@@ -1,5 +1,5 @@
 #property strict
-#property version   "0.300"
+#property version   "1.003"
 #property description "XAUPY Task 003 MT5 data bridge. Execution is hard-locked."
 
 input string InpHost               = "127.0.0.1";

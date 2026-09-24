@@ -24,7 +24,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-002 | DONE | Versioned local IPC contract and process lifecycle | 001 | contract + reconnect/heartbeat tests + verified Windows build |
 | XAUPY-003 | DONE | MQL5 Bridge data channel + execution guardian | 002 | MetaEditor compile + CI/static + bridge probe + verified Windows build |
 | XAUPY-004 | DONE | Canonical configuration/profile model + .set import/export | 002 | schema/validation + .set round-trip/property + packaged tool + verified Windows build |
-| XAUPY-005 | PLANNED | Overview tab implementation | 002,004 | UI build + reference review |
+| XAUPY-005 | ACTIVE | Overview tab implementation | 002,004 | UI/reference structure + real overview projection + Windows build |
 | XAUPY-006 | PLANNED | Full Configuration tab | 004 | validation/profile tests |
 | XAUPY-007 | PLANNED | Strategy engine Direction → Pullback → Trigger | 002,004 | deterministic state tests |
 | XAUPY-008 | PLANNED | Strategy + Monitoring realtime tabs | 005,007 | projection tests + build |
@@ -49,117 +49,82 @@ Status: DONE. Evidence preserved in git history.
 
 Status: DONE. Evidence preserved in git history.
 
-# XAUPY-004 — Canonical configuration/profile model + MT5 .set
+# XAUPY-004
 
-Status: DONE
+Status: DONE. Evidence preserved in git history.
+
+# XAUPY-005 — Overview tab implementation
+
+Status: ACTIVE
 
 ## Goal
 
-Establish one versioned Python-owned configuration model so every strategy parameter can be changed by profile rather than source edits, while preserving MT5 .set compatibility and maintaining hard safety locks.
+Implement the approved Avalonia Overview dashboard using real read-only MT5 Bridge/config/Engine data, with no fake strategy/trading results.
 
-## Scope completed
+## Visual source-of-truth
 
-- canonical schema_version=1;
-- 133 typed parameters;
-- exact independent Direction/Pullback/Trigger timeframe enum:
-  M1/M3/M5/M15/M30/H1/H2/H4;
-- no timeframe-order restriction;
-- MA/Open/Z/RSI/ADX/ATR parameters;
-- entry, risk, SL, TP/dynamic TP, management;
-- sessions/weekdays/news/cost filters;
-- execution identity and mandatory safety values;
-- JSON profile normalization/validation;
-- atomic JSON save/load;
-- MT5 .set parser/import/export;
-- known legacy aliases;
-- unknown key/comment/order/encoding/line-ending preservation;
-- MT5 optimizer suffix preservation;
-- packaged xaupy-config.exe;
-- Engine IPC schema/default/validate endpoints;
-- generated baseline JSON/.set profiles in full artifact;
-- regression compile of Task 003 MT5 Bridge for complete build.
+docs/ui-reference/Tab Tổng Quan.png
 
-## Explicitly out of scope retained
+The implementation follows the reference information hierarchy rather than literal mock trading numbers.
 
-- full Avalonia configuration editor (Task 006);
-- strategy calculations (Task 007);
+## Scope
+
+- quote headline: symbol, BID, ASK, spread;
+- account headline: balance, equity, free margin, currency/mode;
+- persistent Guardian/EXECUTION LOCKED state;
+- Desktop / Python Engine / MT5 Bridge system status;
+- live BID-history lightweight chart using actual Bridge snapshots;
+- canonical baseline profile summary:
+  Direction TF / Pullback TF / Trigger TF / MA / TP / SL / risk limits;
+- explicit Strategy Engine not-running state until Task 007;
+- real current position/order counts;
+- honest empty state instead of fabricated trade history;
+- quick local lifecycle event log;
+- navigation hides Overview when unfinished tabs are selected and shows explicit placeholders;
+- full Windows artifact retains Engine/config tool/profiles/MT5 Bridge.
+
+## Data changes
+
+Python BridgeRegistry exposes overview_payload().
+
+Desktop heartbeat contains overview projection.
+
+Avalonia IPC layer parses:
+
+- OverviewSnapshot;
+- ConfigurationSummary loaded from Task 004 config_defaults_get.
+
+Stale MT5 data must never remain presented as live.
+
+## Explicitly out of scope
+
+- strategy state machine;
+- synthetic BUY/SELL signal;
 - order execution;
-- live-account enablement;
-- optimizer/backtest.
-
-## Hard safety values
-
-The validator rejects changes that would:
-
-- enable real-account execution;
-- disable demo-only mode;
-- enable blind broker retries;
-- allow widening SL;
-- remove required server SL;
-- permit operation on stale market data.
+- ticket-level order history;
+- full Configuration editor;
+- persistent structured trading journal;
+- full candlestick/indicator chart.
 
 ## Acceptance criteria
 
-- [x] exact timeframe option test passes.
-- [x] unusual timeframe order remains valid.
-- [x] default profile validates.
-- [x] field catalog contains 133 parameters.
-- [x] safety unlock attempts are rejected.
-- [x] 500-case random numeric property test passes.
-- [x] canonical JSON save/load round-trip passes.
-- [x] canonical profile → .set → profile is lossless.
-- [x] UTF-16 LE BOM .set support passes.
-- [x] UTF-8 BOM and CP1252 detection passes.
-- [x] template export preserves unknown keys/comments/order/optimizer suffix.
-- [x] template export does not append missing fields unless explicitly requested.
-- [x] Engine IPC config schema/default/validation tests pass.
-- [x] existing bridge/lifecycle tests remain green.
-- [x] Avalonia/.NET build succeeds with 0 warnings/0 errors.
-- [x] packaged xaupy-engine.exe Task 004 smoke test passes.
-- [x] packaged xaupy-config.exe defaults/validate/export/import smoke test passes.
-- [x] Task 003 MQL5 Bridge still compiles 0 errors/0 warnings and EX5 is included.
-- [x] Windows full artifact contains Desktop, Engine, config tool, baseline JSON/.set, MQ5/EX5 and docs.
-- [x] GitHub CI green and uploads XAUPY-Task004-win-x64.
-- [x] downloaded artifact independently inspected before delivery.
+- [ ] UI reference image exists and structural UI test passes.
+- [ ] Overview contains price, system, account, chart, strategy, orders and quick-log groups.
+- [ ] other tabs show explicit placeholders instead of Overview data.
+- [ ] Overview Bridge projection tests pass.
+- [ ] stale Bridge clears live overview values.
+- [ ] packaged Engine Overview smoke test passes.
+- [ ] C# OverviewSnapshot parser checks pass.
+- [ ] canonical M30/M5/M1 config summary is loaded through config_defaults_get.
+- [ ] Python regression tests all pass.
+- [ ] C# IPC self-tests all pass.
+- [ ] Avalonia Release build passes with 0 warnings / 0 errors.
+- [ ] Task 003 MT5 Bridge regression compiles 0 errors / 0 warnings.
+- [ ] Windows full artifact contains Desktop, Engine, config tool, profiles, MQ5/EX5, Task005 docs and Overview UI reference.
+- [ ] GitHub CI green and uploads XAUPY-Task005-win-x64.
 
-## Automated evidence
+## Required artifact
 
-- Final source commit: 715ae9fd73d8c97845b2f0c01a20575b497316b9
-- Branch: task/004-config-profile-set
-- GitHub Actions final run: 36014253927
-- Validate config backend job: SUCCESS
-- Windows x64 full config build job: SUCCESS
-- Python tests: 46/46 PASS
-- C# IPC contract checks: 7/7 PASS
-- Avalonia/.NET build: SUCCESS, 0 warnings, 0 errors
-- Canonical field count: 133
-- Exact timeframe options: M1, M3, M5, M15, M30, H1, H2, H4
-- Packaged Engine Task 004 config smoke test: PASS
-- Packaged xaupy-config defaults/validate/export/import smoke test: PASS
-- MetaEditor regression compile: Result: 0 errors, 0 warnings, 1733 ms elapsed
-- GitHub artifact: XAUPY-Task004-win-x64
-- GitHub artifact id: 10814635399
-- Outer GitHub artifact SHA-256: 4ba076479dbd9ded60040b069d9429e9cf95f4d3dec4387c0c41a54310d5bf0d
-- Direct full-build ZIP SHA-256: f4e465bd404786705d44acc3cdee33ad24462a382e7b2382d0b66ace91385212
-- Artifact expiry: 2026-10-08
-- Independent artifact inspection: 240 files
-- XAUPY.Desktop.exe: present, PE32+ Windows x86-64
-- engine/xaupy-engine.exe: present, PE32+ Windows x86-64
-- tools/xaupy-config.exe: present, PE32+ Windows x86-64
-- profiles/Baseline_M30_M5_M1.json: present and valid
-- profiles/Baseline_M30_M5_M1.set: present, UTF-16 LE BOM
-- profiles/config-schema-v1.json: present, field_count=133
-- mt5/XAUPY_Bridge_EA.mq5/.ex5/compile.log: present
-- Desktop runtime: net10.0 self-contained, Microsoft.NETCore.App 10.0.12 included
+XAUPY-Task005-win-x64.zip
 
-## Build/fix history
-
-The first Task 004 CI run exposed duplicated legacy .set aliases for Open filter/reference fields. The aliases were made unambiguous and the complete test/build pipeline was re-run.
-
-The final source commit above is the one that passed all 46 Python tests and produced the verified full build.
-
-## Delivery
-
-The Task 004 Windows x64 full build is ready for manual smoke testing using docs/TASK004_CONFIG_TEST.md.
-
-XAUPY-005, XAUPY-006 and XAUPY-007 remain PLANNED and have not started.
+XAUPY-006 and XAUPY-007 remain PLANNED until Task 005 is complete.

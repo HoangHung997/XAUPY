@@ -1,24 +1,26 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="XAUPY.Desktop.MainWindow"
-        Width="1500"
-        Height="900"
-        MinWidth="1100"
-        MinHeight="700"
-        Background="#07111F"
-        Title="XAUPY Control Center — Task 004 Config Backend">
+        Width="1560"
+        Height="940"
+        MinWidth="1180"
+        MinHeight="760"
+        Background="#06101D"
+        Title="XAUPY Control Center — Task 005 Overview">
   <Window.Styles>
     <Style Selector="Button.nav">
-      <Setter Property="Background" Value="#10233A"/>
-      <Setter Property="Foreground" Value="#DCE9F8"/>
-      <Setter Property="BorderBrush" Value="#1E3E62"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="#B9CBE0"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="7"/>
+      <Setter Property="HorizontalContentAlignment" Value="Left"/>
       <Setter Property="Padding" Value="14,10"/>
-      <Setter Property="Margin" Value="4"/>
+      <Setter Property="Margin" Value="4,2"/>
     </Style>
     <Style Selector="Button.nav:pointerover">
-      <Setter Property="Background" Value="#17395F"/>
+      <Setter Property="Background" Value="#112844"/>
+      <Setter Property="Foreground" Value="#FFFFFF"/>
     </Style>
     <Style Selector="Button.action">
       <Setter Property="Background" Value="#123B66"/>
@@ -26,61 +28,137 @@
       <Setter Property="BorderBrush" Value="#245F96"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="7"/>
-      <Setter Property="Padding" Value="14,8"/>
+      <Setter Property="Padding" Value="13,8"/>
       <Setter Property="Margin" Value="0,0,8,0"/>
     </Style>
     <Style Selector="Border.card">
-      <Setter Property="Background" Value="#0D1A2B"/>
-      <Setter Property="BorderBrush" Value="#1C3959"/>
+      <Setter Property="Background" Value="#0C1929"/>
+      <Setter Property="BorderBrush" Value="#193956"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="10"/>
-      <Setter Property="Padding" Value="18"/>
+      <Setter Property="Padding" Value="16"/>
+    </Style>
+    <Style Selector="Border.metric">
+      <Setter Property="Background" Value="#0A1726"/>
+      <Setter Property="BorderBrush" Value="#18334E"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding" Value="14"/>
     </Style>
     <Style Selector="TextBlock.muted">
-      <Setter Property="Foreground" Value="#8FA8C2"/>
+      <Setter Property="Foreground" Value="#8097AE"/>
+    </Style>
+    <Style Selector="TextBlock.section">
+      <Setter Property="FontSize" Value="17"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="#E7F1FA"/>
+    </Style>
+    <Style Selector="TextBlock.metricValue">
+      <Setter Property="FontSize" Value="22"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="#F2F7FC"/>
+    </Style>
+    <Style Selector="TextBlock.metricLabel">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Foreground" Value="#7890A8"/>
     </Style>
   </Window.Styles>
 
-  <Grid RowDefinitions="64,*,34">
-    <Border Grid.Row="0" Background="#0A1829" BorderBrush="#183554" BorderThickness="0,0,0,1">
+  <Grid RowDefinitions="62,*,32">
+    <Border Grid.Row="0"
+            Background="#081625"
+            BorderBrush="#183553"
+            BorderThickness="0,0,0,1">
       <Grid ColumnDefinitions="Auto,*,Auto" Margin="18,0">
-        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Spacing="12">
-          <Border Width="34" Height="34" CornerRadius="8" Background="#1479FF">
-            <TextBlock Text="N30" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
+        <StackPanel Grid.Column="0"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Center"
+                    Spacing="11">
+          <Border Width="34" Height="34" CornerRadius="8" Background="#157BFF">
+            <TextBlock Text="N30"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontWeight="Bold"/>
           </Border>
-          <TextBlock Text="XAUPY Control Center" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
-          <TextBlock Text="Task 004 Config Backend" Classes="muted" VerticalAlignment="Center"/>
+          <TextBlock Text="XAUPY Control Center"
+                     FontSize="20"
+                     FontWeight="SemiBold"
+                     VerticalAlignment="Center"/>
+          <TextBlock Text="Task 005 Overview"
+                     Classes="muted"
+                     VerticalAlignment="Center"/>
         </StackPanel>
-        <Border Grid.Column="2" Background="#27321C" BorderBrush="#4E6B28" BorderThickness="1" CornerRadius="12" Padding="10,5" VerticalAlignment="Center">
-          <TextBlock Text="EXECUTION LOCKED — CONFIG BACKEND" Foreground="#C9E77B" FontWeight="Bold"/>
-        </Border>
+
+        <StackPanel Grid.Column="2"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Center"
+                    Spacing="8">
+          <Border Background="#10263D"
+                  BorderBrush="#244F77"
+                  BorderThickness="1"
+                  CornerRadius="12"
+                  Padding="10,5">
+            <TextBlock x:Name="HeaderEnginePillText"
+                       Text="ENGINE STARTING"
+                       Foreground="#E9C46A"
+                       FontWeight="SemiBold"/>
+          </Border>
+          <Border Background="#10263D"
+                  BorderBrush="#244F77"
+                  BorderThickness="1"
+                  CornerRadius="12"
+                  Padding="10,5">
+            <TextBlock x:Name="HeaderBridgePillText"
+                       Text="MT5 WAITING"
+                       Foreground="#E9C46A"
+                       FontWeight="SemiBold"/>
+          </Border>
+          <Border Background="#302B17"
+                  BorderBrush="#6A5C24"
+                  BorderThickness="1"
+                  CornerRadius="12"
+                  Padding="10,5">
+            <TextBlock Text="EXECUTION LOCKED"
+                       Foreground="#E9C46A"
+                       FontWeight="Bold"/>
+          </Border>
+        </StackPanel>
       </Grid>
     </Border>
 
     <Grid Grid.Row="1" ColumnDefinitions="220,*">
-      <Border Grid.Column="0" Background="#091525" BorderBrush="#183554" BorderThickness="0,0,1,0">
+      <Border Grid.Column="0"
+              Background="#081422"
+              BorderBrush="#183553"
+              BorderThickness="0,0,1,0">
         <ScrollViewer>
-          <StackPanel Margin="12">
-            <TextBlock Text="ĐIỀU HƯỚNG" Classes="muted" Margin="8,8,8,10"/>
-            <Button Classes="nav" Content="Tổng quan" Tag="overview" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="Cấu hình" Tag="configuration" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="Chiến lược" Tag="strategy" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="Giám sát" Tag="monitoring" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="Lệnh &amp; Vị thế" Tag="orders" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="Backtest" Tag="backtest" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="Tối ưu" Tag="optimization" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="Nhật ký" Tag="logs" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="Công cụ" Tag="tools" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="Cài đặt" Tag="settings" Click="NavButton_OnClick"/>
+          <StackPanel Margin="10">
+            <TextBlock Text="CONTROL CENTER"
+                       Classes="muted"
+                       FontSize="11"
+                       FontWeight="SemiBold"
+                       Margin="10,9,10,8"/>
+            <Button Classes="nav" Content="◉  Tổng quan" Tag="overview" Click="NavButton_OnClick"/>
+            <Button Classes="nav" Content="⚙  Cấu hình" Tag="configuration" Click="NavButton_OnClick"/>
+            <Button Classes="nav" Content="◇  Chiến lược" Tag="strategy" Click="NavButton_OnClick"/>
+            <Button Classes="nav" Content="⌁  Giám sát" Tag="monitoring" Click="NavButton_OnClick"/>
+            <Button Classes="nav" Content="≡  Lệnh &amp; Vị thế" Tag="orders" Click="NavButton_OnClick"/>
+            <Button Classes="nav" Content="↺  Backtest" Tag="backtest" Click="NavButton_OnClick"/>
+            <Button Classes="nav" Content="△  Tối ưu" Tag="optimization" Click="NavButton_OnClick"/>
+            <Button Classes="nav" Content="▤  Nhật ký" Tag="logs" Click="NavButton_OnClick"/>
+            <Button Classes="nav" Content="⌘  Công cụ" Tag="tools" Click="NavButton_OnClick"/>
+            <Button Classes="nav" Content="☰  Cài đặt" Tag="settings" Click="NavButton_OnClick"/>
 
-            <Border Classes="card" Margin="4,22,4,4">
-              <StackPanel Spacing="7">
-                <TextBlock Text="Kiến trúc" FontWeight="SemiBold"/>
+            <Border Classes="card" Margin="4,20,4,4" Padding="13">
+              <StackPanel Spacing="6">
+                <TextBlock Text="STACK STATUS"
+                           Classes="muted"
+                           FontSize="11"
+                           FontWeight="SemiBold"/>
                 <TextBlock Text="Avalonia Desktop" Foreground="#59D9FF"/>
-                <TextBlock Text="↕ IPC v1 / Loopback" Foreground="#E9C46A"/>
-                <TextBlock Text="Python Engine" Foreground="#B08CFF"/>
-                <TextBlock Text="↕ MT5 Bridge snapshots" Foreground="#E9C46A"/>
-                <TextBlock Text="MQL5 EA • execution locked\n                " Foreground="#69D48C"/>
+                <TextBlock Text="Python Engine" Foreground="#B99CFF"/>
+                <TextBlock Text="MT5 Bridge EA" Foreground="#69D48C"/>
+                <TextBlock Text="Canonical Config v1" Foreground="#59D9FF"/>
               </StackPanel>
             </Border>
           </StackPanel>
@@ -88,84 +166,282 @@
       </Border>
 
       <ScrollViewer Grid.Column="1">
-        <StackPanel Margin="28" Spacing="18">
-          <TextBlock x:Name="PageTitle" Text="Tổng quan" FontSize="30" FontWeight="Bold"/>
-          <TextBlock x:Name="PageSubtitle"
-                     Text="Task 004: canonical profile JSON + MT5 .set import/export; full parameter UI thuộc Task 006."
-                     Classes="muted"
-                     FontSize="15"
-                     TextWrapping="Wrap"/>
-
-          <Border Classes="card">
-            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="14">
-              <StackPanel Grid.Column="0" Spacing="7">
-                <TextBlock Text="Desktop UI" Classes="muted"/>
-                <TextBlock Text="Avalonia 12 / .NET 10" FontSize="19" FontWeight="SemiBold"/>
-                <TextBlock Text="Control Center đang hoạt động" Foreground="#69D48C"/>
-              </StackPanel>
-
-              <StackPanel Grid.Column="1" Spacing="7">
-                <TextBlock Text="Python Engine" Classes="muted"/>
-                <TextBlock x:Name="EngineStateText" Text="STARTING" FontSize="19" FontWeight="SemiBold" Foreground="#E9C46A"/>
-                <TextBlock x:Name="EngineDetailText" Text="Đang chuẩn bị Engine..." Classes="muted" TextWrapping="Wrap"/>
-                <TextBlock x:Name="LastHeartbeatText" Text="Heartbeat: —" Classes="muted"/>
-              </StackPanel>
-
-              <StackPanel Grid.Column="2" Spacing="7">
-                <TextBlock Text="MT5 Bridge" Classes="muted"/>
-                <TextBlock x:Name="BridgeStateText" Text="WAITING" FontSize="19" FontWeight="SemiBold" Foreground="#E9C46A"/>
-                <TextBlock x:Name="BridgeDetailText" Text="Chưa nhận snapshot từ XAUPY_Bridge_EA." Classes="muted" TextWrapping="Wrap"/>
-                <TextBlock x:Name="BridgeGuardianText" Text="Guardian: TASK003_EXECUTION_LOCKED" Foreground="#E9C46A" TextWrapping="Wrap"/>
-              </StackPanel>
-            </Grid>
-          </Border>
-
-          <Grid ColumnDefinitions="2*,*" ColumnSpacing="18">
-            <Border Grid.Column="0" Classes="card" MinHeight="330">
-              <StackPanel Spacing="14">
-                <TextBlock Text="Canonical Configuration Backend" FontSize="19" FontWeight="SemiBold"/>
-                <TextBlock Text="Schema v1 • M1/M3/M5/M15/M30/H1/H2/H4 • JSON + MT5 .set" Foreground="#59D9FF"/>
-                <TextBlock Text="Python Engine sở hữu hơn 100 tham số canonical. Direction/Pullback/Trigger độc lập; preset MT5 .set được import/export mà giữ unknown key, comment, thứ tự, encoding và optimizer suffix."
-                           Classes="muted" TextWrapping="Wrap"/>
-
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                  <Button Classes="action" Content="Khởi động Engine" Click="StartEngine_OnClick"/>
-                  <Button Classes="action" Content="Dừng Engine" Click="StopEngine_OnClick"/>
-                </StackPanel>
-
-                <Border Background="#091421" CornerRadius="8" Padding="18" Margin="0,8,0,0">
-                  <StackPanel Spacing="8">
-                    <TextBlock Text="Configuration Safety — Task 004" FontWeight="SemiBold"/>
-                    <TextBlock Text="✓ Exact TF options: M1 M3 M5 M15 M30 H1 H2 H4" Foreground="#69D48C"/>
-                    <TextBlock Text="✓ Không ép thứ tự Direction > Pullback > Trigger" Foreground="#69D48C"/>
-                    <TextBlock Text="✓ Import/export .set bảo toàn unknown/comments/order" Foreground="#69D48C"/>
-                    <TextBlock Text="✓ Real-account unlock bị validator từ chối" Foreground="#69D48C"/>
-                    <TextBlock Text="✓ Execution vẫn khóa; Task 004 không thêm đường đặt lệnh" Foreground="#69D48C" TextWrapping="Wrap"/>
-                  </StackPanel>
-                </Border>
-              </StackPanel>
-            </Border>
-
-            <Border Grid.Column="1" Classes="card">
-              <StackPanel Spacing="10">
-                <TextBlock Text="Build Task 004" FontSize="19" FontWeight="SemiBold"/>
-                <TextBlock Text="✓ Canonical schema + validation" Foreground="#69D48C"/>
-                <TextBlock Text="✓ Profile JSON atomic save/load" Foreground="#69D48C"/>
-                <TextBlock Text="✓ MT5 .set parser/exporter" Foreground="#69D48C"/>
-                <TextBlock Text="• xaupy-config.exe / CI" Foreground="#E9C46A"/>
-                <TextBlock Text="• Full Windows build artifact" Foreground="#E9C46A"/>
-                <TextBlock Text="Trading: HARD LOCKED" Classes="muted" Margin="0,12,0,0"/>
-              </StackPanel>
-            </Border>
+        <StackPanel Margin="24" Spacing="15">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel>
+              <TextBlock x:Name="PageTitle"
+                         Text="Tổng quan"
+                         FontSize="28"
+                         FontWeight="Bold"/>
+              <TextBlock x:Name="PageSubtitle"
+                         Text="Giá XAUUSD, trạng thái hệ thống, tài khoản, chart, chiến lược, lệnh gần đây và log nhanh."
+                         Classes="muted"
+                         FontSize="14"
+                         TextWrapping="Wrap"
+                         Margin="0,4,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+              <Button Classes="action" Content="Khởi động Engine" Click="StartEngine_OnClick"/>
+              <Button Classes="action" Content="Dừng Engine" Click="StopEngine_OnClick"/>
+            </StackPanel>
           </Grid>
+
+          <StackPanel x:Name="OverviewContent" Spacing="15">
+            <!-- Quote and account headline -->
+            <Grid ColumnDefinitions="1.25*,1*,1*,1*,1*" ColumnSpacing="10">
+              <Border Grid.Column="0" Classes="metric">
+                <StackPanel Spacing="4">
+                  <TextBlock x:Name="SymbolValue" Text="XAUUSD" Classes="metricLabel"/>
+                  <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <StackPanel>
+                      <TextBlock Text="BID" Classes="metricLabel"/>
+                      <TextBlock x:Name="BidValue" Text="—" Classes="metricValue" Foreground="#69D48C"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                      <TextBlock Text="ASK" Classes="metricLabel"/>
+                      <TextBlock x:Name="AskValue" Text="—" Classes="metricValue"/>
+                    </StackPanel>
+                  </Grid>
+                  <TextBlock x:Name="SpreadValue" Text="Spread: —" Classes="muted" FontSize="12"/>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Column="1" Classes="metric">
+                <StackPanel Spacing="5">
+                  <TextBlock Text="BALANCE" Classes="metricLabel"/>
+                  <TextBlock x:Name="BalanceValue" Text="—" Classes="metricValue"/>
+                  <TextBlock x:Name="AccountModeValue" Text="MT5: waiting" Classes="muted" FontSize="12"/>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Column="2" Classes="metric">
+                <StackPanel Spacing="5">
+                  <TextBlock Text="EQUITY" Classes="metricLabel"/>
+                  <TextBlock x:Name="EquityValue" Text="—" Classes="metricValue"/>
+                  <TextBlock Text="Dữ liệu trực tiếp từ Bridge" Classes="muted" FontSize="12"/>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Column="3" Classes="metric">
+                <StackPanel Spacing="5">
+                  <TextBlock Text="FREE MARGIN" Classes="metricLabel"/>
+                  <TextBlock x:Name="MarginFreeValue" Text="—" Classes="metricValue"/>
+                  <TextBlock x:Name="CurrencyValue" Text="Currency: —" Classes="muted" FontSize="12"/>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Column="4" Classes="metric">
+                <StackPanel Spacing="5">
+                  <TextBlock Text="GUARDIAN" Classes="metricLabel"/>
+                  <TextBlock x:Name="GuardianValue" Text="LOCKED" FontSize="20" FontWeight="Bold" Foreground="#E9C46A"/>
+                  <TextBlock x:Name="GuardianReasonValue" Text="TASK003_EXECUTION_LOCKED" Classes="muted" FontSize="12" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <!-- System status -->
+            <Border Classes="card">
+              <Grid ColumnDefinitions="1*,1*,1*,1.3*" ColumnSpacing="14">
+                <StackPanel Grid.Column="0" Spacing="5">
+                  <TextBlock Text="Desktop" Classes="metricLabel"/>
+                  <TextBlock Text="ONLINE" FontSize="18" FontWeight="SemiBold" Foreground="#69D48C"/>
+                  <TextBlock Text="Avalonia/.NET 10" Classes="muted" FontSize="12"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="5">
+                  <TextBlock Text="Python Engine" Classes="metricLabel"/>
+                  <TextBlock x:Name="EngineStateText" Text="STARTING" FontSize="18" FontWeight="SemiBold" Foreground="#E9C46A"/>
+                  <TextBlock x:Name="LastHeartbeatText" Text="Heartbeat: —" Classes="muted" FontSize="12"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Spacing="5">
+                  <TextBlock Text="MT5 Bridge" Classes="metricLabel"/>
+                  <TextBlock x:Name="BridgeStateText" Text="WAITING" FontSize="18" FontWeight="SemiBold" Foreground="#E9C46A"/>
+                  <TextBlock x:Name="BridgeAgeText" Text="Snapshot age: —" Classes="muted" FontSize="12"/>
+                </StackPanel>
+                <StackPanel Grid.Column="3" Spacing="5">
+                  <TextBlock Text="Chi tiết kết nối" Classes="metricLabel"/>
+                  <TextBlock x:Name="EngineDetailText" Text="Đang chuẩn bị Engine..." Foreground="#B9CBE0" TextWrapping="Wrap"/>
+                  <TextBlock x:Name="BridgeDetailText" Text="Chưa nhận snapshot MT5." Classes="muted" FontSize="12" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Grid>
+            </Border>
+
+            <!-- Chart + strategy -->
+            <Grid ColumnDefinitions="1.75*,1*" ColumnSpacing="14">
+              <Border Grid.Column="0" Classes="card">
+                <StackPanel Spacing="10">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel>
+                      <TextBlock Text="XAUUSD • Live Quote" Classes="section"/>
+                      <TextBlock Text="Biểu đồ nhanh dùng lịch sử BID nhận từ MT5 Bridge; không phải dữ liệu minh họa." Classes="muted" FontSize="12"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                      <TextBlock x:Name="ChartLastValue" Text="Last: —" FontWeight="SemiBold"/>
+                      <TextBlock x:Name="ChartRangeValue" Text="Range: —" Classes="muted" FontSize="12"/>
+                    </StackPanel>
+                  </Grid>
+
+                  <Border Background="#07121E"
+                          BorderBrush="#142E47"
+                          BorderThickness="1"
+                          CornerRadius="8"
+                          Height="238"
+                          Padding="14">
+                    <Grid RowDefinitions="*,Auto">
+                      <Grid Grid.Row="0"
+                            ColumnDefinitions="*,*,*,*,*,*,*,*,*,*"
+                            Margin="4,8">
+                        <Border x:Name="ChartBar0" Grid.Column="0" Width="14" Height="22" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.35"/>
+                        <Border x:Name="ChartBar1" Grid.Column="1" Width="14" Height="28" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.40"/>
+                        <Border x:Name="ChartBar2" Grid.Column="2" Width="14" Height="32" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.45"/>
+                        <Border x:Name="ChartBar3" Grid.Column="3" Width="14" Height="38" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.50"/>
+                        <Border x:Name="ChartBar4" Grid.Column="4" Width="14" Height="44" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.55"/>
+                        <Border x:Name="ChartBar5" Grid.Column="5" Width="14" Height="50" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.60"/>
+                        <Border x:Name="ChartBar6" Grid.Column="6" Width="14" Height="55" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.65"/>
+                        <Border x:Name="ChartBar7" Grid.Column="7" Width="14" Height="48" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.70"/>
+                        <Border x:Name="ChartBar8" Grid.Column="8" Width="14" Height="58" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.75"/>
+                        <Border x:Name="ChartBar9" Grid.Column="9" Width="14" Height="64" Background="#2D9CFF" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.85"/>
+                      </Grid>
+                      <Grid Grid.Row="1" ColumnDefinitions="*,*,*">
+                        <TextBlock x:Name="ChartMinValue" Text="Min —" Classes="muted" FontSize="11"/>
+                        <TextBlock Grid.Column="1" Text="LIVE BID HISTORY" HorizontalAlignment="Center" Classes="muted" FontSize="11"/>
+                        <TextBlock x:Name="ChartMaxValue" Grid.Column="2" Text="Max —" HorizontalAlignment="Right" Classes="muted" FontSize="11"/>
+                      </Grid>
+                    </Grid>
+                  </Border>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Column="1" Classes="card">
+                <StackPanel Spacing="11">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Chiến lược realtime" Classes="section"/>
+                    <Border Grid.Column="1" Background="#2F2915" BorderBrush="#675B24" BorderThickness="1" CornerRadius="10" Padding="8,3">
+                      <TextBlock x:Name="StrategyStateValue" Text="CHƯA CHẠY" Foreground="#E9C46A" FontSize="11" FontWeight="Bold"/>
+                    </Border>
+                  </Grid>
+                  <TextBlock x:Name="ProfileValue" Text="Profile: Baseline" Foreground="#59D9FF"/>
+                  <Grid ColumnDefinitions="*,*,*" ColumnSpacing="7">
+                    <Border Grid.Column="0" Classes="metric" Padding="9">
+                      <StackPanel>
+                        <TextBlock Text="DIRECTION" Classes="metricLabel"/>
+                        <TextBlock x:Name="DirectionTfValue" Text="M30" FontSize="18" FontWeight="SemiBold"/>
+                      </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Classes="metric" Padding="9">
+                      <StackPanel>
+                        <TextBlock Text="PULLBACK" Classes="metricLabel"/>
+                        <TextBlock x:Name="PullbackTfValue" Text="M5" FontSize="18" FontWeight="SemiBold"/>
+                      </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" Classes="metric" Padding="9">
+                      <StackPanel>
+                        <TextBlock Text="TRIGGER" Classes="metricLabel"/>
+                        <TextBlock x:Name="TriggerTfValue" Text="M1" FontSize="18" FontWeight="SemiBold"/>
+                      </StackPanel>
+                    </Border>
+                  </Grid>
+                  <TextBlock x:Name="DirectionRuleValue" Text="Direction: EMA50" Foreground="#B9CBE0"/>
+                  <TextBlock x:Name="TpSlValue" Text="SL STRUCTURE • TP FIXED" Foreground="#B9CBE0"/>
+                  <TextBlock Text="Strategy Engine thuộc Task 007. Overview không giả lập tín hiệu BUY/SELL trước khi backend chiến lược tồn tại."
+                             Classes="muted"
+                             TextWrapping="Wrap"
+                             FontSize="12"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <!-- Recent orders + quick logs -->
+            <Grid ColumnDefinitions="1.55*,1*" ColumnSpacing="14">
+              <Border Grid.Column="0" Classes="card">
+                <StackPanel Spacing="10">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Lệnh gần đây" Classes="section"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                      <TextBlock Text="Positions:" Classes="muted"/>
+                      <TextBlock x:Name="PositionsCountValue" Text="0"/>
+                      <TextBlock Text="Orders:" Classes="muted"/>
+                      <TextBlock x:Name="OrdersCountValue" Text="0"/>
+                    </StackPanel>
+                  </Grid>
+                  <Border Background="#07121E" CornerRadius="7" Padding="10">
+                    <Grid ColumnDefinitions="1.1*,0.7*,0.8*,0.8*,0.8*,1.2*">
+                      <TextBlock Text="Thời gian" Classes="metricLabel"/>
+                      <TextBlock Grid.Column="1" Text="Side" Classes="metricLabel"/>
+                      <TextBlock Grid.Column="2" Text="Lot" Classes="metricLabel"/>
+                      <TextBlock Grid.Column="3" Text="Entry" Classes="metricLabel"/>
+                      <TextBlock Grid.Column="4" Text="P/L" Classes="metricLabel"/>
+                      <TextBlock Grid.Column="5" Text="Trạng thái" Classes="metricLabel"/>
+                    </Grid>
+                  </Border>
+                  <Border Background="#091625" CornerRadius="7" Padding="16">
+                    <TextBlock x:Name="RecentOrdersEmptyText"
+                               Text="Chưa có dữ liệu lệnh. Task 005 chỉ hiển thị dữ liệu thật; execution hiện đang khóa."
+                               Classes="muted"
+                               HorizontalAlignment="Center"
+                               TextWrapping="Wrap"/>
+                  </Border>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Column="1" Classes="card">
+                <StackPanel Spacing="10">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Log nhanh" Classes="section"/>
+                    <TextBlock Grid.Column="1" Text="LOCAL UI EVENTS" Classes="metricLabel"/>
+                  </Grid>
+                  <Border Background="#07121E" CornerRadius="7" Padding="12" MinHeight="130">
+                    <TextBlock x:Name="QuickLogText"
+                               Text="Đang khởi tạo Control Center..."
+                               FontFamily="Consolas"
+                               FontSize="12"
+                               Foreground="#9DB5CD"
+                               TextWrapping="Wrap"/>
+                  </Border>
+                </StackPanel>
+              </Border>
+            </Grid>
+          </StackPanel>
+
+          <Border x:Name="PlaceholderContent" Classes="card" IsVisible="False" MinHeight="420">
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="12"
+                        MaxWidth="580">
+              <TextBlock x:Name="PlaceholderTitle"
+                         Text="Tab chưa triển khai"
+                         FontSize="24"
+                         FontWeight="SemiBold"
+                         HorizontalAlignment="Center"/>
+              <TextBlock x:Name="PlaceholderDetail"
+                         Text="Task 005 chỉ triển khai tab Tổng quan. Các tab còn lại sẽ được hoàn thiện theo đúng thứ tự task."
+                         Classes="muted"
+                         TextWrapping="Wrap"
+                         TextAlignment="Center"/>
+              <TextBlock Text="Không hiển thị dữ liệu giả để tạo cảm giác chức năng đã tồn tại."
+                         Foreground="#E9C46A"
+                         TextAlignment="Center"/>
+            </StackPanel>
+          </Border>
         </StackPanel>
       </ScrollViewer>
     </Grid>
 
-    <Border Grid.Row="2" Background="#081321" BorderBrush="#183554" BorderThickness="0,1,0,0">
+    <Border Grid.Row="2"
+            Background="#071320"
+            BorderBrush="#183553"
+            BorderThickness="0,1,0,0">
       <Grid ColumnDefinitions="*,Auto" Margin="18,0">
-        <TextBlock Text="XAUPY • config backend • MT5 bridge retained • execution locked" Classes="muted" VerticalAlignment="Center"/>
-        <TextBlock Grid.Column="1" Text="TASK XAUPY-004" Foreground="#59D9FF" VerticalAlignment="Center"/>
+        <TextBlock Text="XAUPY • overview uses real bridge/config data • execution locked"
+                   Classes="muted"
+                   VerticalAlignment="Center"
+                   FontSize="11"/>
+        <TextBlock Grid.Column="1"
+                   Text="TASK XAUPY-005"
+                   Foreground="#59D9FF"
+                   VerticalAlignment="Center"
+                   FontSize="11"/>
       </Grid>
     </Border>
   </Grid>

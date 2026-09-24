@@ -44,12 +44,16 @@ public sealed class EngineStateChangedEventArgs(
     EngineConnectionState state,
     string detail,
     DateTimeOffset? lastHeartbeatUtc,
-    Mt5BridgeStatus mt5Bridge) : EventArgs
+    Mt5BridgeStatus mt5Bridge,
+    OverviewSnapshot overview,
+    ConfigurationSummary configuration) : EventArgs
 {
     public EngineConnectionState State { get; } = state;
     public string Detail { get; } = detail;
     public DateTimeOffset? LastHeartbeatUtc { get; } = lastHeartbeatUtc;
     public Mt5BridgeStatus Mt5Bridge { get; } = mt5Bridge;
+    public OverviewSnapshot Overview { get; } = overview;
+    public ConfigurationSummary Configuration { get; } = configuration;
 }
 
 public sealed class EngineProcessSupervisor : IDisposable
@@ -88,6 +92,8 @@ public sealed class EngineProcessSupervisor : IDisposable
     public EngineConnectionState State { get; private set; } = EngineConnectionState.Stopped;
     public DateTimeOffset? LastHeartbeatUtc { get; private set; }
     public Mt5BridgeStatus Mt5Bridge { get; private set; } = Mt5BridgeStatus.Offline;
+    public OverviewSnapshot Overview { get; private set; } = OverviewSnapshot.Empty;
+    public ConfigurationSummary Configuration { get; private set; } = ConfigurationSummary.Default;
 
     public Task StartAsync()
     {
@@ -101,6 +107,8 @@ public sealed class EngineProcessSupervisor : IDisposable
             _stopRequested = false;
             _restartAttempts = 0;
             Mt5Bridge = Mt5BridgeStatus.Offline;
+            Overview = OverviewSnapshot.Empty;
+            Configuration = ConfigurationSummary.Default;
 
             if (!File.Exists(EnginePath))
             {
@@ -161,6 +169,7 @@ public sealed class EngineProcessSupervisor : IDisposable
         CloseConnection();
         TerminateOwnedProcess();
         Mt5Bridge = Mt5BridgeStatus.Offline;
+        Overview = OverviewSnapshot.Empty;
         SetState(EngineConnectionState.Stopped, "Python Engine đã dừng.");
     }
 
@@ -185,6 +194,7 @@ public sealed class EngineProcessSupervisor : IDisposable
                     _process?.Dispose();
                     _process = StartOwnedProcess();
                     Mt5Bridge = Mt5BridgeStatus.Offline;
+                    Overview = OverviewSnapshot.Empty;
                     SetState(
                         EngineConnectionState.Starting,
                         $"Engine đã tự khởi động lại ({_restartAttempts}/{MaxRestartAttempts}), PID {_process.Id}.");
@@ -217,7 +227,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
                     var heartbeat = ProtocolEnvelope.Create(
                         "heartbeat",
-                        new { component = "desktop", desktop_version = "0.3.0-task003" });
+                        new { component = "desktop", desktop_version = "0.5.0-task005" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
@@ -232,6 +242,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
                     RejectUnexpectedExecutionEnable(response);
                     Mt5Bridge = ParseBridgeStatus(response.Payload);
+                    Overview = OverviewSnapshot.FromHeartbeatPayload(response.Payload);
 
                     LastHeartbeatUtc = DateTimeOffset.UtcNow;
                     SetState(
@@ -248,6 +259,7 @@ public sealed class EngineProcessSupervisor : IDisposable
             {
                 CloseConnection();
                 Mt5Bridge = Mt5BridgeStatus.Offline;
+                Overview = OverviewSnapshot.Empty;
 
                 if (_stopRequested || cancellationToken.IsCancellationRequested)
                     break;
@@ -281,7 +293,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "0.3.0-task003" });
+            new { component = "desktop", desktop_version = "0.5.0-task005" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -292,6 +304,21 @@ public sealed class EngineProcessSupervisor : IDisposable
             throw new InvalidDataException("hello_ack request_id does not match.");
 
         RejectUnexpectedExecutionEnable(response);
+
+        var configRequest = ProtocolEnvelope.Create(
+            "config_defaults_get",
+            new { component = "desktop", desktop_version = "0.5.0-task005" });
+
+        var configResponse = await SendReceiveAsync(
+            configRequest,
+            TimeSpan.FromSeconds(3),
+            cancellationToken);
+
+        if (configResponse.Type != "config_defaults_ack")
+            throw new InvalidDataException($"Unexpected config defaults response: {configResponse.Type}");
+
+        RejectUnexpectedExecutionEnable(configResponse);
+        Configuration = ConfigurationSummary.FromConfigDefaultsAck(configResponse.Payload);
     }
 
     private static void RejectUnexpectedExecutionEnable(ProtocolEnvelope response)
@@ -299,13 +326,13 @@ public sealed class EngineProcessSupervisor : IDisposable
         if (response.Payload.TryGetProperty("trading_enabled", out var trading) &&
             trading.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 003 Engine unexpectedly reported trading_enabled=true.");
+            throw new InvalidDataException("Task 005 Engine unexpectedly reported trading_enabled=true.");
         }
 
         if (response.Payload.TryGetProperty("execution_enabled", out var execution) &&
             execution.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 003 Engine unexpectedly reported execution_enabled=true.");
+            throw new InvalidDataException("Task 005 Engine unexpectedly reported execution_enabled=true.");
         }
     }
 
@@ -350,7 +377,7 @@ public sealed class EngineProcessSupervisor : IDisposable
         }
 
         if (executionReady || !executionLocked)
-            throw new InvalidDataException("Task 003 bridge guardian unexpectedly reported execution ready.");
+            throw new InvalidDataException("Task 005 bridge guardian unexpectedly reported execution ready.");
 
         return new Mt5BridgeStatus(
             connected,
@@ -489,7 +516,13 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         StateChanged?.Invoke(
             this,
-            new EngineStateChangedEventArgs(state, detail, LastHeartbeatUtc, Mt5Bridge));
+            new EngineStateChangedEventArgs(
+                state,
+                detail,
+                LastHeartbeatUtc,
+                Mt5Bridge,
+                Overview,
+                Configuration));
     }
 
     private static int? ReadPortFromEnvironment()

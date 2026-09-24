@@ -1,7 +1,8 @@
 """XAUPY Python Engine.
 
-Task 004 adds the canonical configuration/profile backend and MT5 .set compatibility.
+Task 005 adds the read-only Overview data projection used by the Avalonia dashboard.
+Configuration and MT5 Bridge support from earlier tasks remain active.
 Trading execution remains locked.
 """
 
-__version__ = "0.4.0-task004"
+__version__ = "0.5.0-task005"

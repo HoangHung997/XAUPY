@@ -2,44 +2,44 @@
 
 XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 
-1. Avalonia / C# Desktop — giao diện Control Center.
-2. Python Engine — chiến lược, nghiên cứu, backtest và tối ưu.
+1. Avalonia / C# Desktop — Control Center.
+2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-004 DONE. XAUPY-005/006/007 vẫn PLANNED và chưa bắt đầu.
+Trạng thái hiện tại: TASK XAUPY-005 — Overview tab.
 
 ## Tài liệu bắt buộc
 
-- [Đặc tả sản phẩm](docs/PRODUCT_SPEC.md)
-- [Kế hoạch triển khai theo task](docs/IMPLEMENTATION_TASKS.md)
-- [IPC protocol](docs/IPC_PROTOCOL.md)
+- [Product spec](docs/PRODUCT_SPEC.md)
+- [Implementation tasks](docs/IMPLEMENTATION_TASKS.md)
+- [Overview UI spec](docs/OVERVIEW_UI_SPEC.md)
+- [Overview smoke test](docs/TASK005_OVERVIEW_TEST.md)
 - [Canonical config/profile spec](docs/CONFIG_PROFILE_SPEC.md)
-- [Task 004 config smoke test](docs/TASK004_CONFIG_TEST.md)
-- [Task 003 MT5 Bridge](docs/TASK003_MT5_BRIDGE.md)
+- [IPC protocol](docs/IPC_PROTOCOL.md)
 - [UI reference](docs/ui-reference/README.md)
 
 ## Nguyên tắc triển khai
 
 - Chỉ làm một task tại một thời điểm.
-- Task chỉ DONE khi code, tests, GitHub CI và full build artifact đều hoàn tất.
-- Mọi task có UI/backend phải có Windows x64 full build trước khi giao người dùng test.
-- Python là canonical owner của profile/strategy configuration.
-- Full Avalonia parameter editor thuộc Task 006.
-- Execution vẫn khóa; Task 004 không thêm đường đặt lệnh.
+- Task chỉ DONE khi code, tests, GitHub CI và full Windows build đều hoàn tất.
+- Overview chỉ hiển thị dữ liệu thật từ MT5 Bridge / Python Engine / canonical config.
+- Không dùng số liệu mockup làm dữ liệu runtime.
+- Những backend chưa tồn tại phải hiện rõ chưa chạy/chưa triển khai.
+- Execution vẫn khóa.
 
-## Task 004 đã hoàn thành
+## Task 005
 
-- schema profile versioned;
-- 133 tham số canonical;
-- Direction/Pullback/Trigger TF độc lập;
-- exact TF options: M1, M3, M5, M15, M30, H1, H2, H4;
-- JSON profile validation + atomic save/load;
-- MT5 .set import/export;
-- bảo toàn unknown keys, comments, order, encoding, line endings và optimizer suffix;
-- packaged tools/xaupy-config.exe;
-- Engine IPC: config_schema_get, config_defaults_get, config_validate;
-- baseline JSON/.set được tạo sẵn trong full build;
-- real-account unlock và các safety unlock bị validator từ chối;
-- CI final: 46 Python tests PASS, C# 7/7 PASS, .NET 0 warnings/0 errors, MetaEditor 0 errors/0 warnings.
+Overview Avalonia triển khai các nhóm đã duyệt:
 
-Xem evidence đầy đủ trong docs/IMPLEMENTATION_TASKS.md.
+- XAUUSD BID/ASK/spread;
+- Desktop / Python Engine / MT5 Bridge status;
+- balance/equity/free margin/account mode;
+- live BID history chart;
+- configured Direction/Pullback/Trigger summary;
+- real position/order counters;
+- quick local event log;
+- explicit placeholders cho các tab chưa tới task.
+
+Visual source-of-truth:
+
+docs/ui-reference/Tab Tổng Quan.png

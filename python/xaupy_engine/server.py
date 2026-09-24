@@ -136,6 +136,7 @@ class EngineServer:
                 "uptime_ms": int((time.monotonic() - self._started_monotonic) * 1000),
                 "connections_total": self._connections_total,
                 "bridge": self.bridge.status().to_payload(),
+                "overview": self.bridge.overview_payload(),
             }
             return Envelope.response("heartbeat_ack", request.request_id, payload), False
 
@@ -270,7 +271,7 @@ class EngineServer:
                 request.request_id,
                 {
                     "code": "UNSUPPORTED_MESSAGE",
-                    "message": f"Unsupported Task 004 message type: {request.type}",
+                    "message": f"Unsupported Task 005 message type: {request.type}",
                     "trading_enabled": False,
                     "execution_enabled": False,
                 },

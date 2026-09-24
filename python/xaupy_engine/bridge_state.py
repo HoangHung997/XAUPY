@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import time
+from datetime import datetime, timezone
 from typing import Any
 
 
@@ -110,6 +111,51 @@ class BridgeRegistry:
         self._latest_snapshot = dict(payload)
         self._last_seen_monotonic = time.monotonic()
         self._snapshots_total += 1
+
+    def overview_payload(self) -> dict[str, Any]:
+        status = self.status()
+        snapshot = self._latest_snapshot or {}
+
+        if not status.connected or not snapshot:
+            return {
+                "available": False,
+                "snapshot_received_utc": None,
+                "symbol": status.symbol,
+                "account_trade_mode": status.account_trade_mode,
+                "terminal_connected": status.terminal_connected,
+                "bid": None,
+                "ask": None,
+                "spread_points": None,
+                "balance": None,
+                "equity": None,
+                "margin_free": None,
+                "account_currency": None,
+                "positions_count": 0,
+                "orders_count": 0,
+                "bars": {},
+            }
+
+        bars = snapshot.get("bars")
+        if not isinstance(bars, dict):
+            bars = {}
+
+        return {
+            "available": True,
+            "snapshot_received_utc": datetime.now(timezone.utc).isoformat(),
+            "symbol": snapshot.get("symbol"),
+            "account_trade_mode": snapshot.get("account_trade_mode"),
+            "terminal_connected": bool(snapshot.get("terminal_connected", False)),
+            "bid": snapshot.get("bid"),
+            "ask": snapshot.get("ask"),
+            "spread_points": snapshot.get("spread_points"),
+            "balance": snapshot.get("balance"),
+            "equity": snapshot.get("equity"),
+            "margin_free": snapshot.get("margin_free"),
+            "account_currency": snapshot.get("account_currency"),
+            "positions_count": snapshot.get("positions_count", 0),
+            "orders_count": snapshot.get("orders_count", 0),
+            "bars": bars,
+        }
 
     def status(self) -> BridgeStatus:
         now = time.monotonic()

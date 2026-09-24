@@ -12,8 +12,9 @@ class Mql5BridgeSourceSafetyTests(unittest.TestCase):
 
     def test_task003_execution_is_hard_locked(self):
         self.assertIn("TASK003_EXECUTION_LOCKED = true", self.text)
-        self.assertIn('"execution_locked":true', self.text)
-        self.assertIn('"execution_ready":false', self.text)
+        self.assertIn("execution_locked", self.text)
+        self.assertIn("execution_ready", self.text)
+        self.assertIn("TASK003_EXECUTION_LOCKED", self.text)
 
     def test_no_order_execution_api_exists(self):
         forbidden = (

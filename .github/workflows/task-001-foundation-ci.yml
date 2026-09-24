@@ -3,9 +3,14 @@ name: Task 001 - Foundation CI
 on:
   push:
     branches:
-      - main
-      - 'task/**'
+      - 'task/001-foundation-shell'
   pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/XAUPY.Desktop/**'
+      - 'python/**'
+      - '.github/workflows/task-001-foundation-ci.yml'
   workflow_dispatch:
 
 permissions:
@@ -46,8 +51,7 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Publish Windows x64 self-contained
         shell: pwsh
-        run: |
-          dotnet publish src/XAUPY.Desktop/XAUPY.Desktop.csproj -c Release -r win-x64 --self-contained true -o dist/XAUPY.Desktop-win-x64
+        run: dotnet publish src/XAUPY.Desktop/XAUPY.Desktop.csproj -c Release -r win-x64 --self-contained true -o dist/XAUPY.Desktop-win-x64
       - name: Add foundation Python source and docs
         shell: pwsh
         run: |
@@ -57,8 +61,7 @@ jobs:
           Copy-Item docs/IMPLEMENTATION_TASKS.md dist/XAUPY.Desktop-win-x64/docs/IMPLEMENTATION_TASKS.md
       - name: Package artifact
         shell: pwsh
-        run: |
-          Compress-Archive -Path dist/XAUPY.Desktop-win-x64/* -DestinationPath dist/XAUPY-Task001-win-x64.zip -Force
+        run: Compress-Archive -Path dist/XAUPY.Desktop-win-x64/* -DestinationPath dist/XAUPY-Task001-win-x64.zip -Force
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:

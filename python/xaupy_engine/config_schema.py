@@ -94,8 +94,8 @@ FIELDS: tuple[ConfigField, ...] = (
     _f("direction.ma_period","int",50,"XAUPY_DirectionMAPeriod",aliases=("DirectionMAPeriod","InpDirectionMAPeriod"),minimum=1,maximum=1000),
     _f("direction.price_source","enum","CLOSE","XAUPY_DirectionPriceSource",aliases=("DirectionPriceSource","InpDirectionPriceSource"),enum=PRICE_SOURCES),
     _f("direction.require_close_side","bool",True,"XAUPY_DirectionRequireCloseSide",aliases=("DirectionRequireCloseSide",)),
-    _f("direction.open_filter_enabled","bool",False,"XAUPY_DirectionOpenFilterEnabled",aliases=("DirectionOpenFilterEnabled","InpOpenFilterEnabled")),
-    _f("direction.open_reference_mode","enum","DAILY_OPEN","XAUPY_DirectionOpenReference",aliases=("OpenReferenceMode","InpOpenReferenceMode"),enum=OPEN_REFERENCE_MODES),
+    _f("direction.open_filter_enabled","bool",False,"XAUPY_DirectionOpenFilterEnabled",aliases=("DirectionOpenFilterEnabled","InpDirectionOpenFilterEnabled")),
+    _f("direction.open_reference_mode","enum","DAILY_OPEN","XAUPY_DirectionOpenReference",aliases=("DirectionOpenReferenceMode","InpDirectionOpenReferenceMode"),enum=OPEN_REFERENCE_MODES),
 
     _f("pullback.logic","enum","AND","XAUPY_PullbackLogic",aliases=("PullbackLogic","InpPullbackLogic"),enum=LOGIC_OPTIONS),
     _f("pullback.rsi_enabled","bool",True,"XAUPY_PullbackRSIEnabled",aliases=("PullbackUseRSI","InpPullbackUseRSI")),

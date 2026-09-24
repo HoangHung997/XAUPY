@@ -6,14 +6,14 @@
 2. Do not start the next task until the current task is DONE.
 3. DONE requires code + tests + GitHub CI evidence + required build artifact.
 4. Product philosophy changes require an explicit spec update.
-5. User smoke testing may follow delivery when the task's purpose is to create the first runnable build, but no later task may start until the current task is fully closed.
+5. User smoke testing may follow delivery, but the current task must have a complete downloadable build before asking the user to test.
 
 ## Status legend
 
-ACTIVE — only task currently being implemented.  
-PLANNED — not started.  
-BLOCKED — dependency/user decision prevents work.  
-READY_FOR_USER_TEST — CI/build complete, awaiting manual acceptance.  
+ACTIVE — only task currently being implemented.
+PLANNED — not started.
+BLOCKED — dependency/user decision prevents work.
+READY_FOR_USER_TEST — CI/build complete, awaiting requested manual acceptance.
 DONE — implementation, automated evidence and required deliverable complete.
 
 ## Task table
@@ -21,7 +21,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | ID | Status | Task | Dependency | Required evidence |
 |---|---|---|---|---|
 | XAUPY-001 | DONE | Foundation, Avalonia shell, Python engine stub, CI Windows artifact | — | CI green + verified Windows zip artifact |
-| XAUPY-002 | PLANNED | Versioned local IPC contract and process lifecycle | 001 | contract + reconnect/heartbeat tests |
+| XAUPY-002 | ACTIVE | Versioned local IPC contract and process lifecycle | 001 | contract + reconnect/heartbeat tests + Windows build |
 | XAUPY-003 | PLANNED | MQL5 Bridge data channel + execution guardian | 002 | compile + CI/static + demo probe |
 | XAUPY-004 | PLANNED | Canonical configuration/profile model + .set import/export | 002 | round-trip/property tests |
 | XAUPY-005 | PLANNED | Overview tab implementation | 002,004 | UI build + reference review |
@@ -41,53 +41,56 @@ DONE — implementation, automated evidence and required deliverable complete.
 
 Status: DONE
 
+Automated evidence is preserved in git history.
+
+# XAUPY-002 — Versioned local IPC and process lifecycle
+
+Status: ACTIVE
+
 ## Goal
 
-Create a runnable, non-trading foundation that proves the selected stack can build and be delivered before broker/strategy implementation begins.
+Turn the Task 001 shell into a real two-process desktop foundation: Avalonia owns a packaged Python Engine process, communicates with it over a versioned loopback-only protocol, monitors heartbeat health, reconnects after connection loss and shuts it down cleanly. Trading remains impossible.
 
-## Scope completed
+## Scope
 
-- Avalonia 12 desktop project targeting .NET 10.
-- Dark Control Center shell reflecting approved UI hierarchy.
-- All ten top-level tabs visible and navigable as placeholders.
-- Explicit foundation / no trading status.
-- Minimal Python engine package with versioned heartbeat contract; no strategy/execution.
-- GitHub Actions validation and Windows x64 self-contained publish.
-- Root README/build instructions.
+- Protocol v1 envelope and documentation.
+- TCP loopback transport at 127.0.0.1 with configurable port.
+- JSON Lines framing.
+- hello / hello_ack.
+- heartbeat / heartbeat_ack.
+- shutdown / shutdown_ack.
+- error envelope for unsupported messages.
+- UUID request_id correlation.
+- Python asyncio Engine server.
+- C# protocol client and Python Engine process supervisor.
+- bounded restart behavior for an unexpectedly exited owned Engine.
+- Avalonia UI displays live Engine connection state and last heartbeat.
+- packaged xaupy-engine.exe so the user does not need to install Python.
+- GitHub CI tests source and the packaged executable.
+- Windows x64 full build artifact.
 
-## Out of scope retained
+## Explicitly out of scope
 
-MT5 connectivity, MQL5 EA, strategy calculations, order placement, trading, backtest/optimizer implementation and real profile editing.
+MT5 connection, MQL5 Bridge, ticks/bars/account data, strategy calculations, trade intents/order execution, configuration editor, backtest and optimization.
 
 ## Acceptance criteria
 
-- [x] dotnet restore succeeds.
-- [x] dotnet build Release succeeds.
-- [x] Python unit tests pass.
-- [x] Windows self-contained publish succeeds.
-- [x] CI uploads XAUPY-Task001-win-x64.zip.
-- [x] Artifact independently unpacked and verified to contain XAUPY.Desktop.exe, XAUPY.Desktop.dll, deps/runtimeconfig, Python contract source and task/product docs.
-- [x] Packaged Python unit tests pass after extracting the built artifact.
-- [x] XAUPY.Desktop.exe verified as Windows PE32+ x86-64 GUI executable.
-- [x] runtimeconfig verified as net10.0 self-contained runtime.
-- [x] Shell states trading is disabled in Task 001.
-- [x] No code path sends broker/trading commands.
-- [x] Task docs record CI run/artifact evidence.
+- [ ] Python protocol unit tests pass.
+- [ ] Python server hello/heartbeat integration passes.
+- [ ] Disconnect/reconnect integration passes.
+- [ ] Shutdown lifecycle integration passes.
+- [ ] Non-loopback bind is rejected.
+- [ ] C# protocol serialization/correlation self-tests pass.
+- [ ] Avalonia Desktop Release build passes.
+- [ ] Windows xaupy-engine.exe is built by PyInstaller.
+- [ ] Built xaupy-engine.exe passes hello + heartbeat + shutdown smoke test.
+- [ ] Windows Desktop self-contained publish contains engine/xaupy-engine.exe.
+- [ ] Desktop shows Python Engine lifecycle status.
+- [ ] Task 002 still exposes no trading or broker command path.
+- [ ] GitHub CI is green and uploads XAUPY-Task002-win-x64.
 
-## Automated evidence
+## Required artifact
 
-- Source commit: 536c4f54f7d47ebe74ee970922dbff13d1dc3926
-- Branch: task/001-foundation-shell
-- GitHub Actions run: 35992138266
-- Validate source job: SUCCESS
-- Windows x64 artifact job: SUCCESS
-- Artifact: XAUPY-Task001-win-x64
-- GitHub artifact id: 10804970735
-- Outer GitHub artifact SHA-256: 298918bb070362e2027842c4d82c32e3b85ec2bcf0eda1b4f12141fadffed17c
-- Direct inner build ZIP SHA-256: 18e9ad63bfb3154c0c47b641b7002382d18b8ebe72baee82022d2fa12177213d
-- Artifact expiry: 2026-10-08
-- Packaged Python tests: 3/3 PASS
+XAUPY-Task002-win-x64.zip
 
-## Delivery
-
-The direct build ZIP is the user-test deliverable for Task 001. User smoke testing of launch/resize/navigation happens after delivery. XAUPY-002 remains PLANNED and has not started.
+Task XAUPY-003 must remain PLANNED until this task is completed and the full Task 002 build has been produced.

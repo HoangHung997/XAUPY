@@ -6,7 +6,7 @@
         MinWidth="1100"
         MinHeight="700"
         Background="#07111F"
-        Title="XAUPY Control Center — Task 001 Foundation">
+        Title="XAUPY Control Center — Task 002 IPC Lifecycle">
   <Window.Styles>
     <Style Selector="Button.nav">
       <Setter Property="Background" Value="#10233A"/>
@@ -19,6 +19,15 @@
     </Style>
     <Style Selector="Button.nav:pointerover">
       <Setter Property="Background" Value="#17395F"/>
+    </Style>
+    <Style Selector="Button.action">
+      <Setter Property="Background" Value="#123B66"/>
+      <Setter Property="Foreground" Value="#E8F4FF"/>
+      <Setter Property="BorderBrush" Value="#245F96"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="7"/>
+      <Setter Property="Padding" Value="14,8"/>
+      <Setter Property="Margin" Value="0,0,8,0"/>
     </Style>
     <Style Selector="Border.card">
       <Setter Property="Background" Value="#0D1A2B"/>
@@ -40,10 +49,10 @@
             <TextBlock Text="N30" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
           </Border>
           <TextBlock Text="XAUPY Control Center" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
-          <TextBlock Text="Task 001 Foundation" Classes="muted" VerticalAlignment="Center"/>
+          <TextBlock Text="Task 002 IPC Lifecycle" Classes="muted" VerticalAlignment="Center"/>
         </StackPanel>
         <Border Grid.Column="2" Background="#27321C" BorderBrush="#4E6B28" BorderThickness="1" CornerRadius="12" Padding="10,5" VerticalAlignment="Center">
-          <TextBlock Text="NO TRADING — FOUNDATION ONLY" Foreground="#C9E77B" FontWeight="Bold"/>
+          <TextBlock Text="NO TRADING — IPC ONLY" Foreground="#C9E77B" FontWeight="Bold"/>
         </Border>
       </Grid>
     </Border>
@@ -63,13 +72,14 @@
             <Button Classes="nav" Content="Nhật ký" Tag="logs" Click="NavButton_OnClick"/>
             <Button Classes="nav" Content="Công cụ" Tag="tools" Click="NavButton_OnClick"/>
             <Button Classes="nav" Content="Cài đặt" Tag="settings" Click="NavButton_OnClick"/>
+
             <Border Classes="card" Margin="4,22,4,4">
               <StackPanel Spacing="7">
-                <TextBlock Text="Kiến trúc đã khóa" FontWeight="SemiBold"/>
+                <TextBlock Text="Kiến trúc" FontWeight="SemiBold"/>
                 <TextBlock Text="Avalonia Desktop" Foreground="#59D9FF"/>
+                <TextBlock Text="↕ IPC v1 / Loopback" Foreground="#E9C46A"/>
                 <TextBlock Text="Python Engine" Foreground="#B08CFF"/>
-                <TextBlock Text="MQL5 Bridge" Foreground="#69D48C"/>
-                <TextBlock Text="IPC chưa triển khai ở Task 001." Classes="muted" TextWrapping="Wrap" Margin="0,5,0,0"/>
+                <TextBlock Text="MQL5 Bridge — chưa triển khai" Classes="muted"/>
               </StackPanel>
             </Border>
           </StackPanel>
@@ -79,19 +89,27 @@
       <ScrollViewer Grid.Column="1">
         <StackPanel Margin="28" Spacing="18">
           <TextBlock x:Name="PageTitle" Text="Tổng quan" FontSize="30" FontWeight="Bold"/>
-          <TextBlock x:Name="PageSubtitle" Text="Foundation shell: xác nhận stack Avalonia/.NET có thể build và phát hành qua GitHub CI." Classes="muted" FontSize="15" TextWrapping="Wrap"/>
+          <TextBlock x:Name="PageSubtitle"
+                     Text="Task 002: Desktop tự quản lý Python Engine và giám sát kết nối IPC v1 qua localhost."
+                     Classes="muted"
+                     FontSize="15"
+                     TextWrapping="Wrap"/>
+
           <Border Classes="card">
             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="14">
               <StackPanel Grid.Column="0" Spacing="7">
                 <TextBlock Text="Desktop UI" Classes="muted"/>
                 <TextBlock Text="Avalonia 12 / .NET 10" FontSize="19" FontWeight="SemiBold"/>
-                <TextBlock Text="Shell đang hoạt động" Foreground="#69D48C"/>
+                <TextBlock Text="Control Center đang hoạt động" Foreground="#69D48C"/>
               </StackPanel>
+
               <StackPanel Grid.Column="1" Spacing="7">
                 <TextBlock Text="Python Engine" Classes="muted"/>
-                <TextBlock Text="Stub contract only" FontSize="19" FontWeight="SemiBold"/>
-                <TextBlock Text="Không có chiến lược giao dịch" Foreground="#E9C46A"/>
+                <TextBlock x:Name="EngineStateText" Text="STARTING" FontSize="19" FontWeight="SemiBold" Foreground="#E9C46A"/>
+                <TextBlock x:Name="EngineDetailText" Text="Đang chuẩn bị Engine..." Classes="muted" TextWrapping="Wrap"/>
+                <TextBlock x:Name="LastHeartbeatText" Text="Heartbeat: —" Classes="muted"/>
               </StackPanel>
+
               <StackPanel Grid.Column="2" Spacing="7">
                 <TextBlock Text="MT5 Bridge" Classes="muted"/>
                 <TextBlock Text="Not implemented" FontSize="19" FontWeight="SemiBold"/>
@@ -99,29 +117,42 @@
               </StackPanel>
             </Grid>
           </Border>
+
           <Grid ColumnDefinitions="2*,*" ColumnSpacing="18">
             <Border Grid.Column="0" Classes="card" MinHeight="330">
-              <StackPanel Spacing="12">
-                <TextBlock Text="UI Source-of-Truth" FontSize="19" FontWeight="SemiBold"/>
-                <TextBlock Text="docs/ui-reference/" Foreground="#59D9FF"/>
-                <TextBlock Text="Task 001 chỉ dựng khung ứng dụng và điều hướng. Các tab chức năng sẽ được triển khai từng task sau khi CI và build foundation được xác nhận." Classes="muted" TextWrapping="Wrap"/>
+              <StackPanel Spacing="14">
+                <TextBlock Text="IPC v1 — Process Lifecycle" FontSize="19" FontWeight="SemiBold"/>
+                <TextBlock Text="127.0.0.1:39421 • UTF-8 JSON Lines • schema_version=1" Foreground="#59D9FF"/>
+                <TextBlock Text="Desktop tự khởi động xaupy-engine.exe, bắt tay hello, gửi heartbeat định kỳ và thử reconnect khi kết nối bị gián đoạn. Nếu Engine do Desktop sở hữu dừng bất thường, supervisor có giới hạn số lần tự khởi động lại."
+                           Classes="muted" TextWrapping="Wrap"/>
+
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                  <Button Classes="action" Content="Khởi động Engine" Click="StartEngine_OnClick"/>
+                  <Button Classes="action" Content="Dừng Engine" Click="StopEngine_OnClick"/>
+                </StackPanel>
+
                 <Border Background="#091421" CornerRadius="8" Padding="18" Margin="0,8,0,0">
                   <StackPanel Spacing="8">
-                    <TextBlock Text="10 tab đã khai báo" FontWeight="SemiBold"/>
-                    <TextBlock Text="Tổng quan · Cấu hình · Chiến lược · Giám sát · Lệnh &amp; Vị thế" Classes="muted"/>
-                    <TextBlock Text="Backtest · Tối ưu · Nhật ký · Công cụ · Cài đặt" Classes="muted"/>
+                    <TextBlock Text="Task 002 Safety" FontWeight="SemiBold"/>
+                    <TextBlock Text="✓ IPC chỉ bind loopback" Foreground="#69D48C"/>
+                    <TextBlock Text="✓ Mọi response correlation bằng request_id" Foreground="#69D48C"/>
+                    <TextBlock Text="✓ Engine luôn trading_enabled=false" Foreground="#69D48C"/>
+                    <TextBlock Text="✓ Không có MT5/broker/order API trong task này" Foreground="#69D48C"/>
                   </StackPanel>
                 </Border>
               </StackPanel>
             </Border>
+
             <Border Grid.Column="1" Classes="card">
               <StackPanel Spacing="10">
-                <TextBlock Text="Acceptance Task 001" FontSize="19" FontWeight="SemiBold"/>
-                <TextBlock Text="✓ Desktop shell" Foreground="#69D48C"/>
-                <TextBlock Text="✓ Python heartbeat contract" Foreground="#69D48C"/>
-                <TextBlock Text="• CI validation" Foreground="#E9C46A"/>
-                <TextBlock Text="• Windows build artifact" Foreground="#E9C46A"/>
-                <TextBlock Text="Trading remains disabled." Classes="muted" Margin="0,12,0,0"/>
+                <TextBlock Text="Phạm vi hiện tại" FontSize="19" FontWeight="SemiBold"/>
+                <TextBlock Text="hello / hello_ack" Foreground="#69D48C"/>
+                <TextBlock Text="heartbeat / heartbeat_ack" Foreground="#69D48C"/>
+                <TextBlock Text="shutdown / shutdown_ack" Foreground="#69D48C"/>
+                <TextBlock Text="Reconnect / restart supervisor" Foreground="#69D48C"/>
+                <TextBlock Text="MT5: chưa kết nối" Classes="muted" Margin="0,12,0,0"/>
+                <TextBlock Text="Strategy: chưa chạy" Classes="muted"/>
+                <TextBlock Text="Trading: khóa" Classes="muted"/>
               </StackPanel>
             </Border>
           </Grid>
@@ -131,8 +162,8 @@
 
     <Border Grid.Row="2" Background="#081321" BorderBrush="#183554" BorderThickness="0,1,0,0">
       <Grid ColumnDefinitions="*,Auto" Margin="18,0">
-        <TextBlock Text="XAUPY • one task at a time • CI evidence required" Classes="muted" VerticalAlignment="Center"/>
-        <TextBlock Grid.Column="1" Text="TASK XAUPY-001" Foreground="#59D9FF" VerticalAlignment="Center"/>
+        <TextBlock Text="XAUPY • IPC v1 • localhost only • no trading" Classes="muted" VerticalAlignment="Center"/>
+        <TextBlock Grid.Column="1" Text="TASK XAUPY-002" Foreground="#59D9FF" VerticalAlignment="Center"/>
       </Grid>
     </Border>
   </Grid>

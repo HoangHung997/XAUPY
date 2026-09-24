@@ -1,6 +1,7 @@
-"""XAUPY Python engine foundation package.
+"""XAUPY Python Engine.
 
-Task 001 contains contracts only. It does not calculate strategy signals or send trades.
+Task 002 provides only local IPC/process lifecycle services.
+No strategy or broker execution exists in this task.
 """
 
-__version__ = "0.1.0-task001"
+__version__ = "0.2.0-task002"

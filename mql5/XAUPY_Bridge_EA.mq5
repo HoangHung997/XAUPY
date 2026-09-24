@@ -22,17 +22,29 @@ ulong g_last_connect_attempt_ms = 0;
 string JsonEscape(string value)
 {
    string s = value;
-   StringReplace(s, "\\", "\\\\");
-   StringReplace(s, """, "\\"");
-   StringReplace(s, "\r", "\\r");
-   StringReplace(s, "\n", "\\n");
-   StringReplace(s, "\t", "\\t");
+   string slash = CharToString(92);
+   string quote = CharToString(34);
+   string cr = CharToString(13);
+   string lf = CharToString(10);
+   string tab = CharToString(9);
+
+   StringReplace(s, slash, slash + slash);
+   StringReplace(s, quote, slash + quote);
+   StringReplace(s, cr, slash + "r");
+   StringReplace(s, lf, slash + "n");
+   StringReplace(s, tab, slash + "t");
    return s;
 }
 
 string JsonString(string value)
 {
-   return """ + JsonEscape(value) + """;
+   string quote = CharToString(34);
+   return quote + JsonEscape(value) + quote;
+}
+
+string JsonKey(string key)
+{
+   return JsonString(key) + ":";
 }
 
 string JsonBool(bool value)
@@ -198,21 +210,21 @@ string JsonGuardian()
    double loss_limit = MathAbs(balance) * InpMaxDailyLossPct / 100.0;
 
    string json = "{";
-   json += ""execution_locked":true,";
-   json += ""execution_ready":false,";
-   json += ""reason":" + JsonString(GuardianReason()) + ",";
-   json += ""demo_only":true,";
-   json += ""demo_account":" + JsonBool(demo_account) + ",";
-   json += ""terminal_connected":" + JsonBool(terminal_connected) + ",";
-   json += ""terminal_trade_allowed":" + JsonBool(terminal_trade_allowed) + ",";
-   json += ""mql_trade_allowed":" + JsonBool(mql_trade_allowed) + ",";
-   json += ""max_volume":" + JsonNumber(InpMaxVolume, 2) + ",";
-   json += ""max_daily_loss_pct":" + JsonNumber(InpMaxDailyLossPct, 2) + ",";
-   json += ""daily_realized":" + JsonNumber(realized, 2) + ",";
-   json += ""daily_loss_limit":" + JsonNumber(loss_limit, 2) + ",";
-   json += ""max_open_positions":" + IntegerToString(InpMaxOpenPositions) + ",";
-   json += ""own_positions":" + IntegerToString(OwnPositionsCount()) + ",";
-   json += ""own_orders":" + IntegerToString(OwnOrdersCount());
+   json += JsonKey("execution_locked") + "true,";
+   json += JsonKey("execution_ready") + "false,";
+   json += JsonKey("reason") + JsonString(GuardianReason()) + ",";
+   json += JsonKey("demo_only") + "true,";
+   json += JsonKey("demo_account") + JsonBool(demo_account) + ",";
+   json += JsonKey("terminal_connected") + JsonBool(terminal_connected) + ",";
+   json += JsonKey("terminal_trade_allowed") + JsonBool(terminal_trade_allowed) + ",";
+   json += JsonKey("mql_trade_allowed") + JsonBool(mql_trade_allowed) + ",";
+   json += JsonKey("max_volume") + JsonNumber(InpMaxVolume, 2) + ",";
+   json += JsonKey("max_daily_loss_pct") + JsonNumber(InpMaxDailyLossPct, 2) + ",";
+   json += JsonKey("daily_realized") + JsonNumber(realized, 2) + ",";
+   json += JsonKey("daily_loss_limit") + JsonNumber(loss_limit, 2) + ",";
+   json += JsonKey("max_open_positions") + IntegerToString(InpMaxOpenPositions) + ",";
+   json += JsonKey("own_positions") + IntegerToString(OwnPositionsCount()) + ",";
+   json += JsonKey("own_orders") + IntegerToString(OwnOrdersCount());
    json += "}";
    return json;
 }
@@ -227,12 +239,12 @@ string JsonBar(ENUM_TIMEFRAMES timeframe)
       return "null";
 
    string json = "{";
-   json += ""time":" + IntegerToString((int)rates[0].time) + ",";
-   json += ""open":" + JsonNumber(rates[0].open, _Digits) + ",";
-   json += ""high":" + JsonNumber(rates[0].high, _Digits) + ",";
-   json += ""low":" + JsonNumber(rates[0].low, _Digits) + ",";
-   json += ""close":" + JsonNumber(rates[0].close, _Digits) + ",";
-   json += ""tick_volume":" + IntegerToString((int)rates[0].tick_volume);
+   json += JsonKey("time") + StringFormat("%I64d", (long)rates[0].time) + ",";
+   json += JsonKey("open") + JsonNumber(rates[0].open, _Digits) + ",";
+   json += JsonKey("high") + JsonNumber(rates[0].high, _Digits) + ",";
+   json += JsonKey("low") + JsonNumber(rates[0].low, _Digits) + ",";
+   json += JsonKey("close") + JsonNumber(rates[0].close, _Digits) + ",";
+   json += JsonKey("tick_volume") + StringFormat("%I64d", (long)rates[0].tick_volume);
    json += "}";
    return json;
 }
@@ -240,14 +252,14 @@ string JsonBar(ENUM_TIMEFRAMES timeframe)
 string JsonBars()
 {
    string json = "{";
-   json += ""M1":"  + JsonBar(PERIOD_M1)  + ",";
-   json += ""M3":"  + JsonBar(PERIOD_M3)  + ",";
-   json += ""M5":"  + JsonBar(PERIOD_M5)  + ",";
-   json += ""M15":" + JsonBar(PERIOD_M15) + ",";
-   json += ""M30":" + JsonBar(PERIOD_M30) + ",";
-   json += ""H1":"  + JsonBar(PERIOD_H1)  + ",";
-   json += ""H2":"  + JsonBar(PERIOD_H2)  + ",";
-   json += ""H4":"  + JsonBar(PERIOD_H4);
+   json += JsonKey("M1")  + JsonBar(PERIOD_M1)  + ",";
+   json += JsonKey("M3")  + JsonBar(PERIOD_M3)  + ",";
+   json += JsonKey("M5")  + JsonBar(PERIOD_M5)  + ",";
+   json += JsonKey("M15") + JsonBar(PERIOD_M15) + ",";
+   json += JsonKey("M30") + JsonBar(PERIOD_M30) + ",";
+   json += JsonKey("H1")  + JsonBar(PERIOD_H1)  + ",";
+   json += JsonKey("H2")  + JsonBar(PERIOD_H2)  + ",";
+   json += JsonKey("H4")  + JsonBar(PERIOD_H4);
    json += "}";
    return json;
 }
@@ -255,11 +267,11 @@ string JsonBars()
 string BuildHelloPayload()
 {
    string json = "{";
-   json += ""bridge_version":"0.3.0-task003",";
-   json += ""component":"mt5-bridge",";
-   json += ""symbol":" + JsonString(_Symbol) + ",";
-   json += ""magic":" + IntegerToString((int)InpMagic) + ",";
-   json += ""execution_locked":true";
+   json += JsonKey("bridge_version") + JsonString("0.3.0-task003") + ",";
+   json += JsonKey("component") + JsonString("mt5-bridge") + ",";
+   json += JsonKey("symbol") + JsonString(_Symbol) + ",";
+   json += JsonKey("magic") + StringFormat("%I64d", InpMagic) + ",";
+   json += JsonKey("execution_locked") + "true";
    json += "}";
    return json;
 }
@@ -276,32 +288,32 @@ string BuildSnapshotPayload()
       spread_points = (tick.ask - tick.bid) / point;
 
    string json = "{";
-   json += ""bridge_version":"0.3.0-task003",";
-   json += ""symbol":" + JsonString(_Symbol) + ",";
-   json += ""magic":" + IntegerToString((int)InpMagic) + ",";
-   json += ""terminal_connected":" + JsonBool((bool)TerminalInfoInteger(TERMINAL_CONNECTED)) + ",";
-   json += ""account_trade_mode":" + JsonString(AccountTradeModeText()) + ",";
-   json += ""account_login":" + IntegerToString((int)AccountInfoInteger(ACCOUNT_LOGIN)) + ",";
-   json += ""account_currency":" + JsonString(AccountInfoString(ACCOUNT_CURRENCY)) + ",";
-   json += ""balance":" + JsonNumber(AccountInfoDouble(ACCOUNT_BALANCE), 2) + ",";
-   json += ""equity":" + JsonNumber(AccountInfoDouble(ACCOUNT_EQUITY), 2) + ",";
-   json += ""margin_free":" + JsonNumber(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2) + ",";
-   json += ""bid":" + JsonNumber(tick.bid, _Digits) + ",";
-   json += ""ask":" + JsonNumber(tick.ask, _Digits) + ",";
-   json += ""spread_points":" + JsonNumber(spread_points, 2) + ",";
-   json += ""digits":" + IntegerToString(_Digits) + ",";
-   json += ""point":" + JsonNumber(point, 10) + ",";
-   json += ""volume_min":" + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN), 2) + ",";
-   json += ""volume_max":" + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MAX), 2) + ",";
-   json += ""volume_step":" + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP), 2) + ",";
-   json += ""tick_size":" + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE), 10) + ",";
-   json += ""tick_value":" + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE), 8) + ",";
-   json += ""stops_level":" + IntegerToString((int)SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL)) + ",";
-   json += ""freeze_level":" + IntegerToString((int)SymbolInfoInteger(_Symbol, SYMBOL_TRADE_FREEZE_LEVEL)) + ",";
-   json += ""positions_count":" + IntegerToString(OwnPositionsCount()) + ",";
-   json += ""orders_count":" + IntegerToString(OwnOrdersCount()) + ",";
-   json += ""guardian":" + JsonGuardian() + ",";
-   json += ""bars":" + JsonBars();
+   json += JsonKey("bridge_version") + JsonString("0.3.0-task003") + ",";
+   json += JsonKey("symbol") + JsonString(_Symbol) + ",";
+   json += JsonKey("magic") + StringFormat("%I64d", InpMagic) + ",";
+   json += JsonKey("terminal_connected") + JsonBool((bool)TerminalInfoInteger(TERMINAL_CONNECTED)) + ",";
+   json += JsonKey("account_trade_mode") + JsonString(AccountTradeModeText()) + ",";
+   json += JsonKey("account_login") + StringFormat("%I64d", AccountInfoInteger(ACCOUNT_LOGIN)) + ",";
+   json += JsonKey("account_currency") + JsonString(AccountInfoString(ACCOUNT_CURRENCY)) + ",";
+   json += JsonKey("balance") + JsonNumber(AccountInfoDouble(ACCOUNT_BALANCE), 2) + ",";
+   json += JsonKey("equity") + JsonNumber(AccountInfoDouble(ACCOUNT_EQUITY), 2) + ",";
+   json += JsonKey("margin_free") + JsonNumber(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2) + ",";
+   json += JsonKey("bid") + JsonNumber(tick.bid, _Digits) + ",";
+   json += JsonKey("ask") + JsonNumber(tick.ask, _Digits) + ",";
+   json += JsonKey("spread_points") + JsonNumber(spread_points, 2) + ",";
+   json += JsonKey("digits") + IntegerToString(_Digits) + ",";
+   json += JsonKey("point") + JsonNumber(point, 10) + ",";
+   json += JsonKey("volume_min") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN), 2) + ",";
+   json += JsonKey("volume_max") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MAX), 2) + ",";
+   json += JsonKey("volume_step") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP), 2) + ",";
+   json += JsonKey("tick_size") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE), 10) + ",";
+   json += JsonKey("tick_value") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE), 8) + ",";
+   json += JsonKey("stops_level") + IntegerToString((int)SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL)) + ",";
+   json += JsonKey("freeze_level") + IntegerToString((int)SymbolInfoInteger(_Symbol, SYMBOL_TRADE_FREEZE_LEVEL)) + ",";
+   json += JsonKey("positions_count") + IntegerToString(OwnPositionsCount()) + ",";
+   json += JsonKey("orders_count") + IntegerToString(OwnOrdersCount()) + ",";
+   json += JsonKey("guardian") + JsonGuardian() + ",";
+   json += JsonKey("bars") + JsonBars();
    json += "}";
    return json;
 }
@@ -309,11 +321,11 @@ string BuildSnapshotPayload()
 string BuildEnvelope(string message_type, string request_id, string payload_json)
 {
    string json = "{";
-   json += ""schema_version":1,";
-   json += ""type":" + JsonString(message_type) + ",";
-   json += ""request_id":" + JsonString(request_id) + ",";
-   json += ""sent_at_utc":" + JsonString(IsoUtcNow()) + ",";
-   json += ""payload":" + payload_json;
+   json += JsonKey("schema_version") + "1,";
+   json += JsonKey("type") + JsonString(message_type) + ",";
+   json += JsonKey("request_id") + JsonString(request_id) + ",";
+   json += JsonKey("sent_at_utc") + JsonString(IsoUtcNow()) + ",";
+   json += JsonKey("payload") + payload_json;
    json += "}";
    return json;
 }
@@ -405,8 +417,8 @@ bool SendRequest(string message_type,
    if(newline >= 0)
       response_text = StringSubstr(response_text, 0, newline);
 
-   string request_token = ""request_id":"" + request_id + """;
-   string type_token = ""type":"" + expected_type + """;
+   string request_token = JsonKey("request_id") + JsonString(request_id);
+   string type_token = JsonKey("type") + JsonString(expected_type);
 
    if(StringFind(response_text, request_token) < 0 ||
       StringFind(response_text, type_token) < 0)
@@ -416,8 +428,8 @@ bool SendRequest(string message_type,
       return false;
    }
 
-   if(StringFind(response_text, ""execution_enabled":true") >= 0 ||
-      StringFind(response_text, ""trading_enabled":true") >= 0)
+   if(StringFind(response_text, JsonKey("execution_enabled") + "true") >= 0 ||
+      StringFind(response_text, JsonKey("trading_enabled") + "true") >= 0)
    {
       Print("XAUPY_BRIDGE safety violation: Engine reported execution enabled.");
       CloseSocket();

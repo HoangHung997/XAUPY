@@ -20,7 +20,7 @@ DONE — acceptance evidence complete.
 
 | ID | Status | Task | Dependency | Required evidence |
 |---|---|---|---|---|
-| XAUPY-001 | ACTIVE | Foundation, Avalonia shell, Python engine stub, CI Windows artifact | — | CI green + Windows zip artifact |
+| XAUPY-001 | READY_FOR_USER_TEST | Foundation, Avalonia shell, Python engine stub, CI Windows artifact | — | CI green + Windows zip artifact + user launch test |
 | XAUPY-002 | PLANNED | Versioned local IPC contract and process lifecycle | 001 | contract + reconnect/heartbeat tests |
 | XAUPY-003 | PLANNED | MQL5 Bridge data channel + execution guardian | 002 | compile + CI/static + demo probe |
 | XAUPY-004 | PLANNED | Canonical configuration/profile model + .set import/export | 002 | round-trip/property tests |
@@ -39,7 +39,7 @@ DONE — acceptance evidence complete.
 
 # XAUPY-001 — Foundation, Avalonia shell and CI build
 
-Status: ACTIVE
+Status: READY_FOR_USER_TEST
 
 ## Goal
 
@@ -61,16 +61,28 @@ MT5 connectivity, MQL5 EA, strategy calculations, order placement, trading, back
 
 ## Acceptance criteria
 
-- [ ] dotnet restore succeeds.
-- [ ] dotnet build Release succeeds.
-- [ ] Python unit tests pass.
-- [ ] Windows self-contained publish succeeds.
-- [ ] CI uploads XAUPY-Task001-win-x64.zip.
-- [ ] Desktop shell opens with ten tab names.
-- [ ] Shell states trading is disabled in Task 001.
-- [ ] No code path sends broker/trading commands.
-- [ ] Task docs record CI run/artifact before status change.
+- [x] dotnet restore succeeds.
+- [x] dotnet build Release succeeds.
+- [x] Python unit tests pass.
+- [x] Windows self-contained publish succeeds.
+- [x] CI uploads XAUPY-Task001-win-x64.zip.
+- [ ] User confirms the desktop shell launches on Windows and navigation works.
+- [x] Shell states trading is disabled in Task 001.
+- [x] No code path sends broker/trading commands.
+- [x] Task docs record CI run/artifact before status change.
 
-## Handoff after CI
+## Automated evidence
 
-When automated criteria pass, update status to READY_FOR_USER_TEST and provide the GitHub Actions artifact. Do not begin XAUPY-002 until user acceptance when manual test is requested.
+- Source commit: 536c4f54f7d47ebe74ee970922dbff13d1dc3926
+- Branch: task/001-foundation-shell
+- GitHub Actions run: 35992138266
+- Validate source job: SUCCESS
+- Windows x64 artifact job: SUCCESS
+- Artifact: XAUPY-Task001-win-x64
+- Artifact id: 10804970735
+- Artifact SHA-256 digest: 298918bb070362e2027842c4d82c32e3b85ec2bcf0eda1b4f12141fadffed17c
+- Artifact expiry: 2026-10-08
+
+## Handoff
+
+Task 001 is waiting only for the requested manual Windows launch/navigation test. Do not begin XAUPY-002 until the user accepts Task 001.

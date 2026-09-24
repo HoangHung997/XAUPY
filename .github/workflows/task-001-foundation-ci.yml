@@ -1,0 +1,68 @@
+name: Task 001 - Foundation CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'task/**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Python unit tests
+        run: python -m unittest discover -s python/tests -v
+      - name: Restore Avalonia desktop
+        run: dotnet restore src/XAUPY.Desktop/XAUPY.Desktop.csproj
+      - name: Build Avalonia desktop
+        run: dotnet build src/XAUPY.Desktop/XAUPY.Desktop.csproj -c Release --no-restore
+
+  windows-build:
+    name: Windows x64 artifact
+    runs-on: windows-latest
+    needs: validate
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Publish Windows x64 self-contained
+        shell: pwsh
+        run: |
+          dotnet publish src/XAUPY.Desktop/XAUPY.Desktop.csproj -c Release -r win-x64 --self-contained true -o dist/XAUPY.Desktop-win-x64
+      - name: Add foundation Python source and docs
+        shell: pwsh
+        run: |
+          Copy-Item python dist/XAUPY.Desktop-win-x64/python -Recurse
+          New-Item -ItemType Directory -Force -Path dist/XAUPY.Desktop-win-x64/docs | Out-Null
+          Copy-Item docs/PRODUCT_SPEC.md dist/XAUPY.Desktop-win-x64/docs/PRODUCT_SPEC.md
+          Copy-Item docs/IMPLEMENTATION_TASKS.md dist/XAUPY.Desktop-win-x64/docs/IMPLEMENTATION_TASKS.md
+      - name: Package artifact
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/XAUPY.Desktop-win-x64/* -DestinationPath dist/XAUPY-Task001-win-x64.zip -Force
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: XAUPY-Task001-win-x64
+          path: dist/XAUPY-Task001-win-x64.zip
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+*.user
+*.suo
+.vs/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+dist/
+artifacts/
+data/
+logs/
+profiles/local/

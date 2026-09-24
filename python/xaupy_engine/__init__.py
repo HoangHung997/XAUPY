@@ -1,6 +1,7 @@
 """XAUPY Python Engine.
 
-Task 003 adds the MT5 Bridge data channel while keeping all trade execution locked.
+Task 004 adds the canonical configuration/profile backend and MT5 .set compatibility.
+Trading execution remains locked.
 """
 
-__version__ = "0.3.0-task003"
+__version__ = "0.4.0-task004"

@@ -13,11 +13,11 @@ public partial class MainWindow : Window
     private static readonly IReadOnlyDictionary<string, (string Title, string Subtitle)> Pages =
         new Dictionary<string, (string, string)>
         {
-            ["overview"] = ("Tổng quan", "Task 003: nhận dữ liệu MT5 thật qua Bridge EA; lớp thực thi vẫn khóa cứng."),
-            ["configuration"] = ("Cấu hình", "Placeholder. Canonical profile/config editor thuộc Task 004/006."),
+            ["overview"] = ("Tổng quan", "Task 004: canonical profile JSON + MT5 .set import/export; execution vẫn khóa."),
+            ["configuration"] = ("Cấu hình", "Backend schema/profile/.set đã hoàn thành ở Task 004; full editor Avalonia thuộc Task 006."),
             ["strategy"] = ("Chiến lược", "Placeholder. Direction → Pullback → Trigger thuộc Task 007."),
-            ["monitoring"] = ("Giám sát", "Task 003 chỉ hiện health của MT5 Bridge; monitoring chi tiết thuộc Task 008."),
-            ["orders"] = ("Lệnh & Vị thế", "Placeholder. Task 003 không có API đặt/sửa/đóng lệnh."),
+            ["monitoring"] = ("Giám sát", "MT5 Bridge health từ Task 003 vẫn hoạt động; monitoring chi tiết thuộc Task 008."),
+            ["orders"] = ("Lệnh & Vị thế", "Placeholder. Task 004 vẫn không thêm API đặt/sửa/đóng lệnh."),
             ["backtest"] = ("Backtest", "Placeholder. Backtest parity engine thuộc Task 011."),
             ["optimization"] = ("Tối ưu", "Placeholder. Parameter sweep/walk-forward thuộc Task 012."),
             ["logs"] = ("Nhật ký", "Placeholder. Structured trading journal thuộc Task 010."),

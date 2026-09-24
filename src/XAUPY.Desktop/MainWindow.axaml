@@ -6,7 +6,7 @@
         MinWidth="1100"
         MinHeight="700"
         Background="#07111F"
-        Title="XAUPY Control Center — Task 003 MT5 Bridge">
+        Title="XAUPY Control Center — Task 004 Config Backend">
   <Window.Styles>
     <Style Selector="Button.nav">
       <Setter Property="Background" Value="#10233A"/>
@@ -49,10 +49,10 @@
             <TextBlock Text="N30" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/>
           </Border>
           <TextBlock Text="XAUPY Control Center" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
-          <TextBlock Text="Task 003 MT5 Bridge" Classes="muted" VerticalAlignment="Center"/>
+          <TextBlock Text="Task 004 Config Backend" Classes="muted" VerticalAlignment="Center"/>
         </StackPanel>
         <Border Grid.Column="2" Background="#27321C" BorderBrush="#4E6B28" BorderThickness="1" CornerRadius="12" Padding="10,5" VerticalAlignment="Center">
-          <TextBlock Text="EXECUTION LOCKED — DATA ONLY" Foreground="#C9E77B" FontWeight="Bold"/>
+          <TextBlock Text="EXECUTION LOCKED — CONFIG BACKEND" Foreground="#C9E77B" FontWeight="Bold"/>
         </Border>
       </Grid>
     </Border>
@@ -80,7 +80,7 @@
                 <TextBlock Text="↕ IPC v1 / Loopback" Foreground="#E9C46A"/>
                 <TextBlock Text="Python Engine" Foreground="#B08CFF"/>
                 <TextBlock Text="↕ MT5 Bridge snapshots" Foreground="#E9C46A"/>
-                <TextBlock Text="MQL5 EA • execution locked" Foreground="#69D48C"/>
+                <TextBlock Text="MQL5 EA • execution locked\n                " Foreground="#69D48C"/>
               </StackPanel>
             </Border>
           </StackPanel>
@@ -91,7 +91,7 @@
         <StackPanel Margin="28" Spacing="18">
           <TextBlock x:Name="PageTitle" Text="Tổng quan" FontSize="30" FontWeight="Bold"/>
           <TextBlock x:Name="PageSubtitle"
-                     Text="Task 003: nhận dữ liệu MT5 thật qua Bridge EA; lớp thực thi vẫn khóa cứng."
+                     Text="Task 004: canonical profile JSON + MT5 .set import/export; full parameter UI thuộc Task 006."
                      Classes="muted"
                      FontSize="15"
                      TextWrapping="Wrap"/>
@@ -123,9 +123,9 @@
           <Grid ColumnDefinitions="2*,*" ColumnSpacing="18">
             <Border Grid.Column="0" Classes="card" MinHeight="330">
               <StackPanel Spacing="14">
-                <TextBlock Text="MT5 Data Channel" FontSize="19" FontWeight="SemiBold"/>
-                <TextBlock Text="127.0.0.1:39421 • bridge_snapshot • M1/M3/M5/M15/M30/H1/H2/H4" Foreground="#59D9FF"/>
-                <TextBlock Text="EA gửi account, symbol, bid/ask, spread, broker volume/stop rules, vị thế/lệnh thuộc magic và nến đóng gần nhất của 8 timeframe. Engine đánh dấu Bridge offline nếu snapshot bị stale."
+                <TextBlock Text="Canonical Configuration Backend" FontSize="19" FontWeight="SemiBold"/>
+                <TextBlock Text="Schema v1 • M1/M3/M5/M15/M30/H1/H2/H4 • JSON + MT5 .set" Foreground="#59D9FF"/>
+                <TextBlock Text="Python Engine sở hữu hơn 100 tham số canonical. Direction/Pullback/Trigger độc lập; preset MT5 .set được import/export mà giữ unknown key, comment, thứ tự, encoding và optimizer suffix."
                            Classes="muted" TextWrapping="Wrap"/>
 
                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
@@ -135,12 +135,12 @@
 
                 <Border Background="#091421" CornerRadius="8" Padding="18" Margin="0,8,0,0">
                   <StackPanel Spacing="8">
-                    <TextBlock Text="Execution Guardian — Task 003" FontWeight="SemiBold"/>
-                    <TextBlock Text="✓ EA chỉ kết nối loopback" Foreground="#69D48C"/>
-                    <TextBlock Text="✓ execution_locked=true bắt buộc" Foreground="#69D48C"/>
-                    <TextBlock Text="✓ execution_ready=false bắt buộc" Foreground="#69D48C"/>
-                    <TextBlock Text="✓ Không tồn tại OrderSend/CTrade trong EA Task 003" Foreground="#69D48C"/>
-                    <TextBlock Text="✓ Demo/lot/daily-loss/positions/broker rules được thu thập cho task thực thi sau" Foreground="#69D48C" TextWrapping="Wrap"/>
+                    <TextBlock Text="Configuration Safety — Task 004" FontWeight="SemiBold"/>
+                    <TextBlock Text="✓ Exact TF options: M1 M3 M5 M15 M30 H1 H2 H4" Foreground="#69D48C"/>
+                    <TextBlock Text="✓ Không ép thứ tự Direction > Pullback > Trigger" Foreground="#69D48C"/>
+                    <TextBlock Text="✓ Import/export .set bảo toàn unknown/comments/order" Foreground="#69D48C"/>
+                    <TextBlock Text="✓ Real-account unlock bị validator từ chối" Foreground="#69D48C"/>
+                    <TextBlock Text="✓ Execution vẫn khóa; Task 004 không thêm đường đặt lệnh" Foreground="#69D48C" TextWrapping="Wrap"/>
                   </StackPanel>
                 </Border>
               </StackPanel>
@@ -148,12 +148,12 @@
 
             <Border Grid.Column="1" Classes="card">
               <StackPanel Spacing="10">
-                <TextBlock Text="Build Task 003" FontSize="19" FontWeight="SemiBold"/>
-                <TextBlock Text="✓ Python bridge protocol" Foreground="#69D48C"/>
-                <TextBlock Text="✓ Avalonia bridge status" Foreground="#69D48C"/>
-                <TextBlock Text="✓ MQL5 source" Foreground="#69D48C"/>
-                <TextBlock Text="• MetaEditor compile / CI" Foreground="#E9C46A"/>
-                <TextBlock Text="• XAUPY_Bridge_EA.ex5 artifact" Foreground="#E9C46A"/>
+                <TextBlock Text="Build Task 004" FontSize="19" FontWeight="SemiBold"/>
+                <TextBlock Text="✓ Canonical schema + validation" Foreground="#69D48C"/>
+                <TextBlock Text="✓ Profile JSON atomic save/load" Foreground="#69D48C"/>
+                <TextBlock Text="✓ MT5 .set parser/exporter" Foreground="#69D48C"/>
+                <TextBlock Text="• xaupy-config.exe / CI" Foreground="#E9C46A"/>
+                <TextBlock Text="• Full Windows build artifact" Foreground="#E9C46A"/>
                 <TextBlock Text="Trading: HARD LOCKED" Classes="muted" Margin="0,12,0,0"/>
               </StackPanel>
             </Border>
@@ -164,8 +164,8 @@
 
     <Border Grid.Row="2" Background="#081321" BorderBrush="#183554" BorderThickness="0,1,0,0">
       <Grid ColumnDefinitions="*,Auto" Margin="18,0">
-        <TextBlock Text="XAUPY • MT5 bridge data only • execution locked" Classes="muted" VerticalAlignment="Center"/>
-        <TextBlock Grid.Column="1" Text="TASK XAUPY-003" Foreground="#59D9FF" VerticalAlignment="Center"/>
+        <TextBlock Text="XAUPY • config backend • MT5 bridge retained • execution locked" Classes="muted" VerticalAlignment="Center"/>
+        <TextBlock Grid.Column="1" Text="TASK XAUPY-004" Foreground="#59D9FF" VerticalAlignment="Center"/>
       </Grid>
     </Border>
   </Grid>

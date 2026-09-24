@@ -23,7 +23,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-001 | DONE | Foundation, Avalonia shell, Python engine stub, CI Windows artifact | — | CI green + verified Windows zip artifact |
 | XAUPY-002 | DONE | Versioned local IPC contract and process lifecycle | 001 | contract + reconnect/heartbeat tests + verified Windows build |
 | XAUPY-003 | DONE | MQL5 Bridge data channel + execution guardian | 002 | MetaEditor compile + CI/static + bridge probe + verified Windows build |
-| XAUPY-004 | PLANNED | Canonical configuration/profile model + .set import/export | 002 | round-trip/property tests |
+| XAUPY-004 | ACTIVE | Canonical configuration/profile model + .set import/export | 002 | schema/validation + .set round-trip/property + packaged tool + Windows build |
 | XAUPY-005 | PLANNED | Overview tab implementation | 002,004 | UI build + reference review |
 | XAUPY-006 | PLANNED | Full Configuration tab | 004 | validation/profile tests |
 | XAUPY-007 | PLANNED | Strategy engine Direction → Pullback → Trigger | 002,004 | deterministic state tests |
@@ -45,95 +45,84 @@ Status: DONE. Evidence preserved in git history.
 
 Status: DONE. Evidence preserved in git history.
 
-# XAUPY-003 — MQL5 Bridge data channel and execution guardian
+# XAUPY-003
 
-Status: DONE
+Status: DONE. Evidence preserved in git history.
+
+# XAUPY-004 — Canonical configuration/profile model + MT5 .set
+
+Status: ACTIVE
 
 ## Goal
 
-Connect real MT5 terminal data to the packaged Python Engine through the existing localhost IPC channel while keeping every order-execution path hard-locked.
+Establish one versioned Python-owned configuration model so every strategy parameter can be changed by profile rather than source edits, while preserving MT5 .set compatibility and maintaining hard safety locks.
 
-## Scope completed
+## Scope
 
-- MQL5 Expert Advisor XAUPY_Bridge_EA.
-- loopback-only Socket connection.
-- bridge_hello and bridge_snapshot protocol.
-- account/symbol/broker-rule snapshots.
-- latest closed bar for M1/M3/M5/M15/M30/H1/H2/H4.
-- own position/order counts for configured magic.
-- guardian report for demo status, terminal permissions, max lot, max daily loss and max own positions.
-- Engine bridge registry and stale detection.
-- Desktop bridge CONNECTED/WAITING projection.
-- real MetaEditor compile in GitHub Actions.
-- packaged .mq5 and .ex5 in Windows full build.
-- packaged Python Engine bridge/data/lock smoke test.
+- canonical schema_version=1;
+- more than 100 typed parameters;
+- exact independent Direction/Pullback/Trigger timeframe enum:
+  M1/M3/M5/M15/M30/H1/H2/H4;
+- no hardcoded timeframe-order restriction;
+- MA/Open/Z/RSI/ADX/ATR parameters;
+- entry, risk, SL, TP/dynamic TP, management;
+- sessions/weekdays/news/cost filters;
+- execution identity and mandatory safety values;
+- JSON profile normalization/validation;
+- atomic JSON save/load;
+- MT5 .set parser/import/export;
+- known legacy aliases;
+- unknown key/comment/order/encoding/line-ending preservation;
+- MT5 optimizer suffix preservation;
+- packaged xaupy-config.exe;
+- Engine IPC schema/default/validate endpoints;
+- generated baseline JSON/.set profiles in full artifact;
+- regression compile of Task 003 MT5 Bridge for complete build.
 
-## Hard safety boundary
+## Explicitly out of scope
 
-Task 003 is data-only.
+- full Avalonia configuration editor (Task 006);
+- strategy calculations (Task 007);
+- order execution;
+- live-account enablement;
+- optimizer/backtest.
 
-- TASK003_EXECUTION_LOCKED=true in EA.
-- guardian.execution_locked is required true.
-- guardian.execution_ready is required false.
-- Engine rejects snapshots violating either condition.
-- trade_intent remains unsupported.
-- EA source contains no OrderSend, OrderSendAsync, CTrade or Trade.mqh execution path.
-- Real-account use is not required for acceptance.
+## Hard safety values
+
+The validator must reject changes that would:
+
+- enable real-account execution;
+- disable demo-only mode;
+- enable blind broker retries;
+- allow widening SL;
+- remove required server SL;
+- permit operation on stale market data.
 
 ## Acceptance criteria
 
-- [x] Existing Task 002 protocol/lifecycle tests still pass.
-- [x] Bridge registry validation tests pass.
-- [x] bridge_hello and bridge_snapshot integration tests pass.
-- [x] all 8 required timeframe keys are enforced.
-- [x] stale bridge becomes disconnected.
-- [x] trade_intent remains rejected.
-- [x] MQL5 source static execution-lock tests pass.
-- [x] Avalonia/.NET Release build succeeds with 0 warnings and 0 errors.
-- [x] real MetaEditor compiles XAUPY_Bridge_EA.mq5 with 0 errors and 0 warnings.
-- [x] CI produces XAUPY_Bridge_EA.ex5.
-- [x] packaged xaupy-engine.exe passes Task 003 bridge smoke test.
-- [x] Windows x64 self-contained build contains Desktop, Engine, MQ5, EX5, compile log and docs.
-- [x] GitHub CI is green and uploads XAUPY-Task003-win-x64.
-- [x] downloaded artifact independently inspected before delivery.
+- [ ] exact timeframe option test passes.
+- [ ] unusual timeframe order remains valid.
+- [ ] default profile validates.
+- [ ] field catalog contains at least 100 parameters.
+- [ ] safety unlock attempts are rejected.
+- [ ] random numeric property tests pass.
+- [ ] canonical JSON save/load round-trip passes.
+- [ ] canonical profile → .set → profile is lossless.
+- [ ] UTF-16 LE BOM .set support passes.
+- [ ] UTF-8 BOM and CP1252 detection passes.
+- [ ] template export preserves unknown keys/comments/order/optimizer suffix.
+- [ ] template export does not append missing fields unless explicitly requested.
+- [ ] Engine IPC config schema/default/validation tests pass.
+- [ ] existing bridge/lifecycle tests remain green.
+- [ ] Avalonia/.NET build succeeds with 0 warnings/0 errors.
+- [ ] packaged xaupy-engine.exe Task 004 smoke test passes.
+- [ ] packaged xaupy-config.exe defaults/validate/export/import smoke test passes.
+- [ ] Task 003 MQL5 Bridge still compiles 0 errors/0 warnings and EX5 is included.
+- [ ] Windows full artifact contains Desktop, Engine, config tool, baseline JSON/.set, MQ5/EX5 and docs.
+- [ ] GitHub CI green and uploads XAUPY-Task004-win-x64.
 
-## Automated evidence
+## Required artifact
 
-- Final source commit: cba989f89ebe19b75d829de3cb6d30a83c46f7ff
-- Branch: task/003-mt5-bridge-guardian
-- GitHub Actions final run: 36010613291
-- Validate bridge source job: SUCCESS
-- Windows x64 + MetaEditor build job: SUCCESS
-- Python tests: 23/23 PASS
-- C# IPC contract checks: 7/7 PASS
-- Avalonia/.NET build: SUCCESS, 0 warnings, 0 errors
-- Packaged Python Engine Task 003 bridge smoke test: PASS
-- MetaEditor compile: Result: 0 errors, 0 warnings, 2379 ms elapsed
-- GitHub artifact: XAUPY-Task003-win-x64
-- GitHub artifact id: 10812636924
-- Outer GitHub artifact SHA-256: b8bdc40ccf78ad16613847871386194dae7aaf5ddf4d28d6c5b87fa6ba5a9582
-- Direct full-build ZIP SHA-256: c2d2a7b9e2d4898d44d93a8e293fb44cdaf33c9b6e343ea282d5db56adc26668
-- Artifact expiry: 2026-10-08
-- Independent artifact inspection: 235 files
-- XAUPY.Desktop.exe present and verified PE32+ x86-64
-- engine/xaupy-engine.exe present and verified PE32+ x86-64
-- mt5/XAUPY_Bridge_EA.mq5 present
-- mt5/XAUPY_Bridge_EA.ex5 present
-- mt5/XAUPY_Bridge_EA.compile.log present and confirms 0 errors / 0 warnings
-- docs/TASK003_MT5_DEMO_TEST.md present
-- Desktop runtime: net10.0 self-contained, Microsoft.NETCore.App 10.0.12 included
+XAUPY-Task004-win-x64.zip
 
-## Build/fix history
-
-CI exposed two real MQL5 issues during Task 003 and both were corrected before completion:
-
-1. malformed JSON quote construction in the first EA source revision;
-2. invalid MQL5 Market version formatting that produced one compiler warning.
-
-The final source commit above is the one that compiled with 0 errors and 0 warnings.
-
-## Delivery
-
-The Task 003 full Windows x64 build is ready for manual demo testing with docs/TASK003_MT5_DEMO_TEST.md.
-
-XAUPY-004 remains PLANNED and has not started.
+XAUPY-005/006/007 remain PLANNED until this task is complete.

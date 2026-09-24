@@ -8,6 +8,7 @@ from typing import Final
 from . import __version__
 from .bridge_state import BridgeRegistry, BridgeSnapshotError
 from .contracts import Envelope, PROTOCOL_VERSION, ProtocolError
+from .config_schema import default_profile, normalized_profile, schema_payload, validate_profile
 
 DEFAULT_HOST: Final = "127.0.0.1"
 DEFAULT_PORT: Final = 39421
@@ -138,6 +139,63 @@ class EngineServer:
             }
             return Envelope.response("heartbeat_ack", request.request_id, payload), False
 
+        if request.type == "config_schema_get":
+            return (
+                Envelope.response(
+                    "config_schema_ack",
+                    request.request_id,
+                    {
+                        **common,
+                        "config_schema": schema_payload(),
+                    },
+                ),
+                False,
+            )
+
+        if request.type == "config_defaults_get":
+            return (
+                Envelope.response(
+                    "config_defaults_ack",
+                    request.request_id,
+                    {
+                        **common,
+                        "profile": default_profile(),
+                    },
+                ),
+                False,
+            )
+
+        if request.type == "config_validate":
+            profile = request.payload.get("profile")
+            if not isinstance(profile, dict):
+                return (
+                    Envelope.response(
+                        "config_validate_ack",
+                        request.request_id,
+                        {
+                            **common,
+                            "valid": False,
+                            "errors": ["profile must be an object"],
+                        },
+                    ),
+                    False,
+                )
+
+            errors = validate_profile(profile)
+            payload = {
+                **common,
+                "valid": not errors,
+                "errors": errors,
+            }
+            if not errors:
+                payload["profile"] = normalized_profile(profile)
+
+            return Envelope.response(
+                "config_validate_ack",
+                request.request_id,
+                payload,
+            ), False
+
         if request.type == "bridge_hello":
             try:
                 self.bridge.record_hello(request.payload)
@@ -212,7 +270,7 @@ class EngineServer:
                 request.request_id,
                 {
                     "code": "UNSUPPORTED_MESSAGE",
-                    "message": f"Unsupported Task 003 message type: {request.type}",
+                    "message": f"Unsupported Task 004 message type: {request.type}",
                     "trading_enabled": False,
                     "execution_enabled": False,
                 },

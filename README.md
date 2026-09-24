@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-002 — Versioned local IPC & process lifecycle.
+Trạng thái hiện tại: TASK XAUPY-002 DONE. Task XAUPY-003 vẫn PLANNED và chưa bắt đầu.
 
 ## Tài liệu bắt buộc
 
@@ -21,17 +21,20 @@ Trạng thái hiện tại: TASK XAUPY-002 — Versioned local IPC & process lif
 - Task chỉ DONE khi code, test, GitHub CI và build artifact đều hoàn tất.
 - Task có UI/build phải tạo artifact Windows x64 đầy đủ trước khi chuyển task tiếp theo.
 - Python là strategy authority; MQL5 Bridge sau này vẫn là broker safety authority.
-- Real trading tiếp tục bị khóa trong Task 002.
+- Real trading vẫn bị khóa.
 
-## Task 002
+## Task 002 đã hoàn thành
 
-Task 002 triển khai IPC v1 qua TCP loopback giữa Avalonia Desktop và Python Engine:
+IPC v1 qua TCP loopback giữa Avalonia Desktop và Python Engine đã có:
 
-- chỉ bind localhost;
-- JSON Lines có schema version;
-- request_id để correlation/idempotency ở các task sau;
+- localhost-only;
+- JSON Lines + schema_version=1;
+- request_id correlation;
 - hello/heartbeat/shutdown lifecycle;
 - Desktop tự khởi động Python Engine đóng gói sẵn;
-- reconnect và restart khi engine mất kết nối;
-- Python Engine build thành xaupy-engine.exe bằng PyInstaller;
-- GitHub CI kiểm tra contract, heartbeat, reconnect và executable smoke test.
+- reconnect và bounded restart;
+- Python Engine đóng gói thành xaupy-engine.exe;
+- GitHub CI kiểm tra protocol, heartbeat, reconnect, shutdown và executable smoke test;
+- Windows x64 self-contained full build.
+
+Xem bằng chứng đầy đủ trong docs/IMPLEMENTATION_TASKS.md.

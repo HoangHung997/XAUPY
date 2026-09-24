@@ -23,7 +23,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-001 | DONE | Foundation, Avalonia shell, Python engine stub, CI Windows artifact | — | CI green + verified Windows zip artifact |
 | XAUPY-002 | DONE | Versioned local IPC contract and process lifecycle | 001 | contract + reconnect/heartbeat tests + verified Windows build |
 | XAUPY-003 | DONE | MQL5 Bridge data channel + execution guardian | 002 | MetaEditor compile + CI/static + bridge probe + verified Windows build |
-| XAUPY-004 | ACTIVE | Canonical configuration/profile model + .set import/export | 002 | schema/validation + .set round-trip/property + packaged tool + Windows build |
+| XAUPY-004 | DONE | Canonical configuration/profile model + .set import/export | 002 | schema/validation + .set round-trip/property + packaged tool + verified Windows build |
 | XAUPY-005 | PLANNED | Overview tab implementation | 002,004 | UI build + reference review |
 | XAUPY-006 | PLANNED | Full Configuration tab | 004 | validation/profile tests |
 | XAUPY-007 | PLANNED | Strategy engine Direction → Pullback → Trigger | 002,004 | deterministic state tests |
@@ -51,19 +51,19 @@ Status: DONE. Evidence preserved in git history.
 
 # XAUPY-004 — Canonical configuration/profile model + MT5 .set
 
-Status: ACTIVE
+Status: DONE
 
 ## Goal
 
 Establish one versioned Python-owned configuration model so every strategy parameter can be changed by profile rather than source edits, while preserving MT5 .set compatibility and maintaining hard safety locks.
 
-## Scope
+## Scope completed
 
 - canonical schema_version=1;
-- more than 100 typed parameters;
+- 133 typed parameters;
 - exact independent Direction/Pullback/Trigger timeframe enum:
   M1/M3/M5/M15/M30/H1/H2/H4;
-- no hardcoded timeframe-order restriction;
+- no timeframe-order restriction;
 - MA/Open/Z/RSI/ADX/ATR parameters;
 - entry, risk, SL, TP/dynamic TP, management;
 - sessions/weekdays/news/cost filters;
@@ -79,7 +79,7 @@ Establish one versioned Python-owned configuration model so every strategy param
 - generated baseline JSON/.set profiles in full artifact;
 - regression compile of Task 003 MT5 Bridge for complete build.
 
-## Explicitly out of scope
+## Explicitly out of scope retained
 
 - full Avalonia configuration editor (Task 006);
 - strategy calculations (Task 007);
@@ -89,7 +89,7 @@ Establish one versioned Python-owned configuration model so every strategy param
 
 ## Hard safety values
 
-The validator must reject changes that would:
+The validator rejects changes that would:
 
 - enable real-account execution;
 - disable demo-only mode;
@@ -100,29 +100,66 @@ The validator must reject changes that would:
 
 ## Acceptance criteria
 
-- [ ] exact timeframe option test passes.
-- [ ] unusual timeframe order remains valid.
-- [ ] default profile validates.
-- [ ] field catalog contains at least 100 parameters.
-- [ ] safety unlock attempts are rejected.
-- [ ] random numeric property tests pass.
-- [ ] canonical JSON save/load round-trip passes.
-- [ ] canonical profile → .set → profile is lossless.
-- [ ] UTF-16 LE BOM .set support passes.
-- [ ] UTF-8 BOM and CP1252 detection passes.
-- [ ] template export preserves unknown keys/comments/order/optimizer suffix.
-- [ ] template export does not append missing fields unless explicitly requested.
-- [ ] Engine IPC config schema/default/validation tests pass.
-- [ ] existing bridge/lifecycle tests remain green.
-- [ ] Avalonia/.NET build succeeds with 0 warnings/0 errors.
-- [ ] packaged xaupy-engine.exe Task 004 smoke test passes.
-- [ ] packaged xaupy-config.exe defaults/validate/export/import smoke test passes.
-- [ ] Task 003 MQL5 Bridge still compiles 0 errors/0 warnings and EX5 is included.
-- [ ] Windows full artifact contains Desktop, Engine, config tool, baseline JSON/.set, MQ5/EX5 and docs.
-- [ ] GitHub CI green and uploads XAUPY-Task004-win-x64.
+- [x] exact timeframe option test passes.
+- [x] unusual timeframe order remains valid.
+- [x] default profile validates.
+- [x] field catalog contains 133 parameters.
+- [x] safety unlock attempts are rejected.
+- [x] 500-case random numeric property test passes.
+- [x] canonical JSON save/load round-trip passes.
+- [x] canonical profile → .set → profile is lossless.
+- [x] UTF-16 LE BOM .set support passes.
+- [x] UTF-8 BOM and CP1252 detection passes.
+- [x] template export preserves unknown keys/comments/order/optimizer suffix.
+- [x] template export does not append missing fields unless explicitly requested.
+- [x] Engine IPC config schema/default/validation tests pass.
+- [x] existing bridge/lifecycle tests remain green.
+- [x] Avalonia/.NET build succeeds with 0 warnings/0 errors.
+- [x] packaged xaupy-engine.exe Task 004 smoke test passes.
+- [x] packaged xaupy-config.exe defaults/validate/export/import smoke test passes.
+- [x] Task 003 MQL5 Bridge still compiles 0 errors/0 warnings and EX5 is included.
+- [x] Windows full artifact contains Desktop, Engine, config tool, baseline JSON/.set, MQ5/EX5 and docs.
+- [x] GitHub CI green and uploads XAUPY-Task004-win-x64.
+- [x] downloaded artifact independently inspected before delivery.
 
-## Required artifact
+## Automated evidence
 
-XAUPY-Task004-win-x64.zip
+- Final source commit: 715ae9fd73d8c97845b2f0c01a20575b497316b9
+- Branch: task/004-config-profile-set
+- GitHub Actions final run: 36014253927
+- Validate config backend job: SUCCESS
+- Windows x64 full config build job: SUCCESS
+- Python tests: 46/46 PASS
+- C# IPC contract checks: 7/7 PASS
+- Avalonia/.NET build: SUCCESS, 0 warnings, 0 errors
+- Canonical field count: 133
+- Exact timeframe options: M1, M3, M5, M15, M30, H1, H2, H4
+- Packaged Engine Task 004 config smoke test: PASS
+- Packaged xaupy-config defaults/validate/export/import smoke test: PASS
+- MetaEditor regression compile: Result: 0 errors, 0 warnings, 1733 ms elapsed
+- GitHub artifact: XAUPY-Task004-win-x64
+- GitHub artifact id: 10814635399
+- Outer GitHub artifact SHA-256: 4ba076479dbd9ded60040b069d9429e9cf95f4d3dec4387c0c41a54310d5bf0d
+- Direct full-build ZIP SHA-256: f4e465bd404786705d44acc3cdee33ad24462a382e7b2382d0b66ace91385212
+- Artifact expiry: 2026-10-08
+- Independent artifact inspection: 240 files
+- XAUPY.Desktop.exe: present, PE32+ Windows x86-64
+- engine/xaupy-engine.exe: present, PE32+ Windows x86-64
+- tools/xaupy-config.exe: present, PE32+ Windows x86-64
+- profiles/Baseline_M30_M5_M1.json: present and valid
+- profiles/Baseline_M30_M5_M1.set: present, UTF-16 LE BOM
+- profiles/config-schema-v1.json: present, field_count=133
+- mt5/XAUPY_Bridge_EA.mq5/.ex5/compile.log: present
+- Desktop runtime: net10.0 self-contained, Microsoft.NETCore.App 10.0.12 included
 
-XAUPY-005/006/007 remain PLANNED until this task is complete.
+## Build/fix history
+
+The first Task 004 CI run exposed duplicated legacy .set aliases for Open filter/reference fields. The aliases were made unambiguous and the complete test/build pipeline was re-run.
+
+The final source commit above is the one that passed all 46 Python tests and produced the verified full build.
+
+## Delivery
+
+The Task 004 Windows x64 full build is ready for manual smoke testing using docs/TASK004_CONFIG_TEST.md.
+
+XAUPY-005, XAUPY-006 and XAUPY-007 remain PLANNED and have not started.

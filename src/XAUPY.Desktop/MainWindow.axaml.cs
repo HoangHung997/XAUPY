@@ -112,7 +112,7 @@ public partial class MainWindow : Window
 
     private void ApplyEngineState(EngineStateChangedEventArgs e)
     {
-        var engineText = EngineStateText(e.State);
+        var engineText = GetEngineStateLabel(e.State);
         var engineColor = EngineStateColor(e.State);
 
         FindText("EngineStateText").Text = engineText;
@@ -313,7 +313,7 @@ public partial class MainWindow : Window
         this.FindControl<TextBlock>(name)
         ?? throw new InvalidOperationException($"Missing UI TextBlock: {name}");
 
-    private static string EngineStateText(EngineConnectionState state) => state switch
+    private static string GetEngineStateLabel(EngineConnectionState state) => state switch
     {
         EngineConnectionState.Ready => "READY",
         EngineConnectionState.Starting => "STARTING",

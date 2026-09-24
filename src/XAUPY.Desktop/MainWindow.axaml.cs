@@ -13,11 +13,11 @@ public partial class MainWindow : Window
     private static readonly IReadOnlyDictionary<string, (string Title, string Subtitle)> Pages =
         new Dictionary<string, (string, string)>
         {
-            ["overview"] = ("Tổng quan", "Task 002: Desktop tự quản lý Python Engine và giám sát IPC v1 qua localhost."),
+            ["overview"] = ("Tổng quan", "Task 003: nhận dữ liệu MT5 thật qua Bridge EA; lớp thực thi vẫn khóa cứng."),
             ["configuration"] = ("Cấu hình", "Placeholder. Canonical profile/config editor thuộc Task 004/006."),
             ["strategy"] = ("Chiến lược", "Placeholder. Direction → Pullback → Trigger thuộc Task 007."),
-            ["monitoring"] = ("Giám sát", "IPC heartbeat đã hoạt động; realtime MT5/strategy monitoring thuộc Task 008."),
-            ["orders"] = ("Lệnh & Vị thế", "Placeholder. Task 002 không có broker hoặc order command."),
+            ["monitoring"] = ("Giám sát", "Task 003 chỉ hiện health của MT5 Bridge; monitoring chi tiết thuộc Task 008."),
+            ["orders"] = ("Lệnh & Vị thế", "Placeholder. Task 003 không có API đặt/sửa/đóng lệnh."),
             ["backtest"] = ("Backtest", "Placeholder. Backtest parity engine thuộc Task 011."),
             ["optimization"] = ("Tối ưu", "Placeholder. Parameter sweep/walk-forward thuộc Task 012."),
             ["logs"] = ("Nhật ký", "Placeholder. Structured trading journal thuộc Task 010."),
@@ -62,6 +62,9 @@ public partial class MainWindow : Window
             var stateText = this.FindControl<TextBlock>("EngineStateText")!;
             var detailText = this.FindControl<TextBlock>("EngineDetailText")!;
             var heartbeatText = this.FindControl<TextBlock>("LastHeartbeatText")!;
+            var bridgeStateText = this.FindControl<TextBlock>("BridgeStateText")!;
+            var bridgeDetailText = this.FindControl<TextBlock>("BridgeDetailText")!;
+            var bridgeGuardianText = this.FindControl<TextBlock>("BridgeGuardianText")!;
 
             stateText.Text = e.State switch
             {
@@ -87,6 +90,26 @@ public partial class MainWindow : Window
             heartbeatText.Text = e.LastHeartbeatUtc.HasValue
                 ? $"Heartbeat: {e.LastHeartbeatUtc.Value.ToLocalTime():HH:mm:ss}"
                 : "Heartbeat: —";
+
+            var bridge = e.Mt5Bridge;
+            bridgeStateText.Text = bridge.Connected ? "CONNECTED" : "WAITING";
+            bridgeStateText.Foreground = bridge.Connected ? Brushes.LightGreen : Brushes.Gold;
+
+            if (bridge.Connected)
+            {
+                var age = bridge.AgeMs.HasValue ? $"{bridge.AgeMs.Value} ms" : "—";
+                var symbol = string.IsNullOrWhiteSpace(bridge.Symbol) ? "?" : bridge.Symbol;
+                var mode = string.IsNullOrWhiteSpace(bridge.AccountTradeMode) ? "?" : bridge.AccountTradeMode;
+                bridgeDetailText.Text =
+                    $"{symbol} • {mode} • terminal={(bridge.TerminalConnected ? "online" : "offline")} • age={age} • snapshots={bridge.SnapshotsTotal}";
+            }
+            else
+            {
+                bridgeDetailText.Text = "Chưa nhận snapshot hợp lệ hoặc Bridge đã stale.";
+            }
+
+            bridgeGuardianText.Text = $"Guardian: {bridge.GuardianReason} • EXECUTION LOCKED";
+            bridgeGuardianText.Foreground = Brushes.Gold;
         });
     }
 }

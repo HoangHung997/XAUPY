@@ -1,7 +1,6 @@
 """XAUPY Python Engine.
 
-Task 002 provides only local IPC/process lifecycle services.
-No strategy or broker execution exists in this task.
+Task 003 adds the MT5 Bridge data channel while keeping all trade execution locked.
 """
 
-__version__ = "0.2.0-task002"
+__version__ = "0.3.0-task003"

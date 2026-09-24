@@ -1,89 +1,159 @@
 # XAUPY IPC Protocol v1
 
-Status: Task XAUPY-002
+Status: extended by Task XAUPY-003
 Transport: TCP loopback
 Default endpoint: 127.0.0.1:39421
 Framing: UTF-8 JSON Lines, one JSON object per line
-Trading: disabled in Task 002
+Trading/execution: disabled in Task 003
 
 ## 1. Purpose
 
-IPC v1 is the local control channel between XAUPY.Desktop and the Python Engine. Task 002 deliberately does not connect to MT5 and does not define broker execution messages.
+IPC v1 is the local control channel shared by XAUPY.Desktop, the Python Engine and the MT5 Bridge EA.
 
-The protocol is designed so later tasks can add market data, strategy state and trade intents without replacing the transport or lifecycle model.
+Task 002 established Desktop ↔ Python lifecycle.
+Task 003 adds MT5 Bridge → Python data snapshots while preserving the same versioned envelope.
 
 ## 2. Security boundary
 
-The Python Engine must bind to loopback only. A non-loopback host is rejected by the engine.
+The Python Engine binds loopback only.
+The MQL5 Bridge also rejects non-loopback host configuration.
 
-The default endpoint is 127.0.0.1:39421. The port may be overridden for testing or local development. Remote network control is outside scope and must not be enabled accidentally.
+Default endpoint:
+
+127.0.0.1:39421
+
+Remote network control is outside scope.
 
 ## 3. Envelope
 
-Every message uses the same envelope with these fields:
+Every message uses:
 
-- schema_version: required integer. Task 002 accepts exactly 1.
-- type: required non-empty string.
-- request_id: required UUID string.
-- sent_at_utc: required ISO-8601 UTC timestamp.
+- schema_version: required integer, currently 1;
+- type: required non-empty string;
+- request_id: required UUID string;
+- sent_at_utc: required ISO-8601 UTC timestamp;
 - payload: required JSON object.
 
-Responses copy the request_id of the request they answer.
+Responses copy request_id from the request.
 
-## 4. Message types in Task 002
+## 4. Desktop lifecycle messages
 
-hello: Desktop to Engine. Response hello_ack.
+hello → hello_ack
 
-heartbeat: Desktop to Engine every two seconds. Response heartbeat_ack. Task 002 treats a missing or invalid response as a broken connection and begins reconnect handling.
+heartbeat → heartbeat_ack
 
-shutdown: Desktop to Engine when Desktop owns the process. Response shutdown_ack, then the engine exits cleanly.
+shutdown → shutdown_ack
 
-error: returned for unsupported messages or protocol errors that can still be framed safely.
+error is returned for unsupported or invalid framed requests.
 
-Task 002 does not accept order, position, strategy or broker commands.
+Desktop heartbeat payload now also contains a bridge object:
 
-## 5. Lifecycle
+- connected
+- age_ms
+- symbol
+- terminal_connected
+- account_trade_mode
+- execution_ready
+- execution_locked
+- guardian_reason
+- snapshots_total
 
-Packaged Windows build layout:
+## 5. MT5 Bridge messages
 
-XAUPY.Desktop.exe
-engine/xaupy-engine.exe
+### bridge_hello
 
-Normal flow:
+EA → Engine after socket connect.
 
-1. Desktop starts.
-2. Desktop launches engine/xaupy-engine.exe with localhost and port arguments.
-3. Desktop retries loopback connection while the one-file engine starts.
-4. Desktop sends hello.
-5. Engine returns hello_ack.
-6. Desktop enters READY and sends heartbeat periodically.
-7. If the connection breaks, Desktop enters RECONNECTING and retries.
-8. If the owned Engine process exits unexpectedly, Desktop restarts it with bounded retries.
-9. User Stop Engine sends shutdown when possible and terminates an unresponsive owned process if required.
-10. Closing Desktop terminates the owned Engine process so no orphan remains.
+Required payload includes:
 
-## 6. Fail-safe state
+- bridge_version
+- component
+- symbol
+- magic
+- execution_locked=true
 
-Task 002 has no trading functionality. Every hello and heartbeat response reports trading_enabled=false. The Desktop displays NO TRADING — IPC ONLY.
+Response:
 
-Any future trading message family must be introduced in a later task with explicit protocol documentation and safety tests.
+bridge_hello_ack
 
-## 7. Compatibility rules
+The response always reports:
+
+- trading_enabled=false
+- execution_enabled=false
+- guardian_reason=TASK003_EXECUTION_LOCKED
+
+### bridge_snapshot
+
+EA → Engine on timer.
+
+Required snapshot includes:
+
+- symbol
+- terminal_connected
+- account_trade_mode
+- bid
+- ask
+- guardian
+- bars
+
+The guardian object must contain:
+
+- execution_locked=true
+- execution_ready=false
+
+bars must include all required timeframe keys:
+
+M1, M3, M5, M15, M30, H1, H2, H4
+
+Response:
+
+bridge_snapshot_ack
+
+Task 003 response includes command=null. Python does not send trading commands in this task.
+
+### bridge_heartbeat
+
+Reserved lightweight EA heartbeat. Response bridge_heartbeat_ack.
+
+## 6. Stale handling
+
+The Engine records the monotonic arrival time of Bridge messages.
+
+If the last Bridge activity becomes older than the configured stale threshold, Desktop heartbeat reports bridge.connected=false.
+
+This status does not stop or restart the Python Engine itself.
+
+## 7. Execution lock
+
+Task 003 explicitly rejects any bridge snapshot claiming:
+
+execution_locked=false
+
+or:
+
+execution_ready=true
+
+Messages such as trade_intent remain unsupported.
+
+Actual order execution must be introduced by a later task with additional protocol messages, idempotency, reconciliation and broker-side safety tests.
+
+## 8. Compatibility rules
 
 - Unknown schema_version is rejected.
-- New optional payload fields may be ignored by an older peer.
-- Envelope fields may not silently change meaning.
+- Optional payload fields may be ignored by an older peer.
+- Envelope field meaning may not silently change.
 - Breaking envelope changes require a new schema_version.
-- request_id is the correlation key and is reserved for idempotency and reconciliation in later execution tasks.
-- JSON Lines framing remains deterministic: exactly one JSON object per line.
+- request_id remains the correlation/idempotency key.
+- Exactly one JSON object is framed per line.
 
-## 8. Task 002 test evidence required
+## 9. Task 003 build evidence
 
-- Python envelope validation tests.
-- Python hello/heartbeat integration test.
-- Disconnect then reconnect test.
-- Shutdown lifecycle test.
-- C# envelope serialization/correlation self-tests.
-- Windows PyInstaller engine executable smoke test.
-- Avalonia Release build.
-- Windows x64 self-contained Desktop build containing engine/xaupy-engine.exe.
+Required:
+
+- Python protocol/bridge tests.
+- C# Desktop/IPC Release build.
+- MQL5 source safety tests.
+- MetaEditor real compile: 0 errors.
+- Compiled XAUPY_Bridge_EA.ex5.
+- Packaged Python Engine bridge smoke test.
+- Windows x64 full build containing Desktop, Engine, .mq5, .ex5 and docs.

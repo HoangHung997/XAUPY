@@ -6,35 +6,30 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-002 DONE. Task XAUPY-003 vẫn PLANNED và chưa bắt đầu.
+Trạng thái hiện tại: TASK XAUPY-003 — MT5 Bridge Data Channel & Execution Guardian.
 
 ## Tài liệu bắt buộc
 
 - [Đặc tả sản phẩm](docs/PRODUCT_SPEC.md)
 - [Kế hoạch triển khai theo task](docs/IMPLEMENTATION_TASKS.md)
 - [IPC protocol](docs/IPC_PROTOCOL.md)
+- [Task 003 MT5 Bridge](docs/TASK003_MT5_BRIDGE.md)
+- [Task 003 demo test](docs/TASK003_MT5_DEMO_TEST.md)
 - [UI reference](docs/ui-reference/README.md)
 
 ## Nguyên tắc triển khai
 
 - Chỉ làm một task tại một thời điểm.
 - Task chỉ DONE khi code, test, GitHub CI và build artifact đều hoàn tất.
-- Task có UI/build phải tạo artifact Windows x64 đầy đủ trước khi chuyển task tiếp theo.
-- Python là strategy authority; MQL5 Bridge sau này vẫn là broker safety authority.
-- Real trading vẫn bị khóa.
+- Mọi task có UI/bridge phải có Windows x64 full build trước khi giao người dùng test.
+- Python là strategy authority; MQL5 Bridge là broker/safety boundary.
+- Task 003 chỉ truyền dữ liệu và đánh giá guardian. Execution bị khóa cứng.
 
-## Task 002 đã hoàn thành
+## Task 003
 
-IPC v1 qua TCP loopback giữa Avalonia Desktop và Python Engine đã có:
-
-- localhost-only;
-- JSON Lines + schema_version=1;
-- request_id correlation;
-- hello/heartbeat/shutdown lifecycle;
-- Desktop tự khởi động Python Engine đóng gói sẵn;
-- reconnect và bounded restart;
-- Python Engine đóng gói thành xaupy-engine.exe;
-- GitHub CI kiểm tra protocol, heartbeat, reconnect, shutdown và executable smoke test;
-- Windows x64 self-contained full build.
-
-Xem bằng chứng đầy đủ trong docs/IMPLEMENTATION_TASKS.md.
+- MQL5 Bridge EA kết nối localhost qua Socket API.
+- Snapshot account/symbol/broker rules + 8 timeframe M1/M3/M5/M15/M30/H1/H2/H4.
+- Python Engine lưu bridge state và chiếu health sang Avalonia.
+- Desktop hiển thị MT5 Bridge CONNECTED/WAITING và guardian.
+- EA không chứa OrderSend, OrderSendAsync hoặc CTrade.
+- GitHub CI dùng MetaEditor thật để compile .mq5 thành .ex5.

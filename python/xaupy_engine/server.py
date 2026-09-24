@@ -6,6 +6,7 @@ import time
 from typing import Final
 
 from . import __version__
+from .bridge_state import BridgeRegistry, BridgeSnapshotError
 from .contracts import Envelope, PROTOCOL_VERSION, ProtocolError
 
 DEFAULT_HOST: Final = "127.0.0.1"
@@ -14,7 +15,12 @@ MAX_LINE_BYTES: Final = 1024 * 1024
 
 
 class EngineServer:
-    def __init__(self, host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
+    def __init__(
+        self,
+        host: str = DEFAULT_HOST,
+        port: int = DEFAULT_PORT,
+        bridge_stale_seconds: float = 5.0,
+    ) -> None:
         if host not in {"127.0.0.1", "localhost"}:
             raise ValueError("XAUPY Engine may bind to loopback only")
         if not (0 <= port <= 65535):
@@ -27,6 +33,7 @@ class EngineServer:
         self._shutdown_event = asyncio.Event()
         self._started_monotonic = time.monotonic()
         self._connections_total = 0
+        self.bridge = BridgeRegistry(stale_seconds=bridge_stale_seconds)
 
     async def start(self) -> None:
         if self._server is not None:
@@ -105,15 +112,19 @@ class EngineServer:
             except (ConnectionError, BrokenPipeError):
                 pass
 
-    def _dispatch(self, request: Envelope) -> tuple[Envelope, bool]:
-        common = {
+    def _common(self) -> dict:
+        return {
             "component": "python-engine",
             "engine_version": __version__,
             "protocol_version": PROTOCOL_VERSION,
             "state": "ready",
             "trading_enabled": False,
+            "execution_enabled": False,
             "pid": os.getpid(),
         }
+
+    def _dispatch(self, request: Envelope) -> tuple[Envelope, bool]:
+        common = self._common()
 
         if request.type == "hello":
             return Envelope.response("hello_ack", request.request_id, common), False
@@ -123,8 +134,67 @@ class EngineServer:
                 **common,
                 "uptime_ms": int((time.monotonic() - self._started_monotonic) * 1000),
                 "connections_total": self._connections_total,
+                "bridge": self.bridge.status().to_payload(),
             }
             return Envelope.response("heartbeat_ack", request.request_id, payload), False
+
+        if request.type == "bridge_hello":
+            try:
+                self.bridge.record_hello(request.payload)
+            except BridgeSnapshotError as exc:
+                return self._bridge_error(request, str(exc)), False
+
+            return (
+                Envelope.response(
+                    "bridge_hello_ack",
+                    request.request_id,
+                    {
+                        **common,
+                        "bridge_protocol": 1,
+                        "task": "XAUPY-003",
+                        "guardian_reason": "TASK003_EXECUTION_LOCKED",
+                    },
+                ),
+                False,
+            )
+
+        if request.type == "bridge_heartbeat":
+            try:
+                self.bridge.record_heartbeat(request.payload)
+            except BridgeSnapshotError as exc:
+                return self._bridge_error(request, str(exc)), False
+
+            return (
+                Envelope.response(
+                    "bridge_heartbeat_ack",
+                    request.request_id,
+                    {
+                        **common,
+                        "bridge": self.bridge.status().to_payload(),
+                    },
+                ),
+                False,
+            )
+
+        if request.type == "bridge_snapshot":
+            try:
+                self.bridge.record_snapshot(request.payload)
+            except BridgeSnapshotError as exc:
+                return self._bridge_error(request, str(exc)), False
+
+            return (
+                Envelope.response(
+                    "bridge_snapshot_ack",
+                    request.request_id,
+                    {
+                        **common,
+                        "accepted": True,
+                        "command": None,
+                        "bridge": self.bridge.status().to_payload(),
+                    },
+                ),
+                False,
+            )
 
         if request.type == "shutdown":
             return (
@@ -142,11 +212,25 @@ class EngineServer:
                 request.request_id,
                 {
                     "code": "UNSUPPORTED_MESSAGE",
-                    "message": f"Unsupported Task 002 message type: {request.type}",
+                    "message": f"Unsupported Task 003 message type: {request.type}",
                     "trading_enabled": False,
+                    "execution_enabled": False,
                 },
             ),
             False,
+        )
+
+    @staticmethod
+    def _bridge_error(request: Envelope, message: str) -> Envelope:
+        return Envelope.response(
+            "error",
+            request.request_id,
+            {
+                "code": "BRIDGE_SNAPSHOT_INVALID",
+                "message": message,
+                "trading_enabled": False,
+                "execution_enabled": False,
+            },
         )
 
     @staticmethod

@@ -27,7 +27,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-005 | DONE | Overview tab implementation | 002,004 | UI/reference structure + real overview projection + verified Windows build |
 | XAUPY-006 | DONE | Full Configuration tab | 004 | schema-driven 133-field editor + validation/profile/.set tests + verified Windows build |
 | XAUPY-007 | DONE | Strategy engine Direction → Pullback → Trigger | 002,004 | deterministic state tests + verified Windows build |
-| XAUPY-008 | PLANNED | Strategy + Monitoring realtime tabs | 005,007 | projection tests + build |
+| XAUPY-008 | ACTIVE | Strategy + Monitoring realtime tabs | 005,007 | projection tests + verified Windows build |
 | XAUPY-009 | PLANNED | Orders & Positions + guarded manual actions | 003,005 | execution simulation |
 | XAUPY-010 | PLANNED | Structured logging + Journal tab | 002,003 | schema/replay tests |
 | XAUPY-011 | PLANNED | Backtest engine parity | 007,010 | deterministic replay |
@@ -378,3 +378,59 @@ XAUPY-Task007-win-x64.zip
 
 The complete Task 007 Windows x64 build is ready. The realtime Strategy and
 Monitoring UI remains correctly deferred to XAUPY-008.
+
+
+# XAUPY-008 — Strategy + Monitoring realtime tabs
+
+Status: ACTIVE
+
+## Goal
+
+Replace the two approved placeholders with real Avalonia Strategy and Monitoring
+surfaces driven by Task 007 strategy state and Task 003/005 market data.
+
+## Scope in implementation
+
+- typed StrategySnapshot IPC projection;
+- nested strategy execution-safety guard;
+- Strategy dashboard for Direction/Pullback/Trigger, indicators, warm-up and signal evidence;
+- Monitoring dashboard for real quotes, active closed bars, indicator/condition state and connectivity;
+- session-local quote chart advances only on new real snapshot timestamps;
+- explicit unavailable states for later-task Session/News/CPU/RAM backends;
+- Overview strategy card uses real strategy projection;
+- previous Overview/Configuration behavior preserved.
+
+## Hard boundary
+
+- no broker/manual actions;
+- no synthetic market history;
+- no fake Session/News/resource status;
+- trading_enabled=false;
+- execution_enabled=false.
+
+## Acceptance criteria
+
+- [ ] approved Strategy and Monitoring references exist.
+- [ ] both tabs are real hosted controls, not placeholders.
+- [ ] StrategySnapshot parser and C# contract tests pass.
+- [ ] Strategy dashboard uses realtime Engine projection.
+- [ ] Monitoring chart advances only from new real snapshot timestamps.
+- [ ] active role bars come from Overview.Bars.
+- [ ] unavailable later-task backends are explicit.
+- [ ] nested strategy execution enable is rejected.
+- [ ] all Python regressions pass.
+- [ ] C# IPC self-tests pass.
+- [ ] Avalonia Release build passes with 0 warnings / 0 errors.
+- [ ] packaged Engine Task 007 strategy/safety smoke remains green.
+- [ ] packaged config smoke remains green.
+- [ ] MT5 Bridge compiles 0 errors / 0 warnings.
+- [ ] GitHub CI green.
+- [ ] XAUPY-Task008-win-x64 artifact is produced and independently inspected.
+
+## Required artifact
+
+XAUPY-Task008-win-x64.zip
+
+## Evidence
+
+Pending final Task 008 CI/build verification.

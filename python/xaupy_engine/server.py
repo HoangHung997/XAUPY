@@ -122,7 +122,7 @@ class EngineServer:
     async def close(self) -> None:
         optimizer_stopped = await asyncio.to_thread(
             self.optimizer_jobs.shutdown,
-            10.0,
+            5.0,
         )
         if not optimizer_stopped:
             self._log(
@@ -154,12 +154,35 @@ class EngineServer:
                 writer.close()
 
         if writers:
-            await asyncio.gather(
-                *(writer.wait_closed() for writer in writers),
-                return_exceptions=True,
-            )
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(
+                        *(writer.wait_closed() for writer in writers),
+                        return_exceptions=True,
+                    ),
+                    timeout=2.0,
+                )
+            except TimeoutError:
+                self._log(
+                    "WARN",
+                    "Python Engine",
+                    "CONNECTION",
+                    "Timed out draining client sockets during shutdown",
+                    details={"writers": len(writers)},
+                )
 
-        await server.wait_closed()
+        try:
+            await asyncio.wait_for(
+                server.wait_closed(),
+                timeout=2.0,
+            )
+        except TimeoutError:
+            self._log(
+                "WARN",
+                "Python Engine",
+                "CONNECTION",
+                "Timed out waiting for IPC server close",
+            )
 
     async def _handle_client(
         self,

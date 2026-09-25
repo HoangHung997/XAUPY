@@ -1,6 +1,6 @@
 # XAUPY Task 008 — Strategy + Monitoring Realtime UI Specification
 
-Status: ACTIVE implementation task
+Status: DONE
 Dependencies: XAUPY-005, XAUPY-007
 Visual source-of-truth:
 - docs/ui-reference/Tab Chiến Lược.png

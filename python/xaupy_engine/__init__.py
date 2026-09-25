@@ -1,7 +1,8 @@
 """XAUPY Python Engine.
 
-Task 010 adds persistent structured evidence logging and Journal query/bookmark
-IPC while preserving the Task 009 simulation-only broker boundary.
+Task 011 adds deterministic historical Backtest parity using the same
+StrategyEngine as live processing, with persisted reproducible results.
+Broker execution remains hard-locked.
 """
 
-__version__ = "0.10.0-task010"
+__version__ = "0.11.0-task011"

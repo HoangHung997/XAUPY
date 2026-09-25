@@ -27,7 +27,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-005 | DONE | Overview tab implementation | 002,004 | UI/reference structure + real overview projection + verified Windows build |
 | XAUPY-006 | DONE | Full Configuration tab | 004 | schema-driven 133-field editor + validation/profile/.set tests + verified Windows build |
 | XAUPY-007 | DONE | Strategy engine Direction → Pullback → Trigger | 002,004 | deterministic state tests + verified Windows build |
-| XAUPY-008 | ACTIVE | Strategy + Monitoring realtime tabs | 005,007 | projection tests + verified Windows build |
+| XAUPY-008 | DONE | Strategy + Monitoring realtime tabs | 005,007 | projection tests + verified Windows build |
 | XAUPY-009 | PLANNED | Orders & Positions + guarded manual actions | 003,005 | execution simulation |
 | XAUPY-010 | PLANNED | Structured logging + Journal tab | 002,003 | schema/replay tests |
 | XAUPY-011 | PLANNED | Backtest engine parity | 007,010 | deterministic replay |
@@ -382,7 +382,7 @@ Monitoring UI remains correctly deferred to XAUPY-008.
 
 # XAUPY-008 — Strategy + Monitoring realtime tabs
 
-Status: ACTIVE
+Status: DONE
 
 ## Goal
 
@@ -410,22 +410,22 @@ surfaces driven by Task 007 strategy state and Task 003/005 market data.
 
 ## Acceptance criteria
 
-- [ ] approved Strategy and Monitoring references exist.
-- [ ] both tabs are real hosted controls, not placeholders.
-- [ ] StrategySnapshot parser and C# contract tests pass.
-- [ ] Strategy dashboard uses realtime Engine projection.
-- [ ] Monitoring chart advances only from new real snapshot timestamps.
-- [ ] active role bars come from Overview.Bars.
-- [ ] unavailable later-task backends are explicit.
-- [ ] nested strategy execution enable is rejected.
-- [ ] all Python regressions pass.
-- [ ] C# IPC self-tests pass.
-- [ ] Avalonia Release build passes with 0 warnings / 0 errors.
-- [ ] packaged Engine Task 007 strategy/safety smoke remains green.
-- [ ] packaged config smoke remains green.
-- [ ] MT5 Bridge compiles 0 errors / 0 warnings.
-- [ ] GitHub CI green.
-- [ ] XAUPY-Task008-win-x64 artifact is produced and independently inspected.
+- [x] approved Strategy and Monitoring references exist.
+- [x] both tabs are real hosted controls, not placeholders.
+- [x] StrategySnapshot parser and C# contract tests pass.
+- [x] Strategy dashboard uses realtime Engine projection.
+- [x] Monitoring chart advances only from new real snapshot timestamps.
+- [x] active role bars come from Overview.Bars.
+- [x] unavailable later-task backends are explicit.
+- [x] nested strategy execution enable is rejected.
+- [x] all Python regressions pass.
+- [x] C# IPC self-tests pass.
+- [x] Avalonia Release build passes with 0 warnings / 0 errors.
+- [x] packaged Engine Task 007 strategy/safety smoke remains green.
+- [x] packaged config smoke remains green.
+- [x] MT5 Bridge compiles 0 errors / 0 warnings.
+- [x] GitHub CI green.
+- [x] XAUPY-Task008-win-x64 artifact is produced and independently inspected.
 
 ## Required artifact
 
@@ -433,4 +433,36 @@ XAUPY-Task008-win-x64.zip
 
 ## Evidence
 
-Pending final Task 008 CI/build verification.
+- Final implementation CI source commit: 030c651ef47f9912caf931d87785e2fe44e6dc5e
+- Branch: task/008-strategy-monitoring-tabs
+- GitHub Actions final successful run: 36085413233
+- Validate strategy monitoring projection and UI job: SUCCESS
+- Windows x64 full Task 008 UI build job: SUCCESS
+- Python tests: 87/87 PASS
+- C# IPC regression self-tests: 33/33 PASS
+- Avalonia/.NET Release build: SUCCESS, 0 warnings, 0 errors
+- Packaged Task 007 Python Engine deterministic strategy/safety smoke: PASS
+- Packaged xaupy-config regression smoke: PASS
+- MetaEditor locked Bridge regression: Result: 0 errors, 0 warnings, 2366 ms elapsed
+- GitHub artifact: XAUPY-Task008-win-x64
+- GitHub artifact id: 10842524822
+- Artifact size: 101059848 bytes
+- Artifact outer SHA-256: d0ef14a4abae9a028c38c4b3f5a849a7dd4986beace009a21c3552012f347933
+- Direct full-build ZIP size: 101283314 bytes
+- Direct full-build ZIP SHA-256: 887fd5bcee5825ebb9f7a30c82d14bb75fd850194bb67bebc3840499718cee89
+- Artifact expiry: 2026-10-09T02:16:47Z
+- Independent artifact inspection: 251 entries
+- XAUPY.Desktop.exe: present, Windows PE
+- engine/xaupy-engine.exe: present, Windows PE
+- tools/xaupy-config.exe: present, Windows PE
+- profiles/Baseline_M30_M5_M1.json: Direction=M30, Pullback=M5, Trigger=M1
+- profiles/config-schema-v1.json: field_count=133; exact TF options M1/M3/M5/M15/M30/H1/H2/H4
+- packaged safety verified: execution.allow_real_account=false, execution.demo_only=true, execution.max_retry_count=0, safety.never_widen_sl=true, safety.require_server_sl=true, safety.block_on_stale_market_data=true
+- mt5/XAUPY_Bridge_EA.mq5/.ex5/compile.log: present
+- docs/STRATEGY_MONITORING_UI_SPEC.md and docs/TASK008_STRATEGY_MONITORING_TEST.md: present
+- approved Strategy and Monitoring reference PNGs: present with UTF-8 filenames
+
+## Delivery
+
+The complete Task 008 Windows x64 build is ready. XAUPY-009 is the next planned
+task and remains unstarted.

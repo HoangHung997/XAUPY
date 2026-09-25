@@ -102,6 +102,15 @@ public partial class OptimizerDashboard : UserControl
         _supervisor = supervisor;
     }
 
+    public void ApplyEngineState(EngineConnectionState state)
+    {
+        bool ready = state == EngineConnectionState.Ready;
+        Text("EngineResourceText").Text = ready ? "OK" : state.ToString().ToUpperInvariant();
+        Text("EngineResourceText").Foreground = ready ? Brushes.LightGreen : Brushes.Gold;
+        Text("BacktestResourceText").Text = ready ? "READY" : "WAIT";
+        Text("BacktestResourceText").Foreground = ready ? Brushes.LightGreen : Brushes.Gold;
+    }
+
     public void ApplyStatus(OptimizerStatusSnapshot status)
     {
         _status = status;

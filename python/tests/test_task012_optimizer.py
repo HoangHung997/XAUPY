@@ -15,7 +15,12 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import xaupy_engine.optimizer as optimizer_module
-from xaupy_engine.backtest import BacktestCancelled, DatasetMetadata, HistoricalDataset
+from xaupy_engine.backtest import (
+    BacktestCancelled,
+    BacktestEngine,
+    DatasetMetadata,
+    HistoricalDataset,
+)
 from xaupy_engine.config_schema import default_profile
 from xaupy_engine.optimizer import (
     MAX_COMBINATIONS,

@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   cleanup:
-    runs-on: ubuntu-24.04-arm
+    runs-on: macos-latest
     timeout-minutes: 8
     steps:
       - name: Cancel stale branch workflow runs
@@ -23,6 +23,7 @@ jobs:
             const repo = context.repo.repo;
             const current = context.runId;
             const branch = "task/012-optimizer-walk-forward";
+            const currentSha = context.sha;
 
             const runs = await github.paginate(
               github.rest.actions.listWorkflowRunsForRepo,
@@ -31,6 +32,10 @@ jobs:
 
             for (const run of runs) {
               if (run.id === current) continue;
+              if (run.head_sha === currentSha) {
+                core.info(`Keeping current-head run ${run.id}: ${run.name} @ ${run.head_sha}`);
+                continue;
+              }
               if (!["queued", "in_progress", "waiting", "requested", "pending"].includes(run.status)) {
                 continue;
               }

@@ -22,7 +22,7 @@ Every event contains:
 - event_id: UUID;
 - timestamp_utc: ISO-8601 UTC;
 - level: INFO / WARN / ERROR / DEBUG;
-- source: System / MT5 / EA Bridge / Python Engine / Strategy / Orders / Alerts;
+- source: MT5 / EA Bridge / Python Engine / Strategy / Orders / Alerts;
 - tag: normalized event category;
 - message: human-readable summary;
 - details: JSON object with structured evidence;

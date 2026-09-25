@@ -139,6 +139,132 @@ Check(!strategy.TradingEnabled && !strategy.ExecutionEnabled, "strategy executio
 var emptyStrategy = StrategySnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new { }));
 Check(!emptyStrategy.Available && emptyStrategy.State == "STALE", "missing strategy projects explicit stale state");
 
+var ordersPayload = JsonSerializer.SerializeToElement(new
+{
+    orders_positions = new
+    {
+        available = true,
+        snapshot_received_utc = "2026-09-25T03:40:00+00:00",
+        symbol = "XAUUSD",
+        account_trade_mode = "DEMO",
+        terminal_connected = true,
+        account_login = 12345678L,
+        account_currency = "USD",
+        leverage = 100L,
+        bid = 4282.00,
+        ask = 4282.30,
+        spread_points = 30.0,
+        point = 0.01,
+        balance = 10000.0,
+        equity = 10000.0,
+        margin_free = 9950.0,
+        open_pl = 19.0,
+        realized_pl = 43.5,
+        exposure_lots = 0.10,
+        risk_usd = 50.0,
+        risk_pct = 0.5,
+        risk_complete = true,
+        positions_count = 1,
+        orders_count = 1,
+        positions = new[]
+        {
+            new
+            {
+                ticket = 32874561L,
+                magic = 991188L,
+                symbol = "XAUUSD",
+                side = "BUY",
+                volume = 0.10,
+                price_open = 4280.0,
+                price_current = 4282.0,
+                sl = 4275.0,
+                tp = 4290.0,
+                profit = 20.0,
+                swap = -1.0,
+                time = 1790240000L,
+                comment = "XAUPY"
+            }
+        },
+        orders = new[]
+        {
+            new
+            {
+                ticket = 32874570L,
+                magic = 991188L,
+                symbol = "XAUUSD",
+                type = "BUY STOP",
+                volume_initial = 0.10,
+                volume_current = 0.10,
+                price_open = 4285.0,
+                price_current = 4282.0,
+                sl = 4281.0,
+                tp = 4295.0,
+                state = "PLACED",
+                time_setup = 1790240100L,
+                comment = "XAUPY"
+            }
+        },
+        deals = new[]
+        {
+            new
+            {
+                ticket = 32874560L,
+                order_ticket = 32874559L,
+                magic = 991188L,
+                symbol = "XAUUSD",
+                side = "SELL",
+                entry = "OUT",
+                volume = 0.10,
+                price_in = 4278.0,
+                price_out = 4282.1,
+                profit = 44.0,
+                commission = -0.5,
+                swap = 0.0,
+                realized_total = 43.5,
+                reason = "TP",
+                time = 1790240200L,
+                comment = "XAUPY"
+            }
+        },
+        volume_min = 0.01,
+        volume_max = 100.0,
+        volume_step = 0.01,
+        tick_size = 0.01,
+        tick_value = 1.0,
+        stops_level = 10,
+        freeze_level = 5,
+        guardian_reason = "TASK003_EXECUTION_LOCKED",
+        broker_execution_locked = true,
+        simulation_only = true
+    }
+});
+
+var ordersBook = OrdersPositionsSnapshot.FromHeartbeatPayload(ordersPayload);
+Check(ordersBook.Available, "orders positions projection available");
+Check(ordersBook.Positions.Count == 1 && ordersBook.Positions[0].Ticket == 32874561L, "position ticket projection");
+Check(ordersBook.Orders.Count == 1 && ordersBook.Orders[0].Ticket == 32874570L, "pending order ticket projection");
+Check(ordersBook.Deals.Count == 1 && ordersBook.Deals[0].PriceIn == 4278.0 && ordersBook.Deals[0].PriceOut == 4282.1, "deal entry exit projection");
+Check(ordersBook.OpenPl == 19.0 && ordersBook.RealizedPl == 43.5, "orders KPI projection");
+Check(ordersBook.Point == 0.01 && ordersBook.RiskComplete, "orders broker metadata projection");
+Check(ordersBook.BrokerExecutionLocked && ordersBook.SimulationOnly, "orders projection remains simulation-only");
+
+var simulationPayload = JsonSerializer.SerializeToElement(new
+{
+    intent_id = Guid.NewGuid().ToString(),
+    action = "MARKET_BUY",
+    accepted = true,
+    code = "SIMULATED_ACCEPTED",
+    message = "preview only",
+    simulated = true,
+    broker_mutated = false,
+    trading_enabled = false,
+    execution_enabled = false,
+    preview = new { volume = 0.10, broker_request_sent = false }
+});
+var simulation = ManualActionResult.FromAck(simulationPayload);
+Check(simulation.Accepted && simulation.Simulated, "manual action result parser");
+Check(!simulation.BrokerMutated && !simulation.ExecutionEnabled && !simulation.TradingEnabled, "manual simulation cannot report broker execution");
+
 var configPayload = JsonSerializer.SerializeToElement(new
 {
     profile = new

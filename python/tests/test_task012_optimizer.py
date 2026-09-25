@@ -606,6 +606,29 @@ class HeatmapTests(unittest.TestCase):
             )
 
 
+class BacktestRangeBoundaryRegressionTests(unittest.TestCase):
+    def test_pre_range_trigger_state_is_reset_before_sample_entries(self):
+        dataset = multi_day_dataset(2)
+        result = BacktestEngine(
+            optimizer_profile(),
+            initial_balance=10000,
+            spread_pips=0,
+            commission_per_lot=0,
+        ).run(
+            dataset,
+            from_date="2024-01-02",
+            to_date="2024-01-02",
+        )
+
+        self.assertGreaterEqual(result["metrics"]["total_trades"], 1)
+        self.assertTrue(
+            all(
+                trade["entry_time"] >= 1_704_067_200 + 86400
+                for trade in result["trades"]
+            )
+        )
+
+
 class WalkForwardTests(unittest.TestCase):
     def test_plan_has_strict_non_overlap_and_full_out_of_sample_partition(self):
         dataset = multi_day_dataset(12)

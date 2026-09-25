@@ -205,6 +205,44 @@ class Task010JournalProtocolTests(unittest.IsolatedAsyncioTestCase):
         writer.close()
         await writer.wait_closed()
 
+    async def test_duplicate_timer_snapshot_does_not_spam_decision_trace(self):
+        reader, writer = await self.connect()
+        payload = bridge_snapshot()
+
+        await exchange(reader, writer, "bridge_snapshot", payload)
+        await exchange(reader, writer, "bridge_snapshot", payload)
+
+        market = await exchange(
+            reader,
+            writer,
+            "journal_query",
+            {
+                "date_scope": "ALL",
+                "levels": ["DEBUG"],
+                "sources": ["MT5"],
+                "search": "Closed-bar snapshot advanced",
+                "limit": 100,
+            },
+        )
+        strategy = await exchange(
+            reader,
+            writer,
+            "journal_query",
+            {
+                "date_scope": "ALL",
+                "levels": ["DEBUG"],
+                "sources": ["Strategy"],
+                "search": "Strategy evaluation",
+                "limit": 100,
+            },
+        )
+
+        self.assertEqual(1, market.payload["journal"]["total_matched"])
+        self.assertEqual(1, strategy.payload["journal"]["total_matched"])
+
+        writer.close()
+        await writer.wait_closed()
+
     async def test_query_filters_and_persisted_bookmark_protocol(self):
         reader, writer = await self.connect()
 

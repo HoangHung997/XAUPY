@@ -9,6 +9,7 @@ from . import __version__
 from .bridge_state import BridgeRegistry, BridgeSnapshotError
 from .contracts import Envelope, PROTOCOL_VERSION, ProtocolError
 from .config_schema import default_profile, normalized_profile, schema_payload, validate_profile
+from .strategy_engine import StrategyEngine
 
 DEFAULT_HOST: Final = "127.0.0.1"
 DEFAULT_PORT: Final = 39421
@@ -36,6 +37,7 @@ class EngineServer:
         self._connections_total = 0
         self.bridge = BridgeRegistry(stale_seconds=bridge_stale_seconds)
         self.active_profile = default_profile()
+        self.strategy = StrategyEngine(self.active_profile)
 
     async def start(self) -> None:
         if self._server is not None:
@@ -132,12 +134,17 @@ class EngineServer:
             return Envelope.response("hello_ack", request.request_id, common), False
 
         if request.type == "heartbeat":
+            bridge_status = self.bridge.status()
+            market_connected = bridge_status.connected and bridge_status.terminal_connected
             payload = {
                 **common,
                 "uptime_ms": int((time.monotonic() - self._started_monotonic) * 1000),
                 "connections_total": self._connections_total,
-                "bridge": self.bridge.status().to_payload(),
+                "bridge": bridge_status.to_payload(),
                 "overview": self.bridge.overview_payload(),
+                "strategy": self.strategy.status_payload(
+                    market_connected=market_connected
+                ),
             }
             return Envelope.response("heartbeat_ack", request.request_id, payload), False
 
@@ -212,6 +219,7 @@ class EngineServer:
                 )
 
             self.active_profile = normalized_profile(profile)
+            self.strategy.set_profile(self.active_profile)
             return (
                 Envelope.response(
                     "config_active_set_ack",
@@ -258,10 +266,14 @@ class EngineServer:
             ), False
 
         if request.type == "bridge_hello":
+            previous_bridge = self.bridge.status()
             try:
                 self.bridge.record_hello(request.payload)
             except BridgeSnapshotError as exc:
                 return self._bridge_error(request, str(exc)), False
+
+            if previous_bridge.snapshots_total > 0 and not previous_bridge.connected:
+                self.strategy.reset_setup("BRIDGE_RECONNECTED")
 
             return (
                 Envelope.response(
@@ -296,10 +308,24 @@ class EngineServer:
             )
 
         if request.type == "bridge_snapshot":
+            previous_bridge = self.bridge.status()
             try:
                 self.bridge.record_snapshot(request.payload)
             except BridgeSnapshotError as exc:
                 return self._bridge_error(request, str(exc)), False
+
+            bridge_status = self.bridge.status()
+            if (
+                previous_bridge.snapshots_total > 0
+                and not previous_bridge.terminal_connected
+                and bridge_status.terminal_connected
+            ):
+                self.strategy.reset_setup("MARKET_RECONNECTED")
+
+            if bridge_status.terminal_connected:
+                strategy_status = self.strategy.ingest_snapshot(request.payload)
+            else:
+                strategy_status = self.strategy.status_payload(market_connected=False)
 
             return (
                 Envelope.response(
@@ -309,7 +335,8 @@ class EngineServer:
                         **common,
                         "accepted": True,
                         "command": None,
-                        "bridge": self.bridge.status().to_payload(),
+                        "bridge": bridge_status.to_payload(),
+                        "strategy": strategy_status,
                     },
                 ),
                 False,
@@ -331,7 +358,7 @@ class EngineServer:
                 request.request_id,
                 {
                     "code": "UNSUPPORTED_MESSAGE",
-                    "message": f"Unsupported Task 006 message type: {request.type}",
+                    "message": f"Unsupported Task 007 message type: {request.type}",
                     "trading_enabled": False,
                     "execution_enabled": False,
                 },

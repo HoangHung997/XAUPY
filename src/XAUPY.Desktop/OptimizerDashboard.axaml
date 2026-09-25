@@ -274,9 +274,9 @@
                 </StackPanel>
 
                 <Grid Grid.Column="1" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="7">
-                  <TextBlock Grid.Row="0" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="0" Grid.Column="1" Text="Python Engine" Classes="label"/><TextBlock Grid.Row="0" Grid.Column="2" Text="OK" Foreground="#18E58B"/>
+                  <TextBlock Grid.Row="0" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="0" Grid.Column="1" Text="Python Engine" Classes="label"/><TextBlock x:Name="EngineResourceText" Grid.Row="0" Grid.Column="2" Text="WAIT" Foreground="#FFD34D"/>
                   <TextBlock Grid.Row="1" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="1" Grid.Column="1" Text="Dataset" Classes="label"/><TextBlock x:Name="DatasetResourceText" Grid.Row="1" Grid.Column="2" Text="WAIT" Foreground="#FFD34D"/>
-                  <TextBlock Grid.Row="2" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="2" Grid.Column="1" Text="Backtest Engine" Classes="label"/><TextBlock Grid.Row="2" Grid.Column="2" Text="OK" Foreground="#18E58B"/>
+                  <TextBlock Grid.Row="2" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="2" Grid.Column="1" Text="Backtest Engine" Classes="label"/><TextBlock x:Name="BacktestResourceText" Grid.Row="2" Grid.Column="2" Text="WAIT" Foreground="#FFD34D"/>
                   <TextBlock Grid.Row="3" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="3" Grid.Column="1" Text="Result Writer" Classes="label"/><TextBlock x:Name="WriterResourceText" Grid.Row="3" Grid.Column="2" Text="READY" Foreground="#18E58B"/>
                 </Grid>
               </Grid>

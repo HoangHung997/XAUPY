@@ -9,6 +9,7 @@ import tempfile
 import threading
 import time
 import unittest
+import xaupy_engine.optimizer as optimizer_module
 from unittest.mock import patch
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -805,6 +806,89 @@ class RepositoryAndJobTests(unittest.TestCase):
             self.assertEqual("CANCELLED", terminal["status"])
             self.assertIsNone(terminal["result_run_id"])
             self.assertEqual([], repo.history())
+
+    def test_concurrent_start_rechecks_active_job_atomically(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            dataset_path = root / "data.json"
+            write_dataset(dataset_path, days=2)
+            repo = OptimizerRepository(root / "results")
+            manager = OptimizerJobManager(repo)
+
+            request = {
+                "path": str(dataset_path),
+                "from_date": "2024-01-01",
+                "to_date": "2024-01-02",
+                "initial_balance": 10000,
+                "spread_pips": 0,
+                "commission_per_lot": 0,
+                "min_trades": 1,
+                "max_workers": 1,
+                "parameter_ranges": [
+                    {
+                        "path": "risk.fixed_lot",
+                        "min": 0.10,
+                        "max": 0.10,
+                        "step": 0.01,
+                    }
+                ],
+            }
+
+            barrier = threading.Barrier(2)
+            real_loader = optimizer_module.load_historical_dataset
+            real_eval = OptimizerEngine._evaluate_candidate
+
+            def synchronized_loader(path):
+                barrier.wait(timeout=3)
+                return real_loader(path)
+
+            def slow_eval(self, index, parameters, dataset, from_date, to_date):
+                time.sleep(0.5)
+                return real_eval(
+                    self,
+                    index,
+                    parameters,
+                    dataset,
+                    from_date,
+                    to_date,
+                )
+
+            successes = []
+            errors = []
+
+            def start_one():
+                try:
+                    successes.append(
+                        manager.start_sweep(
+                            request,
+                            optimizer_profile(),
+                        )
+                    )
+                except OptimizerError as exc:
+                    errors.append(str(exc))
+
+            with patch(
+                "xaupy_engine.optimizer.load_historical_dataset",
+                synchronized_loader,
+            ), patch.object(
+                OptimizerEngine,
+                "_evaluate_candidate",
+                slow_eval,
+            ):
+                threads = [
+                    threading.Thread(target=start_one),
+                    threading.Thread(target=start_one),
+                ]
+                for thread in threads:
+                    thread.start()
+                for thread in threads:
+                    thread.join(timeout=5)
+
+                self.assertTrue(all(not thread.is_alive() for thread in threads))
+                self.assertEqual(1, len(successes))
+                self.assertEqual(1, len(errors))
+                self.assertIn("already active", errors[0])
+                self.assertTrue(manager.shutdown(timeout_seconds=5.0))
 
     def test_manager_shutdown_cancels_and_joins_active_job(self):
         with tempfile.TemporaryDirectory() as tmp:

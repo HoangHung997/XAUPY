@@ -37,6 +37,27 @@ class Mql5BridgeSourceSafetyTests(unittest.TestCase):
             with self.subTest(timeframe=timeframe):
                 self.assertIn(timeframe, self.text)
 
+    def test_task009_exports_owned_ticket_level_order_book(self):
+        for token in (
+            "JsonPositions()",
+            "JsonOrders()",
+            "JsonDeals()",
+            'JsonKey("positions")',
+            'JsonKey("orders")',
+            'JsonKey("deals")',
+            "DEAL_POSITION_ID",
+            "HistoryPositionEntryPrice",
+            "OwnDailyRealized",
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, self.text)
+
+    def test_task009_still_has_no_broker_mutation_path(self):
+        self.assertIn("ORDER BOOK ACTIVE; BROKER EXECUTION LOCKED", self.text)
+        self.assertNotIn("PositionClose(", self.text)
+        self.assertNotIn("PositionModify(", self.text)
+        self.assertNotIn("OrderDelete(", self.text)
+
     def test_socket_data_channel_exists(self):
         for token in ("SocketCreate(", "SocketConnect(", "SocketSend(", "SocketRead(", "bridge_snapshot"):
             with self.subTest(token=token):

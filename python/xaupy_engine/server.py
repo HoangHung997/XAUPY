@@ -577,7 +577,7 @@ class EngineServer:
         if request.type == "shutdown":
             self._log(
                 "INFO",
-                "System",
+                "Python Engine",
                 "SYSTEM",
                 "Desktop requested Engine shutdown",
                 details=dict(request.payload),

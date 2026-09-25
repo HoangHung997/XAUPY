@@ -200,6 +200,34 @@ class RangeValidationTests(unittest.TestCase):
             combos[0],
         )
 
+    def test_enum_values_are_canonicalized_independent_of_input_order(self):
+        profile = optimizer_profile()
+        forward = parse_parameter_ranges(
+            [
+                {
+                    "path": "timeframes.trigger",
+                    "values": ["M1", "M3", "M5"],
+                }
+            ],
+            profile,
+        )
+        reversed_input = parse_parameter_ranges(
+            [
+                {
+                    "path": "timeframes.trigger",
+                    "values": ["M5", "M1", "M3"],
+                }
+            ],
+            profile,
+        )
+
+        self.assertEqual(("M1", "M3", "M5"), forward[0].values)
+        self.assertEqual(forward, reversed_input)
+        self.assertEqual(
+            parameter_combinations(forward),
+            parameter_combinations(reversed_input),
+        )
+
     def test_inactive_and_locked_or_unknown_parameters_are_rejected(self):
         profile = optimizer_profile()
         with self.assertRaises(OptimizerError):

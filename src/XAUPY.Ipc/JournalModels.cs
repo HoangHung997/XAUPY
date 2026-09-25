@@ -172,7 +172,6 @@ public sealed record JournalSummarySnapshot(
     private static IReadOnlyDictionary<string, int> EmptySourceCounts() =>
         new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
-            ["System"] = 0,
             ["MT5"] = 0,
             ["EA Bridge"] = 0,
             ["Python Engine"] = 0,

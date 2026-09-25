@@ -44,6 +44,7 @@ class BridgeRegistry:
 
         self.stale_seconds = stale_seconds
         self._last_seen_monotonic: float | None = None
+        self._last_snapshot_monotonic: float | None = None
         self._latest_snapshot: dict[str, Any] | None = None
         self._latest_snapshot_received_utc: str | None = None
         self._latest_hello: dict[str, Any] | None = None
@@ -149,14 +150,16 @@ class BridgeRegistry:
 
         self._latest_snapshot = deepcopy(payload)
         self._latest_snapshot_received_utc = datetime.now(timezone.utc).isoformat()
-        self._last_seen_monotonic = time.monotonic()
+        now = time.monotonic()
+        self._last_seen_monotonic = now
+        self._last_snapshot_monotonic = now
         self._snapshots_total += 1
 
     def overview_payload(self) -> dict[str, Any]:
         status = self.status()
         snapshot = self._latest_snapshot or {}
 
-        if not status.connected or not snapshot:
+        if not status.connected or not self.snapshot_fresh() or not snapshot:
             return {
                 "available": False,
                 "snapshot_received_utc": None,
@@ -203,7 +206,7 @@ class BridgeRegistry:
         status = self.status()
         snapshot = self._latest_snapshot or {}
 
-        if not status.connected or not snapshot:
+        if not status.connected or not self.snapshot_fresh() or not snapshot:
             return {
                 "available": False,
                 "snapshot_received_utc": None,
@@ -325,9 +328,23 @@ class BridgeRegistry:
 
     def latest_fresh_snapshot(self) -> dict[str, Any] | None:
         status = self.status()
-        if not status.connected or self._latest_snapshot is None:
+        if (
+            not status.connected
+            or not self.snapshot_fresh()
+            or self._latest_snapshot is None
+        ):
             return None
         return deepcopy(self._latest_snapshot)
+
+    def snapshot_fresh(self) -> bool:
+        if self._last_snapshot_monotonic is None:
+            return False
+        age = max(0.0, time.monotonic() - self._last_snapshot_monotonic)
+        return age <= self.stale_seconds
+
+    def market_data_connected(self) -> bool:
+        status = self.status()
+        return status.connected and status.terminal_connected and self.snapshot_fresh()
 
     def status(self) -> BridgeStatus:
         now = time.monotonic()

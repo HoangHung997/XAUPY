@@ -1,0 +1,45 @@
+name: Task 012 - Backlog Cleanup Isolated
+
+on:
+  push:
+    branches:
+      - 'release/xaupy012-backlog-cleanup'
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    steps:
+      - name: Force-cancel stale Task 012 validation runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          for page in $(seq 1 10); do
+            api="$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs?per_page=100&page=$page"
+            payload="$(curl -fsSL               -H "Authorization: Bearer $GH_TOKEN"               -H "Accept: application/vnd.github+json"               -H "X-GitHub-Api-Version: 2022-11-28"               "$api")"
+
+            count="$(echo "$payload" | jq '.workflow_runs | length')"
+            [ "$count" -gt 0 ] || break
+
+            echo "$payload"               | jq -r                 --argjson self "$GITHUB_RUN_ID"                 '.workflow_runs[]
+                 | select(
+                     (.status == "queued" or .status == "in_progress" or .status == "cancel_requested")
+                     and (.id != $self)
+                     and (
+                       ((.head_branch // "") | startswith("task/012-"))
+                       or (.head_branch // "") == "ci/task012-final"
+                     )
+                   )
+                 | .id'               | while read -r run_id; do
+                  [ -n "$run_id" ] || continue
+                  echo "Force-cancelling stale Task012 run $run_id"
+                  curl -fsSL -X POST                     -H "Authorization: Bearer $GH_TOKEN"                     -H "Accept: application/vnd.github+json"                     -H "X-GitHub-Api-Version: 2022-11-28"                     "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$run_id/force-cancel"                     >/dev/null || true
+                done
+          done

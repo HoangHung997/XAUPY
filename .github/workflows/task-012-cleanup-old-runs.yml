@@ -1,0 +1,32 @@
+name: Task 012 - Cleanup Stale Runs
+
+on:
+  push:
+    branches:
+      - 'task/012-optimizer-walk-forward'
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: macos-14
+    timeout-minutes: 5
+    steps:
+      - name: Cancel stale branch runs but keep current commit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          api="$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs?branch=task%2F012-optimizer-walk-forward&per_page=100"
+          payload="$(curl -fsSL             -H "Authorization: Bearer $GH_TOKEN"             -H "Accept: application/vnd.github+json"             -H "X-GitHub-Api-Version: 2022-11-28"             "$api")"
+
+          echo "$payload"             | jq -r --arg sha "$GITHUB_SHA"               '.workflow_runs[]
+               | select((.status == "queued" or .status == "in_progress" or .status == "cancel_requested") and .head_sha != $sha)
+               | .id'             | while read -r run_id; do
+                [ -n "$run_id" ] || continue
+                echo "Cancelling stale run $run_id"
+                curl -fsSL -X POST                   -H "Authorization: Bearer $GH_TOKEN"                   -H "Accept: application/vnd.github+json"                   -H "X-GitHub-Api-Version: 2022-11-28"                   "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$run_id/cancel"                   >/dev/null || true
+              done

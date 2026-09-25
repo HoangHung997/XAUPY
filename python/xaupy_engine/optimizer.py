@@ -601,7 +601,9 @@ class OptimizerEngine:
         iterator = iter(enumerate(combinations))
 
         def schedule(executor: ThreadPoolExecutor) -> None:
-            target = max(self.max_workers, self.max_workers * 2)
+            # Keep submitted work bounded to actual worker slots so the status
+            # projection's in_flight count is a truthful active-work metric.
+            target = self.max_workers
             while len(in_flight) < target:
                 if cancel_event is not None and cancel_event.is_set():
                     return

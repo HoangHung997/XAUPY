@@ -628,4 +628,265 @@ var backtestDeletePayload = JsonSerializer.SerializeToElement(new
 var backtestDelete = BacktestApiParser.ParseDelete(backtestDeletePayload);
 Check(backtestDelete.Ok && backtestDelete.Deleted, "backtest delete parser");
 
+var optimizerStatusPayload = JsonSerializer.SerializeToElement(new
+{
+    optimizer_status = new
+    {
+        job_id = Guid.NewGuid().ToString(),
+        mode = "SWEEP",
+        status = "RUNNING",
+        phase = "PARAMETER_SWEEP",
+        dataset_file_name = "history.json",
+        dataset_fingerprint = new string('d', 64),
+        base_profile_hash = new string('p', 64),
+        objective = "ROBUST_SCORE_V1",
+        combination_count = 81,
+        total_work = 81,
+        completed_work = 27,
+        in_flight = 4,
+        workers = 4,
+        current_fold = 0,
+        fold_count = 0,
+        progress_pct = 33.333,
+        speed_per_minute = 120.0,
+        eta_seconds = 27.0,
+        elapsed_seconds = 13.5,
+        result_run_id = (string?)null,
+        optimizer_hash = (string?)null,
+        error = (string?)null
+    }
+});
+var optimizerStatus = OptimizerStatusSnapshot.FromHeartbeatPayload(optimizerStatusPayload);
+Check(optimizerStatus.IsActive && optimizerStatus.ProgressPct == 33.333, "optimizer heartbeat status parser");
+Check(optimizerStatus.CompletedWork == 27 && optimizerStatus.Workers == 4, "optimizer progress/resource parser");
+
+var optimizerResultPayload = JsonSerializer.SerializeToElement(new
+{
+    ok = true,
+    result = new
+    {
+        run_id = Guid.NewGuid().ToString(),
+        created_at_utc = "2026-09-25T08:30:00+00:00",
+        mode = "SWEEP",
+        model = "PARAMETER_SWEEP_V1",
+        objective = "ROBUST_SCORE_V1",
+        backtest_model = "M1_OHLC_PARITY_V1",
+        optimizer_hash = new string('o', 64),
+        base_profile_hash = new string('p', 64),
+        dataset_file_name = "history.json",
+        dataset_fingerprint = new string('d', 64),
+        dataset_metadata = new { symbol = "XAUUSD" },
+        from_date = "2024-01-01",
+        to_date = "2024-06-30",
+        initial_balance = 10000.0,
+        spread_pips = 20.0,
+        commission_per_lot = 7.0,
+        min_trades = 20,
+        workers_used = 4,
+        parameter_ranges = new object[]
+        {
+            new
+            {
+                path = "pullback.rsi_buy_level",
+                kind = "float",
+                values = new object[] { 35.0, 40.0, 45.0 },
+                count = 3
+            },
+            new
+            {
+                path = "pullback.rsi_sell_level",
+                kind = "float",
+                values = new object[] { 55.0, 60.0, 65.0 },
+                count = 3
+            }
+        },
+        combination_count = 9,
+        eligible_count = 8,
+        ineligible_count = 1,
+        candidate_total = 9,
+        candidate_offset = 0,
+        candidate_limit = 10,
+        candidates = new object[]
+        {
+            new
+            {
+                index = 0,
+                rank = 1,
+                eligible = true,
+                score = 12.34,
+                trade_sharpe = 1.8,
+                parameters = new Dictionary<string, object>
+                {
+                    ["pullback.rsi_buy_level"] = 35.0,
+                    ["pullback.rsi_sell_level"] = 60.0
+                },
+                metrics = new
+                {
+                    net_profit = 1234.0,
+                    net_profit_pct = 12.34,
+                    gross_profit = 1600.0,
+                    gross_loss = -366.0,
+                    profit_factor = 4.37,
+                    total_trades = 42,
+                    wins = 27,
+                    losses = 15,
+                    win_rate = 64.28,
+                    average_trade = 29.38,
+                    max_drawdown_usd = 320.0,
+                    max_drawdown_pct = 3.1,
+                    initial_balance = 10000.0,
+                    final_balance = 11234.0,
+                    final_equity = 11234.0
+                },
+                result_hash = new string('r', 64),
+                rejection_reason = (string?)null
+            }
+        },
+        fold_count = 0,
+        leakage_guard_passed = false,
+        folds = Array.Empty<object>()
+    },
+    trading_enabled = false,
+    execution_enabled = false
+});
+var optimizerResult = OptimizerApiParser.ParseResult(optimizerResultPayload);
+Check(optimizerResult.Mode == "SWEEP" && optimizerResult.Objective == "ROBUST_SCORE_V1", "optimizer result header parser");
+Check(optimizerResult.ParameterRanges.Count == 2 && optimizerResult.CandidateTotal == 9, "optimizer range/candidate count parser");
+Check(optimizerResult.Candidates.Count == 1 && optimizerResult.Candidates[0].Rank == 1, "optimizer top candidate parser");
+Check(optimizerResult.Candidates[0].Metrics.NetProfit == 1234.0, "optimizer candidate metrics parser");
+
+var optimizerHeatmapPayload = JsonSerializer.SerializeToElement(new
+{
+    ok = true,
+    heatmap = new
+    {
+        x_path = "pullback.rsi_buy_level",
+        y_path = "pullback.rsi_sell_level",
+        metric = "net_profit",
+        higher_is_better = true,
+        x_values = new object[] { 35.0, 40.0 },
+        y_values = new object[] { 55.0, 60.0 },
+        cells = new object[]
+        {
+            new { x = 35.0, y = 55.0, value = 100.0, samples = 2 },
+            new { x = 35.0, y = 60.0, value = (double?)null, samples = 0 }
+        },
+        min_value = 100.0,
+        max_value = 100.0
+    }
+});
+var optimizerHeatmap = OptimizerApiParser.ParseHeatmap(optimizerHeatmapPayload);
+Check(optimizerHeatmap.Cells.Count == 2 && optimizerHeatmap.Cells[0].Samples == 2, "optimizer heatmap cell parser");
+Check(optimizerHeatmap.Cells[1].Value is null && optimizerHeatmap.Cells[1].Samples == 0, "optimizer heatmap missing-cell parser");
+
+var walkForwardPayload = JsonSerializer.SerializeToElement(new
+{
+    ok = true,
+    result = new
+    {
+        run_id = Guid.NewGuid().ToString(),
+        created_at_utc = "2026-09-25T08:31:00+00:00",
+        mode = "WALK_FORWARD",
+        model = "WALK_FORWARD_V1",
+        objective = "ROBUST_SCORE_V1",
+        backtest_model = "M1_OHLC_PARITY_V1",
+        optimizer_hash = new string('w', 64),
+        base_profile_hash = new string('p', 64),
+        dataset_file_name = "history.json",
+        dataset_fingerprint = new string('d', 64),
+        dataset_metadata = new { symbol = "XAUUSD" },
+        from_date = "2024-01-01",
+        to_date = "2024-12-31",
+        initial_balance = 10000.0,
+        spread_pips = 20.0,
+        commission_per_lot = 7.0,
+        min_trades = 20,
+        workers_used = 4,
+        parameter_ranges = Array.Empty<object>(),
+        combination_count_per_fold = 10,
+        candidate_total = 0,
+        candidate_offset = 0,
+        candidate_limit = 10,
+        candidates = Array.Empty<object>(),
+        fold_count = 1,
+        leakage_guard_passed = true,
+        folds = new object[]
+        {
+            new
+            {
+                fold = 1,
+                train_from = "2024-01-01",
+                train_to = "2024-08-31",
+                test_from = "2024-09-01",
+                test_to = "2024-10-15",
+                train_date_count = 170,
+                test_date_count = 30,
+                rolling = true,
+                selection_source = "TRAIN_ONLY",
+                leakage_guard_passed = true,
+                best_parameters = new Dictionary<string, object>
+                {
+                    ["pullback.rsi_buy_level"] = 40.0
+                },
+                train_score = 10.5,
+                train_trade_sharpe = 1.2,
+                train_result_hash = new string('t', 64),
+                train_metrics = new
+                {
+                    net_profit = 500.0,
+                    net_profit_pct = 5.0,
+                    gross_profit = 700.0,
+                    gross_loss = -200.0,
+                    profit_factor = 3.5,
+                    total_trades = 30,
+                    wins = 20,
+                    losses = 10,
+                    win_rate = 66.67,
+                    average_trade = 16.67,
+                    max_drawdown_usd = 150.0,
+                    max_drawdown_pct = 1.5,
+                    initial_balance = 10000.0,
+                    final_balance = 10500.0,
+                    final_equity = 10500.0
+                },
+                test_result_hash = new string('u', 64),
+                test_trade_sharpe = 0.8,
+                test_metrics = new
+                {
+                    net_profit = 120.0,
+                    net_profit_pct = 1.2,
+                    gross_profit = 180.0,
+                    gross_loss = -60.0,
+                    profit_factor = 3.0,
+                    total_trades = 8,
+                    wins = 5,
+                    losses = 3,
+                    win_rate = 62.5,
+                    average_trade = 15.0,
+                    max_drawdown_usd = 80.0,
+                    max_drawdown_pct = 0.8,
+                    initial_balance = 10000.0,
+                    final_balance = 10120.0,
+                    final_equity = 10120.0
+                }
+            }
+        },
+        aggregate = new
+        {
+            average_net_profit = 120.0,
+            average_net_profit_pct = 1.2,
+            average_trade_sharpe = 0.8,
+            average_win_rate = 62.5,
+            average_max_drawdown_pct = 0.8,
+            average_profit_factor = 3.0,
+            positive_fold_ratio = 1.0,
+            stability = 0.91
+        }
+    }
+});
+var walkForward = OptimizerApiParser.ParseResult(walkForwardPayload);
+Check(walkForward.Mode == "WALK_FORWARD" && walkForward.LeakageGuardPassed, "walk-forward result parser");
+Check(walkForward.Folds.Count == 1 && walkForward.Folds[0].SelectionSource == "TRAIN_ONLY", "walk-forward train-only fold parser");
+Check(walkForward.Aggregate is { Stability: 0.91, PositiveFoldRatio: 1.0 }, "walk-forward aggregate parser");
+
 Console.WriteLine($"XAUPY IPC contract self-test complete: {passed} checks passed.");

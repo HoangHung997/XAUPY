@@ -1,0 +1,422 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="XAUPY.Desktop.OptimizerDashboard">
+  <UserControl.Styles>
+    <Style Selector="TextBlock.optHeader">
+      <Setter Property="Foreground" Value="#BDD3E8"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button.optRow">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    </Style>
+    <Style Selector="Button.optRow:pointerover">
+      <Setter Property="Background" Value="#0A2844"/>
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="8">
+      <!-- Approved optimizer header -->
+      <Border Classes="panel">
+        <Grid ColumnDefinitions="*,155,108,108,120,170,120"
+              ColumnSpacing="8"
+              Margin="12,8">
+          <StackPanel Grid.Column="0">
+            <TextBlock Text="Tối ưu chiến lược - Parameter Sweep"
+                       FontSize="20"
+                       FontWeight="Bold"/>
+            <TextBlock Text="Tìm kiếm bộ tham số tối ưu cho XAUUSD bằng BacktestEngine parity"
+                       Classes="dim"
+                       FontSize="12"/>
+          </StackPanel>
+
+          <StackPanel Grid.Column="1" Spacing="3">
+            <TextBlock Text="Preset tối ưu" Classes="label"/>
+            <ComboBox x:Name="OptimizerPresetCombo" SelectedIndex="0">
+              <ComboBoxItem Content="Custom"/>
+            </ComboBox>
+          </StackPanel>
+
+          <Button Grid.Column="2"
+                  Classes="secondary"
+                  Content="💾  Lưu preset"
+                  VerticalAlignment="Bottom"
+                  Click="SavePreset_OnClick"/>
+
+          <Button Grid.Column="3"
+                  Classes="secondary"
+                  Content="⬆  Tải preset"
+                  VerticalAlignment="Bottom"
+                  Click="LoadPreset_OnClick"/>
+
+          <Button Grid.Column="4"
+                  Classes="secondary"
+                  Content="▣  Dữ liệu M1"
+                  VerticalAlignment="Bottom"
+                  Click="SelectDataset_OnClick"/>
+
+          <Button x:Name="StartOptimizerButton"
+                  Grid.Column="5"
+                  Background="#078B3C"
+                  BorderBrush="#16D36B"
+                  BorderThickness="1"
+                  CornerRadius="5"
+                  Foreground="White"
+                  FontWeight="Bold"
+                  Content="▶  BẮT ĐẦU TỐI ƯU"
+                  VerticalAlignment="Bottom"
+                  MinHeight="42"
+                  Click="StartOptimizer_OnClick"/>
+
+          <Button x:Name="StopOptimizerButton"
+                  Grid.Column="6"
+                  Classes="secondary"
+                  Content="■  DỪNG"
+                  VerticalAlignment="Bottom"
+                  MinHeight="42"
+                  IsEnabled="False"
+                  Click="StopOptimizer_OnClick"/>
+        </Grid>
+      </Border>
+
+      <Grid ColumnDefinitions="1.12*,1.28*" ColumnSpacing="8">
+        <!-- Parameter ranges -->
+        <Border Grid.Column="0" Classes="panel">
+          <Grid RowDefinitions="36,Auto,Auto">
+            <Border Grid.Row="0" Background="#082038" Padding="12,8">
+              <TextBlock Text="Phạm vi tham số tối ưu" Classes="panelTitle"/>
+            </Border>
+
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="1.3*,1*,1*,0.75*,1*"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                  ColumnSpacing="6"
+                  RowSpacing="5"
+                  Margin="10,7,10,5">
+              <TextBlock Grid.Row="0" Text="Tham số" Classes="optHeader"/>
+              <TextBlock Grid.Row="0" Grid.Column="1" Text="Giá trị tối thiểu" Classes="optHeader"/>
+              <TextBlock Grid.Row="0" Grid.Column="2" Text="Giá trị tối đa" Classes="optHeader"/>
+              <TextBlock Grid.Row="0" Grid.Column="3" Text="Bước nhảy" Classes="optHeader"/>
+              <TextBlock Grid.Row="0" Grid.Column="4" Text="Giá trị mặc định" Classes="optHeader"/>
+
+              <TextBlock Grid.Row="1" Text="Direction TF" Classes="label" VerticalAlignment="Center"/>
+              <ComboBox x:Name="DirectionTfMinCombo" Grid.Row="1" Grid.Column="1" SelectionChanged="ParameterInput_OnChanged"/>
+              <ComboBox x:Name="DirectionTfMaxCombo" Grid.Row="1" Grid.Column="2" SelectionChanged="ParameterInput_OnChanged"/>
+              <TextBlock Grid.Row="1" Grid.Column="3" Text="1" HorizontalAlignment="Center" VerticalAlignment="Center" Classes="dim"/>
+              <TextBlock x:Name="DirectionTfDefaultText" Grid.Row="1" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
+
+              <TextBlock Grid.Row="2" Text="Pullback TF" Classes="label" VerticalAlignment="Center"/>
+              <ComboBox x:Name="PullbackTfMinCombo" Grid.Row="2" Grid.Column="1" SelectionChanged="ParameterInput_OnChanged"/>
+              <ComboBox x:Name="PullbackTfMaxCombo" Grid.Row="2" Grid.Column="2" SelectionChanged="ParameterInput_OnChanged"/>
+              <TextBlock Grid.Row="2" Grid.Column="3" Text="1" HorizontalAlignment="Center" VerticalAlignment="Center" Classes="dim"/>
+              <TextBlock x:Name="PullbackTfDefaultText" Grid.Row="2" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
+
+              <TextBlock Grid.Row="3" Text="Trigger TF" Classes="label" VerticalAlignment="Center"/>
+              <ComboBox x:Name="TriggerTfMinCombo" Grid.Row="3" Grid.Column="1" SelectionChanged="ParameterInput_OnChanged"/>
+              <ComboBox x:Name="TriggerTfMaxCombo" Grid.Row="3" Grid.Column="2" SelectionChanged="ParameterInput_OnChanged"/>
+              <TextBlock Grid.Row="3" Grid.Column="3" Text="1" HorizontalAlignment="Center" VerticalAlignment="Center" Classes="dim"/>
+              <TextBlock x:Name="TriggerTfDefaultText" Grid.Row="3" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
+
+              <TextBlock Grid.Row="4" Text="RSI Buy (&lt;=)" Classes="label" VerticalAlignment="Center"/>
+              <TextBox x:Name="RsiBuyMinBox" Grid.Row="4" Grid.Column="1" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="RsiBuyMaxBox" Grid.Row="4" Grid.Column="2" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="RsiBuyStepBox" Grid.Row="4" Grid.Column="3" TextChanged="ParameterInput_OnChanged"/>
+              <TextBlock x:Name="RsiBuyDefaultText" Grid.Row="4" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
+
+              <TextBlock Grid.Row="5" Text="RSI Sell (&gt;=)" Classes="label" VerticalAlignment="Center"/>
+              <TextBox x:Name="RsiSellMinBox" Grid.Row="5" Grid.Column="1" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="RsiSellMaxBox" Grid.Row="5" Grid.Column="2" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="RsiSellStepBox" Grid.Row="5" Grid.Column="3" TextChanged="ParameterInput_OnChanged"/>
+              <TextBlock x:Name="RsiSellDefaultText" Grid.Row="5" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
+
+              <TextBlock x:Name="TriggerDeltaParameterLabel" Grid.Row="6" Text="Trigger Delta" Classes="label" VerticalAlignment="Center"/>
+              <TextBox x:Name="RsiDeltaMinBox" Grid.Row="6" Grid.Column="1" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="RsiDeltaMaxBox" Grid.Row="6" Grid.Column="2" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="RsiDeltaStepBox" Grid.Row="6" Grid.Column="3" TextChanged="ParameterInput_OnChanged"/>
+              <TextBlock x:Name="RsiDeltaDefaultText" Grid.Row="6" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
+
+              <TextBlock x:Name="MaParameterLabel" Grid.Row="7" Text="MA Period" Classes="label" VerticalAlignment="Center"/>
+              <TextBox x:Name="EmaMinBox" Grid.Row="7" Grid.Column="1" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="EmaMaxBox" Grid.Row="7" Grid.Column="2" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="EmaStepBox" Grid.Row="7" Grid.Column="3" TextChanged="ParameterInput_OnChanged"/>
+              <TextBlock x:Name="EmaDefaultText" Grid.Row="7" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
+
+              <TextBlock x:Name="SlParameterLabel" Grid.Row="8" Text="SL Structure Lookback" Classes="label" VerticalAlignment="Center"/>
+              <TextBox x:Name="SlMinBox" Grid.Row="8" Grid.Column="1" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="SlMaxBox" Grid.Row="8" Grid.Column="2" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="SlStepBox" Grid.Row="8" Grid.Column="3" TextChanged="ParameterInput_OnChanged"/>
+              <TextBlock x:Name="SlDefaultText" Grid.Row="8" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
+
+              <TextBlock x:Name="TpParameterLabel" Grid.Row="9" Text="TP Fixed" Classes="label" VerticalAlignment="Center"/>
+              <TextBox x:Name="TpMinBox" Grid.Row="9" Grid.Column="1" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="TpMaxBox" Grid.Row="9" Grid.Column="2" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="TpStepBox" Grid.Row="9" Grid.Column="3" TextChanged="ParameterInput_OnChanged"/>
+              <TextBlock x:Name="TpDefaultText" Grid.Row="9" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
+            </Grid>
+
+            <Border Grid.Row="2" Background="#06182A" BorderBrush="#123D5D" BorderThickness="0,1,0,0" Padding="10,7">
+              <Grid ColumnDefinitions="1.3*,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="9">
+                <TextBlock x:Name="OptimizerDatasetText"
+                           Text="Dataset: chưa chọn"
+                           Classes="dim"
+                           FontSize="10"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                  <TextBlock Text="Range:" Classes="dim" FontSize="10" VerticalAlignment="Center"/>
+                  <TextBox x:Name="OptimizeFromDateBox" Width="88" Height="25" Text="2024-01-01"/>
+                  <TextBlock Text="→" VerticalAlignment="Center"/>
+                  <TextBox x:Name="OptimizeToDateBox" Width="88" Height="25" Text="2024-01-31"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                  <TextBlock Text="Vốn:" Classes="dim" FontSize="10" VerticalAlignment="Center"/>
+                  <TextBox x:Name="OptimizeBalanceBox" Width="72" Height="25" Text="10000"/>
+                  <TextBlock Text="Spr:" Classes="dim" FontSize="10" VerticalAlignment="Center"/>
+                  <TextBox x:Name="OptimizeSpreadBox" Width="42" Height="25" Text="20"/>
+                  <TextBlock Text="Com:" Classes="dim" FontSize="10" VerticalAlignment="Center"/>
+                  <TextBox x:Name="OptimizeCommissionBox" Width="42" Height="25" Text="7"/>
+                </StackPanel>
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5">
+                  <TextBlock Text="Min trades:" Classes="dim" FontSize="10" VerticalAlignment="Center"/>
+                  <TextBox x:Name="MinTradesBox" Width="50" Height="25" Text="20"/>
+                </StackPanel>
+                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="5">
+                  <TextBlock Text="Workers:" Classes="dim" FontSize="10" VerticalAlignment="Center"/>
+                  <TextBox x:Name="WorkersBox" Width="42" Height="25" Text="2"/>
+                </StackPanel>
+                <TextBlock x:Name="CombinationPreviewText"
+                           Grid.Column="5"
+                           Text="Tổ hợp: —"
+                           Foreground="#61B8FF"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+          </Grid>
+        </Border>
+
+        <!-- Real progress + optimizer-owned resources -->
+        <StackPanel Grid.Column="1" Spacing="8">
+          <Border Classes="panel">
+            <Grid RowDefinitions="36,Auto,Auto">
+              <Border Grid.Row="0" Background="#082038" Padding="12,8">
+                <TextBlock Text="Trạng thái tối ưu" Classes="panelTitle"/>
+              </Border>
+
+              <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="12,10,12,4">
+                <Border Width="46" Height="46" CornerRadius="23" BorderBrush="#15D97F" BorderThickness="3" Background="#063225">
+                  <TextBlock Text="⚙" Foreground="#1AE38B" FontSize="25" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                  <TextBlock x:Name="OptimizerStateText" Text="CHƯA CHẠY" FontSize="18" FontWeight="Bold" Foreground="#FFD34D"/>
+                  <TextBlock x:Name="OptimizerPhaseText" Text="Chọn dataset và cấu hình phạm vi tham số." Classes="dim" FontSize="11"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
+                  <TextBlock Text="Thời gian đã chạy" Classes="dim" FontSize="10"/>
+                  <TextBlock x:Name="OptimizerElapsedText" Text="00:00:00" FontSize="18" Foreground="#70B9FF"/>
+                </StackPanel>
+              </Grid>
+
+              <StackPanel Grid.Row="2" Margin="12,4,12,10" Spacing="7">
+                <Grid ColumnDefinitions="*,Auto">
+                  <ProgressBar x:Name="OptimizerProgressBar"
+                               Minimum="0"
+                               Maximum="100"
+                               Value="0"
+                               Height="18"/>
+                  <TextBlock x:Name="OptimizerProgressText"
+                             Grid.Column="1"
+                             Text="0%"
+                             FontWeight="Bold"
+                             Margin="10,0,0,0"
+                             VerticalAlignment="Center"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="*,*,*,*,*,*" ColumnSpacing="8">
+                  <StackPanel Grid.Column="0"><TextBlock Text="Tổng công việc" Classes="dim" FontSize="10"/><TextBlock x:Name="TotalWorkText" Text="0" FontWeight="Bold"/></StackPanel>
+                  <StackPanel Grid.Column="1"><TextBlock Text="Đã hoàn thành" Classes="dim" FontSize="10"/><TextBlock x:Name="CompletedWorkText" Text="0" FontWeight="Bold"/></StackPanel>
+                  <StackPanel Grid.Column="2"><TextBlock Text="Đang xử lý" Classes="dim" FontSize="10"/><TextBlock x:Name="InFlightText" Text="0" FontWeight="Bold"/></StackPanel>
+                  <StackPanel Grid.Column="3"><TextBlock Text="Còn lại" Classes="dim" FontSize="10"/><TextBlock x:Name="RemainingWorkText" Text="0" FontWeight="Bold"/></StackPanel>
+                  <StackPanel Grid.Column="4"><TextBlock Text="Tốc độ" Classes="dim" FontSize="10"/><TextBlock x:Name="OptimizerSpeedText" Text="0 /phút" FontWeight="Bold"/></StackPanel>
+                  <StackPanel Grid.Column="5"><TextBlock Text="Dự kiến xong" Classes="dim" FontSize="10"/><TextBlock x:Name="OptimizerEtaText" Text="—" FontWeight="Bold"/></StackPanel>
+                </Grid>
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <Border Classes="panel">
+            <Grid RowDefinitions="36,Auto">
+              <Border Grid.Row="0" Background="#082038" Padding="12,8">
+                <TextBlock Text="Tài nguyên tính toán" Classes="panelTitle"/>
+              </Border>
+              <Grid Grid.Row="1" ColumnDefinitions="1.3*,1*" ColumnSpacing="15" Margin="12,9">
+                <StackPanel Spacing="8">
+                  <Grid ColumnDefinitions="110,*,55">
+                    <TextBlock Text="Worker slots" Classes="label"/>
+                    <ProgressBar x:Name="WorkerProgressBar" Grid.Column="1" Minimum="0" Maximum="100" Value="0" Height="14"/>
+                    <TextBlock x:Name="WorkerUtilizationText" Grid.Column="2" Text="0%" HorizontalAlignment="Right"/>
+                  </Grid>
+                  <Grid ColumnDefinitions="110,*,55">
+                    <TextBlock Text="Throughput" Classes="label"/>
+                    <ProgressBar Grid.Column="1" Minimum="0" Maximum="100" Value="0" Height="14" IsEnabled="False"/>
+                    <TextBlock x:Name="ThroughputText" Grid.Column="2" Text="—" HorizontalAlignment="Right"/>
+                  </Grid>
+                  <Grid ColumnDefinitions="110,*">
+                    <TextBlock Text="CPU / RAM / Disk" Classes="label"/>
+                    <TextBlock Grid.Column="1" Text="—  (Task 014 diagnostics)" Classes="dim"/>
+                  </Grid>
+                </StackPanel>
+
+                <Grid Grid.Column="1" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="7">
+                  <TextBlock Grid.Row="0" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="0" Grid.Column="1" Text="Python Engine" Classes="label"/><TextBlock Grid.Row="0" Grid.Column="2" Text="OK" Foreground="#18E58B"/>
+                  <TextBlock Grid.Row="1" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="1" Grid.Column="1" Text="Dataset" Classes="label"/><TextBlock x:Name="DatasetResourceText" Grid.Row="1" Grid.Column="2" Text="WAIT" Foreground="#FFD34D"/>
+                  <TextBlock Grid.Row="2" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="2" Grid.Column="1" Text="Backtest Engine" Classes="label"/><TextBlock Grid.Row="2" Grid.Column="2" Text="OK" Foreground="#18E58B"/>
+                  <TextBlock Grid.Row="3" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="3" Grid.Column="1" Text="Result Writer" Classes="label"/><TextBlock x:Name="WriterResourceText" Grid.Row="3" Grid.Column="2" Text="READY" Foreground="#18E58B"/>
+                </Grid>
+              </Grid>
+            </Grid>
+          </Border>
+        </StackPanel>
+      </Grid>
+
+      <!-- Bottom approved zones -->
+      <Grid ColumnDefinitions="1.35*,1.05*,0.78*" ColumnSpacing="8">
+        <!-- Top setups -->
+        <Border Grid.Column="0" Classes="panel" MinHeight="350">
+          <Grid RowDefinitions="36,Auto,*">
+            <Border Grid.Row="0" Background="#082038" Padding="12,8">
+              <TextBlock Text="Top 10 bộ tham số tốt nhất" Classes="panelTitle"/>
+            </Border>
+
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="34,62,92,68,70,72,*,62"
+                  Margin="8,6,8,3">
+              <TextBlock Text="#" Classes="optHeader"/>
+              <TextBlock Grid.Column="1" Text="Score" Classes="optHeader"/>
+              <TextBlock Grid.Column="2" Text="Lợi nhuận" Classes="optHeader"/>
+              <TextBlock Grid.Column="3" Text="Sharpe" Classes="optHeader"/>
+              <TextBlock Grid.Column="4" Text="Max DD" Classes="optHeader"/>
+              <TextBlock Grid.Column="5" Text="Winrate" Classes="optHeader"/>
+              <TextBlock Grid.Column="6" Text="Tham số chính" Classes="optHeader"/>
+              <TextBlock Grid.Column="7" Text="Hành động" Classes="optHeader"/>
+            </Grid>
+
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+              <StackPanel x:Name="TopSetupRowsHost" Margin="6,0,6,5"/>
+            </ScrollViewer>
+          </Grid>
+        </Border>
+
+        <!-- Heatmap -->
+        <Border Grid.Column="1" Classes="panel" MinHeight="350">
+          <Grid RowDefinitions="36,Auto,*">
+            <Border Grid.Row="0" Background="#082038" Padding="12,8">
+              <TextBlock Text="Heatmap kết quả tối ưu" Classes="panelTitle"/>
+            </Border>
+
+            <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="6" Margin="9,7,9,4">
+              <StackPanel Grid.Column="0" Spacing="3">
+                <TextBlock Text="Trục X" Classes="dim" FontSize="10"/>
+                <ComboBox x:Name="HeatmapXCombo" SelectionChanged="HeatmapSelection_OnChanged"/>
+              </StackPanel>
+              <StackPanel Grid.Column="1" Spacing="3">
+                <TextBlock Text="Trục Y" Classes="dim" FontSize="10"/>
+                <ComboBox x:Name="HeatmapYCombo" SelectionChanged="HeatmapSelection_OnChanged"/>
+              </StackPanel>
+              <StackPanel Grid.Column="2" Spacing="3">
+                <TextBlock Text="Chỉ số màu" Classes="dim" FontSize="10"/>
+                <ComboBox x:Name="HeatmapMetricCombo" SelectedIndex="0" SelectionChanged="HeatmapSelection_OnChanged">
+                  <ComboBoxItem Content="Lợi nhuận ròng" Tag="net_profit"/>
+                  <ComboBoxItem Content="Robust Score" Tag="score"/>
+                  <ComboBoxItem Content="Winrate" Tag="win_rate"/>
+                  <ComboBoxItem Content="Profit Factor" Tag="profit_factor"/>
+                  <ComboBoxItem Content="Max Drawdown" Tag="max_drawdown_pct"/>
+                  <ComboBoxItem Content="Trade Sharpe" Tag="trade_sharpe"/>
+                </ComboBox>
+              </StackPanel>
+            </Grid>
+
+            <ScrollViewer Grid.Row="2"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto"
+                          Margin="8,4,8,8">
+              <Grid x:Name="HeatmapGridHost"/>
+            </ScrollViewer>
+          </Grid>
+        </Border>
+
+        <!-- Walk-forward -->
+        <Border Grid.Column="2" Classes="panel" MinHeight="350">
+          <Grid RowDefinitions="36,Auto,Auto,*">
+            <Border Grid.Row="0" Background="#082038" Padding="12,8">
+              <TextBlock Text="Walk-Forward Validation" Classes="panelTitle"/>
+            </Border>
+
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="1.1*,1*"
+                  RowDefinitions="Auto,Auto,Auto"
+                  RowSpacing="7"
+                  ColumnSpacing="7"
+                  Margin="10,8,10,5">
+              <TextBlock Grid.Row="0" Text="Số giai đoạn (folds)" Classes="label" VerticalAlignment="Center"/>
+              <TextBox x:Name="WalkForwardFoldsBox" Grid.Row="0" Grid.Column="1" Text="5"/>
+
+              <TextBlock Grid.Row="1" Text="Tỷ lệ train / test" Classes="label" VerticalAlignment="Center"/>
+              <ComboBox x:Name="WalkForwardRatioCombo" Grid.Row="1" Grid.Column="1" SelectedIndex="0">
+                <ComboBoxItem Content="70% / 30%" Tag="0.70"/>
+                <ComboBoxItem Content="60% / 40%" Tag="0.60"/>
+                <ComboBoxItem Content="80% / 20%" Tag="0.80"/>
+              </ComboBox>
+
+              <TextBlock Grid.Row="2" Text="Bước trượt (rolling)" Classes="label" VerticalAlignment="Center"/>
+              <ComboBox x:Name="WalkForwardRollingCombo" Grid.Row="2" Grid.Column="1" SelectedIndex="0">
+                <ComboBoxItem Content="Có" Tag="true"/>
+                <ComboBoxItem Content="Không (anchored)" Tag="false"/>
+              </ComboBox>
+            </Grid>
+
+            <Button Grid.Row="2"
+                    x:Name="RunWalkForwardButton"
+                    Margin="10,2,10,8"
+                    Background="#0866F4"
+                    BorderBrush="#238AFF"
+                    BorderThickness="1"
+                    CornerRadius="5"
+                    Foreground="White"
+                    FontWeight="Bold"
+                    Content="▶  CHẠY WALK-FORWARD"
+                    Click="RunWalkForward_OnClick"/>
+
+            <StackPanel Grid.Row="3" Margin="10,0,10,10" Spacing="6">
+              <Border Background="#082038" Padding="8,5">
+                <TextBlock Text="Kết quả Walk-Forward" FontWeight="SemiBold"/>
+              </Border>
+              <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
+                <TextBlock Grid.Row="0" Text="Lợi nhuận trung bình" Classes="label"/><TextBlock x:Name="WfAverageProfitText" Grid.Row="0" Grid.Column="1" Text="—" Foreground="#18E58B"/>
+                <TextBlock Grid.Row="1" Text="Sharpe trung bình" Classes="label"/><TextBlock x:Name="WfAverageSharpeText" Grid.Row="1" Grid.Column="1" Text="—" Foreground="#18E58B"/>
+                <TextBlock Grid.Row="2" Text="Winrate trung bình" Classes="label"/><TextBlock x:Name="WfAverageWinrateText" Grid.Row="2" Grid.Column="1" Text="—" Foreground="#18E58B"/>
+                <TextBlock Grid.Row="3" Text="Max DD trung bình" Classes="label"/><TextBlock x:Name="WfAverageDdText" Grid.Row="3" Grid.Column="1" Text="—" Foreground="#FF526C"/>
+                <TextBlock Grid.Row="4" Text="Positive folds" Classes="label"/><TextBlock x:Name="WfPositiveFoldsText" Grid.Row="4" Grid.Column="1" Text="—"/>
+                <TextBlock Grid.Row="5" Text="Độ ổn định (Stability)" Classes="label"/><TextBlock x:Name="WfStabilityText" Grid.Row="5" Grid.Column="1" Text="—" Foreground="#18E58B"/>
+              </Grid>
+              <Border Classes="panelSoft" Padding="8,6">
+                <TextBlock x:Name="WfLeakageText"
+                           Text="Chưa có Walk-Forward result."
+                           Classes="dim"
+                           FontSize="10"
+                           TextWrapping="Wrap"/>
+              </Border>
+              <StackPanel x:Name="WalkForwardFoldHost" Spacing="3"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

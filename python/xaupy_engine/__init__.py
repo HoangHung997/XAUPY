@@ -1,8 +1,8 @@
 """XAUPY Python Engine.
 
-Task 011 adds deterministic historical Backtest parity using the same
-StrategyEngine as live processing, with persisted reproducible results.
-Broker execution remains hard-locked.
+Task 012 adds deterministic parameter optimization and train-only walk-forward
+validation on top of the Task 011 BacktestEngine. Broker execution remains
+hard-locked.
 """
 
-__version__ = "0.11.0-task011"
+__version__ = "0.12.0-task012"

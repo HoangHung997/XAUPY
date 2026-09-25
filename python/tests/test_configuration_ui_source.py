@@ -27,12 +27,14 @@ class ConfigurationUiSourceTests(unittest.TestCase):
         self.assertIn('Tag="configuration"', self.main_xaml)
 
     def test_toolbar_has_required_profile_and_set_actions(self):
+        # Labels follow the approved mockup while the event handlers keep the
+        # exact Task 006 behavior.
         for label in (
             "Mặc định",
-            "Hoàn tác Active",
+            "Hoàn tác",
             "Xác thực",
-            "Áp dụng Active",
-            "Mở JSON",
+            "Áp dụng cấu hình",
+            "Nhập JSON",
             "Lưu JSON",
             "Nhập .set",
             "Xuất .set",
@@ -40,8 +42,40 @@ class ConfigurationUiSourceTests(unittest.TestCase):
             with self.subTest(label=label):
                 self.assertIn(label, self.xaml)
 
+        for handler in (
+            "Defaults_OnClick",
+            "ReloadActive_OnClick",
+            "Validate_OnClick",
+            "Apply_OnClick",
+            "LoadJson_OnClick",
+            "SaveJson_OnClick",
+            "ImportSet_OnClick",
+            "ExportSet_OnClick",
+        ):
+            with self.subTest(handler=handler):
+                self.assertIn(handler, self.xaml)
+
+    def test_editor_matches_approved_configuration_zones(self):
+        for label in (
+            "Danh mục cấu hình",
+            "Khởi tạo &amp; an toàn",
+            "Hướng giao dịch",
+            "Nhận diện nhịp hồi",
+            "Xác nhận vào lệnh",
+            "Stop loss",
+            "Take profit",
+            "Quản lý sau vào",
+            "Phiên giao dịch",
+            "Lọc tin",
+            "Cấu hình chiến lược giao dịch",
+            "Chọn profile",
+        ):
+            with self.subTest(label=label):
+                self.assertIn(label, self.xaml)
+
     def test_editor_is_schema_driven_and_searchable(self):
         self.assertIn('x:Name="SearchBox"', self.xaml)
+        self.assertIn('x:Name="FieldsHost"', self.xaml)
         self.assertIn("GetConfigSchemaAsync", self.code)
         self.assertIn("BuildSchema", self.code)
         self.assertIn("field_count", self.code)

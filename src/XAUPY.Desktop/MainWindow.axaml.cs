@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -16,44 +17,55 @@ public partial class MainWindow : Window
     private readonly MonitoringDashboard _monitoringDashboard;
     private readonly List<double> _priceHistory = new();
     private readonly Queue<string> _quickLogs = new();
+    private readonly DispatcherTimer _clockTimer;
 
     private EngineConnectionState? _lastEngineState;
     private bool? _lastBridgeConnected;
     private bool _hadMarketData;
 
-    private static readonly IReadOnlyDictionary<string, (string Title, string Subtitle)> Pages =
-        new Dictionary<string, (string, string)>
+    private static readonly IReadOnlyDictionary<string, (string Title, string Subtitle, string NavName)> Pages =
+        new Dictionary<string, (string, string, string)>
         {
             ["overview"] = (
                 "Tổng quan",
-                "Giá XAUUSD, trạng thái hệ thống, tài khoản, chart, chiến lược, lệnh gần đây và log nhanh."),
+                "Giá XAUUSD, trạng thái hệ thống, tài khoản, chart, chiến lược, lệnh gần đây và log nhanh.",
+                "NavOverview"),
             ["configuration"] = (
                 "Cấu hình",
-                "Full schema-driven editor: 133 tham số, JSON profile, MT5 .set import/export, validation và active profile."),
+                "Full schema-driven editor: 133 tham số, JSON profile, MT5 .set import/export, validation và active profile.",
+                "NavConfiguration"),
             ["strategy"] = (
                 "Chiến lược",
-                "Direction → Pullback → Trigger realtime từ Python Strategy Engine và active profile."),
+                "Direction → Pullback → Trigger realtime từ Python Strategy Engine và active profile.",
+                "NavStrategy"),
             ["monitoring"] = (
                 "Giám sát",
-                "Quote, closed bars, indicator và condition state realtime; không hiển thị dữ liệu giả."),
+                "Quote, closed bars, indicator và condition state realtime; không hiển thị dữ liệu giả.",
+                "NavMonitoring"),
             ["orders"] = (
                 "Lệnh & Vị thế",
-                "Execution và màn hình quản lý lệnh thuộc Task 009."),
+                "Execution và màn hình quản lý lệnh thuộc Task 009.",
+                "NavOrders"),
             ["backtest"] = (
                 "Backtest",
-                "Backtest parity engine thuộc Task 011."),
+                "Backtest parity engine thuộc Task 011.",
+                "NavBacktest"),
             ["optimization"] = (
                 "Tối ưu",
-                "Parameter sweep và walk-forward thuộc Task 012."),
+                "Parameter sweep và walk-forward thuộc Task 012.",
+                "NavOptimization"),
             ["logs"] = (
                 "Nhật ký",
-                "Structured trading journal thuộc Task 010."),
+                "Structured trading journal thuộc Task 010.",
+                "NavLogs"),
             ["tools"] = (
                 "Công cụ",
-                "Diagnostics suite thuộc Task 014."),
+                "Diagnostics suite thuộc Task 014.",
+                "NavTools"),
             ["settings"] = (
                 "Cài đặt",
-                "Startup/backup/fail-safe settings thuộc Task 015.")
+                "Startup/backup/fail-safe settings thuộc Task 015.",
+                "NavSettings")
         };
 
     public MainWindow()
@@ -71,9 +83,16 @@ public partial class MainWindow : Window
         _monitoringDashboard = this.FindControl<MonitoringDashboard>("MonitoringDashboard")
             ?? throw new InvalidOperationException("MonitoringDashboard missing.");
 
-        AppendQuickLog("Control Center Task 008 khởi tạo.");
+        _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _clockTimer.Tick += (_, _) => UpdateClock();
+        _clockTimer.Start();
+        UpdateClock();
+
+        AppendQuickLog("N30 Control Center khởi tạo.");
         ApplyConfigurationSummary(ConfigurationSummary.Default);
+        ApplyStrategySnapshot(StrategySnapshot.Empty);
         ResetOverviewValues();
+        SetNavActive("overview");
 
         Opened += async (_, _) =>
         {
@@ -81,7 +100,11 @@ public partial class MainWindow : Window
             await _engineSupervisor.StartAsync();
         };
 
-        Closed += (_, _) => _engineSupervisor.Dispose();
+        Closed += (_, _) =>
+        {
+            _clockTimer.Stop();
+            _engineSupervisor.Dispose();
+        };
     }
 
     private void NavButton_OnClick(object? sender, RoutedEventArgs e)
@@ -91,13 +114,17 @@ public partial class MainWindow : Window
 
         FindText("PageTitle").Text = page.Title;
         FindText("PageSubtitle").Text = page.Subtitle;
+        SetNavActive(key);
 
         bool overview = string.Equals(key, "overview", StringComparison.Ordinal);
         bool configuration = string.Equals(key, "configuration", StringComparison.Ordinal);
         bool strategy = string.Equals(key, "strategy", StringComparison.Ordinal);
         bool monitoring = string.Equals(key, "monitoring", StringComparison.Ordinal);
+        bool liveSidebar = overview || strategy || monitoring;
 
+        this.FindControl<ScrollViewer>("OverviewScroll")!.IsVisible = overview;
         this.FindControl<StackPanel>("OverviewContent")!.IsVisible = overview;
+        this.FindControl<ScrollViewer>("LiveSidebar")!.IsVisible = liveSidebar;
         _configurationEditor.IsVisible = configuration;
         _strategyDashboard.IsVisible = strategy;
         _monitoringDashboard.IsVisible = monitoring;
@@ -115,6 +142,37 @@ public partial class MainWindow : Window
                 $"Task 008 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát. {page.Subtitle}";
         }
     }
+
+    private void SetNavActive(string activeKey)
+    {
+        foreach (var item in Pages)
+        {
+            var button = this.FindControl<Button>(item.Value.NavName);
+            if (button is null)
+                continue;
+
+            bool active = string.Equals(item.Key, activeKey, StringComparison.Ordinal);
+            bool has = button.Classes.Contains("active");
+            if (active && !has)
+                button.Classes.Add("active");
+            else if (!active && has)
+                button.Classes.Remove("active");
+        }
+    }
+
+    private void TitleBar_OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            BeginMoveDrag(e);
+    }
+
+    private void Minimize_OnClick(object? sender, RoutedEventArgs e) =>
+        WindowState = WindowState.Minimized;
+
+    private void Maximize_OnClick(object? sender, RoutedEventArgs e) =>
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+
+    private void Close_OnClick(object? sender, RoutedEventArgs e) => Close();
 
     private async void StartEngine_OnClick(object? sender, RoutedEventArgs e)
     {
@@ -142,10 +200,12 @@ public partial class MainWindow : Window
         FindText("EngineStateText").Foreground = engineColor;
         FindText("HeaderEnginePillText").Text = $"ENGINE {engineText}";
         FindText("HeaderEnginePillText").Foreground = engineColor;
+        FindText("FooterEngineStateText").Text = engineText;
+        FindText("FooterEngineStateText").Foreground = engineColor;
         FindText("EngineDetailText").Text = e.Detail;
         FindText("LastHeartbeatText").Text = e.LastHeartbeatUtc.HasValue
-            ? $"Heartbeat: {e.LastHeartbeatUtc.Value.ToLocalTime():HH:mm:ss}"
-            : "Heartbeat: —";
+            ? e.LastHeartbeatUtc.Value.ToLocalTime().ToString("HH:mm:ss")
+            : "—";
 
         if (_lastEngineState != e.State)
         {
@@ -164,16 +224,17 @@ public partial class MainWindow : Window
 
     private void ApplyBridgeStatus(Mt5BridgeStatus bridge)
     {
-        var bridgeText = bridge.Connected ? "CONNECTED" : "WAITING";
+        var bridgeText = bridge.Connected ? "OK" : "WAIT";
         var bridgeColor = bridge.Connected ? Brushes.LightGreen : Brushes.Gold;
 
         FindText("BridgeStateText").Text = bridgeText;
         FindText("BridgeStateText").Foreground = bridgeColor;
-        FindText("HeaderBridgePillText").Text = bridge.Connected ? "MT5 CONNECTED" : "MT5 WAITING";
+        FindText("HeaderBridgePillText").Text =
+            bridge.Connected ? "●  Connected to MT5" : "●  Waiting for MT5";
         FindText("HeaderBridgePillText").Foreground = bridgeColor;
         FindText("BridgeAgeText").Text = bridge.AgeMs.HasValue
-            ? $"Snapshot age: {bridge.AgeMs.Value} ms"
-            : "Snapshot age: —";
+            ? $"{bridge.AgeMs.Value} ms"
+            : "—";
 
         var symbol = string.IsNullOrWhiteSpace(bridge.Symbol) ? "?" : bridge.Symbol;
         var mode = string.IsNullOrWhiteSpace(bridge.AccountTradeMode) ? "?" : bridge.AccountTradeMode;
@@ -182,7 +243,7 @@ public partial class MainWindow : Window
             ? $"{symbol} • {mode} • terminal={(bridge.TerminalConnected ? "online" : "offline")} • snapshots={bridge.SnapshotsTotal}"
             : "Chưa nhận snapshot hợp lệ hoặc Bridge đã stale.";
 
-        FindText("GuardianReasonValue").Text = bridge.GuardianReason;
+        FindText("GuardianReasonValue").Text = bridge.Connected ? "OK" : bridge.GuardianReason;
 
         if (_lastBridgeConnected != bridge.Connected)
         {
@@ -223,6 +284,17 @@ public partial class MainWindow : Window
         FindText("DirectionTfValue").Text = strategy.DirectionTimeframe;
         FindText("PullbackTfValue").Text = strategy.PullbackTimeframe;
         FindText("TriggerTfValue").Text = strategy.TriggerTimeframe;
+
+        FindText("OverviewDirectionState").Text =
+            $"{strategy.Direction} ({strategy.DirectionTimeframe})";
+        FindText("OverviewDirectionState").Foreground = DirectionColor(strategy.Direction);
+        FindText("OverviewPullbackState").Text = PullbackState(strategy);
+        FindText("OverviewTriggerState").Text = TriggerState(strategy);
+        FindText("OverviewZTrigger").Text = FormatMetric(strategy.TriggerIndicators.Z);
+        FindText("OverviewRsiTrigger").Text = FormatMetric(strategy.TriggerIndicators.Rsi);
+        FindText("OverviewZPullback").Text = FormatMetric(strategy.PullbackIndicators.Z);
+        FindText("OverviewRsiPullback").Text = FormatMetric(strategy.PullbackIndicators.Rsi);
+        FindText("OverviewMaValue").Text = FormatMetric(strategy.DirectionIndicators.Ma);
     }
 
     private void ApplyOverviewSnapshot(OverviewSnapshot overview)
@@ -246,8 +318,8 @@ public partial class MainWindow : Window
         FindText("BidValue").Text = FormatPrice(overview.Bid);
         FindText("AskValue").Text = FormatPrice(overview.Ask);
         FindText("SpreadValue").Text = overview.SpreadPoints.HasValue
-            ? $"Spread: {overview.SpreadPoints.Value:0.##} points"
-            : "Spread: —";
+            ? $"Spread {overview.SpreadPoints.Value:0.##} pt"
+            : "Spread —";
 
         FindText("BalanceValue").Text = FormatMoney(overview.Balance, currency);
         FindText("EquityValue").Text = FormatMoney(overview.Equity, currency);
@@ -257,10 +329,14 @@ public partial class MainWindow : Window
             : $"Currency: {currency}";
         FindText("AccountModeValue").Text = string.IsNullOrWhiteSpace(overview.AccountTradeMode)
             ? "MT5: connected"
-            : $"MT5: {overview.AccountTradeMode}";
+            : overview.AccountTradeMode!;
 
         FindText("PositionsCountValue").Text = overview.PositionsCount.ToString();
         FindText("OrdersCountValue").Text = overview.OrdersCount.ToString();
+        FindText("SidebarPositionsText").Text = overview.PositionsCount.ToString();
+        FindText("FooterSpreadText").Text = overview.SpreadPoints.HasValue
+            ? overview.SpreadPoints.Value.ToString("0.##")
+            : "—";
 
         FindText("RecentOrdersEmptyText").Text =
             overview.PositionsCount == 0 && overview.OrdersCount == 0
@@ -286,7 +362,7 @@ public partial class MainWindow : Window
     {
         FindText("BidValue").Text = "—";
         FindText("AskValue").Text = "—";
-        FindText("SpreadValue").Text = "Spread: —";
+        FindText("SpreadValue").Text = "Spread —";
         FindText("BalanceValue").Text = "—";
         FindText("EquityValue").Text = "—";
         FindText("MarginFreeValue").Text = "—";
@@ -294,6 +370,8 @@ public partial class MainWindow : Window
         FindText("AccountModeValue").Text = "MT5: waiting";
         FindText("PositionsCountValue").Text = "0";
         FindText("OrdersCountValue").Text = "0";
+        FindText("SidebarPositionsText").Text = "0";
+        FindText("FooterSpreadText").Text = "—";
         FindText("RecentOrdersEmptyText").Text =
             "Chưa có dữ liệu lệnh. Task 008 chỉ hiển thị dữ liệu thật; execution hiện đang khóa.";
     }
@@ -319,7 +397,7 @@ public partial class MainWindow : Window
             double value = _priceHistory[sourceIndex];
             double normalized = (value - min) / range;
             bar.Height = 28 + (normalized * 145);
-            bar.Opacity = 0.45 + (0.05 * i);
+            bar.Opacity = 0.50 + (0.045 * i);
         }
 
         if (_priceHistory.Count == 0)
@@ -338,10 +416,18 @@ public partial class MainWindow : Window
         FindText("ChartMaxValue").Text = $"Max {max:0.00}";
     }
 
+    private void UpdateClock()
+    {
+        var now = DateTime.Now;
+        FindText("HeaderClockText").Text = now.ToString("HH:mm:ss");
+        FindText("HeaderDateText").Text = now.ToString("dd/MM/yyyy");
+        FindText("FooterServerTimeText").Text = now.ToString("yyyy.MM.dd HH:mm:ss");
+    }
+
     private void AppendQuickLog(string message)
     {
         _quickLogs.Enqueue($"[{DateTime.Now:HH:mm:ss}] {message}");
-        while (_quickLogs.Count > 8)
+        while (_quickLogs.Count > 6)
             _quickLogs.Dequeue();
 
         var log = this.FindControl<TextBlock>("QuickLogText");
@@ -352,6 +438,22 @@ public partial class MainWindow : Window
     private TextBlock FindText(string name) =>
         this.FindControl<TextBlock>(name)
         ?? throw new InvalidOperationException($"Missing UI TextBlock: {name}");
+
+    private static string PullbackState(StrategySnapshot strategy)
+    {
+        if (strategy.ArmedSide is not null)
+            return $"ARMED {strategy.ArmedSide}";
+        if (strategy.PullbackBuyPassed == true)
+            return "BUY READY";
+        if (strategy.PullbackSellPassed == true)
+            return "SELL READY";
+        return strategy.State.StartsWith("WAIT_PULLBACK", StringComparison.Ordinal) ? "ĐANG CHỜ" : "—";
+    }
+
+    private static string TriggerState(StrategySnapshot strategy) =>
+        strategy.State.StartsWith("TRIGGERED_", StringComparison.Ordinal)
+            ? strategy.State
+            : strategy.ArmedSide is not null ? "CHỜ TÍN HIỆU" : "—";
 
     private static string GetEngineStateLabel(EngineConnectionState state) => state switch
     {
@@ -376,6 +478,14 @@ public partial class MainWindow : Window
         return Brushes.LightGray;
     }
 
+    private static IBrush DirectionColor(string direction) => direction switch
+    {
+        "BUY" => Brushes.LightGreen,
+        "SELL" => Brushes.IndianRed,
+        "BOTH" => Brushes.LightBlue,
+        _ => Brushes.LightGray
+    };
+
     private static IBrush EngineStateColor(EngineConnectionState state) => state switch
     {
         EngineConnectionState.Ready => Brushes.LightGreen,
@@ -386,6 +496,9 @@ public partial class MainWindow : Window
 
     private static string FormatPrice(double? value) =>
         value.HasValue ? value.Value.ToString("0.00") : "—";
+
+    private static string FormatMetric(double? value) =>
+        value.HasValue ? value.Value.ToString("0.###") : "—";
 
     private static string FormatMoney(double? value, string currency)
     {

@@ -56,7 +56,7 @@ public partial class MonitoringDashboard : UserControl
         ApplyBar("Trigger", strategy.TriggerTimeframe, overview, "TriggerBarRoleText", "TriggerBarText", "TriggerBarTimeText");
 
         Text("MonitorMaText").Text = Metric(strategy.DirectionIndicators.Ma);
-        Text("MonitorPbRsiText").Text = Metric(strategy.PullbackIndicators.Rsi);
+        Text("MonitorPbZText").Text = Metric(strategy.PullbackIndicators.Z);
         Text("MonitorTriggerRsiText").Text = Metric(strategy.TriggerIndicators.Rsi);
         Text("MonitorAdxText").Text = Metric(strategy.Filters.Adx);
         Text("MonitorAtrText").Text = Metric(strategy.Filters.Atr);

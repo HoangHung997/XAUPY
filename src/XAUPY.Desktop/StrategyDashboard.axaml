@@ -1,156 +1,257 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="XAUPY.Desktop.StrategyDashboard">
-  <ScrollViewer>
-    <StackPanel Spacing="14">
-      <Grid ColumnDefinitions="1.1*,1*,1*,1.35*" ColumnSpacing="10">
-        <Border Grid.Column="0" Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="14">
-          <StackPanel Spacing="4">
-            <TextBlock Text="STRATEGY STATE" Foreground="#7890A8" FontSize="11"/>
-            <TextBlock x:Name="StrategyStateText" Text="STALE" FontSize="21" FontWeight="SemiBold" Foreground="#E9C46A"/>
-            <TextBlock x:Name="BlockedReasonText" Text="BRIDGE_STALE" Foreground="#8097AE" FontSize="12" TextWrapping="Wrap"/>
-          </StackPanel>
-        </Border>
-        <Border Grid.Column="1" Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="14">
-          <StackPanel Spacing="4">
-            <TextBlock Text="PROFILE" Foreground="#7890A8" FontSize="11"/>
-            <TextBlock x:Name="ProfileText" Text="Baseline" FontSize="18" FontWeight="SemiBold"/>
-            <TextBlock x:Name="ProfileHashText" Text="Hash: —" Foreground="#8097AE" FontSize="11"/>
-          </StackPanel>
-        </Border>
-        <Border Grid.Column="2" Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="14">
-          <StackPanel Spacing="4">
-            <TextBlock Text="DIRECTION" Foreground="#7890A8" FontSize="11"/>
-            <TextBlock x:Name="DirectionText" Text="NEUTRAL" FontSize="20" FontWeight="SemiBold"/>
-            <TextBlock x:Name="ArmedSideText" Text="Armed: —" Foreground="#8097AE" FontSize="12"/>
-          </StackPanel>
-        </Border>
-        <Border Grid.Column="3" Background="#302B17" BorderBrush="#6A5C24" BorderThickness="1" CornerRadius="10" Padding="14">
-          <StackPanel Spacing="4">
-            <TextBlock Text="BROKER SAFETY" Foreground="#CDBA73" FontSize="11"/>
-            <TextBlock Text="EXECUTION LOCKED" Foreground="#E9C46A" FontWeight="Bold" FontSize="18"/>
-            <TextBlock Text="Task 008 chỉ hiển thị state/signal; không gửi lệnh." Foreground="#AFA374" FontSize="11" TextWrapping="Wrap"/>
-          </StackPanel>
-        </Border>
-      </Grid>
-
-      <Grid ColumnDefinitions="2*,1*" ColumnSpacing="14">
-        <StackPanel Grid.Column="0" Spacing="14">
-          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel Spacing="12">
-              <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Text="Direction → Pullback → Trigger" FontSize="18" FontWeight="SemiBold"/>
-                <TextBlock Grid.Column="1" Text="ACTIVE PROFILE • READ ONLY" Foreground="#59D9FF" FontSize="11"/>
-              </Grid>
-
-              <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
-                <Border Grid.Column="0" Background="#091827" BorderBrush="#1E466B" BorderThickness="1" CornerRadius="8" Padding="13">
-                  <StackPanel Spacing="6">
-                    <TextBlock Text="01  DIRECTION" Foreground="#59D9FF" FontWeight="SemiBold"/>
-                    <TextBlock x:Name="DirectionTfText" Text="M30" FontSize="24" FontWeight="Bold"/>
-                    <TextBlock x:Name="DirectionRuleText" Text="EMA50" Foreground="#B9CBE0"/>
-                    <TextBlock x:Name="DirectionMaText" Text="MA: —" Foreground="#8097AE"/>
-                    <TextBlock x:Name="DirectionOpenText" Text="Open ref: —" Foreground="#8097AE"/>
-                  </StackPanel>
-                </Border>
-
-                <Border Grid.Column="1" Background="#091827" BorderBrush="#1E466B" BorderThickness="1" CornerRadius="8" Padding="13">
-                  <StackPanel Spacing="6">
-                    <TextBlock Text="02  PULLBACK" Foreground="#B99CFF" FontWeight="SemiBold"/>
-                    <TextBlock x:Name="PullbackTfText" Text="M5" FontSize="24" FontWeight="Bold"/>
-                    <TextBlock x:Name="PullbackRsiText" Text="RSI: —" Foreground="#B9CBE0"/>
-                    <TextBlock x:Name="PullbackZText" Text="Z: —" Foreground="#8097AE"/>
-                    <TextBlock x:Name="PullbackConditionText" Text="BUY — • SELL —" Foreground="#8097AE"/>
-                  </StackPanel>
-                </Border>
-
-                <Border Grid.Column="2" Background="#091827" BorderBrush="#1E466B" BorderThickness="1" CornerRadius="8" Padding="13">
-                  <StackPanel Spacing="6">
-                    <TextBlock Text="03  TRIGGER" Foreground="#69D48C" FontWeight="SemiBold"/>
-                    <TextBlock x:Name="TriggerTfText" Text="M1" FontSize="24" FontWeight="Bold"/>
-                    <TextBlock x:Name="TriggerRsiText" Text="RSI: —" Foreground="#B9CBE0"/>
-                    <TextBlock x:Name="TriggerZText" Text="Z: —" Foreground="#8097AE"/>
-                    <TextBlock x:Name="TriggerConditionText" Text="Reversal: —" Foreground="#8097AE"/>
-                  </StackPanel>
-                </Border>
-              </Grid>
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <Grid ColumnDefinitions="2.7*,1*" ColumnSpacing="8">
+      <StackPanel Grid.Column="0" Spacing="8">
+        <Border Classes="panel">
+          <Grid ColumnDefinitions="*,Auto" Margin="12,8">
+            <StackPanel>
+              <TextBlock Text="Xây dựng chiến lược giao dịch" FontSize="20" FontWeight="SemiBold"/>
+              <TextBlock Text="Thiết lập khung thời gian, bộ lọc, điều kiện kích hoạt và quản lý lệnh theo quy tắc N30." Classes="dim" FontSize="12"/>
             </StackPanel>
-          </Border>
-
-          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel Spacing="10">
-              <TextBlock Text="Bộ lọc &amp; chỉ báo realtime" FontSize="17" FontWeight="SemiBold"/>
-              <TextBlock Text="Chỉ hiển thị giá trị Python Strategy Engine thực sự tính được. Dấu — nghĩa là disabled, chưa warm-up hoặc chưa có reference bar."
-                         Foreground="#8097AE" FontSize="12" TextWrapping="Wrap"/>
-              <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
-                <Border Grid.Column="0" Background="#091827" CornerRadius="8" Padding="12">
-                  <StackPanel>
-                    <TextBlock Text="ADX" Foreground="#7890A8" FontSize="11"/>
-                    <TextBlock x:Name="AdxText" Text="—" FontSize="20" FontWeight="SemiBold"/>
-                  </StackPanel>
-                </Border>
-                <Border Grid.Column="1" Background="#091827" CornerRadius="8" Padding="12">
-                  <StackPanel>
-                    <TextBlock Text="ATR" Foreground="#7890A8" FontSize="11"/>
-                    <TextBlock x:Name="AtrText" Text="—" FontSize="20" FontWeight="SemiBold"/>
-                  </StackPanel>
-                </Border>
-                <Border Grid.Column="2" Background="#091827" CornerRadius="8" Padding="12">
-                  <StackPanel>
-                    <TextBlock Text="OPEN REFERENCE" Foreground="#7890A8" FontSize="11"/>
-                    <TextBlock x:Name="OpenFilterText" Text="—" FontSize="20" FontWeight="SemiBold"/>
-                  </StackPanel>
-                </Border>
-              </Grid>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+              <Button Classes="secondary" Content="▣  Lưu chiến lược" IsEnabled="False"/>
+              <Button Classes="secondary" Content="⬇  Tải chiến lược" IsEnabled="False"/>
+              <Button Classes="secondary" Content="☆  Đặt làm mặc định" IsEnabled="False"/>
+              <Button Classes="secondary" Content="⬇  Xuất cấu hình" IsEnabled="False"/>
             </StackPanel>
-          </Border>
+          </Grid>
+        </Border>
 
-          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
+        <!-- Approved 3-stage Direction → Pullback → Trigger flow -->
+        <Grid ColumnDefinitions="*,28,*,28,*" ColumnSpacing="6">
+          <Border Grid.Column="0" Background="#071C35" BorderBrush="#0C7DFF" BorderThickness="2" CornerRadius="6" Padding="14,12">
             <StackPanel Spacing="9">
-              <TextBlock Text="Warm-up / dữ liệu" FontSize="17" FontWeight="SemiBold"/>
-              <TextBlock x:Name="BarsSeenText" Text="Bars: —" Foreground="#B9CBE0" FontFamily="Consolas" TextWrapping="Wrap"/>
-              <TextBlock x:Name="WarmupText" Text="Warm-up: chờ dữ liệu thật." Foreground="#8097AE" TextWrapping="Wrap"/>
-              <TextBlock x:Name="DataErrorText" Text="Data error: none" Foreground="#8097AE" TextWrapping="Wrap"/>
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <Border Width="38" Height="38" CornerRadius="19" Background="#0A66F2"><TextBlock Text="1" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                <StackPanel>
+                  <TextBlock Text="Direction TF" FontSize="18" FontWeight="Bold"/>
+                  <TextBlock Text="Xác định xu hướng chính" Classes="dim" FontSize="11"/>
+                </StackPanel>
+              </StackPanel>
+              <Border Classes="panelSoft" Padding="12,8">
+                <TextBlock x:Name="DirectionTfText" Text="M30" FontSize="19" FontWeight="SemiBold"/>
+              </Border>
+              <Border Background="#2A1830" BorderBrush="#6B2C5D" BorderThickness="1" CornerRadius="5" Padding="12,9">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <TextBlock Text="↓" Foreground="#FF415C" FontSize="23" FontWeight="Bold"/>
+                  <TextBlock x:Name="DirectionText" Text="NEUTRAL" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
+                </StackPanel>
+              </Border>
+              <TextBlock x:Name="DirectionRuleText" Text="EMA50" Foreground="#C9DDEF"/>
+              <TextBlock x:Name="DirectionMaText" Text="MA: —" Classes="dim"/>
+              <TextBlock x:Name="DirectionOpenText" Text="Open ref: —" Classes="dim"/>
             </StackPanel>
           </Border>
-        </StackPanel>
 
-        <StackPanel Grid.Column="1" Spacing="14">
-          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
+          <TextBlock Grid.Column="1" Text="→" FontSize="37" Foreground="#59AFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+          <Border Grid.Column="2" Background="#17113A" BorderBrush="#7A4BFF" BorderThickness="2" CornerRadius="6" Padding="14,12">
             <StackPanel Spacing="9">
-              <TextBlock Text="Chiến lược hiện tại" FontSize="17" FontWeight="SemiBold"/>
-              <TextBlock x:Name="SymbolText" Text="XAUUSD" Foreground="#59D9FF"/>
-              <TextBlock x:Name="TimeframeSummaryText" Text="M30 → M5 → M1" FontSize="18" FontWeight="SemiBold"/>
-              <TextBlock x:Name="ConfigSummaryText" Text="Direction EMA50" Foreground="#B9CBE0" TextWrapping="Wrap"/>
-              <TextBlock x:Name="ResetReasonText" Text="Reset: —" Foreground="#8097AE" FontSize="12" TextWrapping="Wrap"/>
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <Border Width="38" Height="38" CornerRadius="19" Background="#6842D8"><TextBlock Text="2" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                <StackPanel>
+                  <TextBlock Text="Pullback TF" FontSize="18" FontWeight="Bold"/>
+                  <TextBlock Text="Tìm nhịp hồi để vào lệnh" Classes="dim" FontSize="11"/>
+                </StackPanel>
+              </StackPanel>
+              <Border Classes="panelSoft" Padding="12,8">
+                <TextBlock x:Name="PullbackTfText" Text="M5" FontSize="19" FontWeight="SemiBold"/>
+              </Border>
+              <Border Background="#2A1743" BorderBrush="#8049B6" BorderThickness="1" CornerRadius="5" Padding="12,9">
+                <TextBlock x:Name="PullbackStateText" Text="WAIT" Foreground="#CB73FF" FontSize="16" FontWeight="Bold"/>
+              </Border>
+              <TextBlock x:Name="PullbackRsiText" Text="RSI: —" Foreground="#C9DDEF"/>
+              <TextBlock x:Name="PullbackZText" Text="Z: —" Classes="dim"/>
+              <TextBlock x:Name="PullbackConditionText" Text="BUY — • SELL —" Classes="dim"/>
             </StackPanel>
           </Border>
 
-          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
+          <TextBlock Grid.Column="3" Text="→" FontSize="37" Foreground="#59AFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+          <Border Grid.Column="4" Background="#062E30" BorderBrush="#11CF91" BorderThickness="2" CornerRadius="6" Padding="14,12">
             <StackPanel Spacing="9">
-              <TextBlock Text="Trạng thái điều kiện (Realtime)" FontSize="17" FontWeight="SemiBold"/>
-              <Grid ColumnDefinitions="1.2*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
-                <TextBlock Grid.Row="0" Text="Direction" Foreground="#7890A8"/>
-                <TextBlock x:Name="DirectionConditionText" Grid.Row="0" Grid.Column="1" Text="NEUTRAL" HorizontalAlignment="Right"/>
-                <TextBlock Grid.Row="1" Text="Pullback" Foreground="#7890A8"/>
-                <TextBlock x:Name="PullbackStateText" Grid.Row="1" Grid.Column="1" Text="WAIT" HorizontalAlignment="Right"/>
-                <TextBlock Grid.Row="2" Text="Trigger" Foreground="#7890A8"/>
-                <TextBlock x:Name="TriggerStateText" Grid.Row="2" Grid.Column="1" Text="WAIT" HorizontalAlignment="Right"/>
-                <TextBlock Grid.Row="3" Text="Ready" Foreground="#7890A8"/>
-                <TextBlock x:Name="ReadyText" Grid.Row="3" Grid.Column="1" Text="NO" HorizontalAlignment="Right"/>
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <Border Width="38" Height="38" CornerRadius="19" Background="#0C9F73"><TextBlock Text="3" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                <StackPanel>
+                  <TextBlock Text="Trigger TF" FontSize="18" FontWeight="Bold"/>
+                  <TextBlock Text="Tín hiệu vào lệnh chính xác" Classes="dim" FontSize="11"/>
+                </StackPanel>
+              </StackPanel>
+              <Border Classes="panelSoft" Padding="12,8">
+                <TextBlock x:Name="TriggerTfText" Text="M1" FontSize="19" FontWeight="SemiBold"/>
+              </Border>
+              <Border Background="#082B3D" BorderBrush="#14657A" BorderThickness="1" CornerRadius="5" Padding="12,9">
+                <TextBlock x:Name="TriggerStateText" Text="WAIT" Foreground="#40C9FF" FontSize="16" FontWeight="Bold"/>
+              </Border>
+              <TextBlock x:Name="TriggerRsiText" Text="RSI: —" Foreground="#C9DDEF"/>
+              <TextBlock x:Name="TriggerZText" Text="Z: —" Classes="dim"/>
+              <TextBlock x:Name="TriggerConditionText" Text="Reversal: —" Classes="dim"/>
+            </StackPanel>
+          </Border>
+        </Grid>
+
+        <Border Classes="panel">
+          <StackPanel>
+            <Border Background="#082038" Padding="12,7">
+              <TextBlock Text="▦  Bộ lọc và điều kiện chiến lược" Classes="panelTitle"/>
+            </Border>
+            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8" Margin="10">
+              <Border Grid.Row="0" Grid.Column="0" Classes="panelSoft" Padding="12">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="∿  Z-Score (Mean Reversion)" Foreground="#59B7FF" FontWeight="SemiBold"/>
+                  <TextBlock Text="☑ Bật bộ lọc Z-Score" Classes="label"/>
+                  <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <StackPanel><TextBlock Text="Pullback Z" Classes="dim" FontSize="10"/><TextBlock x:Name="PullbackZFilterMirror" Text="Theo active profile"/></StackPanel>
+                    <StackPanel Grid.Column="1"><TextBlock Text="Trigger Z" Classes="dim" FontSize="10"/><TextBlock x:Name="TriggerZFilterMirror" Text="Theo active profile"/></StackPanel>
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Row="0" Grid.Column="1" Classes="panelSoft" Padding="12">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="▥  RSI (Momentum)" Foreground="#56A8FF" FontWeight="SemiBold"/>
+                  <TextBlock Text="☑ Bật bộ lọc RSI" Classes="label"/>
+                  <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <StackPanel><TextBlock Text="Pullback RSI" Classes="dim" FontSize="10"/><TextBlock x:Name="PullbackRsiMirror" Text="—"/></StackPanel>
+                    <StackPanel Grid.Column="1"><TextBlock Text="Trigger RSI" Classes="dim" FontSize="10"/><TextBlock x:Name="TriggerRsiMirror" Text="—"/></StackPanel>
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Row="0" Grid.Column="2" Classes="panelSoft" Padding="12">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="▥  ADX (Xu hướng)" Foreground="#42DDF4" FontWeight="SemiBold"/>
+                  <TextBlock Text="☑ Bộ lọc ADX" Classes="label"/>
+                  <TextBlock x:Name="AdxText" Text="—" FontSize="22" FontWeight="SemiBold"/>
+                  <TextBlock Text="Giá trị realtime từ Strategy Engine" Classes="dim" FontSize="10"/>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Row="1" Grid.Column="0" Classes="panelSoft" Padding="12">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="∿  ATR (Biến động)" Foreground="#59B7FF" FontWeight="SemiBold"/>
+                  <TextBlock Text="☑ Bộ lọc ATR" Classes="label"/>
+                  <TextBlock x:Name="AtrText" Text="—" FontSize="22" FontWeight="SemiBold"/>
+                  <TextBlock Text="Không giả lập dữ liệu khi chưa warm-up" Classes="dim" FontSize="10"/>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Row="1" Grid.Column="1" Classes="panelSoft" Padding="12">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="◷  Open Filter (Thời gian giao dịch)" Foreground="#44C8FF" FontWeight="SemiBold"/>
+                  <TextBlock Text="☑ Theo active profile" Classes="label"/>
+                  <TextBlock x:Name="OpenFilterText" Text="—" FontSize="22" FontWeight="SemiBold"/>
+                  <TextBlock Text="Reference/open filter từ Engine" Classes="dim" FontSize="10"/>
+                </StackPanel>
+              </Border>
+
+              <Border Grid.Row="1" Grid.Column="2" Classes="panelSoft" Padding="12">
+                <StackPanel Spacing="6">
+                  <TextBlock Text="🛡  SL / TP Mode" Foreground="#59B7FF" FontWeight="SemiBold"/>
+                  <TextBlock Text="Quản lý theo canonical config" Classes="label"/>
+                  <TextBlock x:Name="ConfigSummaryText" Text="Direction EMA50" FontSize="13" TextWrapping="Wrap"/>
+                  <TextBlock Text="Execution vẫn LOCKED" Foreground="#FFD34D" FontSize="10"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <Grid ColumnDefinitions="1.6*,1*" ColumnSpacing="8" Margin="10,0,10,10">
+              <Border Grid.Column="0" Classes="panelSoft" Padding="12">
+                <Grid ColumnDefinitions="1.2*,1*" ColumnSpacing="8">
+                  <StackPanel>
+                    <TextBlock Text="⌘  Logic kết hợp điều kiện" Foreground="#5ED3FF" FontWeight="SemiBold"/>
+                    <TextBlock Text="Điều kiện chỉ được đánh giá từ dữ liệu thật của Engine." Classes="dim" FontSize="11" TextWrapping="Wrap"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1">
+                    <TextBlock Text="State / Armed" Classes="dim" FontSize="10"/>
+                    <TextBlock x:Name="ArmedSideText" Text="Armed: —"/>
+                    <TextBlock x:Name="BlockedReasonText" Text="BRIDGE_STALE" Classes="dim" FontSize="11" TextWrapping="Wrap"/>
+                  </StackPanel>
+                </Grid>
+              </Border>
+              <Border Grid.Column="1" Classes="panelSoft" Padding="12">
+                <StackPanel>
+                  <TextBlock Text="⚙  Điều kiện nâng cao (Tùy chọn)" Foreground="#5ED3FF" FontWeight="SemiBold"/>
+                  <TextBlock Text="☑ Close candle   ☑ Hard safety   ☑ No retry" Classes="label" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <Border Classes="panel" Padding="12">
+          <Grid ColumnDefinitions="1.4*,1*" ColumnSpacing="10">
+            <StackPanel>
+              <TextBlock Text="Warm-up / dữ liệu" Classes="panelTitle"/>
+              <TextBlock x:Name="BarsSeenText" Text="Bars: —" FontFamily="Consolas" Classes="label" TextWrapping="Wrap"/>
+              <TextBlock x:Name="WarmupText" Text="Warm-up: chờ dữ liệu thật." Classes="dim" FontSize="11" TextWrapping="Wrap"/>
+              <TextBlock x:Name="DataErrorText" Text="Data error: none" Classes="dim" FontSize="11" TextWrapping="Wrap"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+              <TextBlock Text="Tín hiệu gần nhất" Classes="panelTitle"/>
+              <TextBlock x:Name="LastSignalText" Text="Chưa có signal." Classes="label" TextWrapping="Wrap"/>
+              <TextBlock x:Name="SignalSequenceText" Text="Sequence: 0" Classes="dim" FontSize="11"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+      </StackPanel>
+
+      <!-- Right column mirrors approved current strategy + realtime condition panels -->
+      <StackPanel Grid.Column="1" Spacing="8">
+        <Border Classes="panel">
+          <StackPanel>
+            <Grid Background="#082038" ColumnDefinitions="*,Auto" Margin="12,7">
+              <TextBlock Text="Chiến lược hiện tại" Classes="panelTitle"/>
+              <Border Grid.Column="1" Background="#063B2C" BorderBrush="#0D9C70" BorderThickness="1" CornerRadius="4" Padding="8,3">
+                <TextBlock x:Name="StrategyStateText" Text="STALE" Foreground="#18E58B" FontSize="11" FontWeight="Bold"/>
+              </Border>
+            </Grid>
+            <StackPanel Margin="12,8" Spacing="7">
+              <TextBlock Text="Tên chiến lược" Classes="dim" FontSize="10"/>
+              <Border Classes="panelSoft" Padding="9,7"><TextBlock x:Name="ProfileText" Text="Baseline"/></Border>
+              <TextBlock x:Name="ProfileHashText" Text="Hash: —" Classes="dim" FontSize="10"/>
+              <TextBlock Text="Cấu hình chính" Foreground="#7DB7E8" FontWeight="SemiBold"/>
+              <Grid ColumnDefinitions="1.2*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="7">
+                <TextBlock Grid.Row="0" Text="Direction → Pullback → Trigger" Classes="label"/>
+                <TextBlock x:Name="TimeframeSummaryText" Grid.Row="0" Grid.Column="1" Text="M30 → M5 → M1" HorizontalAlignment="Right"/>
+                <TextBlock Grid.Row="1" Text="Symbol" Classes="label"/>
+                <TextBlock x:Name="SymbolText" Grid.Row="1" Grid.Column="1" Text="XAUUSD" HorizontalAlignment="Right"/>
+                <TextBlock Grid.Row="2" Text="Ready" Classes="label"/>
+                <TextBlock x:Name="ReadyText" Grid.Row="2" Grid.Column="1" Text="NO" HorizontalAlignment="Right"/>
+                <TextBlock Grid.Row="3" Text="Reset" Classes="label"/>
+                <TextBlock x:Name="ResetReasonText" Grid.Row="3" Grid.Column="1" Text="—" HorizontalAlignment="Right" TextWrapping="Wrap"/>
               </Grid>
             </StackPanel>
-          </Border>
+          </StackPanel>
+        </Border>
 
-          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel Spacing="8">
-              <TextBlock Text="Tín hiệu gần nhất" FontSize="17" FontWeight="SemiBold"/>
-              <TextBlock x:Name="LastSignalText" Text="Chưa có signal." Foreground="#B9CBE0" TextWrapping="Wrap"/>
-              <TextBlock x:Name="SignalSequenceText" Text="Sequence: 0" Foreground="#8097AE" FontSize="12"/>
-            </StackPanel>
-          </Border>
-        </StackPanel>
-      </Grid>
-    </StackPanel>
+        <Border Classes="panel">
+          <StackPanel>
+            <Grid Background="#082038" ColumnDefinitions="*,Auto" Margin="12,7">
+              <TextBlock Text="Trạng thái điều kiện (Realtime)" Classes="panelTitle"/>
+              <TextBlock Grid.Column="1" Text="↻" Foreground="#7DB7E8"/>
+            </Grid>
+            <Grid Margin="12,8" ColumnDefinitions="Auto,1.1*,1*,1*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+              <TextBlock Grid.Row="0" Text="●" Foreground="#FF415C"/><TextBlock Grid.Row="0" Grid.Column="1" Text="Direction" Classes="label"/><TextBlock x:Name="DirectionConditionText" Grid.Row="0" Grid.Column="2" Text="NEUTRAL"/><TextBlock Grid.Row="0" Grid.Column="3" Text="Realtime" Classes="dim" FontSize="10"/>
+              <TextBlock Grid.Row="1" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="1" Grid.Column="1" Text="Pullback" Classes="label"/><TextBlock x:Name="PullbackConditionMirror" Grid.Row="1" Grid.Column="2" Text="—"/><TextBlock Grid.Row="1" Grid.Column="3" Text="Realtime" Classes="dim" FontSize="10"/>
+              <TextBlock Grid.Row="2" Text="●" Foreground="#8DA0B5"/><TextBlock Grid.Row="2" Grid.Column="1" Text="Trigger" Classes="label"/><TextBlock x:Name="TriggerConditionMirror" Grid.Row="2" Grid.Column="2" Text="—"/><TextBlock Grid.Row="2" Grid.Column="3" Text="Realtime" Classes="dim" FontSize="10"/>
+              <TextBlock Grid.Row="3" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="3" Grid.Column="1" Text="ADX Filter" Classes="label"/><TextBlock Grid.Row="3" Grid.Column="2" Text="ĐỘNG"/><TextBlock Grid.Row="3" Grid.Column="3" Text="Engine" Classes="dim" FontSize="10"/>
+              <TextBlock Grid.Row="4" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="4" Grid.Column="1" Text="ATR Filter" Classes="label"/><TextBlock Grid.Row="4" Grid.Column="2" Text="ĐỘNG"/><TextBlock Grid.Row="4" Grid.Column="3" Text="Engine" Classes="dim" FontSize="10"/>
+              <TextBlock Grid.Row="5" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="5" Grid.Column="1" Text="Tất cả điều kiện" Classes="label"/><TextBlock Grid.Row="5" Grid.Column="2" Text="STATE"/><TextBlock Grid.Row="5" Grid.Column="3" Text="Locked" Classes="dim" FontSize="10"/>
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <Border Classes="panel" Padding="12">
+          <StackPanel Spacing="6">
+            <TextBlock Text="Broker safety" Classes="panelTitle"/>
+            <TextBlock Text="EXECUTION LOCKED" Foreground="#FFD34D" FontWeight="Bold" FontSize="17"/>
+            <TextBlock Text="Task 008 chỉ hiển thị state/signal; không gửi lệnh." Classes="dim" FontSize="11" TextWrapping="Wrap"/>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </Grid>
   </ScrollViewer>
 </UserControl>

@@ -1,178 +1,307 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="XAUPY.Desktop.MonitoringDashboard">
-  <ScrollViewer>
-    <StackPanel Spacing="14">
-      <Grid ColumnDefinitions="1.4*,1*,1*,1*" ColumnSpacing="10">
-        <Border Grid.Column="0" Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="14">
-          <StackPanel Spacing="4">
-            <TextBlock Text="XAUUSD LIVE" Foreground="#7890A8" FontSize="11"/>
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="8">
+      <Grid ColumnDefinitions="2.35*,1*" ColumnSpacing="8">
+        <!-- Main market chart -->
+        <Border Grid.Column="0" Classes="panel" Height="325">
+          <Grid RowDefinitions="42,*,27">
+            <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="Auto,*,Auto" Margin="12,0">
+              <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <TextBlock Text="XAUUSD" FontSize="17" FontWeight="Bold"/>
+                <TextBlock Text="M5" FontSize="17" FontWeight="Bold"/>
+              </StackPanel>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="5" VerticalAlignment="Center">
+                <Border Classes="panelSoft" Padding="10,5"><TextBlock Text="M1"/></Border>
+                <Border Background="#0866F4" BorderBrush="#2A8EFF" BorderThickness="1" CornerRadius="4" Padding="10,5"><TextBlock Text="M5"/></Border>
+                <Border Classes="panelSoft" Padding="10,5"><TextBlock Text="M15"/></Border>
+                <Border Classes="panelSoft" Padding="10,5"><TextBlock Text="M30"/></Border>
+                <Border Classes="panelSoft" Padding="10,5"><TextBlock Text="H1"/></Border>
+                <Border Classes="panelSoft" Padding="10,5"><TextBlock Text="H4"/></Border>
+              </StackPanel>
+              <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+                <TextBlock Text="+ So sánh" Classes="label"/>
+                <TextBlock Text="ƒ  Chỉ báo" Classes="label"/>
+                <TextBlock Text="Nến Nhật" Classes="label"/>
+              </StackPanel>
+            </Grid>
+
+            <Border Grid.Row="1" Background="#041526" BorderBrush="#0D3553" BorderThickness="0,1,0,1">
+              <Grid RowDefinitions="Auto,*">
+                <Grid ColumnDefinitions="*,Auto" Margin="12,8,12,0">
+                  <StackPanel Orientation="Horizontal" Spacing="14">
+                    <TextBlock Text="O —   H —   L —   C —" Foreground="#C8D9EA"/>
+                    <TextBlock x:Name="ChartLastText" Text="Last: —" Foreground="#FF415C"/>
+                    <TextBlock x:Name="ChartRangeText" Text="Range: —" Classes="dim"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="BID" Classes="dim"/>
+                    <TextBlock x:Name="MonitorBidText" Text="—" Foreground="#18E58B" FontWeight="SemiBold"/>
+                    <TextBlock Text="ASK" Classes="dim"/>
+                    <TextBlock x:Name="MonitorAskText" Text="—" FontWeight="SemiBold"/>
+                  </StackPanel>
+                </Grid>
+
+                <Grid Grid.Row="1" Margin="0,6,0,0">
+                  <Grid RowDefinitions="*,*,*,*" Opacity="0.38">
+                    <Border Grid.Row="0" BorderBrush="#17415F" BorderThickness="0,0,0,1"/>
+                    <Border Grid.Row="1" BorderBrush="#17415F" BorderThickness="0,0,0,1"/>
+                    <Border Grid.Row="2" BorderBrush="#17415F" BorderThickness="0,0,0,1"/>
+                    <Border Grid.Row="3" BorderBrush="#17415F" BorderThickness="0,0,0,1"/>
+                  </Grid>
+                  <StackPanel x:Name="QuoteChartBars"
+                              Orientation="Horizontal"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Bottom"
+                              Spacing="7"
+                              Margin="18,0,18,8"/>
+                </Grid>
+              </Grid>
+            </Border>
+
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto,*" Margin="12,0">
+              <TextBlock x:Name="ChartMinText" Text="Min —" Classes="dim" FontSize="11" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="1" Text="REAL HEARTBEAT QUOTES" Classes="dim" FontSize="10" VerticalAlignment="Center"/>
+              <TextBlock x:Name="ChartMaxText" Grid.Column="2" Text="Max —" HorizontalAlignment="Right" Classes="dim" FontSize="11" VerticalAlignment="Center"/>
+            </Grid>
+          </Grid>
+        </Border>
+
+        <!-- Approved multi-timeframe condition table -->
+        <Border Grid.Column="1" Classes="panel" Height="325">
+          <StackPanel>
+            <Border Background="#082038" Padding="12,8">
+              <TextBlock Text="Trạng thái điều kiện đa khung thời gian" Classes="panelTitle"/>
+            </Border>
+            <Grid Margin="10,8" ColumnDefinitions="0.8*,1*,1*,1*,1*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="9">
+              <TextBlock Grid.Row="0" Text="Khung" Classes="dim" FontSize="10"/>
+              <TextBlock Grid.Row="0" Grid.Column="1" Text="Direction" Classes="dim" FontSize="10"/>
+              <TextBlock Grid.Row="0" Grid.Column="2" Text="Pullback" Classes="dim" FontSize="10"/>
+              <TextBlock Grid.Row="0" Grid.Column="3" Text="Trigger" Classes="dim" FontSize="10"/>
+              <TextBlock Grid.Row="0" Grid.Column="4" Text="Trạng thái" Classes="dim" FontSize="10"/>
+
+              <TextBlock Grid.Row="1" x:Name="MonitorDirectionTfText" Text="M30"/>
+              <TextBlock Grid.Row="1" Grid.Column="1" x:Name="MonitorDirectionStateText" Text="NEUTRAL"/>
+              <TextBlock Grid.Row="1" Grid.Column="2" Text="—"/>
+              <TextBlock Grid.Row="1" Grid.Column="3" Text="—"/>
+              <TextBlock Grid.Row="1" Grid.Column="4" Text="● Active" Foreground="#18E58B"/>
+
+              <TextBlock Grid.Row="2" x:Name="MonitorPullbackTfText" Text="M5"/>
+              <TextBlock Grid.Row="2" Grid.Column="1" Text="—"/>
+              <TextBlock Grid.Row="2" Grid.Column="2" x:Name="MonitorPullbackStateText" Text="WAIT"/>
+              <TextBlock Grid.Row="2" Grid.Column="3" Text="—"/>
+              <TextBlock Grid.Row="2" Grid.Column="4" Text="● Active" Foreground="#18E58B"/>
+
+              <TextBlock Grid.Row="3" x:Name="MonitorTriggerTfText" Text="M1"/>
+              <TextBlock Grid.Row="3" Grid.Column="1" Text="—"/>
+              <TextBlock Grid.Row="3" Grid.Column="2" Text="—"/>
+              <TextBlock Grid.Row="3" Grid.Column="3" x:Name="MonitorTriggerStateText" Text="WAIT"/>
+              <TextBlock Grid.Row="3" Grid.Column="4" Text="● Active" Foreground="#18E58B"/>
+
+              <TextBlock Grid.Row="4" Text="M15" Classes="dim"/>
+              <TextBlock Grid.Row="4" Grid.Column="1" Text="—" Classes="dim"/>
+              <TextBlock Grid.Row="4" Grid.Column="2" Text="—" Classes="dim"/>
+              <TextBlock Grid.Row="4" Grid.Column="3" Text="—" Classes="dim"/>
+              <TextBlock Grid.Row="4" Grid.Column="4" Text="○ Chưa đánh giá" Classes="dim"/>
+
+              <TextBlock Grid.Row="5" Text="H1" Classes="dim"/>
+              <TextBlock Grid.Row="5" Grid.Column="1" Text="—" Classes="dim"/>
+              <TextBlock Grid.Row="5" Grid.Column="2" Text="—" Classes="dim"/>
+              <TextBlock Grid.Row="5" Grid.Column="3" Text="—" Classes="dim"/>
+              <TextBlock Grid.Row="5" Grid.Column="4" Text="○ Chưa đánh giá" Classes="dim"/>
+
+              <TextBlock Grid.Row="6" Text="H4" Classes="dim"/>
+              <TextBlock Grid.Row="6" Grid.Column="1" Text="—" Classes="dim"/>
+              <TextBlock Grid.Row="6" Grid.Column="2" Text="—" Classes="dim"/>
+              <TextBlock Grid.Row="6" Grid.Column="3" Text="—" Classes="dim"/>
+              <TextBlock Grid.Row="6" Grid.Column="4" Text="○ Chưa đánh giá" Classes="dim"/>
+            </Grid>
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <Grid ColumnDefinitions="2.35*,1*" ColumnSpacing="8">
+        <!-- Indicator cards -->
+        <Border Grid.Column="0" Classes="panel">
+          <StackPanel>
+            <Border Background="#082038" Padding="12,7"><TextBlock Text="Chỉ báo &amp; Thị trường (Realtime)" Classes="panelTitle"/></Border>
+            <Grid ColumnDefinitions="*,*,*,*,*,*,*,*" ColumnSpacing="7" Margin="10,8">
+              <Border Grid.Column="0" Classes="panelSoft" Padding="10">
+                <StackPanel HorizontalAlignment="Center">
+                  <TextBlock Text="Z-Score" Classes="label"/>
+                  <Border Width="74" Height="38" CornerRadius="37,37,0,0" BorderBrush="#4C9BFF" BorderThickness="7,7,7,0" Margin="0,8,0,0"/>
+                  <TextBlock x:Name="MonitorPbZText" Text="—" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                  <TextBlock Text="Pullback" Classes="dim" FontSize="10"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="1" Classes="panelSoft" Padding="10">
+                <StackPanel HorizontalAlignment="Center">
+                  <TextBlock Text="RSI" Classes="label"/>
+                  <Border Width="74" Height="38" CornerRadius="37,37,0,0" BorderBrush="#5BA9FF" BorderThickness="7,7,7,0" Margin="0,8,0,0"/>
+                  <TextBlock x:Name="MonitorTriggerRsiText" Text="—" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                  <TextBlock Text="Trigger" Classes="dim" FontSize="10"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="2" Classes="panelSoft" Padding="10">
+                <StackPanel HorizontalAlignment="Center">
+                  <TextBlock Text="ADX" Classes="label"/>
+                  <Border Width="74" Height="38" CornerRadius="37,37,0,0" BorderBrush="#8EA9CC" BorderThickness="7,7,7,0" Margin="0,8,0,0"/>
+                  <TextBlock x:Name="MonitorAdxText" Text="—" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                  <TextBlock Text="Trend" Classes="dim" FontSize="10"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="3" Classes="panelSoft" Padding="10">
+                <StackPanel HorizontalAlignment="Center">
+                  <TextBlock Text="ATR" Classes="label"/>
+                  <Border Width="74" Height="38" CornerRadius="37,37,0,0" BorderBrush="#8EA9CC" BorderThickness="7,7,7,0" Margin="0,8,0,0"/>
+                  <TextBlock x:Name="MonitorAtrText" Text="—" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                  <TextBlock Text="Volatility" Classes="dim" FontSize="10"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="4" Classes="panelSoft" Padding="10">
+                <StackPanel HorizontalAlignment="Center" Spacing="5">
+                  <TextBlock Text="MA" Classes="label"/>
+                  <TextBlock x:Name="MonitorMaText" Text="—" FontSize="19" FontWeight="Bold"/>
+                  <TextBlock Text="Direction" Classes="dim" FontSize="10"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="5" Classes="panelSoft" Padding="10">
+                <StackPanel HorizontalAlignment="Center" Spacing="5">
+                  <TextBlock Text="Latency" Classes="label"/>
+                  <TextBlock x:Name="MonitorAgeText" Text="—" FontSize="19" FontWeight="Bold"/>
+                  <TextBlock Text="ms" Classes="dim" FontSize="10"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="6" Classes="panelSoft" Padding="10">
+                <StackPanel HorizontalAlignment="Center" Spacing="5">
+                  <TextBlock Text="Strategy" Classes="label"/>
+                  <TextBlock x:Name="MonitorStrategyText" Text="STALE" FontSize="15" FontWeight="Bold" TextWrapping="Wrap" TextAlignment="Center"/>
+                  <TextBlock x:Name="MonitorDirectionText" Text="Direction: NEUTRAL" Classes="dim" FontSize="10" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="7" Classes="panelSoft" Padding="10">
+                <StackPanel HorizontalAlignment="Center" Spacing="5">
+                  <TextBlock Text="Bridge" Classes="label"/>
+                  <TextBlock x:Name="MonitorBridgeText" Text="WAITING" FontSize="15" FontWeight="Bold"/>
+                  <TextBlock Text="Realtime" Classes="dim" FontSize="10"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <!-- Connection -->
+        <Border Grid.Column="1" Classes="panel">
+          <StackPanel>
+            <Border Background="#082038" Padding="12,7"><TextBlock Text="Kết nối &amp; Engine" Classes="panelTitle"/></Border>
+            <Grid Margin="12,8" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+              <TextBlock Grid.Row="0" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="0" Grid.Column="1" Text="MT5 Terminal" Classes="label"/><TextBlock x:Name="MonitorTerminalText" Grid.Row="0" Grid.Column="2" Text="offline"/>
+              <TextBlock Grid.Row="1" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="1" Grid.Column="1" Text="EA Bridge (MQL5)" Classes="label"/><TextBlock Grid.Row="1" Grid.Column="2" Text="Realtime"/>
+              <TextBlock Grid.Row="2" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="2" Grid.Column="1" Text="Python Engine" Classes="label"/><TextBlock x:Name="MonitorSnapshotCountText" Grid.Row="2" Grid.Column="2" Text="Snapshots: 0"/>
+              <TextBlock Grid.Row="3" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="3" Grid.Column="1" Text="Profile" Classes="label"/><TextBlock x:Name="MonitorProfileText" Grid.Row="3" Grid.Column="2" Text="Baseline" TextWrapping="Wrap"/>
+            </Grid>
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <Grid ColumnDefinitions="1.65*,0.95*,0.9*" ColumnSpacing="8">
+        <!-- Session/news panel kept in correct location but honestly unavailable -->
+        <Border Grid.Column="0" Classes="panel" MinHeight="170">
+          <StackPanel>
+            <Border Background="#082038" Padding="12,7"><TextBlock Text="Phiên giao dịch &amp; Tin tức" Classes="panelTitle"/></Border>
+            <Grid ColumnDefinitions="0.9*,1.5*" Margin="10,8" ColumnSpacing="10">
               <StackPanel>
-                <TextBlock Text="BID" Foreground="#7890A8" FontSize="10"/>
-                <TextBlock x:Name="MonitorBidText" Text="—" FontSize="22" FontWeight="SemiBold" Foreground="#69D48C"/>
+                <Border Background="#0866F4" CornerRadius="4" Padding="10,5"><TextBlock Text="Phiên thị trường" HorizontalAlignment="Center"/></Border>
+                <Grid Margin="4,7" ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6">
+                  <TextBlock Grid.Row="0" Text="Sydney" Classes="label"/><TextBlock Grid.Row="0" Grid.Column="1" Text="—" Classes="dim"/><TextBlock Grid.Row="0" Grid.Column="2" Text="Chưa có backend" Classes="dim"/>
+                  <TextBlock Grid.Row="1" Text="Tokyo" Classes="label"/><TextBlock Grid.Row="1" Grid.Column="1" Text="—" Classes="dim"/><TextBlock Grid.Row="1" Grid.Column="2" Text="Chưa có backend" Classes="dim"/>
+                  <TextBlock Grid.Row="2" Text="London" Classes="label"/><TextBlock Grid.Row="2" Grid.Column="1" Text="—" Classes="dim"/><TextBlock Grid.Row="2" Grid.Column="2" Text="Chưa có backend" Classes="dim"/>
+                  <TextBlock Grid.Row="3" Text="New York" Classes="label"/><TextBlock Grid.Row="3" Grid.Column="1" Text="—" Classes="dim"/><TextBlock Grid.Row="3" Grid.Column="2" Text="Chưa có backend" Classes="dim"/>
+                </Grid>
               </StackPanel>
               <StackPanel Grid.Column="1">
-                <TextBlock Text="ASK" Foreground="#7890A8" FontSize="10"/>
-                <TextBlock x:Name="MonitorAskText" Text="—" FontSize="22" FontWeight="SemiBold"/>
+                <TextBlock Text="Tin tức quan trọng (Hôm nay)" FontWeight="SemiBold"/>
+                <Border Classes="panelSoft" Margin="0,6,0,0" Padding="12,13">
+                  <TextBlock Text="Chưa có realtime session/news backend ở Task 008. Không hiển thị countdown, calendar hoặc tin tức giả."
+                             Classes="dim" TextWrapping="Wrap" TextAlignment="Center"/>
+                </Border>
               </StackPanel>
             </Grid>
           </StackPanel>
         </Border>
-        <Border Grid.Column="1" Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="14">
-          <StackPanel Spacing="4">
-            <TextBlock Text="MT5 BRIDGE" Foreground="#7890A8" FontSize="11"/>
-            <TextBlock x:Name="MonitorBridgeText" Text="WAITING" FontSize="18" FontWeight="SemiBold" Foreground="#E9C46A"/>
-            <TextBlock x:Name="MonitorAgeText" Text="Age: —" Foreground="#8097AE" FontSize="11"/>
+
+        <!-- Execution state -->
+        <Border Grid.Column="1" Classes="panel">
+          <StackPanel>
+            <Border Background="#082038" Padding="12,7"><TextBlock Text="Trạng thái thực thi" Classes="panelTitle"/></Border>
+            <Grid Margin="12,9" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="7">
+              <TextBlock Grid.Row="0" Text="Tổng lệnh hôm nay" Classes="label"/><TextBlock Grid.Row="0" Grid.Column="1" Text="—"/>
+              <TextBlock Grid.Row="1" Text="Lệnh đã khớp" Classes="label"/><TextBlock Grid.Row="1" Grid.Column="1" Text="—" Foreground="#18E58B"/>
+              <TextBlock Grid.Row="2" Text="Lệnh bị từ chối" Classes="label"/><TextBlock Grid.Row="2" Grid.Column="1" Text="—"/>
+              <TextBlock Grid.Row="3" Text="Lệnh chờ xử lý" Classes="label"/><TextBlock Grid.Row="3" Grid.Column="1" Text="—"/>
+              <TextBlock Grid.Row="4" Text="Execution" Classes="label"/><TextBlock Grid.Row="4" Grid.Column="1" Text="LOCKED" Foreground="#FFD34D" FontWeight="Bold"/>
+            </Grid>
+            <TextBlock Text="Không có manual/auto broker action ở Task 008." Classes="dim" FontSize="10" TextWrapping="Wrap" Margin="12,0,12,8"/>
           </StackPanel>
         </Border>
-        <Border Grid.Column="2" Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="14">
-          <StackPanel Spacing="4">
-            <TextBlock Text="STRATEGY" Foreground="#7890A8" FontSize="11"/>
-            <TextBlock x:Name="MonitorStrategyText" Text="STALE" FontSize="18" FontWeight="SemiBold"/>
-            <TextBlock x:Name="MonitorDirectionText" Text="Direction: NEUTRAL" Foreground="#8097AE" FontSize="11"/>
-          </StackPanel>
-        </Border>
-        <Border Grid.Column="3" Background="#302B17" BorderBrush="#6A5C24" BorderThickness="1" CornerRadius="10" Padding="14">
-          <StackPanel Spacing="4">
-            <TextBlock Text="EXECUTION" Foreground="#CDBA73" FontSize="11"/>
-            <TextBlock Text="LOCKED" Foreground="#E9C46A" FontSize="18" FontWeight="Bold"/>
-            <TextBlock Text="Không có manual/auto broker action ở Task 008." Foreground="#AFA374" FontSize="11" TextWrapping="Wrap"/>
+
+        <!-- Resources -->
+        <Border Grid.Column="2" Classes="panel">
+          <StackPanel>
+            <Border Background="#082038" Padding="12,7"><TextBlock Text="Tài nguyên hệ thống" Classes="panelTitle"/></Border>
+            <Grid ColumnDefinitions="*,*,*" Margin="10,10" ColumnSpacing="8">
+              <StackPanel Grid.Column="0" HorizontalAlignment="Center"><Border Width="55" Height="55" CornerRadius="28" BorderBrush="#1E5E82" BorderThickness="7"><TextBlock Text="—" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/></Border><TextBlock Text="CPU" Classes="dim" FontSize="10" HorizontalAlignment="Center"/></StackPanel>
+              <StackPanel Grid.Column="1" HorizontalAlignment="Center"><Border Width="55" Height="55" CornerRadius="28" BorderBrush="#1E5E82" BorderThickness="7"><TextBlock Text="—" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/></Border><TextBlock Text="RAM" Classes="dim" FontSize="10" HorizontalAlignment="Center"/></StackPanel>
+              <StackPanel Grid.Column="2" HorizontalAlignment="Center"><Border Width="55" Height="55" CornerRadius="28" BorderBrush="#1E5E82" BorderThickness="7"><TextBlock Text="—" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/></Border><TextBlock Text="Disk" Classes="dim" FontSize="10" HorizontalAlignment="Center"/></StackPanel>
+            </Grid>
+            <TextBlock Text="CPU/RAM diagnostics thuộc Task 014 — chưa có backend." Classes="dim" FontSize="10" TextWrapping="Wrap" Margin="10,0,10,8"/>
           </StackPanel>
         </Border>
       </Grid>
 
-      <Grid ColumnDefinitions="2.1*,1*" ColumnSpacing="14">
-        <StackPanel Grid.Column="0" Spacing="14">
-          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel Spacing="10">
-              <Grid ColumnDefinitions="*,Auto">
-                <StackPanel>
-                  <TextBlock Text="Live quote monitor" FontSize="18" FontWeight="SemiBold"/>
-                  <TextBlock Text="Lịch sử chỉ được tích lũy từ snapshot thật nhận trong phiên Desktop; không backfill số giả."
-                             Foreground="#8097AE" FontSize="12" TextWrapping="Wrap"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                  <TextBlock x:Name="ChartLastText" Text="Last: —" FontWeight="SemiBold"/>
-                  <TextBlock x:Name="ChartRangeText" Text="Range: —" Foreground="#8097AE" FontSize="11"/>
-                </StackPanel>
-              </Grid>
-              <Border Height="245" Background="#07121E" BorderBrush="#142E47" BorderThickness="1" CornerRadius="8" Padding="12">
-                <Grid RowDefinitions="*,Auto">
-                  <StackPanel x:Name="QuoteChartBars"
-                              Grid.Row="0"
-                              Orientation="Horizontal"
-                              HorizontalAlignment="Stretch"
-                              VerticalAlignment="Bottom"
-                              Spacing="5"/>
-                  <Grid Grid.Row="1" ColumnDefinitions="*,*,*" Margin="0,8,0,0">
-                    <TextBlock x:Name="ChartMinText" Text="Min —" Foreground="#8097AE" FontSize="11"/>
-                    <TextBlock Grid.Column="1" Text="REAL HEARTBEAT QUOTES" HorizontalAlignment="Center" Foreground="#8097AE" FontSize="11"/>
-                    <TextBlock x:Name="ChartMaxText" Grid.Column="2" Text="Max —" HorizontalAlignment="Right" Foreground="#8097AE" FontSize="11"/>
-                  </Grid>
-                </Grid>
-              </Border>
+      <!-- Closed bars strip -->
+      <Border Classes="panel">
+        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8" Margin="10,8">
+          <Border Grid.Column="0" Classes="panelSoft" Padding="10">
+            <StackPanel>
+              <TextBlock x:Name="DirectionBarRoleText" Text="DIRECTION • M30" Foreground="#59B7FF" FontWeight="SemiBold"/>
+              <TextBlock x:Name="DirectionBarText" Text="OHLC: —" Classes="label" TextWrapping="Wrap"/>
+              <TextBlock x:Name="DirectionBarTimeText" Text="Closed: —" Classes="dim" FontSize="10"/>
             </StackPanel>
           </Border>
+          <Border Grid.Column="1" Classes="panelSoft" Padding="10">
+            <StackPanel>
+              <TextBlock x:Name="PullbackBarRoleText" Text="PULLBACK • M5" Foreground="#B67AFF" FontWeight="SemiBold"/>
+              <TextBlock x:Name="PullbackBarText" Text="OHLC: —" Classes="label" TextWrapping="Wrap"/>
+              <TextBlock x:Name="PullbackBarTimeText" Text="Closed: —" Classes="dim" FontSize="10"/>
+            </StackPanel>
+          </Border>
+          <Border Grid.Column="2" Classes="panelSoft" Padding="10">
+            <StackPanel>
+              <TextBlock x:Name="TriggerBarRoleText" Text="TRIGGER • M1" Foreground="#18E58B" FontWeight="SemiBold"/>
+              <TextBlock x:Name="TriggerBarText" Text="OHLC: —" Classes="label" TextWrapping="Wrap"/>
+              <TextBlock x:Name="TriggerBarTimeText" Text="Closed: —" Classes="dim" FontSize="10"/>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
 
-          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel Spacing="10">
-              <TextBlock Text="Market bars đang dùng" FontSize="17" FontWeight="SemiBold"/>
-              <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
-                <Border Grid.Column="0" Background="#091827" CornerRadius="8" Padding="12">
-                  <StackPanel Spacing="5">
-                    <TextBlock x:Name="DirectionBarRoleText" Text="DIRECTION • M30" Foreground="#59D9FF" FontWeight="SemiBold"/>
-                    <TextBlock x:Name="DirectionBarText" Text="OHLC: —" Foreground="#B9CBE0" TextWrapping="Wrap"/>
-                    <TextBlock x:Name="DirectionBarTimeText" Text="Closed: —" Foreground="#8097AE" FontSize="11"/>
-                  </StackPanel>
-                </Border>
-                <Border Grid.Column="1" Background="#091827" CornerRadius="8" Padding="12">
-                  <StackPanel Spacing="5">
-                    <TextBlock x:Name="PullbackBarRoleText" Text="PULLBACK • M5" Foreground="#B99CFF" FontWeight="SemiBold"/>
-                    <TextBlock x:Name="PullbackBarText" Text="OHLC: —" Foreground="#B9CBE0" TextWrapping="Wrap"/>
-                    <TextBlock x:Name="PullbackBarTimeText" Text="Closed: —" Foreground="#8097AE" FontSize="11"/>
-                  </StackPanel>
-                </Border>
-                <Border Grid.Column="2" Background="#091827" CornerRadius="8" Padding="12">
-                  <StackPanel Spacing="5">
-                    <TextBlock x:Name="TriggerBarRoleText" Text="TRIGGER • M1" Foreground="#69D48C" FontWeight="SemiBold"/>
-                    <TextBlock x:Name="TriggerBarText" Text="OHLC: —" Foreground="#B9CBE0" TextWrapping="Wrap"/>
-                    <TextBlock x:Name="TriggerBarTimeText" Text="Closed: —" Foreground="#8097AE" FontSize="11"/>
-                  </StackPanel>
-                </Border>
-              </Grid>
-            </StackPanel>
-          </Border>
-
-          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel Spacing="10">
-              <TextBlock Text="Indicator monitor" FontSize="17" FontWeight="SemiBold"/>
-              <Grid ColumnDefinitions="*,*,*,*,*" ColumnSpacing="8">
-                <Border Grid.Column="0" Background="#091827" CornerRadius="8" Padding="10">
-                  <StackPanel><TextBlock Text="MA" Foreground="#7890A8" FontSize="10"/><TextBlock x:Name="MonitorMaText" Text="—" FontSize="18"/></StackPanel>
-                </Border>
-                <Border Grid.Column="1" Background="#091827" CornerRadius="8" Padding="10">
-                  <StackPanel><TextBlock Text="PB RSI" Foreground="#7890A8" FontSize="10"/><TextBlock x:Name="MonitorPbRsiText" Text="—" FontSize="18"/></StackPanel>
-                </Border>
-                <Border Grid.Column="2" Background="#091827" CornerRadius="8" Padding="10">
-                  <StackPanel><TextBlock Text="TRG RSI" Foreground="#7890A8" FontSize="10"/><TextBlock x:Name="MonitorTriggerRsiText" Text="—" FontSize="18"/></StackPanel>
-                </Border>
-                <Border Grid.Column="3" Background="#091827" CornerRadius="8" Padding="10">
-                  <StackPanel><TextBlock Text="ADX" Foreground="#7890A8" FontSize="10"/><TextBlock x:Name="MonitorAdxText" Text="—" FontSize="18"/></StackPanel>
-                </Border>
-                <Border Grid.Column="4" Background="#091827" CornerRadius="8" Padding="10">
-                  <StackPanel><TextBlock Text="ATR" Foreground="#7890A8" FontSize="10"/><TextBlock x:Name="MonitorAtrText" Text="—" FontSize="18"/></StackPanel>
-                </Border>
-              </Grid>
-            </StackPanel>
-          </Border>
+      <!-- Alert table -->
+      <Border Classes="panel">
+        <StackPanel>
+          <Grid Background="#082038" ColumnDefinitions="Auto,Auto,*" Margin="12,7" ColumnSpacing="10">
+            <TextBlock Text="Cảnh báo &amp; Thông báo" Classes="panelTitle"/>
+            <Border Grid.Column="1" Background="#0866F4" CornerRadius="4" Padding="10,3"><TextBlock Text="Tất cả"/></Border>
+          </Grid>
+          <Grid Margin="12,7" ColumnDefinitions="100,90,120,*">
+            <TextBlock Text="Thời gian" Classes="dim"/><TextBlock Grid.Column="1" Text="Mức" Classes="dim"/><TextBlock Grid.Column="2" Text="Loại" Classes="dim"/><TextBlock Grid.Column="3" Text="Thông báo" Classes="dim"/>
+          </Grid>
+          <Grid Margin="12,2,12,8" ColumnDefinitions="100,90,120,*">
+            <TextBlock Text="Realtime" Classes="dim"/><TextBlock Grid.Column="1" Text="INFO" Foreground="#40BFFF"/><TextBlock Grid.Column="2" Text="Hệ thống" Classes="label"/><TextBlock x:Name="MonitorAlertText" Grid.Column="3" Text="Alert: đang chờ Bridge." Foreground="#FFD34D" TextWrapping="Wrap"/>
+          </Grid>
         </StackPanel>
-
-        <StackPanel Grid.Column="1" Spacing="14">
-          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel Spacing="9">
-              <TextBlock Text="Multi-timeframe điều kiện" FontSize="17" FontWeight="SemiBold"/>
-              <TextBlock Text="Chỉ 3 timeframe đang được active profile đánh giá; các TF khác không bị suy diễn."
-                         Foreground="#8097AE" FontSize="11" TextWrapping="Wrap"/>
-              <Border Background="#07121E" CornerRadius="7" Padding="10">
-                <Grid ColumnDefinitions="0.8*,0.7*,1.2*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
-                  <TextBlock Grid.Row="0" Text="ROLE" Foreground="#7890A8" FontSize="10"/>
-                  <TextBlock Grid.Row="0" Grid.Column="1" Text="TF" Foreground="#7890A8" FontSize="10"/>
-                  <TextBlock Grid.Row="0" Grid.Column="2" Text="STATE" Foreground="#7890A8" FontSize="10"/>
-                  <TextBlock Grid.Row="1" Text="Direction"/><TextBlock x:Name="MonitorDirectionTfText" Grid.Row="1" Grid.Column="1" Text="M30"/><TextBlock x:Name="MonitorDirectionStateText" Grid.Row="1" Grid.Column="2" Text="NEUTRAL"/>
-                  <TextBlock Grid.Row="2" Text="Pullback"/><TextBlock x:Name="MonitorPullbackTfText" Grid.Row="2" Grid.Column="1" Text="M5"/><TextBlock x:Name="MonitorPullbackStateText" Grid.Row="2" Grid.Column="2" Text="WAIT"/>
-                  <TextBlock Grid.Row="3" Text="Trigger"/><TextBlock x:Name="MonitorTriggerTfText" Grid.Row="3" Grid.Column="1" Text="M1"/><TextBlock x:Name="MonitorTriggerStateText" Grid.Row="3" Grid.Column="2" Text="WAIT"/>
-                </Grid>
-              </Border>
-            </StackPanel>
-          </Border>
-
-          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel Spacing="7">
-              <TextBlock Text="Kết nối &amp; Engine" FontSize="17" FontWeight="SemiBold"/>
-              <TextBlock x:Name="MonitorTerminalText" Text="Terminal: offline" Foreground="#B9CBE0"/>
-              <TextBlock x:Name="MonitorSnapshotCountText" Text="Snapshots: 0" Foreground="#8097AE"/>
-              <TextBlock x:Name="MonitorProfileText" Text="Profile: Baseline" Foreground="#8097AE" TextWrapping="Wrap"/>
-            </StackPanel>
-          </Border>
-
-          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel Spacing="7">
-              <TextBlock Text="Session / News" FontSize="17" FontWeight="SemiBold"/>
-              <TextBlock Text="Chưa có realtime session/news backend ở Task 008." Foreground="#E9C46A" TextWrapping="Wrap"/>
-              <TextBlock Text="Không hiển thị countdown, calendar hoặc trạng thái tin tức giả." Foreground="#8097AE" FontSize="11" TextWrapping="Wrap"/>
-            </StackPanel>
-          </Border>
-
-          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
-            <StackPanel Spacing="7">
-              <TextBlock Text="Tài nguyên &amp; cảnh báo" FontSize="17" FontWeight="SemiBold"/>
-              <TextBlock Text="CPU/RAM diagnostics thuộc Task 014 — chưa có backend." Foreground="#8097AE" TextWrapping="Wrap"/>
-              <TextBlock x:Name="MonitorAlertText" Text="Alert: đang chờ Bridge." Foreground="#E9C46A" TextWrapping="Wrap"/>
-            </StackPanel>
-          </Border>
-        </StackPanel>
-      </Grid>
+      </Border>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

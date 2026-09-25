@@ -2,457 +2,360 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:XAUPY.Desktop"
         x:Class="XAUPY.Desktop.MainWindow"
-        Width="1560"
-        Height="940"
-        MinWidth="1180"
-        MinHeight="760"
-        Background="#06101D"
-        Title="XAUPY Control Center — Task 008 Strategy &amp; Monitoring">
-  <Window.Styles>
-    <Style Selector="Button.nav">
-      <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="Foreground" Value="#B9CBE0"/>
-      <Setter Property="BorderBrush" Value="Transparent"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="7"/>
-      <Setter Property="HorizontalContentAlignment" Value="Left"/>
-      <Setter Property="Padding" Value="14,10"/>
-      <Setter Property="Margin" Value="4,2"/>
-    </Style>
-    <Style Selector="Button.nav:pointerover">
-      <Setter Property="Background" Value="#112844"/>
-      <Setter Property="Foreground" Value="#FFFFFF"/>
-    </Style>
-    <Style Selector="Button.action">
-      <Setter Property="Background" Value="#123B66"/>
-      <Setter Property="Foreground" Value="#E8F4FF"/>
-      <Setter Property="BorderBrush" Value="#245F96"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="7"/>
-      <Setter Property="Padding" Value="13,8"/>
-      <Setter Property="Margin" Value="0,0,8,0"/>
-    </Style>
-    <Style Selector="Border.card">
-      <Setter Property="Background" Value="#0C1929"/>
-      <Setter Property="BorderBrush" Value="#193956"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="10"/>
-      <Setter Property="Padding" Value="16"/>
-    </Style>
-    <Style Selector="Border.metric">
-      <Setter Property="Background" Value="#0A1726"/>
-      <Setter Property="BorderBrush" Value="#18334E"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="8"/>
-      <Setter Property="Padding" Value="14"/>
-    </Style>
-    <Style Selector="TextBlock.muted">
-      <Setter Property="Foreground" Value="#8097AE"/>
-    </Style>
-    <Style Selector="TextBlock.section">
-      <Setter Property="FontSize" Value="17"/>
-      <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="Foreground" Value="#E7F1FA"/>
-    </Style>
-    <Style Selector="TextBlock.metricValue">
-      <Setter Property="FontSize" Value="22"/>
-      <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="Foreground" Value="#F2F7FC"/>
-    </Style>
-    <Style Selector="TextBlock.metricLabel">
-      <Setter Property="FontSize" Value="12"/>
-      <Setter Property="Foreground" Value="#7890A8"/>
-    </Style>
-  </Window.Styles>
+        Width="1666"
+        Height="925"
+        MinWidth="1360"
+        MinHeight="780"
+        Background="#031426"
+        WindowDecorations="None"
+        Title="N30 Control Center v1.0 (Python) - XAUUSD">
 
-  <Grid RowDefinitions="62,*,32">
+  <Grid RowDefinitions="42,68,*,24">
+    <!-- Custom title bar: mirrors the approved N30 mockup -->
     <Border Grid.Row="0"
-            Background="#081625"
-            BorderBrush="#183553"
-            BorderThickness="0,0,0,1">
-      <Grid ColumnDefinitions="Auto,*,Auto" Margin="18,0">
-        <StackPanel Grid.Column="0"
-                    Orientation="Horizontal"
-                    VerticalAlignment="Center"
-                    Spacing="11">
-          <Border Width="34" Height="34" CornerRadius="8" Background="#157BFF">
-            <TextBlock Text="N30"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       FontWeight="Bold"/>
+            Background="#03162A"
+            BorderBrush="#124467"
+            BorderThickness="0,0,0,1"
+            PointerPressed="TitleBar_OnPointerPressed">
+      <Grid ColumnDefinitions="*,Auto,Auto" Margin="14,0,6,0">
+        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <Border Width="22" Height="22" CornerRadius="11" Background="#0877FF">
+            <TextBlock Text="N" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
           </Border>
-          <TextBlock Text="XAUPY Control Center"
-                     FontSize="20"
-                     FontWeight="SemiBold"
-                     VerticalAlignment="Center"/>
-          <TextBlock Text="Task 008 Strategy + Monitoring"
-                     Classes="muted"
-                     VerticalAlignment="Center"/>
+          <TextBlock Text="N30 Control Center" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/>
+          <TextBlock Text="v1.0 (Python)  -  XAUUSD" FontSize="16" FontWeight="SemiBold" Foreground="#D8E6F7" VerticalAlignment="Center"/>
         </StackPanel>
 
-        <StackPanel Grid.Column="2"
-                    Orientation="Horizontal"
-                    VerticalAlignment="Center"
-                    Spacing="8">
-          <Border Background="#10263D"
-                  BorderBrush="#244F77"
-                  BorderThickness="1"
-                  CornerRadius="12"
-                  Padding="10,5">
-            <TextBlock x:Name="HeaderEnginePillText"
-                       Text="ENGINE STARTING"
-                       Foreground="#E9C46A"
-                       FontWeight="SemiBold"/>
-          </Border>
-          <Border Background="#10263D"
-                  BorderBrush="#244F77"
-                  BorderThickness="1"
-                  CornerRadius="12"
-                  Padding="10,5">
-            <TextBlock x:Name="HeaderBridgePillText"
-                       Text="MT5 WAITING"
-                       Foreground="#E9C46A"
-                       FontWeight="SemiBold"/>
-          </Border>
-          <Border Background="#302B17"
-                  BorderBrush="#6A5C24"
-                  BorderThickness="1"
-                  CornerRadius="12"
-                  Padding="10,5">
-            <TextBlock Text="EXECUTION LOCKED"
-                       Foreground="#E9C46A"
-                       FontWeight="Bold"/>
-          </Border>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,18,0">
+          <TextBlock x:Name="HeaderBridgePillText" Text="●  Waiting for MT5" Foreground="#FFD34D" FontSize="15" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Stretch">
+          <Button Width="42" Background="Transparent" BorderThickness="0" Foreground="#C9D9EA" Content="—" Click="Minimize_OnClick"/>
+          <Button Width="42" Background="Transparent" BorderThickness="0" Foreground="#C9D9EA" Content="□" Click="Maximize_OnClick"/>
+          <Button Width="42" Background="Transparent" BorderThickness="0" Foreground="#C9D9EA" Content="✕" Click="Close_OnClick"/>
         </StackPanel>
       </Grid>
     </Border>
 
-    <Grid Grid.Row="1" ColumnDefinitions="220,*">
-      <Border Grid.Column="0"
-              Background="#081422"
-              BorderBrush="#183553"
-              BorderThickness="0,0,1,0">
-        <ScrollViewer>
-          <StackPanel Margin="10">
-            <TextBlock Text="CONTROL CENTER"
-                       Classes="muted"
-                       FontSize="11"
-                       FontWeight="SemiBold"
-                       Margin="10,9,10,8"/>
-            <Button Classes="nav" Content="◉  Tổng quan" Tag="overview" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="⚙  Cấu hình" Tag="configuration" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="◇  Chiến lược" Tag="strategy" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="⌁  Giám sát" Tag="monitoring" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="≡  Lệnh &amp; Vị thế" Tag="orders" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="↺  Backtest" Tag="backtest" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="△  Tối ưu" Tag="optimization" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="▤  Nhật ký" Tag="logs" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="⌘  Công cụ" Tag="tools" Click="NavButton_OnClick"/>
-            <Button Classes="nav" Content="☰  Cài đặt" Tag="settings" Click="NavButton_OnClick"/>
+    <!-- Approved horizontal navigation -->
+    <Border Grid.Row="1" Background="#04172A" BorderBrush="#14517A" BorderThickness="1" Margin="14,0,14,8" CornerRadius="5">
+      <Grid ColumnDefinitions="*,*,*,*,*,*,*,*,*,*,175">
+        <Button x:Name="NavOverview" Grid.Column="0" Classes="navTab active" Tag="overview" Click="NavButton_OnClick">
+          <StackPanel Spacing="2"><TextBlock Text="⌂" FontSize="23" HorizontalAlignment="Center"/><TextBlock Text="Tổng quan" FontSize="14"/></StackPanel>
+        </Button>
+        <Button x:Name="NavConfiguration" Grid.Column="1" Classes="navTab" Tag="configuration" Click="NavButton_OnClick">
+          <StackPanel Spacing="2"><TextBlock Text="⚙" FontSize="21" HorizontalAlignment="Center"/><TextBlock Text="Cấu hình" FontSize="14"/></StackPanel>
+        </Button>
+        <Button x:Name="NavStrategy" Grid.Column="2" Classes="navTab" Tag="strategy" Click="NavButton_OnClick">
+          <StackPanel Spacing="2"><TextBlock Text="▥" FontSize="22" HorizontalAlignment="Center"/><TextBlock Text="Chiến lược" FontSize="14"/></StackPanel>
+        </Button>
+        <Button x:Name="NavMonitoring" Grid.Column="3" Classes="navTab" Tag="monitoring" Click="NavButton_OnClick">
+          <StackPanel Spacing="2"><TextBlock Text="◉" FontSize="22" HorizontalAlignment="Center"/><TextBlock Text="Giám sát" FontSize="14"/></StackPanel>
+        </Button>
+        <Button x:Name="NavOrders" Grid.Column="4" Classes="navTab" Tag="orders" Click="NavButton_OnClick">
+          <StackPanel Spacing="2"><TextBlock Text="▣" FontSize="21" HorizontalAlignment="Center"/><TextBlock Text="Lệnh &amp; Vị thế" FontSize="13"/></StackPanel>
+        </Button>
+        <Button x:Name="NavBacktest" Grid.Column="5" Classes="navTab" Tag="backtest" Click="NavButton_OnClick">
+          <StackPanel Spacing="2"><TextBlock Text="≡" FontSize="23" HorizontalAlignment="Center"/><TextBlock Text="Backtest" FontSize="14"/></StackPanel>
+        </Button>
+        <Button x:Name="NavOptimization" Grid.Column="6" Classes="navTab" Tag="optimization" Click="NavButton_OnClick">
+          <StackPanel Spacing="2"><TextBlock Text="✣" FontSize="22" HorizontalAlignment="Center"/><TextBlock Text="Tối ưu" FontSize="14"/></StackPanel>
+        </Button>
+        <Button x:Name="NavLogs" Grid.Column="7" Classes="navTab" Tag="logs" Click="NavButton_OnClick">
+          <StackPanel Spacing="2"><TextBlock Text="▤" FontSize="22" HorizontalAlignment="Center"/><TextBlock Text="Nhật ký" FontSize="14"/></StackPanel>
+        </Button>
+        <Button x:Name="NavTools" Grid.Column="8" Classes="navTab" Tag="tools" Click="NavButton_OnClick">
+          <StackPanel Spacing="2"><TextBlock Text="⚒" FontSize="21" HorizontalAlignment="Center"/><TextBlock Text="Công cụ" FontSize="14"/></StackPanel>
+        </Button>
+        <Button x:Name="NavSettings" Grid.Column="9" Classes="navTab" Tag="settings" Click="NavButton_OnClick">
+          <StackPanel Spacing="2"><TextBlock Text="⚙" FontSize="21" HorizontalAlignment="Center"/><TextBlock Text="Cài đặt" FontSize="14"/></StackPanel>
+        </Button>
+        <StackPanel Grid.Column="10" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0">
+          <TextBlock x:Name="HeaderClockText" Text="--:--:--" FontSize="15" HorizontalAlignment="Right"/>
+          <TextBlock x:Name="HeaderDateText" Text="--/--/----" Foreground="#91AAC2" FontSize="12" HorizontalAlignment="Right"/>
+        </StackPanel>
+      </Grid>
+    </Border>
 
-            <Border Classes="card" Margin="4,20,4,4" Padding="13">
-              <StackPanel Spacing="6">
-                <TextBlock Text="STACK STATUS"
-                           Classes="muted"
-                           FontSize="11"
-                           FontWeight="SemiBold"/>
-                <TextBlock Text="Avalonia Desktop" Foreground="#59D9FF"/>
-                <TextBlock Text="Python Engine" Foreground="#B99CFF"/>
-                <TextBlock Text="MT5 Bridge EA" Foreground="#69D48C"/>
-                <TextBlock Text="Canonical Config v1" Foreground="#59D9FF"/>
+    <Grid Grid.Row="2" ColumnDefinitions="280,*" ColumnSpacing="8" Margin="14,0,14,8">
+      <!-- Reused left status column shown in approved Overview / Strategy / Monitoring mockups -->
+      <ScrollViewer x:Name="LiveSidebar" Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="8">
+          <Border Classes="panel" Padding="14,10">
+            <StackPanel Spacing="3">
+              <StackPanel Orientation="Horizontal" Spacing="9">
+                <TextBlock x:Name="SymbolValue" Text="XAUUSD" FontSize="22" FontWeight="Bold" Foreground="#B9D5F0"/>
+                <TextBlock Text="●" Foreground="#17E58B" FontSize="18" VerticalAlignment="Center"/>
               </StackPanel>
-            </Border>
-          </StackPanel>
-        </ScrollViewer>
-      </Border>
-
-      <ScrollViewer Grid.Column="1">
-        <StackPanel Margin="24" Spacing="15">
-          <Grid ColumnDefinitions="*,Auto">
-            <StackPanel>
-              <TextBlock x:Name="PageTitle"
-                         Text="Tổng quan"
-                         FontSize="28"
-                         FontWeight="Bold"/>
-              <TextBlock x:Name="PageSubtitle"
-                         Text="Giá XAUUSD, trạng thái hệ thống, tài khoản, chart, chiến lược, lệnh gần đây và log nhanh."
-                         Classes="muted"
-                         FontSize="14"
-                         TextWrapping="Wrap"
-                         Margin="0,4,0,0"/>
-            </StackPanel>
-            <StackPanel Grid.Column="1"
-                        Orientation="Horizontal"
-                        VerticalAlignment="Center">
-              <Button Classes="action" Content="Khởi động Engine" Click="StartEngine_OnClick"/>
-              <Button Classes="action" Content="Dừng Engine" Click="StopEngine_OnClick"/>
-            </StackPanel>
-          </Grid>
-
-          <StackPanel x:Name="OverviewContent" Spacing="15">
-            <!-- Quote and account headline -->
-            <Grid ColumnDefinitions="1.25*,1*,1*,1*,1*" ColumnSpacing="10">
-              <Border Grid.Column="0" Classes="metric">
-                <StackPanel Spacing="4">
-                  <TextBlock x:Name="SymbolValue" Text="XAUUSD" Classes="metricLabel"/>
-                  <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                    <StackPanel>
-                      <TextBlock Text="BID" Classes="metricLabel"/>
-                      <TextBlock x:Name="BidValue" Text="—" Classes="metricValue" Foreground="#69D48C"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1">
-                      <TextBlock Text="ASK" Classes="metricLabel"/>
-                      <TextBlock x:Name="AskValue" Text="—" Classes="metricValue"/>
-                    </StackPanel>
-                  </Grid>
-                  <TextBlock x:Name="SpreadValue" Text="Spread: —" Classes="muted" FontSize="12"/>
-                </StackPanel>
-              </Border>
-
-              <Border Grid.Column="1" Classes="metric">
-                <StackPanel Spacing="5">
-                  <TextBlock Text="BALANCE" Classes="metricLabel"/>
-                  <TextBlock x:Name="BalanceValue" Text="—" Classes="metricValue"/>
-                  <TextBlock x:Name="AccountModeValue" Text="MT5: waiting" Classes="muted" FontSize="12"/>
-                </StackPanel>
-              </Border>
-
-              <Border Grid.Column="2" Classes="metric">
-                <StackPanel Spacing="5">
-                  <TextBlock Text="EQUITY" Classes="metricLabel"/>
-                  <TextBlock x:Name="EquityValue" Text="—" Classes="metricValue"/>
-                  <TextBlock Text="Dữ liệu trực tiếp từ Bridge" Classes="muted" FontSize="12"/>
-                </StackPanel>
-              </Border>
-
-              <Border Grid.Column="3" Classes="metric">
-                <StackPanel Spacing="5">
-                  <TextBlock Text="FREE MARGIN" Classes="metricLabel"/>
-                  <TextBlock x:Name="MarginFreeValue" Text="—" Classes="metricValue"/>
-                  <TextBlock x:Name="CurrencyValue" Text="Currency: —" Classes="muted" FontSize="12"/>
-                </StackPanel>
-              </Border>
-
-              <Border Grid.Column="4" Classes="metric">
-                <StackPanel Spacing="5">
-                  <TextBlock Text="GUARDIAN" Classes="metricLabel"/>
-                  <TextBlock x:Name="GuardianValue" Text="LOCKED" FontSize="20" FontWeight="Bold" Foreground="#E9C46A"/>
-                  <TextBlock x:Name="GuardianReasonValue" Text="TASK003_EXECUTION_LOCKED" Classes="muted" FontSize="12" TextWrapping="Wrap"/>
-                </StackPanel>
-              </Border>
-            </Grid>
-
-            <!-- System status -->
-            <Border Classes="card">
-              <Grid ColumnDefinitions="1*,1*,1*,1.3*" ColumnSpacing="14">
-                <StackPanel Grid.Column="0" Spacing="5">
-                  <TextBlock Text="Desktop" Classes="metricLabel"/>
-                  <TextBlock Text="ONLINE" FontSize="18" FontWeight="SemiBold" Foreground="#69D48C"/>
-                  <TextBlock Text="Avalonia/.NET 10" Classes="muted" FontSize="12"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Spacing="5">
-                  <TextBlock Text="Python Engine" Classes="metricLabel"/>
-                  <TextBlock x:Name="EngineStateText" Text="STARTING" FontSize="18" FontWeight="SemiBold" Foreground="#E9C46A"/>
-                  <TextBlock x:Name="LastHeartbeatText" Text="Heartbeat: —" Classes="muted" FontSize="12"/>
-                </StackPanel>
-                <StackPanel Grid.Column="2" Spacing="5">
-                  <TextBlock Text="MT5 Bridge" Classes="metricLabel"/>
-                  <TextBlock x:Name="BridgeStateText" Text="WAITING" FontSize="18" FontWeight="SemiBold" Foreground="#E9C46A"/>
-                  <TextBlock x:Name="BridgeAgeText" Text="Snapshot age: —" Classes="muted" FontSize="12"/>
-                </StackPanel>
-                <StackPanel Grid.Column="3" Spacing="5">
-                  <TextBlock Text="Chi tiết kết nối" Classes="metricLabel"/>
-                  <TextBlock x:Name="EngineDetailText" Text="Đang chuẩn bị Engine..." Foreground="#B9CBE0" TextWrapping="Wrap"/>
-                  <TextBlock x:Name="BridgeDetailText" Text="Chưa nhận snapshot MT5." Classes="muted" FontSize="12" TextWrapping="Wrap"/>
-                </StackPanel>
+              <TextBlock x:Name="BidValue" Text="—" FontSize="37" FontWeight="Bold" Foreground="#17E58B"/>
+              <TextBlock x:Name="SpreadValue" Text="Spread: —" FontSize="18" Foreground="#FF415C"/>
+              <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,5,0,0">
+                <TextBlock Text="Bid" Foreground="#17E58B"/>
+                <TextBlock Grid.Column="1"/>
+                <TextBlock Grid.Column="2" Text="Ask" Foreground="#17E58B" Margin="0,0,8,0"/>
+                <TextBlock x:Name="AskValue" Grid.Column="3" Text="—"/>
               </Grid>
-            </Border>
+            </StackPanel>
+          </Border>
 
-            <!-- Chart + strategy -->
-            <Grid ColumnDefinitions="1.75*,1*" ColumnSpacing="14">
-              <Border Grid.Column="0" Classes="card">
-                <StackPanel Spacing="10">
-                  <Grid ColumnDefinitions="*,Auto">
-                    <StackPanel>
-                      <TextBlock Text="XAUUSD • Live Quote" Classes="section"/>
-                      <TextBlock Text="Biểu đồ nhanh dùng lịch sử BID nhận từ MT5 Bridge; không phải dữ liệu minh họa." Classes="muted" FontSize="12"/>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                      <TextBlock x:Name="ChartLastValue" Text="Last: —" FontWeight="SemiBold"/>
-                      <TextBlock x:Name="ChartRangeValue" Text="Range: —" Classes="muted" FontSize="12"/>
-                    </StackPanel>
-                  </Grid>
-
-                  <Border Background="#07121E"
-                          BorderBrush="#142E47"
-                          BorderThickness="1"
-                          CornerRadius="8"
-                          Height="238"
-                          Padding="14">
-                    <Grid RowDefinitions="*,Auto">
-                      <Grid Grid.Row="0"
-                            ColumnDefinitions="*,*,*,*,*,*,*,*,*,*"
-                            Margin="4,8">
-                        <Border x:Name="ChartBar0" Grid.Column="0" Width="14" Height="22" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.35"/>
-                        <Border x:Name="ChartBar1" Grid.Column="1" Width="14" Height="28" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.40"/>
-                        <Border x:Name="ChartBar2" Grid.Column="2" Width="14" Height="32" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.45"/>
-                        <Border x:Name="ChartBar3" Grid.Column="3" Width="14" Height="38" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.50"/>
-                        <Border x:Name="ChartBar4" Grid.Column="4" Width="14" Height="44" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.55"/>
-                        <Border x:Name="ChartBar5" Grid.Column="5" Width="14" Height="50" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.60"/>
-                        <Border x:Name="ChartBar6" Grid.Column="6" Width="14" Height="55" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.65"/>
-                        <Border x:Name="ChartBar7" Grid.Column="7" Width="14" Height="48" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.70"/>
-                        <Border x:Name="ChartBar8" Grid.Column="8" Width="14" Height="58" Background="#247BDE" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.75"/>
-                        <Border x:Name="ChartBar9" Grid.Column="9" Width="14" Height="64" Background="#2D9CFF" CornerRadius="3" VerticalAlignment="Bottom" HorizontalAlignment="Center" Opacity="0.85"/>
-                      </Grid>
-                      <Grid Grid.Row="1" ColumnDefinitions="*,*,*">
-                        <TextBlock x:Name="ChartMinValue" Text="Min —" Classes="muted" FontSize="11"/>
-                        <TextBlock Grid.Column="1" Text="LIVE BID HISTORY" HorizontalAlignment="Center" Classes="muted" FontSize="11"/>
-                        <TextBlock x:Name="ChartMaxValue" Grid.Column="2" Text="Max —" HorizontalAlignment="Right" Classes="muted" FontSize="11"/>
-                      </Grid>
-                    </Grid>
-                  </Border>
-                </StackPanel>
+          <Border Classes="panel">
+            <StackPanel>
+              <Border Background="#082038" Padding="12,7">
+                <TextBlock Text="Trạng thái EA" Classes="panelTitle"/>
               </Border>
-
-              <Border Grid.Column="1" Classes="card">
-                <StackPanel Spacing="11">
-                  <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Chiến lược realtime" Classes="section"/>
-                    <Border Grid.Column="1" Background="#2F2915" BorderBrush="#675B24" BorderThickness="1" CornerRadius="10" Padding="8,3">
-                      <TextBlock x:Name="StrategyStateValue" Text="CHƯA CHẠY" Foreground="#E9C46A" FontSize="11" FontWeight="Bold"/>
-                    </Border>
-                  </Grid>
-                  <TextBlock x:Name="ProfileValue" Text="Profile: Baseline" Foreground="#59D9FF"/>
-                  <Grid ColumnDefinitions="*,*,*" ColumnSpacing="7">
-                    <Border Grid.Column="0" Classes="metric" Padding="9">
-                      <StackPanel>
-                        <TextBlock Text="DIRECTION" Classes="metricLabel"/>
-                        <TextBlock x:Name="DirectionTfValue" Text="M30" FontSize="18" FontWeight="SemiBold"/>
-                      </StackPanel>
-                    </Border>
-                    <Border Grid.Column="1" Classes="metric" Padding="9">
-                      <StackPanel>
-                        <TextBlock Text="PULLBACK" Classes="metricLabel"/>
-                        <TextBlock x:Name="PullbackTfValue" Text="M5" FontSize="18" FontWeight="SemiBold"/>
-                      </StackPanel>
-                    </Border>
-                    <Border Grid.Column="2" Classes="metric" Padding="9">
-                      <StackPanel>
-                        <TextBlock Text="TRIGGER" Classes="metricLabel"/>
-                        <TextBlock x:Name="TriggerTfValue" Text="M1" FontSize="18" FontWeight="SemiBold"/>
-                      </StackPanel>
-                    </Border>
-                  </Grid>
-                  <TextBlock x:Name="DirectionRuleValue" Text="Direction: EMA50" Foreground="#B9CBE0"/>
-                  <TextBlock x:Name="TpSlValue" Text="SL STRUCTURE • TP FIXED" Foreground="#B9CBE0"/>
-                  <TextBlock Text="Strategy state lấy trực tiếp từ Python Engine. Tín hiệu chỉ hiển thị khi backend thật phát sinh; execution vẫn khóa."
-                             Classes="muted"
-                             TextWrapping="Wrap"
-                             FontSize="12"/>
-                </StackPanel>
+              <Border Margin="0,0,0,0" Background="#063928" Padding="12,10">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <Button Grid.Column="0" Width="36" Height="36" CornerRadius="18" Classes="secondary" Content="▶" Click="StartEngine_OnClick"/>
+                  <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="ĐANG CHẠY" Foreground="#18E58B" FontWeight="Bold" FontSize="18"/>
+                    <TextBlock x:Name="HeaderEnginePillText" Text="ENGINE STARTING" Foreground="#A8C2DA" FontSize="11"/>
+                  </StackPanel>
+                  <Button Grid.Column="2" Width="42" Classes="secondary" Content="■" Click="StopEngine_OnClick"/>
+                </Grid>
               </Border>
-            </Grid>
+            </StackPanel>
+          </Border>
 
-            <!-- Recent orders + quick logs -->
-            <Grid ColumnDefinitions="1.55*,1*" ColumnSpacing="14">
-              <Border Grid.Column="0" Classes="card">
-                <StackPanel Spacing="10">
-                  <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Lệnh gần đây" Classes="section"/>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
-                      <TextBlock Text="Positions:" Classes="muted"/>
-                      <TextBlock x:Name="PositionsCountValue" Text="0"/>
-                      <TextBlock Text="Orders:" Classes="muted"/>
-                      <TextBlock x:Name="OrdersCountValue" Text="0"/>
-                    </StackPanel>
-                  </Grid>
-                  <Border Background="#07121E" CornerRadius="7" Padding="10">
-                    <Grid ColumnDefinitions="1.1*,0.7*,0.8*,0.8*,0.8*,1.2*">
-                      <TextBlock Text="Thời gian" Classes="metricLabel"/>
-                      <TextBlock Grid.Column="1" Text="Side" Classes="metricLabel"/>
-                      <TextBlock Grid.Column="2" Text="Lot" Classes="metricLabel"/>
-                      <TextBlock Grid.Column="3" Text="Entry" Classes="metricLabel"/>
-                      <TextBlock Grid.Column="4" Text="P/L" Classes="metricLabel"/>
-                      <TextBlock Grid.Column="5" Text="Trạng thái" Classes="metricLabel"/>
-                    </Grid>
-                  </Border>
-                  <Border Background="#091625" CornerRadius="7" Padding="16">
-                    <TextBlock x:Name="RecentOrdersEmptyText"
-                               Text="Chưa có dữ liệu lệnh. Task 008 chỉ hiển thị dữ liệu thật; execution hiện đang khóa."
-                               Classes="muted"
-                               HorizontalAlignment="Center"
-                               TextWrapping="Wrap"/>
-                  </Border>
-                </StackPanel>
-              </Border>
+          <Border Classes="panel">
+            <StackPanel>
+              <Border Background="#082038" Padding="12,7"><TextBlock Text="Tài khoản giao dịch" Classes="panelTitle"/></Border>
+              <Grid Margin="12,8" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="7">
+                <TextBlock Grid.Row="0" Text="Balance" Classes="label"/><TextBlock x:Name="BalanceValue" Grid.Row="0" Grid.Column="1" Text="—" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="1" Text="Equity" Classes="label"/><TextBlock x:Name="EquityValue" Grid.Row="1" Grid.Column="1" Text="—" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="2" Text="Free Margin" Classes="label"/><TextBlock x:Name="MarginFreeValue" Grid.Row="2" Grid.Column="1" Text="—"/>
+                <TextBlock Grid.Row="3" Text="Lệnh đang mở" Classes="label"/><TextBlock x:Name="SidebarPositionsText" Grid.Row="3" Grid.Column="1" Text="—"/>
+                <TextBlock Grid.Row="4" Text="Mode" Classes="label"/><TextBlock x:Name="AccountModeValue" Grid.Row="4" Grid.Column="1" Text="MT5: waiting"/>
+              </Grid>
+              <TextBlock x:Name="CurrencyValue" Text="Currency: —" Foreground="#7695B3" FontSize="11" Margin="12,0,12,8"/>
+            </StackPanel>
+          </Border>
 
-              <Border Grid.Column="1" Classes="card">
-                <StackPanel Spacing="10">
-                  <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Log nhanh" Classes="section"/>
-                    <TextBlock Grid.Column="1" Text="LOCAL UI EVENTS" Classes="metricLabel"/>
-                  </Grid>
-                  <Border Background="#07121E" CornerRadius="7" Padding="12" MinHeight="130">
-                    <TextBlock x:Name="QuickLogText"
-                               Text="Đang khởi tạo Control Center..."
-                               FontFamily="Consolas"
-                               FontSize="12"
-                               Foreground="#9DB5CD"
-                               TextWrapping="Wrap"/>
-                  </Border>
-                </StackPanel>
-              </Border>
-            </Grid>
-          </StackPanel>
-
-          <local:ConfigurationEditor x:Name="ConfigurationEditor"
-                                     IsVisible="False"
-                                     Height="760"/>
-
-          <local:StrategyDashboard x:Name="StrategyDashboard"
-                                   IsVisible="False"/>
-
-          <local:MonitoringDashboard x:Name="MonitoringDashboard"
-                                     IsVisible="False"/>
-
-          <Border x:Name="PlaceholderContent" Classes="card" IsVisible="False" MinHeight="420">
-            <StackPanel HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Spacing="12"
-                        MaxWidth="580">
-              <TextBlock x:Name="PlaceholderTitle"
-                         Text="Tab chưa triển khai"
-                         FontSize="24"
-                         FontWeight="SemiBold"
-                         HorizontalAlignment="Center"/>
-              <TextBlock x:Name="PlaceholderDetail"
-                         Text="Task 008 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát. Các tab còn lại sẽ được hoàn thiện theo đúng thứ tự task."
-                         Classes="muted"
-                         TextWrapping="Wrap"
-                         TextAlignment="Center"/>
-              <TextBlock Text="Không hiển thị dữ liệu giả để tạo cảm giác chức năng đã tồn tại."
-                         Foreground="#E9C46A"
-                         TextAlignment="Center"/>
+          <Border Classes="panel">
+            <StackPanel>
+              <Border Background="#082038" Padding="12,7"><TextBlock Text="Kết nối &amp; Hệ thống" Classes="panelTitle"/></Border>
+              <Grid Margin="12,8" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="7">
+                <TextBlock Grid.Row="0" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="0" Grid.Column="1" Text="MT5 Terminal" Classes="label"/><TextBlock x:Name="BridgeStateText" Grid.Row="0" Grid.Column="2" Text="WAITING" Foreground="#FFD34D"/>
+                <TextBlock Grid.Row="1" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="1" Grid.Column="1" Text="EA Bridge" Classes="label"/><TextBlock x:Name="BridgeAgeText" Grid.Row="1" Grid.Column="2" Text="—" Foreground="#9AB5CF"/>
+                <TextBlock Grid.Row="2" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="2" Grid.Column="1" Text="Python Engine" Classes="label"/><TextBlock x:Name="EngineStateText" Grid.Row="2" Grid.Column="2" Text="STARTING" Foreground="#FFD34D"/>
+                <TextBlock Grid.Row="3" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="3" Grid.Column="1" Text="Dữ liệu thị trường" Classes="label"/><TextBlock x:Name="LastHeartbeatText" Grid.Row="3" Grid.Column="2" Text="—" Foreground="#9AB5CF"/>
+                <TextBlock Grid.Row="4" Text="Ping" Classes="label"/><TextBlock x:Name="GuardianReasonValue" Grid.Row="4" Grid.Column="2" Text="LOCKED" Foreground="#FFD34D"/>
+              </Grid>
+              <TextBlock x:Name="EngineDetailText" Text="Đang chuẩn bị Engine..." Classes="dim" FontSize="10" TextWrapping="Wrap" Margin="12,0,12,4"/>
+              <TextBlock x:Name="BridgeDetailText" Text="Chưa nhận snapshot MT5." Classes="dim" FontSize="10" TextWrapping="Wrap" Margin="12,0,12,10"/>
             </StackPanel>
           </Border>
         </StackPanel>
       </ScrollViewer>
+
+      <StackPanel IsVisible="False">
+        <TextBlock x:Name="PageTitle" Text="Tổng quan"/>
+        <TextBlock x:Name="PageSubtitle" Text=""/>
+      </StackPanel>
+
+      <!-- Overview -->
+      <ScrollViewer Grid.Column="1" x:Name="OverviewScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel x:Name="OverviewContent" Spacing="8">
+          <Grid ColumnDefinitions="2.35*,0.95*" ColumnSpacing="8">
+            <Border Grid.Column="0" Classes="panel" Height="344">
+              <Grid RowDefinitions="42,*,27">
+                <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="Auto,*,Auto" Margin="12,0">
+                  <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <TextBlock Text="XAUUSD" FontSize="17" FontWeight="Bold"/>
+                    <TextBlock Text="M5" FontSize="17" FontWeight="Bold"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="5" VerticalAlignment="Center">
+                    <Border Classes="panelSoft" Padding="11,5"><TextBlock Text="M1"/></Border>
+                    <Border Classes="panelSoft" Padding="11,5"><TextBlock Text="M3"/></Border>
+                    <Border Background="#0866F4" BorderBrush="#2A8EFF" BorderThickness="1" CornerRadius="4" Padding="11,5"><TextBlock Text="M5"/></Border>
+                    <Border Classes="panelSoft" Padding="11,5"><TextBlock Text="M15"/></Border>
+                    <Border Classes="panelSoft" Padding="11,5"><TextBlock Text="M30"/></Border>
+                    <Border Classes="panelSoft" Padding="11,5"><TextBlock Text="H1"/></Border>
+                    <Border Classes="panelSoft" Padding="11,5"><TextBlock Text="H4"/></Border>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+                    <TextBlock Text="+ So sánh" Classes="label"/>
+                    <TextBlock Text="ƒ  Chỉ báo" Classes="label"/>
+                    <TextBlock Text="Nến Nhật" Classes="label"/>
+                  </StackPanel>
+                </Grid>
+
+                <Border Grid.Row="1" Background="#041526" BorderBrush="#0D3553" BorderThickness="0,1,0,1">
+                  <Grid RowDefinitions="Auto,*">
+                    <StackPanel Orientation="Horizontal" Spacing="14" Margin="12,8,0,0">
+                      <TextBlock Text="O —   H —   L —   C —" Foreground="#C8D9EA"/>
+                      <TextBlock x:Name="ChartLastValue" Text="Last: —" Foreground="#FF415C"/>
+                      <TextBlock x:Name="ChartRangeValue" Text="Range: —" Classes="dim"/>
+                    </StackPanel>
+                    <Grid Grid.Row="1" Margin="0,8,0,0">
+                      <Grid RowDefinitions="*,*,*,*" Opacity="0.38">
+                        <Border Grid.Row="0" BorderBrush="#17415F" BorderThickness="0,0,0,1"/>
+                        <Border Grid.Row="1" BorderBrush="#17415F" BorderThickness="0,0,0,1"/>
+                        <Border Grid.Row="2" BorderBrush="#17415F" BorderThickness="0,0,0,1"/>
+                        <Border Grid.Row="3" BorderBrush="#17415F" BorderThickness="0,0,0,1"/>
+                      </Grid>
+                      <Grid ColumnDefinitions="*,*,*,*,*,*,*,*,*,*" Margin="18,5,18,8">
+                        <Border x:Name="ChartBar0" Grid.Column="0" Width="16" Height="22" Background="#16C990" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                        <Border x:Name="ChartBar1" Grid.Column="1" Width="16" Height="28" Background="#16C990" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                        <Border x:Name="ChartBar2" Grid.Column="2" Width="16" Height="32" Background="#16C990" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                        <Border x:Name="ChartBar3" Grid.Column="3" Width="16" Height="38" Background="#FF415C" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                        <Border x:Name="ChartBar4" Grid.Column="4" Width="16" Height="44" Background="#16C990" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                        <Border x:Name="ChartBar5" Grid.Column="5" Width="16" Height="50" Background="#FF415C" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                        <Border x:Name="ChartBar6" Grid.Column="6" Width="16" Height="55" Background="#16C990" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                        <Border x:Name="ChartBar7" Grid.Column="7" Width="16" Height="48" Background="#FF415C" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                        <Border x:Name="ChartBar8" Grid.Column="8" Width="16" Height="58" Background="#16C990" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                        <Border x:Name="ChartBar9" Grid.Column="9" Width="16" Height="64" Background="#16C990" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                </Border>
+
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto,*" Margin="12,0">
+                  <TextBlock x:Name="ChartMinValue" Text="Min —" Classes="dim" FontSize="11" VerticalAlignment="Center"/>
+                  <TextBlock Grid.Column="1" Text="REAL BRIDGE QUOTE HISTORY" Classes="dim" FontSize="10" VerticalAlignment="Center"/>
+                  <TextBlock x:Name="ChartMaxValue" Grid.Column="2" Text="Max —" HorizontalAlignment="Right" Classes="dim" FontSize="11" VerticalAlignment="Center"/>
+                </Grid>
+              </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Classes="panel" Height="344">
+              <StackPanel>
+                <Border Background="#082038" Padding="12,8"><TextBlock Text="Thông tin chiến lược (Realtime)" Classes="panelTitle"/></Border>
+                <Grid Margin="12,8" ColumnDefinitions="1.2*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="7">
+                  <TextBlock Grid.Row="0" Text="Direction" Classes="label"/><TextBlock x:Name="OverviewDirectionState" Grid.Row="0" Grid.Column="1" Text="—" Foreground="#FF415C" FontWeight="Bold"/>
+                  <TextBlock Grid.Row="1" Text="Pullback" Classes="label"/><TextBlock x:Name="OverviewPullbackState" Grid.Row="1" Grid.Column="1" Text="—" Foreground="#FFD34D"/>
+                  <TextBlock Grid.Row="2" Text="Trigger" Classes="label"/><TextBlock x:Name="OverviewTriggerState" Grid.Row="2" Grid.Column="1" Text="—"/>
+                  <TextBlock Grid.Row="3" Text="Z-Score (Trigger)" Classes="label"/><TextBlock x:Name="OverviewZTrigger" Grid.Row="3" Grid.Column="1" Text="—"/>
+                  <TextBlock Grid.Row="4" Text="RSI (Trigger)" Classes="label"/><TextBlock x:Name="OverviewRsiTrigger" Grid.Row="4" Grid.Column="1" Text="—"/>
+                  <TextBlock Grid.Row="5" Text="Z-Score (Pullback)" Classes="label"/><TextBlock x:Name="OverviewZPullback" Grid.Row="5" Grid.Column="1" Text="—"/>
+                  <TextBlock Grid.Row="6" Text="RSI (Pullback)" Classes="label"/><TextBlock x:Name="OverviewRsiPullback" Grid.Row="6" Grid.Column="1" Text="—"/>
+                  <TextBlock Grid.Row="7" Text="Direction MA" Classes="label"/><TextBlock x:Name="OverviewMaValue" Grid.Row="7" Grid.Column="1" Text="—"/>
+                  <TextBlock Grid.Row="8" Text="Trạng thái" Classes="label"/><TextBlock x:Name="StrategyStateValue" Grid.Row="8" Grid.Column="1" Text="STALE" Foreground="#FFD34D"/>
+                </Grid>
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <Border Classes="panel" MinHeight="240">
+            <StackPanel>
+              <Grid Background="#082038" ColumnDefinitions="*,Auto" Margin="12,7">
+                <StackPanel Orientation="Horizontal" Spacing="9">
+                  <TextBlock Text="▣" Foreground="#62AFFF"/>
+                  <TextBlock Text="Công cụ &amp; Tham số đầy đủ (Trung tâm cấu hình)" Classes="panelTitle"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                  <Button Classes="secondary" Content="⚡  Cài đặt nhanh"/>
+                  <Button Classes="secondary" Content="▣  Preset"/>
+                  <Button Classes="secondary" Content="▣  Quản lý set"/>
+                  <Button Classes="secondary" Content="▥  Hướng dẫn"/>
+                </StackPanel>
+              </Grid>
+              <StackPanel Orientation="Horizontal" Spacing="5" Margin="10,8,10,5">
+                <Border Background="#0866F4" CornerRadius="4" Padding="12,6"><TextBlock Text="01. Timeframe &amp; Logic"/></Border>
+                <Border Classes="panelSoft" Padding="12,6"><TextBlock Text="02. Direction"/></Border>
+                <Border Classes="panelSoft" Padding="12,6"><TextBlock Text="03. Pullback"/></Border>
+                <Border Classes="panelSoft" Padding="12,6"><TextBlock Text="04. Trigger"/></Border>
+                <Border Classes="panelSoft" Padding="12,6"><TextBlock Text="05. Z-Score"/></Border>
+                <Border Classes="panelSoft" Padding="12,6"><TextBlock Text="06. RSI"/></Border>
+                <Border Classes="panelSoft" Padding="12,6"><TextBlock Text="07. Entry"/></Border>
+                <Border Classes="panelSoft" Padding="12,6"><TextBlock Text="08. SL/TP"/></Border>
+                <Border Classes="panelSoft" Padding="12,6"><TextBlock Text="09. Risk"/></Border>
+                <Border Classes="panelSoft" Padding="12,6"><TextBlock Text="10. Bộ lọc"/></Border>
+              </StackPanel>
+              <Grid ColumnDefinitions="1.05*,1.05*,1.2*" Margin="12,6,12,12" ColumnSpacing="18">
+                <StackPanel Grid.Column="0" Spacing="8">
+                  <TextBlock Text="Khung thời gian chính" FontWeight="SemiBold"/>
+                  <Grid ColumnDefinitions="*,Auto"><TextBlock Text="Direction TF" Classes="label"/><TextBlock x:Name="DirectionTfValue" Grid.Column="1" Text="M30" FontWeight="Bold"/></Grid>
+                  <Grid ColumnDefinitions="*,Auto"><TextBlock Text="Pullback TF" Classes="label"/><TextBlock x:Name="PullbackTfValue" Grid.Column="1" Text="M5" FontWeight="Bold"/></Grid>
+                  <Grid ColumnDefinitions="*,Auto"><TextBlock Text="Trigger TF" Classes="label"/><TextBlock x:Name="TriggerTfValue" Grid.Column="1" Text="M1" FontWeight="Bold"/></Grid>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="8">
+                  <TextBlock Text="Logic kết hợp" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="DirectionRuleValue" Text="Direction: EMA50" Classes="label"/>
+                  <TextBlock x:Name="TpSlValue" Text="SL STRUCTURE • TP FIXED" Classes="label" TextWrapping="Wrap"/>
+                  <TextBlock Text="☑ Cho phép BUY    ☑ Cho phép SELL" Foreground="#DCEAF8"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Spacing="8">
+                  <TextBlock Text="Preset cấu hình" FontWeight="SemiBold"/>
+                  <Border Classes="panelSoft" Padding="10,7"><TextBlock x:Name="ProfileValue" Text="Profile: Baseline"/></Border>
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Classes="secondary" Content="Lưu preset"/>
+                    <Button Classes="secondary" Content="Mở .set"/>
+                    <Button Classes="secondary" Content="Xuất JSON"/>
+                  </StackPanel>
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <Grid ColumnDefinitions="1.55*,1*" ColumnSpacing="8">
+            <Border Grid.Column="0" Classes="panel" MinHeight="160">
+              <StackPanel>
+                <Border Background="#082038" Padding="12,7">
+                  <Grid ColumnDefinitions="*,Auto"><TextBlock Text="Lệnh gần đây" Classes="panelTitle"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                      <TextBlock Text="Positions:" Classes="dim"/><TextBlock x:Name="PositionsCountValue" Text="0"/>
+                      <TextBlock Text="Orders:" Classes="dim"/><TextBlock x:Name="OrdersCountValue" Text="0"/>
+                    </StackPanel>
+                  </Grid>
+                </Border>
+                <Grid Margin="12,7" ColumnDefinitions="0.5*,1.3*,0.8*,0.7*,1*,1*,0.8*,0.8*,0.8*">
+                  <TextBlock Text="#" Classes="dim"/><TextBlock Grid.Column="1" Text="Thời gian" Classes="dim"/><TextBlock Grid.Column="2" Text="Loại" Classes="dim"/><TextBlock Grid.Column="3" Text="Lot" Classes="dim"/><TextBlock Grid.Column="4" Text="Giá vào" Classes="dim"/><TextBlock Grid.Column="5" Text="Giá đóng" Classes="dim"/><TextBlock Grid.Column="6" Text="Lãi/Lỗ" Classes="dim"/><TextBlock Grid.Column="7" Text="TP" Classes="dim"/><TextBlock Grid.Column="8" Text="SL" Classes="dim"/>
+                </Grid>
+                <TextBlock x:Name="RecentOrdersEmptyText" Text="Chưa có dữ liệu lệnh chi tiết." Classes="dim" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Classes="panel" MinHeight="160">
+              <StackPanel>
+                <Border Background="#082038" Padding="12,7"><TextBlock Text="Nhật ký hệ thống" Classes="panelTitle"/></Border>
+                <Grid Margin="12,6" ColumnDefinitions="90,80,*"><TextBlock Text="Thời gian" Classes="dim"/><TextBlock Grid.Column="1" Text="Mức" Classes="dim"/><TextBlock Grid.Column="2" Text="Thông tin" Classes="dim"/></Grid>
+                <TextBlock x:Name="QuickLogText" Text="Đang khởi tạo Control Center..." FontFamily="Consolas" FontSize="11" Foreground="#9FC2DE" TextWrapping="Wrap" Margin="12,2,12,8"/>
+              </StackPanel>
+            </Border>
+          </Grid>
+        </StackPanel>
+      </ScrollViewer>
+
+      <local:ConfigurationEditor x:Name="ConfigurationEditor"
+                                 Grid.ColumnSpan="2"
+                                 IsVisible="False"/>
+
+      <local:StrategyDashboard x:Name="StrategyDashboard"
+                               Grid.Column="1"
+                               IsVisible="False"/>
+
+      <local:MonitoringDashboard x:Name="MonitoringDashboard"
+                                 Grid.Column="1"
+                                 IsVisible="False"/>
+
+      <Border x:Name="PlaceholderContent" Grid.ColumnSpan="2" Classes="panel" IsVisible="False">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" MaxWidth="650">
+          <TextBlock x:Name="PlaceholderTitle" Text="Tab chưa triển khai" FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+          <TextBlock x:Name="PlaceholderDetail" Text="Chức năng backend chưa được triển khai." Classes="dim" TextWrapping="Wrap" TextAlignment="Center"/>
+          <TextBlock Text="Bố cục sẽ bám đúng ảnh UI reference; không hiển thị dữ liệu giao dịch giả." Foreground="#FFD34D" TextAlignment="Center"/>
+        </StackPanel>
+      </Border>
     </Grid>
 
-    <Border Grid.Row="2"
-            Background="#071320"
-            BorderBrush="#183553"
-            BorderThickness="0,1,0,0">
-      <Grid ColumnDefinitions="*,Auto" Margin="18,0">
-        <TextBlock Text="XAUPY • overview + configuration + realtime strategy/monitoring • execution locked"
-                   Classes="muted"
-                   VerticalAlignment="Center"
-                   FontSize="11"/>
-        <TextBlock Grid.Column="1"
-                   Text="TASK XAUPY-008"
-                   Foreground="#59D9FF"
-                   VerticalAlignment="Center"
-                   FontSize="11"/>
+    <!-- Approved narrow status footer -->
+    <Border Grid.Row="3" Background="#03162A" BorderBrush="#124467" BorderThickness="0,1,0,0">
+      <Grid ColumnDefinitions="*,Auto" Margin="20,0">
+        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+          <TextBlock Text="●" Foreground="#18E58B" FontSize="10"/>
+          <TextBlock Text="Python Engine:" Classes="dim" FontSize="10"/>
+          <TextBlock x:Name="FooterEngineStateText" Text="Starting" FontSize="10"/>
+          <TextBlock Text="|" Classes="dim" FontSize="10"/>
+          <TextBlock Text="Model: Rule-based (Z + RSI)" Classes="dim" FontSize="10"/>
+          <TextBlock Text="|" Classes="dim" FontSize="10"/>
+          <TextBlock Text="Log: ON" Classes="dim" FontSize="10"/>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+          <TextBlock Text="Server Time:" Classes="dim" FontSize="10"/>
+          <TextBlock x:Name="FooterServerTimeText" Text="—" FontSize="10"/>
+          <TextBlock Text="|" Classes="dim" FontSize="10"/>
+          <TextBlock Text="Spread:" Classes="dim" FontSize="10"/>
+          <TextBlock x:Name="FooterSpreadText" Text="—" FontSize="10"/>
+        </StackPanel>
       </Grid>
     </Border>
   </Grid>

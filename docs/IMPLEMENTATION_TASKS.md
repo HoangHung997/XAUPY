@@ -26,7 +26,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-004 | DONE | Canonical configuration/profile model + .set import/export | 002 | schema/validation + .set round-trip/property + packaged tool + verified Windows build |
 | XAUPY-005 | DONE | Overview tab implementation | 002,004 | UI/reference structure + real overview projection + verified Windows build |
 | XAUPY-006 | DONE | Full Configuration tab | 004 | schema-driven 133-field editor + validation/profile/.set tests + verified Windows build |
-| XAUPY-007 | ACTIVE | Strategy engine Direction → Pullback → Trigger | 002,004 | deterministic state tests + verified Windows build |
+| XAUPY-007 | DONE | Strategy engine Direction → Pullback → Trigger | 002,004 | deterministic state tests + verified Windows build |
 | XAUPY-008 | PLANNED | Strategy + Monitoring realtime tabs | 005,007 | projection tests + build |
 | XAUPY-009 | PLANNED | Orders & Positions + guarded manual actions | 003,005 | execution simulation |
 | XAUPY-010 | PLANNED | Structured logging + Journal tab | 002,003 | schema/replay tests |
@@ -163,7 +163,7 @@ The helper was renamed to GetEngineStateLabel and the complete CI/build pipeline
 
 The Task 005 Windows x64 full build is ready for manual smoke testing using docs/TASK005_OVERVIEW_TEST.md.
 
-XAUPY-007 remains PLANNED and has not started.
+At Task 005 delivery, XAUPY-007 was still PLANNED.
 
 
 # XAUPY-006 — Full Configuration tab
@@ -285,7 +285,7 @@ The final run above is clean with 0 Avalonia/.NET warnings and 0 errors.
 
 The full Task 006 Windows x64 build is ready for manual testing using docs/TASK006_CONFIGURATION_TEST.md.
 
-XAUPY-007 remains PLANNED and has not started.
+At Task 006 delivery, XAUPY-007 was still PLANNED.
 
 
 # XAUPY-007 — Strategy engine Direction → Pullback → Trigger
@@ -322,23 +322,23 @@ Task 003 closed-bar Bridge data and Task 004 active profile.
 
 ## Acceptance criteria
 
-- [ ] indicator calculations are deterministic.
-- [ ] BUY Direction → Pullback → Trigger state test passes.
-- [ ] SELL state test passes symmetrically.
-- [ ] arming bar cannot trigger immediately.
-- [ ] duplicate/out-of-order bar handling is deterministic.
-- [ ] independent Direction/Pullback/Trigger TF behavior is tested.
-- [ ] profile change resets setup without inventing history.
-- [ ] stale/disconnected market projection is blocked.
-- [ ] reconnect resets setup.
-- [ ] heartbeat/Bridge IPC projection tests pass.
-- [ ] all previous Python regression tests pass.
-- [ ] existing C# IPC self-tests pass.
-- [ ] Avalonia Release build passes.
-- [ ] Task 003 MT5 Bridge still compiles 0 errors / 0 warnings.
-- [ ] packaged Task 007 Engine smoke test passes.
-- [ ] GitHub CI green.
-- [ ] XAUPY-Task007-win-x64 artifact is produced and independently inspected.
+- [x] indicator calculations are deterministic.
+- [x] BUY Direction → Pullback → Trigger state test passes.
+- [x] SELL state test passes symmetrically.
+- [x] arming bar cannot trigger immediately.
+- [x] duplicate/out-of-order bar handling is deterministic.
+- [x] independent Direction/Pullback/Trigger TF behavior is tested.
+- [x] profile change resets setup without inventing history.
+- [x] stale/disconnected market projection is blocked.
+- [x] reconnect resets setup.
+- [x] heartbeat/Bridge IPC projection tests pass.
+- [x] all previous Python regression tests pass.
+- [x] existing C# IPC self-tests pass.
+- [x] Avalonia Release build passes.
+- [x] Task 003 MT5 Bridge still compiles 0 errors / 0 warnings.
+- [x] packaged Task 007 Engine smoke test passes.
+- [x] GitHub CI green.
+- [x] XAUPY-Task007-win-x64 artifact is produced and independently inspected.
 
 ## Required artifact
 

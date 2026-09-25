@@ -523,7 +523,7 @@ class WalkForwardTests(unittest.TestCase):
             def __init__(self, candidate_profile, **kwargs):
                 self.profile = candidate_profile
 
-            def run(self, dataset, *, from_date, to_date):
+            def run(self, dataset, *, from_date, to_date, cancel_check=None):
                 lot = float(self.profile["risk"]["fixed_lot"])
                 # Train ranges end before the final OOS block. Train deliberately
                 # prefers 0.05; test deliberately rewards 0.10 much more.
@@ -602,7 +602,7 @@ class WalkForwardTests(unittest.TestCase):
             def __init__(self, candidate_profile, **kwargs):
                 self.profile = candidate_profile
 
-            def run(self, dataset, *, from_date, to_date):
+            def run(self, dataset, *, from_date, to_date, cancel_check=None):
                 if from_date >= "2024-01-10":
                     cancel_event.set()
                 pnl = 100.0

@@ -585,6 +585,27 @@ class HeatmapTests(unittest.TestCase):
         self.assertEqual(0, missing["samples"])
 
 
+    def test_heatmap_rejects_excessive_grid_size(self):
+        result = {
+            "mode": "SWEEP",
+            "parameter_ranges": [
+                {"path": "a", "values": list(range(51))},
+                {"path": "b", "values": list(range(50))},
+            ],
+            "candidates": [],
+        }
+        with self.assertRaisesRegex(
+            OptimizerError,
+            "heatmap would contain 2,550 cells",
+        ):
+            heatmap_from_result(
+                result,
+                x_path="a",
+                y_path="b",
+                metric="net_profit",
+            )
+
+
 class WalkForwardTests(unittest.TestCase):
     def test_plan_has_strict_non_overlap_and_full_out_of_sample_partition(self):
         dataset = multi_day_dataset(12)

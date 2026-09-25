@@ -37,6 +37,7 @@ WALK_FORWARD_MODEL = "WALK_FORWARD_V1"
 OBJECTIVE_ID = "ROBUST_SCORE_V1"
 MAX_COMBINATIONS = 50_000
 MAX_WORKERS = 8
+MAX_HEATMAP_CELLS = 2_500
 
 OPTIMIZABLE_PATHS = frozenset(
     {
@@ -1220,6 +1221,13 @@ def heatmap_from_result(
 
     x_values = list(ranges[x_path].get("values", []))
     y_values = list(ranges[y_path].get("values", []))
+    cell_count = len(x_values) * len(y_values)
+    if cell_count > MAX_HEATMAP_CELLS:
+        raise OptimizerError(
+            f"heatmap would contain {cell_count:,} cells; "
+            f"Task 012 limit is {MAX_HEATMAP_CELLS:,}. "
+            "Narrow one or both axes."
+        )
     buckets: dict[tuple[str, str], list[float]] = {}
 
     for candidate in result.get("candidates", []):
@@ -1436,21 +1444,6 @@ class OptimizerJobManager:
             ],
         }
 
-        with self._lock:
-            if self._shutting_down:
-                raise OptimizerError("optimizer manager is shutting down")
-            if self._active_job_id is not None:
-                active = self._jobs.get(self._active_job_id)
-                if active and active["status"] in {"QUEUED", "RUNNING", "STOPPING"}:
-                    raise OptimizerError(
-                        f"optimizer job already active: {self._active_job_id}"
-                    )
-
-            self._jobs[job_id] = state
-            self._cancel_events[job_id] = cancel_event
-            self._active_job_id = job_id
-            self._last_job_id = job_id
-
         thread = threading.Thread(
             target=self._run_job,
             args=(
@@ -1469,9 +1462,39 @@ class OptimizerJobManager:
             name=f"xaupy-optimizer-{job_id[:8]}",
             daemon=True,
         )
+
         with self._lock:
+            if self._shutting_down:
+                raise OptimizerError("optimizer manager is shutting down")
+            if self._active_job_id is not None:
+                active = self._jobs.get(self._active_job_id)
+                if active and active["status"] in {"QUEUED", "RUNNING", "STOPPING"}:
+                    raise OptimizerError(
+                        f"optimizer job already active: {self._active_job_id}"
+                    )
+
+            self._jobs[job_id] = state
+            self._cancel_events[job_id] = cancel_event
+            self._active_job_id = job_id
+            self._last_job_id = job_id
             self._threads[job_id] = thread
-        thread.start()
+
+            # Start while holding the same manager lock used by shutdown().
+            # The worker may begin immediately but blocks on _run_job's first
+            # lock acquisition until registration is complete. Therefore
+            # shutdown can never observe an unstarted registered thread.
+            try:
+                thread.start()
+            except Exception:
+                self._threads.pop(job_id, None)
+                self._cancel_events.pop(job_id, None)
+                self._jobs.pop(job_id, None)
+                if self._active_job_id == job_id:
+                    self._active_job_id = None
+                if self._last_job_id == job_id:
+                    self._last_job_id = None
+                raise
+
         return self.status(job_id)
 
     def _run_job(

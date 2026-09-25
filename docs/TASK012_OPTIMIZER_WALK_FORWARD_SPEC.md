@@ -245,6 +245,10 @@ value.
 
 No synthetic interpolation is used.
 
+To keep the Desktop heatmap bounded, Task 012 rejects X×Y grids larger than
+2,500 cells and asks the user to narrow one or both axes. This does not change
+the persisted sweep evidence or candidate ranking.
+
 ## 11. Walk-Forward Validation
 
 Inputs:

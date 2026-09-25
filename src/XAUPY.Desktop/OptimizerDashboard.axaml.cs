@@ -43,8 +43,8 @@ public partial class OptimizerDashboard : UserControl
     private string? _slPath;
     private string? _tpPath;
     private bool _includeRsiRows;
-    private bool _includeRsiDelta;
-    private bool _includeEma;
+    private string? _triggerDeltaPath;
+    private bool _includeMaPeriod;
 
     private sealed record AxisOption(string Label, string Path)
     {
@@ -215,23 +215,47 @@ public partial class OptimizerDashboard : UserControl
                 "RsiBuyMinBox", "RsiBuyMaxBox", "RsiBuyStepBox",
                 "RsiSellMinBox", "RsiSellMaxBox", "RsiSellStepBox");
 
-            _includeRsiDelta = GetBool(profile, "trigger", "rsi_enabled") ?? false;
-            double rsiDelta = GetDouble(profile, "trigger", "rsi_reversal_delta") ?? 3;
-            SetNumericRange(
-                "RsiDeltaMinBox", "RsiDeltaMaxBox", "RsiDeltaStepBox",
-                rsiDelta, rsiDelta, 1);
-            Text("RsiDeltaDefaultText").Text = Format(rsiDelta);
-            SetRowEnabled(
-                _includeRsiDelta,
-                "RsiDeltaMinBox", "RsiDeltaMaxBox", "RsiDeltaStepBox");
+            bool triggerRsi = GetBool(profile, "trigger", "rsi_enabled") ?? false;
+            bool triggerZ = GetBool(profile, "trigger", "z_enabled") ?? false;
+            if (triggerRsi)
+            {
+                _triggerDeltaPath = "trigger.rsi_reversal_delta";
+                Text("TriggerDeltaParameterLabel").Text = "RSI Δ Trigger";
+                double value = GetDouble(profile, "trigger", "rsi_reversal_delta") ?? 3;
+                SetNumericRange(
+                    "RsiDeltaMinBox", "RsiDeltaMaxBox", "RsiDeltaStepBox",
+                    value, value, 1);
+                Text("RsiDeltaDefaultText").Text = Format(value);
+                SetRowEnabled(true, "RsiDeltaMinBox", "RsiDeltaMaxBox", "RsiDeltaStepBox");
+            }
+            else if (triggerZ)
+            {
+                _triggerDeltaPath = "trigger.z_reversal_delta";
+                Text("TriggerDeltaParameterLabel").Text = "Z-Score / Delta";
+                double value = GetDouble(profile, "trigger", "z_reversal_delta") ?? 0.5;
+                SetNumericRange(
+                    "RsiDeltaMinBox", "RsiDeltaMaxBox", "RsiDeltaStepBox",
+                    value, value, 0.25);
+                Text("RsiDeltaDefaultText").Text = Format(value);
+                SetRowEnabled(true, "RsiDeltaMinBox", "RsiDeltaMaxBox", "RsiDeltaStepBox");
+            }
+            else
+            {
+                _triggerDeltaPath = null;
+                Text("TriggerDeltaParameterLabel").Text = "Trigger Delta (disabled)";
+                Text("RsiDeltaDefaultText").Text = "—";
+                SetRowEnabled(false, "RsiDeltaMinBox", "RsiDeltaMaxBox", "RsiDeltaStepBox");
+            }
 
-            _includeEma = GetBool(profile, "direction", "ma_enabled") ?? false;
+            _includeMaPeriod = GetBool(profile, "direction", "ma_enabled") ?? false;
+            string maType = GetString(profile, "direction", "ma_type") ?? "EMA";
+            Text("MaParameterLabel").Text = $"{maType} Period";
             double ma = GetDouble(profile, "direction", "ma_period") ?? 50;
             SetNumericRange(
                 "EmaMinBox", "EmaMaxBox", "EmaStepBox",
                 ma, ma, 20);
             Text("EmaDefaultText").Text = Format(ma);
-            SetRowEnabled(_includeEma, "EmaMinBox", "EmaMaxBox", "EmaStepBox");
+            SetRowEnabled(_includeMaPeriod, "EmaMinBox", "EmaMaxBox", "EmaStepBox");
 
             string slMode = GetString(profile, "stop_loss", "mode") ?? "STRUCTURE";
             if (slMode == "STRUCTURE")
@@ -996,7 +1020,9 @@ public partial class OptimizerDashboard : UserControl
                         SetNumericRange("RsiSellMinBox", "RsiSellMaxBox", "RsiSellStepBox", min, max, step);
                         break;
                     case "trigger.rsi_reversal_delta":
-                        SetNumericRange("RsiDeltaMinBox", "RsiDeltaMaxBox", "RsiDeltaStepBox", min, max, step);
+                    case "trigger.z_reversal_delta":
+                        if (path == _triggerDeltaPath)
+                            SetNumericRange("RsiDeltaMinBox", "RsiDeltaMaxBox", "RsiDeltaStepBox", min, max, step);
                         break;
                     case "direction.ma_period":
                         SetNumericRange("EmaMinBox", "EmaMaxBox", "EmaStepBox", min, max, step);
@@ -1063,13 +1089,13 @@ public partial class OptimizerDashboard : UserControl
                 "pullback.rsi_sell_level",
                 "RsiSellMinBox", "RsiSellMaxBox", "RsiSellStepBox"));
         }
-        if (_includeRsiDelta)
+        if (_triggerDeltaPath is not null)
         {
             ranges.Add(NumericRange(
-                "trigger.rsi_reversal_delta",
+                _triggerDeltaPath,
                 "RsiDeltaMinBox", "RsiDeltaMaxBox", "RsiDeltaStepBox"));
         }
-        if (_includeEma)
+        if (_includeMaPeriod)
         {
             ranges.Add(NumericRange(
                 "direction.ma_period",

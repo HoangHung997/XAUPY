@@ -825,7 +825,7 @@ public partial class OptimizerDashboard : UserControl
         for (int i = 0; i < rows; i++)
             grid.RowDefinitions.Add(new RowDefinition(new GridLength(i == 0 ? 28 : 30)));
 
-        AddHeatmapLabel(grid, 0, 0, "Y \ X");
+        AddHeatmapLabel(grid, 0, 0, "Y \\ X");
         for (int i = 0; i < heatmap.XValues.Count; i++)
             AddHeatmapLabel(grid, i + 1, 0, JsonValueText(heatmap.XValues[i]));
         for (int i = 0; i < heatmap.YValues.Count; i++)
@@ -862,8 +862,7 @@ public partial class OptimizerDashboard : UserControl
             };
             ToolTip.SetTip(
                 border,
-                $"{heatmap.XPath}={JsonValueText(cell.X)} • {heatmap.YPath}={JsonValueText(cell.Y)}
-" +
+                $"{heatmap.XPath}={JsonValueText(cell.X)} • {heatmap.YPath}={JsonValueText(cell.Y)}\n" +
                 $"{heatmap.Metric}: {(cell.Value.HasValue ? cell.Value.Value.ToString("0.########") : "—")} • samples={cell.Samples}");
             Grid.SetColumn(border, xIndex + 1);
             Grid.SetRow(border, yIndex + 1);

@@ -866,7 +866,7 @@ public partial class BacktestDashboard : UserControl
             : value[..Math.Min(10, value.Length)];
 
     private static string Csv(string value) =>
-        $""{value.Replace(""", """")}"";
+        "\"" + value.Replace("\"", "\"\"") + "\"";
 
     private static string Invariant(double value) =>
         value.ToString("0.########", CultureInfo.InvariantCulture);

@@ -38,6 +38,7 @@ class EngineServer:
         port: int = DEFAULT_PORT,
         bridge_stale_seconds: float = 5.0,
         journal_dir: str | os.PathLike[str] | None = None,
+        backtest_dir: str | os.PathLike[str] | None = None,
     ) -> None:
         if host not in {"127.0.0.1", "localhost"}:
             raise ValueError("XAUPY Engine may bind to loopback only")
@@ -56,7 +57,7 @@ class EngineServer:
         self.strategy = StrategyEngine(self.active_profile)
         self.manual_actions = ManualActionSimulator(self.bridge)
         self.journal = StructuredJournal(journal_dir)
-        self.backtests = BacktestRepository()
+        self.backtests = BacktestRepository(backtest_dir)
 
         self._last_bridge_connected: bool | None = None
         self._last_market_fresh: bool | None = None

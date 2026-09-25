@@ -29,7 +29,22 @@ Follow docs/ui-reference/README.md and `Tab Tối Ưu.png`:
 Mock profits, scores, progress, CPU/RAM usage, setup rows and heatmap cells in
 the PNG are illustrative only.
 
-### Documented resource-panel departure
+### Documented parameter/resource departures
+
+The approved mock uses generic Z-Score/Delta and ATR SL/TP multiplier rows.
+Runtime Task 012 instead maps these rows to the **active canonical profile and
+Task 011-supported semantics**:
+
+- Trigger Delta shows RSI reversal delta when Trigger RSI is active, or Z-Score
+  reversal delta when Trigger Z is active;
+- MA Period uses the active SMA/EMA/SMMA/LWMA type label;
+- SL row uses STRUCTURE lookback or FIXED distance;
+- TP row uses FIXED distance or RR ratio;
+- unsupported Task 011 modes remain disabled/rejected rather than being
+  approximated.
+
+The real UI also exposes initial balance, spread and commission assumptions in
+the optimizer context strip because they are part of the reproducibility key.
 
 Task 014 owns system diagnostics. Task 012 therefore reports only optimizer-owned
 resources that are real and measurable inside the optimizer:
@@ -43,6 +58,10 @@ resources that are real and measurable inside the optimizer:
 
 It does **not** fabricate CPU %, RAM or Disk I/O. Those fields remain explicitly
 unavailable until Task 014.
+
+The mock's live MT5/Data Feed resource checks are replaced by historical Dataset,
+Backtest Engine and Result Writer states for the optimizer itself. The common
+left sidebar still shows live MT5/EA/Engine connectivity separately.
 
 ## 3. Reuse of Task 011
 

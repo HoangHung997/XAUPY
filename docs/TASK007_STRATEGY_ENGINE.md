@@ -1,6 +1,6 @@
 # XAUPY Task 007 — Strategy Engine Specification
 
-Status: ACTIVE implementation task
+Status: DONE
 Dependencies: XAUPY-002, XAUPY-004
 UI delivery: outside Task 007; Strategy/Monitoring UI belongs to XAUPY-008
 

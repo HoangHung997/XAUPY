@@ -1,12 +1,13 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:XAUPY.Desktop"
         x:Class="XAUPY.Desktop.MainWindow"
         Width="1560"
         Height="940"
         MinWidth="1180"
         MinHeight="760"
         Background="#06101D"
-        Title="XAUPY Control Center — Task 005 Overview">
+        Title="XAUPY Control Center — Task 006 Configuration">
   <Window.Styles>
     <Style Selector="Button.nav">
       <Setter Property="Background" Value="Transparent"/>
@@ -84,7 +85,7 @@
                      FontSize="20"
                      FontWeight="SemiBold"
                      VerticalAlignment="Center"/>
-          <TextBlock Text="Task 005 Overview"
+          <TextBlock Text="Task 006 Configuration"
                      Classes="muted"
                      VerticalAlignment="Center"/>
         </StackPanel>
@@ -404,6 +405,10 @@
             </Grid>
           </StackPanel>
 
+          <local:ConfigurationEditor x:Name="ConfigurationEditor"
+                                     IsVisible="False"
+                                     Height="760"/>
+
           <Border x:Name="PlaceholderContent" Classes="card" IsVisible="False" MinHeight="420">
             <StackPanel HorizontalAlignment="Center"
                         VerticalAlignment="Center"
@@ -415,7 +420,7 @@
                          FontWeight="SemiBold"
                          HorizontalAlignment="Center"/>
               <TextBlock x:Name="PlaceholderDetail"
-                         Text="Task 005 chỉ triển khai tab Tổng quan. Các tab còn lại sẽ được hoàn thiện theo đúng thứ tự task."
+                         Text="Task 006 đã triển khai Tổng quan + Cấu hình. Các tab khác sẽ được hoàn thiện theo đúng thứ tự task."
                          Classes="muted"
                          TextWrapping="Wrap"
                          TextAlignment="Center"/>
@@ -433,12 +438,12 @@
             BorderBrush="#183553"
             BorderThickness="0,1,0,0">
       <Grid ColumnDefinitions="*,Auto" Margin="18,0">
-        <TextBlock Text="XAUPY • overview uses real bridge/config data • execution locked"
+        <TextBlock Text="XAUPY • overview + full configuration editor • execution locked"
                    Classes="muted"
                    VerticalAlignment="Center"
                    FontSize="11"/>
         <TextBlock Grid.Column="1"
-                   Text="TASK XAUPY-005"
+                   Text="TASK XAUPY-006"
                    Foreground="#59D9FF"
                    VerticalAlignment="Center"
                    FontSize="11"/>

@@ -29,7 +29,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-007 | DONE | Strategy engine Direction → Pullback → Trigger | 002,004 | deterministic state tests + verified Windows build |
 | XAUPY-008 | DONE | Strategy + Monitoring realtime tabs | 005,007 | projection tests + verified Windows build |
 | XAUPY-009 | DONE | Orders & Positions + guarded manual actions | 003,005 | execution simulation |
-| XAUPY-010 | ACTIVE | Structured logging + Journal tab | 002,003 | schema/replay tests |
+| XAUPY-010 | DONE | Structured logging + Journal tab | 002,003 | schema/replay tests |
 | XAUPY-011 | PLANNED | Backtest engine parity | 007,010 | deterministic replay |
 | XAUPY-012 | PLANNED | Optimizer + walk-forward | 011 | reproducibility/leakage guards |
 | XAUPY-013 | PLANNED | Dynamic TP/SL + stop-confirm entry | 003,007,011 | state/broker simulation |
@@ -555,3 +555,92 @@ XAUPY-Task009-win-x64.zip
 The complete Task 009 Windows x64 build is ready for manual DEMO smoke testing
 using `docs/TASK009_ORDERS_POSITIONS_TEST.md`. XAUPY-010 remains PLANNED and
 has not been started.
+
+
+# XAUPY-010 — Structured logging + Journal tab
+
+Status: DONE
+
+## Goal completed
+
+Implement persistent structured operational evidence and the approved full-width
+Journal UI using `docs/ui-reference/Tab Nhật Kí.png` and
+`docs/ui-reference/README.md` as the visual source-of-truth.
+
+## Scope completed
+
+- schema v1 append-only UTF-8 `journal-v1.jsonl`;
+- optional `journal-v1.csv` mirror controlled by `logging.csv_enabled`;
+- persisted `bookmarks-v1.json` sidecar without rewriting evidence records;
+- replay across Engine restart with monotonic sequence continuation;
+- corrupt lines counted/ignored so startup continues;
+- duplicate persisted sequence/event_id ignored during replay;
+- deterministic filtering by level, source, text, date scope and bookmark;
+- journal evidence for Engine/IPC, Bridge/reconnect/stale, config apply/reject,
+  Strategy state/decision trace, owned position/order/deal changes, manual action
+  simulation and safety blocks;
+- duplicate timer snapshots are deduplicated so decision-trace logging advances
+  only when closed-bar/decision evidence changes;
+- heartbeat exposes compact journal summary only;
+- `journal_query` and `journal_bookmark_set` IPC;
+- typed C# journal models and supervisor APIs;
+- approved full-width Journal UI with source filters, INFO/WARN/ERROR/DEBUG,
+  search/date scope, log table, structured detail, summary, recent alerts,
+  bookmarks, refresh and JSONL export;
+- source filters exactly match the approved mockup:
+  MT5 / EA Bridge / Python Engine / Strategy / Orders / Alerts.
+
+## Hard boundary retained
+
+- no broker execution enablement;
+- `trading_enabled=false`;
+- `execution_enabled=false`;
+- Task 009 manual actions remain simulation-only;
+- `trade_intent` remains unsupported;
+- MQL5 contains no OrderSend / OrderSendAsync / CTrade / PositionClose /
+  PositionModify / OrderDelete path;
+- demo-only, no-retry, mandatory server SL, stale-data block and never-widen-SL
+  remain locked.
+
+## Automated evidence
+
+- Final implementation CI source commit: c3cffdcaa41429c27faec3b50c7b11386d2576e6
+- Branch: task/010-structured-logging-journal
+- GitHub Actions final branch run: 36097183355
+- Validate structured journal replay and UI job: SUCCESS
+- Windows x64 full Task 010 build job: SUCCESS
+- Python regression/source tests: 146/146 PASS
+- C# IPC/journal self-tests: 53/53 PASS
+- Avalonia/.NET Release build: SUCCESS, 0 warnings, 0 errors
+- Packaged Task 010 structured journal replay/bookmark smoke: PASS
+- Packaged Task 009 order-book/manual-simulation regression smoke: PASS
+- Packaged Task 007 deterministic strategy/safety regression smoke: PASS
+- Packaged xaupy-config regression smoke: PASS
+- MetaEditor locked Bridge regression: Result: 0 errors, 0 warnings, 2709 ms elapsed
+- GitHub artifact: XAUPY-Task010-win-x64
+- GitHub artifact id: 10847074709
+- Artifact size: 104574017 bytes
+- Artifact outer SHA-256: aee000fbb30e4fdd77b13ac738c170264b54354e2f43f61494f6883348e9cdc3
+- Direct full-build ZIP size: 104797053 bytes
+- Direct full-build ZIP SHA-256: 9cf6f5bb97f4328f0dcff0cb1d975d9cc6a66f253f978dd808d52d2d3b61eee8
+- Independent artifact inspection: 257 entries
+- XAUPY.Desktop.exe: present
+- engine/xaupy-engine.exe: present
+- tools/xaupy-config.exe: present
+- profiles/config-schema-v1.json: field_count=133
+- baseline Direction=M30 / Pullback=M5 / Trigger=M1
+- packaged safety verified:
+  max_retry_count=0, demo_only=true, allow_real_account=false,
+  never_widen_sl=true, require_server_sl=true,
+  block_on_stale_market_data=true
+- logging defaults verified: csv_enabled=true, decision_trace_enabled=true
+- mt5/XAUPY_Bridge_EA.mq5/.ex5/compile.log: present
+- docs/ui-reference/Tab Nhật Kí.png: present
+- forbidden broker mutation APIs: absent
+
+## Delivery
+
+The complete Task 010 Windows x64 build is ready for manual smoke testing using
+`docs/TASK010_STRUCTURED_LOGGING_JOURNAL_TEST.md`.
+
+XAUPY-011 remains PLANNED and has not started.

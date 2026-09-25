@@ -846,6 +846,18 @@ public partial class OptimizerDashboard : UserControl
 
         double min = heatmap.MinValue ?? 0;
         double max = heatmap.MaxValue ?? 0;
+        Text("HeatmapMaxText").Text = heatmap.MaxValue.HasValue
+            ? Compact(heatmap.MaxValue.Value)
+            : "—";
+        Text("HeatmapMinText").Text = heatmap.MinValue.HasValue
+            ? Compact(heatmap.MinValue.Value)
+            : "—";
+        Text("HeatmapMidText").Text =
+            heatmap.MinValue.HasValue && heatmap.MaxValue.HasValue &&
+            heatmap.MinValue.Value <= 0 && heatmap.MaxValue.Value >= 0
+                ? "0"
+                : Compact((min + max) / 2.0);
+
         foreach (var cell in heatmap.Cells)
         {
             int xIndex = FindJsonValueIndex(heatmap.XValues, cell.X);
@@ -885,6 +897,9 @@ public partial class OptimizerDashboard : UserControl
 
     private void ClearHeatmap(string message)
     {
+        Text("HeatmapMaxText").Text = "—";
+        Text("HeatmapMidText").Text = "—";
+        Text("HeatmapMinText").Text = "—";
         var grid = GridControl("HeatmapGridHost");
         grid.Children.Clear();
         grid.ColumnDefinitions.Clear();

@@ -550,6 +550,8 @@ class OptimizerEngine:
     ) -> dict[str, Any]:
         combinations = parameter_combinations(parameter_ranges)
         total = len(combinations)
+        if cancel_event is not None and cancel_event.is_set():
+            raise OptimizationCancelled("optimizer cancelled")
         if total <= 0:
             raise OptimizerError("optimizer has no combinations")
         if total > MAX_COMBINATIONS:
@@ -601,6 +603,9 @@ class OptimizerEngine:
                         future.cancel()
                     raise OptimizationCancelled("optimizer cancelled")
                 schedule(executor)
+
+        if cancel_event is not None and cancel_event.is_set():
+            raise OptimizationCancelled("optimizer cancelled")
 
         final_candidates = [
             candidate

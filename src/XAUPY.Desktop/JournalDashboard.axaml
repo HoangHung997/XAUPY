@@ -196,7 +196,8 @@
             <ComboBoxItem Content="Tất cả thời gian" Tag="ALL"/>
           </ComboBox>
 
-          <Button Grid.Column="3"
+          <Button x:Name="BookmarksOnlyButton"
+                  Grid.Column="3"
                   Classes="secondary"
                   Content="🔖  Dấu trang"
                   Click="BookmarksOnly_OnClick"/>

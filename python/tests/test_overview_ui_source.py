@@ -73,7 +73,7 @@ class OverviewUiSourceTests(unittest.TestCase):
         # but the hard safety state must remain visible in the rendered shell.
         self.assertIn('x:Name="GuardianReasonValue"', self.xaml)
         self.assertIn('Text="LOCKED"', self.xaml)
-        self.assertIn("Execution vẫn khóa", self.code)
+        self.assertIn("broker execution hiện đang khóa", self.code)
 
 
 if __name__ == "__main__":

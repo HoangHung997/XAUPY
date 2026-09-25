@@ -7,7 +7,7 @@
         MinWidth="1360"
         MinHeight="780"
         Background="#031426"
-        SystemDecorations="None"
+        WindowDecorations="None"
         Title="N30 Control Center v1.0 (Python) - XAUUSD">
 
   <Grid RowDefinitions="42,68,*,24">
@@ -159,7 +159,7 @@
           <Grid ColumnDefinitions="2.35*,0.95*" ColumnSpacing="8">
             <Border Grid.Column="0" Classes="panel" Height="344">
               <Grid RowDefinitions="42,*,27">
-                <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="Auto,*,Auto" Padding="12,0">
+                <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="Auto,*,Auto" Margin="12,0">
                   <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                     <TextBlock Text="XAUUSD" FontSize="17" FontWeight="Bold"/>
                     <TextBlock Text="M5" FontSize="17" FontWeight="Bold"/>
@@ -238,7 +238,7 @@
 
           <Border Classes="panel" MinHeight="240">
             <StackPanel>
-              <Grid Background="#082038" ColumnDefinitions="*,Auto" Padding="12,7">
+              <Grid Background="#082038" ColumnDefinitions="*,Auto" Margin="12,7">
                 <StackPanel Orientation="Horizontal" Spacing="9">
                   <TextBlock Text="▣" Foreground="#62AFFF"/>
                   <TextBlock Text="Công cụ &amp; Tham số đầy đủ (Trung tâm cấu hình)" Classes="panelTitle"/>

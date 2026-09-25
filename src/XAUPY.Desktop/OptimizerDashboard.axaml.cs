@@ -632,14 +632,17 @@ public partial class OptimizerDashboard : UserControl
                 ? FormatDuration(_status.EtaSeconds.Value)
                 : "—";
 
+        int activeWorkerSlots = _status.Workers <= 0
+            ? 0
+            : Math.Min(_status.InFlight, _status.Workers);
         double utilization = _status.Workers <= 0
             ? 0
-            : Math.Clamp(_status.InFlight / (double)_status.Workers * 100.0, 0, 100);
+            : activeWorkerSlots / (double)_status.Workers * 100.0;
         Progress("WorkerProgressBar").Value = utilization;
         Text("WorkerUtilizationText").Text =
             _status.Workers > 0
-                ? $"{_status.InFlight}/{_status.Workers}"
-                : "0%";
+                ? $"{activeWorkerSlots}/{_status.Workers}"
+                : "0/0";
         Text("ThroughputText").Text =
             _status.SpeedPerMinute > 0
                 ? $"{_status.SpeedPerMinute:0}"

@@ -134,9 +134,17 @@ class BridgeRegistry:
         orders = payload.get("orders", [])
         positions_count = payload.get("positions_count")
         orders_count = payload.get("orders_count")
-        if isinstance(positions_count, int) and positions_count != len(positions):
+        if (
+            "positions" in payload
+            and isinstance(positions_count, int)
+            and positions_count != len(positions)
+        ):
             raise BridgeSnapshotError("positions_count does not match positions array")
-        if isinstance(orders_count, int) and orders_count != len(orders):
+        if (
+            "orders" in payload
+            and isinstance(orders_count, int)
+            and orders_count != len(orders)
+        ):
             raise BridgeSnapshotError("orders_count does not match orders array")
 
         self._latest_snapshot = deepcopy(payload)

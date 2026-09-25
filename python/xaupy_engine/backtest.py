@@ -546,10 +546,20 @@ class BacktestEngine:
                 break
             process_bars.append(bar)
 
+        range_setup_reset = False
         for bar in process_bars:
             _raise_if_cancelled(cancel_check)
             local_date = dataset.local_date(bar.time)
             allow_entries = start_date <= local_date <= end_date
+            if allow_entries and not range_setup_reset:
+                # Pre-range bars are indicator warm-up evidence only. A setup or
+                # signal armed outside the requested sample must not leak into
+                # the sample. Retain historical bars, but reset actionable
+                # state exactly at the first in-range M1 bar.
+                strategy.reset_setup("BACKTEST_RANGE_START")
+                state.pending_signals.clear()
+                last_signal_sequence = strategy.signal_sequence
+                range_setup_reset = True
             if allow_entries:
                 self._ensure_day_state(state, dataset, bar.time)
 

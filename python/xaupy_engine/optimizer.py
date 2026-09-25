@@ -797,21 +797,24 @@ class OptimizerEngine:
                 self.base_profile,
                 best["parameters"],
             )
-            test_result = BacktestEngine(
-                test_profile,
-                initial_balance=self.initial_balance,
-                spread_pips=self.spread_pips,
-                commission_per_lot=self.commission_per_lot,
-            ).run(
-                dataset,
-                from_date=fold["test_from"],
-                to_date=fold["test_to"],
-                cancel_check=(
-                    cancel_event.is_set
-                    if cancel_event is not None
-                    else None
-                ),
-            )
+            try:
+                test_result = BacktestEngine(
+                    test_profile,
+                    initial_balance=self.initial_balance,
+                    spread_pips=self.spread_pips,
+                    commission_per_lot=self.commission_per_lot,
+                ).run(
+                    dataset,
+                    from_date=fold["test_from"],
+                    to_date=fold["test_to"],
+                    cancel_check=(
+                        cancel_event.is_set
+                        if cancel_event is not None
+                        else None
+                    ),
+                )
+            except BacktestCancelled as exc:
+                raise OptimizationCancelled("walk-forward cancelled") from exc
             if cancel_event is not None and cancel_event.is_set():
                 raise OptimizationCancelled("walk-forward cancelled")
             test_sharpe = trade_sample_sharpe(test_result)
@@ -1272,6 +1275,7 @@ class OptimizerJobManager:
         self._last_job_id: str | None = None
         self._cancel_events: dict[str, threading.Event] = {}
         self._threads: dict[str, threading.Thread] = {}
+        self._shutting_down = False
 
     def start_sweep(
         self,
@@ -1303,6 +1307,8 @@ class OptimizerJobManager:
         base_profile: dict[str, Any],
     ) -> dict[str, Any]:
         with self._lock:
+            if self._shutting_down:
+                raise OptimizerError("optimizer manager is shutting down")
             if self._active_job_id is not None:
                 active = self._jobs.get(self._active_job_id)
                 if active and active["status"] in {"QUEUED", "RUNNING", "STOPPING"}:
@@ -1393,6 +1399,8 @@ class OptimizerJobManager:
         }
 
         with self._lock:
+            if self._shutting_down:
+                raise OptimizerError("optimizer manager is shutting down")
             if self._active_job_id is not None:
                 active = self._jobs.get(self._active_job_id)
                 if active and active["status"] in {"QUEUED", "RUNNING", "STOPPING"}:
@@ -1683,6 +1691,7 @@ class OptimizerJobManager:
         """
         timeout = max(0.0, float(timeout_seconds))
         with self._lock:
+            self._shutting_down = True
             for job_id, state in self._jobs.items():
                 if state.get("status") in {"QUEUED", "RUNNING", "STOPPING"}:
                     state["status"] = "STOPPING"

@@ -15,7 +15,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import xaupy_engine.optimizer as optimizer_module
-from xaupy_engine.backtest import DatasetMetadata, HistoricalDataset
+from xaupy_engine.backtest import BacktestCancelled, DatasetMetadata, HistoricalDataset
 from xaupy_engine.config_schema import default_profile
 from xaupy_engine.optimizer import (
     MAX_COMBINATIONS,
@@ -642,6 +642,80 @@ class WalkForwardTests(unittest.TestCase):
                     cancel_event=cancel_event,
                 )
 
+    def test_backtest_cancelled_during_oos_maps_to_optimizer_cancelled(self):
+        dataset = multi_day_dataset(12)
+        profile = optimizer_profile()
+        ranges = parse_parameter_ranges(
+            [
+                {
+                    "path": "risk.fixed_lot",
+                    "min": 0.05,
+                    "max": 0.10,
+                    "step": 0.05,
+                }
+            ],
+            profile,
+        )
+        engine = OptimizerEngine(
+            profile,
+            initial_balance=10000,
+            spread_pips=0,
+            commission_per_lot=0,
+            min_trades=1,
+            max_workers=1,
+        )
+
+        class FakeBacktest:
+            def __init__(self, candidate_profile, **kwargs):
+                self.profile = candidate_profile
+
+            def run(
+                self,
+                dataset,
+                *,
+                from_date,
+                to_date,
+                cancel_check=None,
+            ):
+                if from_date >= "2024-01-10":
+                    raise BacktestCancelled("backtest cancelled")
+                pnl = 100.0
+                metrics = {
+                    "net_profit": pnl,
+                    "net_profit_pct": 1.0,
+                    "gross_profit": pnl,
+                    "gross_loss": 0.0,
+                    "profit_factor": None,
+                    "total_trades": 2,
+                    "wins": 2,
+                    "losses": 0,
+                    "win_rate": 100.0,
+                    "average_trade": 50.0,
+                    "max_drawdown_usd": 0.0,
+                    "max_drawdown_pct": 0.0,
+                    "initial_balance": 10000.0,
+                    "final_balance": 10100.0,
+                    "final_equity": 10100.0,
+                }
+                return {
+                    "metrics": metrics,
+                    "trades": [{"net_pl": 50.0}, {"net_pl": 50.0}],
+                    "result_hash": f"{from_date}:{to_date}",
+                }
+
+        with patch("xaupy_engine.optimizer.BacktestEngine", FakeBacktest):
+            with self.assertRaises(OptimizationCancelled):
+                engine.walk_forward(
+                    dataset,
+                    from_date="2024-01-01",
+                    to_date="2024-01-12",
+                    parameter_ranges=ranges,
+                    folds=3,
+                    train_ratio=0.75,
+                    rolling=False,
+                    cancel_event=threading.Event(),
+                )
+
     def test_walk_forward_aggregate_stability_is_bounded(self):
         folds = [
             {
@@ -943,6 +1017,42 @@ class RepositoryAndJobTests(unittest.TestCase):
             self.assertEqual("CANCELLED", terminal["status"])
             self.assertIsNone(terminal["result_run_id"])
             self.assertEqual([], repo.history())
+
+    def test_shutdown_rejects_new_optimizer_jobs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            dataset_path = root / "data.json"
+            write_dataset(dataset_path, days=1)
+            manager = OptimizerJobManager(
+                OptimizerRepository(root / "results")
+            )
+
+            self.assertTrue(manager.shutdown(timeout_seconds=1.0))
+            with self.assertRaisesRegex(
+                OptimizerError,
+                "shutting down",
+            ):
+                manager.start_sweep(
+                    {
+                        "path": str(dataset_path),
+                        "from_date": "2024-01-01",
+                        "to_date": "2024-01-01",
+                        "initial_balance": 10000,
+                        "spread_pips": 0,
+                        "commission_per_lot": 0,
+                        "min_trades": 1,
+                        "max_workers": 1,
+                        "parameter_ranges": [
+                            {
+                                "path": "risk.fixed_lot",
+                                "min": 0.10,
+                                "max": 0.10,
+                                "step": 0.01,
+                            }
+                        ],
+                    },
+                    optimizer_profile(),
+                )
 
     def test_job_cancel_is_cooperative_and_does_not_persist_completed_result(self):
         with tempfile.TemporaryDirectory() as tmp:

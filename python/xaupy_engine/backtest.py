@@ -513,11 +513,13 @@ class BacktestEngine:
         if end_date < start_date:
             raise BacktestError("to_date must be >= from_date")
 
-        in_range = [
-            bar
-            for bar in dataset.bars
-            if start_date <= dataset.local_date(bar.time) <= end_date
-        ]
+        in_range: list[Bar] = []
+        for index, bar in enumerate(dataset.bars):
+            if index % 1024 == 0:
+                _raise_if_cancelled(cancel_check)
+            local_date = dataset.local_date(bar.time)
+            if start_date <= local_date <= end_date:
+                in_range.append(bar)
         if not in_range:
             raise BacktestError("requested date range contains no M1 bars")
 
@@ -536,8 +538,13 @@ class BacktestEngine:
         spread_price = self.spread_pips * dataset.metadata.point_size
         first_range_time = in_range[0].time
 
-        m1_lookup = {bar.time: bar for bar in dataset.bars}
-        process_bars = [bar for bar in dataset.bars if bar.time <= last_allowed_time]
+        process_bars: list[Bar] = []
+        for index, bar in enumerate(dataset.bars):
+            if index % 1024 == 0:
+                _raise_if_cancelled(cancel_check)
+            if bar.time > last_allowed_time:
+                break
+            process_bars.append(bar)
 
         for bar in process_bars:
             _raise_if_cancelled(cancel_check)

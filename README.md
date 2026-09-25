@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-007 ACTIVE trên nhánh `task/007-strategy-engine`. XAUPY-001–006 đã DONE.
+Trạng thái hiện tại: TASK XAUPY-007 DONE. XAUPY-008 vẫn PLANNED và chưa bắt đầu.
 
 ## Tài liệu bắt buộc
 
@@ -79,7 +79,7 @@ Configuration tab Avalonia được xây theo schema canonical thay vì hard-cod
 - final CI: 66 Python tests PASS, 23 C# checks PASS, Avalonia/.NET 0 warnings / 0 errors, MetaEditor 0 errors / 0 warnings.
 
 
-## Task 007 đang triển khai
+## Task 007 đã hoàn thành
 
 Phạm vi hiện tại:
 
@@ -92,3 +92,13 @@ Phạm vi hiện tại:
 - execution vẫn hard-locked, không có trade_intent hay OrderSend.
 
 Xem chi tiết tại docs/TASK007_STRATEGY_ENGINE.md.
+
+Final Task 007 evidence:
+
+- 78/78 Python tests PASS;
+- 23/23 C# IPC checks PASS;
+- Avalonia Release build: 0 warnings / 0 errors;
+- packaged Engine deterministic strategy/safety smoke: PASS;
+- packaged Config regression smoke: PASS;
+- MetaEditor Bridge regression: 0 errors / 0 warnings;
+- verified Windows x64 artifact: XAUPY-Task007-win-x64.

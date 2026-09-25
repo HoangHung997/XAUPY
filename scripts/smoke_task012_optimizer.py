@@ -469,7 +469,6 @@ def main() -> int:
             )
             assert fetched["payload"]["ok"] is True
             assert fetched["payload"]["result"]["optimizer_hash"] == wf_hash
-            assert fetched["payload"]["result"]["execution_enabled"] if False else True
             assert fetched["payload"]["execution_enabled"] is False
             assert fetched["payload"]["trading_enabled"] is False
         finally:

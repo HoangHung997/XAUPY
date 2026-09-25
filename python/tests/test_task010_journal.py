@@ -85,7 +85,7 @@ class StructuredJournalTests(unittest.TestCase):
             self.assertEqual(3, len(csv_lines))
             self.assertTrue(csv_lines[0].startswith("sequence,timestamp_utc,level"))
             self.assertEqual(1, csv_lines[0].count("sequence"))
-            self.assertIn(",INFO,System,SYSTEM,first,", csv_lines[1])
+            self.assertIn(",INFO,Python Engine,SYSTEM,first,", csv_lines[1])
             self.assertIn(",WARN,Alerts,RISK,second,", csv_lines[2])
 
     def test_schema_rejects_invalid_level_source_tag_and_details(self):

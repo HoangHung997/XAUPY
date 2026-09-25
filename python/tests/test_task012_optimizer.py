@@ -379,6 +379,44 @@ class OptimizerJobPreflightTests(unittest.TestCase):
             )
 
 
+    def test_manager_rejects_invalid_sweep_before_job_registration(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            dataset_path = root / "data.json"
+            write_dataset(dataset_path, days=2)
+            repo = OptimizerRepository(root / "results")
+            manager = OptimizerJobManager(repo)
+
+            with self.assertRaisesRegex(
+                OptimizerError,
+                "to_date must be >= from_date",
+            ):
+                manager.start_sweep(
+                    {
+                        "path": str(dataset_path),
+                        "from_date": "2024-01-02",
+                        "to_date": "2024-01-01",
+                        "initial_balance": 10000,
+                        "spread_pips": 0,
+                        "commission_per_lot": 0,
+                        "min_trades": 1,
+                        "max_workers": 1,
+                        "parameter_ranges": [
+                            {
+                                "path": "risk.fixed_lot",
+                                "min": 0.10,
+                                "max": 0.10,
+                                "step": 0.01,
+                            }
+                        ],
+                    },
+                    optimizer_profile(),
+                )
+
+            self.assertEqual("IDLE", manager.status()["status"])
+            self.assertEqual([], repo.history())
+
+
 class ScoreAndSweepTests(unittest.TestCase):
     def test_min_trade_count_controls_eligibility(self):
         result = {

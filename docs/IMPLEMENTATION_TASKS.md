@@ -25,7 +25,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-003 | DONE | MQL5 Bridge data channel + execution guardian | 002 | MetaEditor compile + CI/static + bridge probe + verified Windows build |
 | XAUPY-004 | DONE | Canonical configuration/profile model + .set import/export | 002 | schema/validation + .set round-trip/property + packaged tool + verified Windows build |
 | XAUPY-005 | DONE | Overview tab implementation | 002,004 | UI/reference structure + real overview projection + verified Windows build |
-| XAUPY-006 | ACTIVE | Full Configuration tab | 004 | schema-driven 133-field editor + validation/profile/.set tests + Windows build |
+| XAUPY-006 | DONE | Full Configuration tab | 004 | schema-driven 133-field editor + validation/profile/.set tests + verified Windows build |
 | XAUPY-007 | PLANNED | Strategy engine Direction → Pullback → Trigger | 002,004 | deterministic state tests |
 | XAUPY-008 | PLANNED | Strategy + Monitoring realtime tabs | 005,007 | projection tests + build |
 | XAUPY-009 | PLANNED | Orders & Positions + guarded manual actions | 003,005 | execution simulation |
@@ -168,7 +168,7 @@ XAUPY-007 remains PLANNED and has not started.
 
 # XAUPY-006 — Full Configuration tab
 
-Status: ACTIVE
+Status: DONE
 
 ## Goal
 
@@ -218,28 +218,71 @@ The active profile cannot:
 
 ## Acceptance criteria
 
-- [ ] Configuration reference image exists.
-- [ ] all 133 canonical fields render from schema.
-- [ ] search/filter structure is present.
-- [ ] exact TF options remain M1/M3/M5/M15/M30/H1/H2/H4.
-- [ ] unusual timeframe ordering can validate/apply.
-- [ ] active profile get/set protocol tests pass.
-- [ ] invalid safety unlock cannot replace active profile.
-- [ ] JSON load/save actions exist.
-- [ ] .set import/export actions exist.
-- [ ] locked fields are disabled in UI.
-- [ ] Overview remains functional and receives active summary.
-- [ ] Python regression tests pass.
-- [ ] C# IPC/config parser tests pass.
-- [ ] Avalonia Release build succeeds with 0 warnings / 0 errors.
-- [ ] packaged Engine Task 006 active config smoke test passes.
-- [ ] packaged xaupy-config smoke test passes.
-- [ ] MT5 Bridge regression compiles 0 errors / 0 warnings.
-- [ ] Windows full artifact includes Desktop, Engine, config tool, profiles, MQ5/EX5, docs and both Overview/Configuration UI references.
-- [ ] GitHub CI green and uploads XAUPY-Task006-win-x64.
+- [x] Configuration reference image exists.
+- [x] all 133 canonical fields render from schema.
+- [x] search/filter structure is present.
+- [x] exact TF options remain M1/M3/M5/M15/M30/H1/H2/H4.
+- [x] unusual timeframe ordering can validate/apply.
+- [x] active profile get/set protocol tests pass.
+- [x] invalid safety unlock cannot replace active profile.
+- [x] JSON load/save actions exist.
+- [x] .set import/export actions exist.
+- [x] locked fields are disabled in UI.
+- [x] Overview remains functional and receives active summary.
+- [x] Python regression tests pass.
+- [x] C# IPC/config parser tests pass.
+- [x] Avalonia Release build succeeds with 0 warnings / 0 errors.
+- [x] packaged Engine Task 006 active config smoke test passes.
+- [x] packaged xaupy-config smoke test passes.
+- [x] MT5 Bridge regression compiles 0 errors / 0 warnings.
+- [x] Windows full artifact includes Desktop, Engine, config tool, profiles, MQ5/EX5, docs and both Overview/Configuration UI references.
+- [x] GitHub CI green and uploads XAUPY-Task006-win-x64.
 
 ## Required artifact
 
 XAUPY-Task006-win-x64.zip
 
-XAUPY-007 remains PLANNED until Task 006 is complete.
+## Automated evidence
+
+- Final CI source commit: 0404b6f94ea4098650a3cebc7a9921b3e97491f7
+- Branch: task/006-configuration-tab
+- GitHub Actions final run: 36081310157
+- Validate configuration UI job: SUCCESS
+- Windows x64 full configuration build job: SUCCESS
+- Python tests: 66/66 PASS
+- C# IPC/config self-tests: 23/23 PASS
+- Avalonia/.NET build: SUCCESS, 0 warnings, 0 errors
+- Packaged Task 006 Python Engine active config/validation/safety smoke test: PASS
+- Packaged xaupy-config defaults/validate/export/import smoke test: PASS
+- MetaEditor MT5 Bridge regression: Result: 0 errors, 0 warnings, 2398 ms elapsed
+- GitHub artifact: XAUPY-Task006-win-x64
+- GitHub artifact id: 10841319551
+- GitHub outer artifact SHA-256: 62b8253333b8e0f6a49c060d80547fc37af4fbfa2b65df23c4d4da1b2913dc53
+- Direct full-build ZIP SHA-256: cd0dca3c972ab78f980b7460d642e4c9b8c7b4e955fbff215f92c151ae801881
+- Artifact expiry: 2026-10-09
+- Independent artifact inspection: 245 files
+- XAUPY.Desktop.exe: present, PE32+ Windows x86-64
+- engine/xaupy-engine.exe: present, PE32+ Windows x86-64
+- tools/xaupy-config.exe: present, PE32+ Windows x86-64
+- profiles/config-schema-v1.json: field_count=133
+- Exact timeframe options: M1, M3, M5, M15, M30, H1, H2, H4
+- profiles/Baseline_M30_M5_M1.json: Direction=M30, Pullback=M5, Trigger=M1
+- Locked safety verified in packaged baseline: allow_real_account=false, demo_only=true, max_retry_count=0, never_widen_sl=true, require_server_sl=true, block_on_stale_market_data=true
+- mt5/XAUPY_Bridge_EA.mq5/.ex5/compile.log: present
+- docs/ui-reference/Tab Tổng Quan.png and Tab Cấu Hình.png: both present in ZIP with UTF-8 filenames
+- Desktop runtime: net10.0 self-contained, Microsoft.NETCore.App 10.0.12 included
+
+## Build/fix history
+
+Task 006 CI found and resolved two implementation-quality issues before completion:
+
+1. the Task 005 placeholder regression test still expected the old Task 005 wording after Configuration became a real tab;
+2. Avalonia 12 reported obsolete TextBox.Watermark usage. Both XAML and code-behind were migrated to PlaceholderText.
+
+The final run above is clean with 0 Avalonia/.NET warnings and 0 errors.
+
+## Delivery
+
+The full Task 006 Windows x64 build is ready for manual testing using docs/TASK006_CONFIGURATION_TEST.md.
+
+XAUPY-007 remains PLANNED and has not started.

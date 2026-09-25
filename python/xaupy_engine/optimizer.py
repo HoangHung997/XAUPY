@@ -1256,6 +1256,7 @@ class OptimizerJobManager:
         self._active_job_id: str | None = None
         self._last_job_id: str | None = None
         self._cancel_events: dict[str, threading.Event] = {}
+        self._threads: dict[str, threading.Thread] = {}
 
     def start_sweep(
         self,
@@ -1400,6 +1401,8 @@ class OptimizerJobManager:
             name=f"xaupy-optimizer-{job_id[:8]}",
             daemon=True,
         )
+        with self._lock:
+            self._threads[job_id] = thread
         thread.start()
         return self.status(job_id)
 
@@ -1566,6 +1569,7 @@ class OptimizerJobManager:
             with self._lock:
                 if self._active_job_id == job_id:
                     self._active_job_id = None
+                self._threads.pop(job_id, None)
 
     def _update_progress(
         self,
@@ -1647,6 +1651,31 @@ class OptimizerJobManager:
             cancel_event = self._cancel_events[job_id]
             cancel_event.set()
         return self.status(job_id)
+
+    def shutdown(self, timeout_seconds: float = 10.0) -> bool:
+        """Cooperatively stop active optimizer jobs and join manager threads.
+
+        Returns True when every optimizer manager thread exited before timeout.
+        This is used by Engine shutdown and tests so ThreadPoolExecutor workers
+        cannot keep the process alive after the IPC server has closed.
+        """
+        timeout = max(0.0, float(timeout_seconds))
+        with self._lock:
+            for job_id, state in self._jobs.items():
+                if state.get("status") in {"QUEUED", "RUNNING", "STOPPING"}:
+                    state["status"] = "STOPPING"
+                    state["phase"] = "STOPPING"
+                    event = self._cancel_events.get(job_id)
+                    if event is not None:
+                        event.set()
+            threads = list(self._threads.values())
+
+        deadline = time.monotonic() + timeout
+        for thread in threads:
+            remaining = max(0.0, deadline - time.monotonic())
+            thread.join(remaining)
+
+        return not any(thread.is_alive() for thread in threads)
 
     def _journal(
         self,

@@ -58,7 +58,7 @@ class OverviewUiSourceTests(unittest.TestCase):
     def test_unimplemented_tabs_have_explicit_placeholder_instead_of_fake_data(self):
         self.assertIn('x:Name="PlaceholderContent"', self.xaml)
         self.assertIn("Không hiển thị dữ liệu giả", self.xaml)
-        self.assertIn("Task 005 chỉ triển khai", self.code)
+        self.assertIn("đã triển khai Tổng quan + Cấu hình", self.code)
 
     def test_execution_lock_remains_visible(self):
         self.assertIn("EXECUTION LOCKED", self.xaml)

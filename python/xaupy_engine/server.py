@@ -137,7 +137,7 @@ class EngineServer:
 
         if request.type == "heartbeat":
             bridge_status = self.bridge.status()
-            market_connected = bridge_status.connected and bridge_status.terminal_connected
+            market_connected = self.bridge.market_data_connected()
             payload = {
                 **common,
                 "uptime_ms": int((time.monotonic() - self._started_monotonic) * 1000),

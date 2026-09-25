@@ -1,23 +1,23 @@
-name: Task 012 - UI Reference Extract
+name: Task 012 - Optimizer Walk-Forward CI
 
 on:
   push:
     branches:
       - 'task/012-optimizer-walk-forward'
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  reference:
+  validate-python:
+    name: Validate optimizer reproducibility and leakage guards
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Upload approved Optimizer UI reference
-        uses: actions/upload-artifact@v4
+      - uses: actions/setup-python@v5
         with:
-          name: XAUPY-Task012-UI-reference
-          path: 'docs/ui-reference/Tab Tối Ưu.png'
-          if-no-files-found: error
-          retention-days: 2
+          python-version: '3.13'
+      - name: Python Task 012 and regression tests
+        run: python -m unittest discover -s python/tests -v

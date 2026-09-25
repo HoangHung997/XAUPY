@@ -1155,8 +1155,8 @@ class BacktestEngine:
             "profile": deepcopy(self.profile),
             "metrics": metrics,
             "skipped_signals": dict(sorted(state.skipped_signals.items())),
-            "equity_curve": state.equity_curve,
-            "drawdown_curve": state.drawdown_curve,
+            "equity_curve": self._downsample_curve(state.equity_curve),
+            "drawdown_curve": self._downsample_curve(state.drawdown_curve),
             "trades": state.trades,
         }
         encoded = json.dumps(
@@ -1191,6 +1191,26 @@ class BacktestEngine:
             .date()
             .isoformat()
         )
+
+    @staticmethod
+    def _downsample_curve(
+        points: list[dict[str, Any]],
+        max_points: int = 1200,
+    ) -> list[dict[str, Any]]:
+        if len(points) <= max_points:
+            return deepcopy(points)
+        if max_points < 2:
+            return [deepcopy(points[-1])]
+
+        selected: list[dict[str, Any]] = []
+        last_index = -1
+        for step in range(max_points):
+            index = round(step * (len(points) - 1) / (max_points - 1))
+            if index == last_index:
+                continue
+            selected.append(deepcopy(points[index]))
+            last_index = index
+        return selected
 
     @staticmethod
     def _round(value: float) -> float:

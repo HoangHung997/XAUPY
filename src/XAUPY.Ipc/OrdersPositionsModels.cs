@@ -40,7 +40,8 @@ public sealed record DealSnapshot(
     string Side,
     string Entry,
     double Volume,
-    double Price,
+    double PriceIn,
+    double PriceOut,
     double Profit,
     double Commission,
     double Swap,
@@ -286,10 +287,11 @@ public sealed record OrdersPositionsSnapshot(
         var orderTicket = OverviewSnapshot.ReadLong(item, "order_ticket");
         var magic = OverviewSnapshot.ReadLong(item, "magic");
         var volume = OverviewSnapshot.ReadDouble(item, "volume");
-        var price = OverviewSnapshot.ReadDouble(item, "price");
+        var priceIn = OverviewSnapshot.ReadDouble(item, "price_in");
+        var priceOut = OverviewSnapshot.ReadDouble(item, "price_out");
         var time = OverviewSnapshot.ReadLong(item, "time");
         if (ticket is null || orderTicket is null || magic is null ||
-            volume is null || price is null || time is null)
+            volume is null || priceIn is null || priceOut is null || time is null)
         {
             return false;
         }
@@ -302,7 +304,8 @@ public sealed record OrdersPositionsSnapshot(
             OverviewSnapshot.ReadString(item, "side") ?? "UNKNOWN",
             OverviewSnapshot.ReadString(item, "entry") ?? "UNKNOWN",
             volume.Value,
-            price.Value,
+            priceIn.Value,
+            priceOut.Value,
             OverviewSnapshot.ReadDouble(item, "profit") ?? 0,
             OverviewSnapshot.ReadDouble(item, "commission") ?? 0,
             OverviewSnapshot.ReadDouble(item, "swap") ?? 0,

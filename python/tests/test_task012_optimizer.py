@@ -610,6 +610,52 @@ class RepositoryAndJobTests(unittest.TestCase):
             self.assertTrue(repo.delete(stored["run_id"]))
             self.assertFalse(repo.delete(stored["run_id"]))
 
+    def test_status_without_job_id_retains_latest_terminal_job(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            dataset_path = root / "data.json"
+            write_dataset(dataset_path, days=1)
+            repo = OptimizerRepository(root / "results")
+            manager = OptimizerJobManager(repo)
+
+            started = manager.start_sweep(
+                {
+                    "path": str(dataset_path),
+                    "from_date": "2024-01-01",
+                    "to_date": "2024-01-01",
+                    "initial_balance": 10000,
+                    "spread_pips": 0,
+                    "commission_per_lot": 0,
+                    "min_trades": 1,
+                    "max_workers": 1,
+                    "parameter_ranges": [
+                        {
+                            "path": "risk.fixed_lot",
+                            "min": 0.10,
+                            "max": 0.10,
+                            "step": 0.01,
+                        }
+                    ],
+                },
+                optimizer_profile(),
+            )
+            job_id = started["job_id"]
+
+            deadline = time.time() + 10
+            terminal = None
+            while time.time() < deadline:
+                terminal = manager.status(job_id)
+                if terminal["status"] in {"COMPLETED", "FAILED", "CANCELLED"}:
+                    break
+                time.sleep(0.02)
+
+            self.assertIsNotNone(terminal)
+            self.assertEqual("COMPLETED", terminal["status"])
+            latest = manager.status()
+            self.assertEqual(job_id, latest["job_id"])
+            self.assertEqual("COMPLETED", latest["status"])
+            self.assertEqual(terminal["result_run_id"], latest["result_run_id"])
+
     def test_job_cancel_is_cooperative_and_does_not_persist_completed_result(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)

@@ -1359,14 +1359,16 @@ public partial class OptimizerDashboard : UserControl
     private void SelectComboByTag(string comboName, string tag)
     {
         var combo = Combo(comboName);
-        for (int i = 0; i < combo.ItemCount; i++)
+        int index = 0;
+        foreach (var raw in combo.Items)
         {
-            if (combo.Items[i] is ComboBoxItem item &&
+            if (raw is ComboBoxItem item &&
                 string.Equals(item.Tag?.ToString(), tag, StringComparison.OrdinalIgnoreCase))
             {
-                combo.SelectedIndex = i;
+                combo.SelectedIndex = index;
                 return;
             }
+            index++;
         }
     }
 

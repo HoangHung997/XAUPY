@@ -1,6 +1,6 @@
 # XAUPY IPC Protocol v1
 
-Status: extended by Task XAUPY-006
+Status: extended by Task XAUPY-007
 Transport: TCP loopback
 Default endpoint: 127.0.0.1:39421
 Framing: UTF-8 JSON Lines, one JSON object per line
@@ -14,6 +14,7 @@ Task 002 established Desktop ↔ Python lifecycle.
 Task 003 added MT5 Bridge → Python data snapshots.
 Task 004 adds canonical configuration schema/defaults/validation messages.
 Task 006 adds active-profile get/set lifecycle for the Avalonia Configuration editor.
+Task 007 adds read-only deterministic strategy state projected from real closed-bar Bridge data.
 
 ## 2. Security boundary
 
@@ -47,7 +48,15 @@ heartbeat → heartbeat_ack
 
 shutdown → shutdown_ack
 
-heartbeat_ack includes MT5 bridge health from Task 003.
+heartbeat_ack includes MT5 bridge health from Task 003, Overview projection from
+Task 005, and Task 007 strategy projection.
+
+The strategy object includes read-only state such as state, blocked_reason,
+profile_hash, exact strategy timeframes, direction, armed_side, signal_sequence,
+last_signal, warmup_reasons, bars_seen, indicators and condition evidence.
+
+When Bridge/terminal data is stale or unavailable, strategy.available=false and
+strategy.state=STALE.
 
 ## 5. MT5 Bridge messages
 
@@ -57,13 +66,17 @@ bridge_snapshot → bridge_snapshot_ack
 
 bridge_heartbeat → bridge_heartbeat_ack
 
-Task 006 keeps all Task 003 execution locks:
+Task 007 keeps all Task 003 execution locks:
 
 - trading_enabled=false
 - execution_enabled=false
 - bridge snapshot requires execution_locked=true
 - bridge snapshot requires execution_ready=false
 - trade_intent remains unsupported
+
+Task 007 bridge_snapshot_ack also includes the current read-only strategy
+projection. Strategy evaluation only advances from newer closed-bar timestamps.
+A terminal reconnect resets the armed setup before resumed data is evaluated.
 
 ## 6. Configuration messages
 
@@ -115,6 +128,10 @@ Response config_active_set_ack contains:
 - execution_enabled=false
 
 Invalid profiles do not replace the previous active profile.
+
+When a valid active profile changes in Task 007, the Strategy Engine receives the
+same normalized profile, resets its current setup and keeps accumulated raw
+closed-bar history.
 
 The active profile is in-memory for Task 006. Explicit JSON/.set save is the persistence path; automatic startup restore belongs to later settings/startup work.
 

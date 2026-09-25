@@ -119,6 +119,18 @@ class EngineServer:
         await self._shutdown_event.wait()
 
     async def close(self) -> None:
+        optimizer_stopped = await asyncio.to_thread(
+            self.optimizer_jobs.shutdown,
+            10.0,
+        )
+        if not optimizer_stopped:
+            self._log(
+                "WARN",
+                "Python Engine",
+                "OPTIMIZER_SHUTDOWN",
+                "Optimizer threads did not stop within shutdown timeout",
+            )
+
         if self._server is None:
             return
 

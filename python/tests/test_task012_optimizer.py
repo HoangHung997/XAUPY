@@ -285,6 +285,100 @@ class RangeValidationTests(unittest.TestCase):
         self.assertEqual("M3", changed["timeframes"]["trigger"])
 
 
+class OptimizerJobPreflightTests(unittest.TestCase):
+    def test_sweep_rejects_invalid_job_date_range_before_candidates(self):
+        dataset = multi_day_dataset(2)
+        engine = OptimizerEngine(
+            optimizer_profile(),
+            initial_balance=10000,
+            spread_pips=0,
+            commission_per_lot=0,
+            min_trades=1,
+            max_workers=1,
+        )
+        ranges = parse_parameter_ranges(
+            [
+                {
+                    "path": "risk.fixed_lot",
+                    "min": 0.10,
+                    "max": 0.10,
+                    "step": 0.01,
+                }
+            ],
+            optimizer_profile(),
+        )
+
+        with self.assertRaisesRegex(
+            OptimizerError,
+            "to_date must be >= from_date",
+        ):
+            engine.run_sweep(
+                dataset,
+                from_date="2024-01-02",
+                to_date="2024-01-01",
+                parameter_ranges=ranges,
+            )
+
+        with self.assertRaisesRegex(
+            OptimizerError,
+            "contains no M1 bars",
+        ):
+            engine.run_sweep(
+                dataset,
+                from_date="2025-01-01",
+                to_date="2025-01-02",
+                parameter_ranges=ranges,
+            )
+
+    def test_sweep_rejects_dataset_symbol_mismatch_as_job_error(self):
+        dataset = multi_day_dataset(1)
+        mismatched = HistoricalDataset(
+            path=dataset.path,
+            fingerprint=dataset.fingerprint,
+            metadata=DatasetMetadata(
+                symbol="BTCUSD",
+                point_size=dataset.metadata.point_size,
+                tick_size=dataset.metadata.tick_size,
+                tick_value=dataset.metadata.tick_value,
+                volume_min=dataset.metadata.volume_min,
+                volume_max=dataset.metadata.volume_max,
+                volume_step=dataset.metadata.volume_step,
+                timezone_offset_minutes=dataset.metadata.timezone_offset_minutes,
+            ),
+            bars=dataset.bars,
+        )
+        engine = OptimizerEngine(
+            optimizer_profile(),
+            initial_balance=10000,
+            spread_pips=0,
+            commission_per_lot=0,
+            min_trades=1,
+            max_workers=1,
+        )
+        ranges = parse_parameter_ranges(
+            [
+                {
+                    "path": "risk.fixed_lot",
+                    "min": 0.10,
+                    "max": 0.10,
+                    "step": 0.01,
+                }
+            ],
+            optimizer_profile(),
+        )
+
+        with self.assertRaisesRegex(
+            OptimizerError,
+            "dataset symbol BTCUSD does not match profile symbol XAUUSD",
+        ):
+            engine.run_sweep(
+                mismatched,
+                from_date="2024-01-01",
+                to_date="2024-01-01",
+                parameter_ranges=ranges,
+            )
+
+
 class ScoreAndSweepTests(unittest.TestCase):
     def test_min_trade_count_controls_eligibility(self):
         result = {

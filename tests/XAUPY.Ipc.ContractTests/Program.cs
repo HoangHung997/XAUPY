@@ -323,7 +323,6 @@ var journalHeartbeatPayload = JsonSerializer.SerializeToElement(new
         level_counts = new { INFO = 7, WARN = 2, ERROR = 1, DEBUG = 2 },
         source_counts = new Dictionary<string, int>
         {
-            ["System"] = 1,
             ["MT5"] = 2,
             ["EA Bridge"] = 2,
             ["Python Engine"] = 2,

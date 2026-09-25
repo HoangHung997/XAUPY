@@ -1,0 +1,178 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="XAUPY.Desktop.MonitoringDashboard">
+  <ScrollViewer>
+    <StackPanel Spacing="14">
+      <Grid ColumnDefinitions="1.4*,1*,1*,1*" ColumnSpacing="10">
+        <Border Grid.Column="0" Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="14">
+          <StackPanel Spacing="4">
+            <TextBlock Text="XAUUSD LIVE" Foreground="#7890A8" FontSize="11"/>
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+              <StackPanel>
+                <TextBlock Text="BID" Foreground="#7890A8" FontSize="10"/>
+                <TextBlock x:Name="MonitorBidText" Text="—" FontSize="22" FontWeight="SemiBold" Foreground="#69D48C"/>
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <TextBlock Text="ASK" Foreground="#7890A8" FontSize="10"/>
+                <TextBlock x:Name="MonitorAskText" Text="—" FontSize="22" FontWeight="SemiBold"/>
+              </StackPanel>
+            </Grid>
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="1" Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="14">
+          <StackPanel Spacing="4">
+            <TextBlock Text="MT5 BRIDGE" Foreground="#7890A8" FontSize="11"/>
+            <TextBlock x:Name="MonitorBridgeText" Text="WAITING" FontSize="18" FontWeight="SemiBold" Foreground="#E9C46A"/>
+            <TextBlock x:Name="MonitorAgeText" Text="Age: —" Foreground="#8097AE" FontSize="11"/>
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="2" Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="14">
+          <StackPanel Spacing="4">
+            <TextBlock Text="STRATEGY" Foreground="#7890A8" FontSize="11"/>
+            <TextBlock x:Name="MonitorStrategyText" Text="STALE" FontSize="18" FontWeight="SemiBold"/>
+            <TextBlock x:Name="MonitorDirectionText" Text="Direction: NEUTRAL" Foreground="#8097AE" FontSize="11"/>
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="3" Background="#302B17" BorderBrush="#6A5C24" BorderThickness="1" CornerRadius="10" Padding="14">
+          <StackPanel Spacing="4">
+            <TextBlock Text="EXECUTION" Foreground="#CDBA73" FontSize="11"/>
+            <TextBlock Text="LOCKED" Foreground="#E9C46A" FontSize="18" FontWeight="Bold"/>
+            <TextBlock Text="Không có manual/auto broker action ở Task 008." Foreground="#AFA374" FontSize="11" TextWrapping="Wrap"/>
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <Grid ColumnDefinitions="2.1*,1*" ColumnSpacing="14">
+        <StackPanel Grid.Column="0" Spacing="14">
+          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
+            <StackPanel Spacing="10">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel>
+                  <TextBlock Text="Live quote monitor" FontSize="18" FontWeight="SemiBold"/>
+                  <TextBlock Text="Lịch sử chỉ được tích lũy từ snapshot thật nhận trong phiên Desktop; không backfill số giả."
+                             Foreground="#8097AE" FontSize="12" TextWrapping="Wrap"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                  <TextBlock x:Name="ChartLastText" Text="Last: —" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="ChartRangeText" Text="Range: —" Foreground="#8097AE" FontSize="11"/>
+                </StackPanel>
+              </Grid>
+              <Border Height="245" Background="#07121E" BorderBrush="#142E47" BorderThickness="1" CornerRadius="8" Padding="12">
+                <Grid RowDefinitions="*,Auto">
+                  <StackPanel x:Name="QuoteChartBars"
+                              Grid.Row="0"
+                              Orientation="Horizontal"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Bottom"
+                              Spacing="5"/>
+                  <Grid Grid.Row="1" ColumnDefinitions="*,*,*" Margin="0,8,0,0">
+                    <TextBlock x:Name="ChartMinText" Text="Min —" Foreground="#8097AE" FontSize="11"/>
+                    <TextBlock Grid.Column="1" Text="REAL HEARTBEAT QUOTES" HorizontalAlignment="Center" Foreground="#8097AE" FontSize="11"/>
+                    <TextBlock x:Name="ChartMaxText" Grid.Column="2" Text="Max —" HorizontalAlignment="Right" Foreground="#8097AE" FontSize="11"/>
+                  </Grid>
+                </Grid>
+              </Border>
+            </StackPanel>
+          </Border>
+
+          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
+            <StackPanel Spacing="10">
+              <TextBlock Text="Market bars đang dùng" FontSize="17" FontWeight="SemiBold"/>
+              <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                <Border Grid.Column="0" Background="#091827" CornerRadius="8" Padding="12">
+                  <StackPanel Spacing="5">
+                    <TextBlock x:Name="DirectionBarRoleText" Text="DIRECTION • M30" Foreground="#59D9FF" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="DirectionBarText" Text="OHLC: —" Foreground="#B9CBE0" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="DirectionBarTimeText" Text="Closed: —" Foreground="#8097AE" FontSize="11"/>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Column="1" Background="#091827" CornerRadius="8" Padding="12">
+                  <StackPanel Spacing="5">
+                    <TextBlock x:Name="PullbackBarRoleText" Text="PULLBACK • M5" Foreground="#B99CFF" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="PullbackBarText" Text="OHLC: —" Foreground="#B9CBE0" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="PullbackBarTimeText" Text="Closed: —" Foreground="#8097AE" FontSize="11"/>
+                  </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Background="#091827" CornerRadius="8" Padding="12">
+                  <StackPanel Spacing="5">
+                    <TextBlock x:Name="TriggerBarRoleText" Text="TRIGGER • M1" Foreground="#69D48C" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="TriggerBarText" Text="OHLC: —" Foreground="#B9CBE0" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="TriggerBarTimeText" Text="Closed: —" Foreground="#8097AE" FontSize="11"/>
+                  </StackPanel>
+                </Border>
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
+            <StackPanel Spacing="10">
+              <TextBlock Text="Indicator monitor" FontSize="17" FontWeight="SemiBold"/>
+              <Grid ColumnDefinitions="*,*,*,*,*" ColumnSpacing="8">
+                <Border Grid.Column="0" Background="#091827" CornerRadius="8" Padding="10">
+                  <StackPanel><TextBlock Text="MA" Foreground="#7890A8" FontSize="10"/><TextBlock x:Name="MonitorMaText" Text="—" FontSize="18"/></StackPanel>
+                </Border>
+                <Border Grid.Column="1" Background="#091827" CornerRadius="8" Padding="10">
+                  <StackPanel><TextBlock Text="PB RSI" Foreground="#7890A8" FontSize="10"/><TextBlock x:Name="MonitorPbRsiText" Text="—" FontSize="18"/></StackPanel>
+                </Border>
+                <Border Grid.Column="2" Background="#091827" CornerRadius="8" Padding="10">
+                  <StackPanel><TextBlock Text="TRG RSI" Foreground="#7890A8" FontSize="10"/><TextBlock x:Name="MonitorTriggerRsiText" Text="—" FontSize="18"/></StackPanel>
+                </Border>
+                <Border Grid.Column="3" Background="#091827" CornerRadius="8" Padding="10">
+                  <StackPanel><TextBlock Text="ADX" Foreground="#7890A8" FontSize="10"/><TextBlock x:Name="MonitorAdxText" Text="—" FontSize="18"/></StackPanel>
+                </Border>
+                <Border Grid.Column="4" Background="#091827" CornerRadius="8" Padding="10">
+                  <StackPanel><TextBlock Text="ATR" Foreground="#7890A8" FontSize="10"/><TextBlock x:Name="MonitorAtrText" Text="—" FontSize="18"/></StackPanel>
+                </Border>
+              </Grid>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" Spacing="14">
+          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
+            <StackPanel Spacing="9">
+              <TextBlock Text="Multi-timeframe điều kiện" FontSize="17" FontWeight="SemiBold"/>
+              <TextBlock Text="Chỉ 3 timeframe đang được active profile đánh giá; các TF khác không bị suy diễn."
+                         Foreground="#8097AE" FontSize="11" TextWrapping="Wrap"/>
+              <Border Background="#07121E" CornerRadius="7" Padding="10">
+                <Grid ColumnDefinitions="0.8*,0.7*,1.2*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+                  <TextBlock Grid.Row="0" Text="ROLE" Foreground="#7890A8" FontSize="10"/>
+                  <TextBlock Grid.Row="0" Grid.Column="1" Text="TF" Foreground="#7890A8" FontSize="10"/>
+                  <TextBlock Grid.Row="0" Grid.Column="2" Text="STATE" Foreground="#7890A8" FontSize="10"/>
+                  <TextBlock Grid.Row="1" Text="Direction"/><TextBlock x:Name="MonitorDirectionTfText" Grid.Row="1" Grid.Column="1" Text="M30"/><TextBlock x:Name="MonitorDirectionStateText" Grid.Row="1" Grid.Column="2" Text="NEUTRAL"/>
+                  <TextBlock Grid.Row="2" Text="Pullback"/><TextBlock x:Name="MonitorPullbackTfText" Grid.Row="2" Grid.Column="1" Text="M5"/><TextBlock x:Name="MonitorPullbackStateText" Grid.Row="2" Grid.Column="2" Text="WAIT"/>
+                  <TextBlock Grid.Row="3" Text="Trigger"/><TextBlock x:Name="MonitorTriggerTfText" Grid.Row="3" Grid.Column="1" Text="M1"/><TextBlock x:Name="MonitorTriggerStateText" Grid.Row="3" Grid.Column="2" Text="WAIT"/>
+                </Grid>
+              </Border>
+            </StackPanel>
+          </Border>
+
+          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
+            <StackPanel Spacing="7">
+              <TextBlock Text="Kết nối &amp; Engine" FontSize="17" FontWeight="SemiBold"/>
+              <TextBlock x:Name="MonitorTerminalText" Text="Terminal: offline" Foreground="#B9CBE0"/>
+              <TextBlock x:Name="MonitorSnapshotCountText" Text="Snapshots: 0" Foreground="#8097AE"/>
+              <TextBlock x:Name="MonitorProfileText" Text="Profile: Baseline" Foreground="#8097AE" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
+
+          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
+            <StackPanel Spacing="7">
+              <TextBlock Text="Session / News" FontSize="17" FontWeight="SemiBold"/>
+              <TextBlock Text="Chưa có realtime session/news backend ở Task 008." Foreground="#E9C46A" TextWrapping="Wrap"/>
+              <TextBlock Text="Không hiển thị countdown, calendar hoặc trạng thái tin tức giả." Foreground="#8097AE" FontSize="11" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
+
+          <Border Background="#0C1929" BorderBrush="#193956" BorderThickness="1" CornerRadius="10" Padding="16">
+            <StackPanel Spacing="7">
+              <TextBlock Text="Tài nguyên &amp; cảnh báo" FontSize="17" FontWeight="SemiBold"/>
+              <TextBlock Text="CPU/RAM diagnostics thuộc Task 014 — chưa có backend." Foreground="#8097AE" TextWrapping="Wrap"/>
+              <TextBlock x:Name="MonitorAlertText" Text="Alert: đang chờ Bridge." Foreground="#E9C46A" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

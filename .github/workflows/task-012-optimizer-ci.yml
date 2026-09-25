@@ -1,9 +1,6 @@
 name: Task 012 - Optimizer Walk-Forward CI
 
 on:
-  push:
-    branches:
-      - 'task/012-optimizer-walk-forward'
   pull_request:
   workflow_dispatch:
 

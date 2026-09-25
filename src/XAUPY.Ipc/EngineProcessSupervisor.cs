@@ -46,6 +46,7 @@ public sealed class EngineStateChangedEventArgs(
     DateTimeOffset? lastHeartbeatUtc,
     Mt5BridgeStatus mt5Bridge,
     OverviewSnapshot overview,
+    OrdersPositionsSnapshot ordersPositions,
     ConfigurationSummary configuration,
     StrategySnapshot strategy) : EventArgs
 {
@@ -54,6 +55,7 @@ public sealed class EngineStateChangedEventArgs(
     public DateTimeOffset? LastHeartbeatUtc { get; } = lastHeartbeatUtc;
     public Mt5BridgeStatus Mt5Bridge { get; } = mt5Bridge;
     public OverviewSnapshot Overview { get; } = overview;
+    public OrdersPositionsSnapshot OrdersPositions { get; } = ordersPositions;
     public ConfigurationSummary Configuration { get; } = configuration;
     public StrategySnapshot Strategy { get; } = strategy;
 }
@@ -95,6 +97,7 @@ public sealed class EngineProcessSupervisor : IDisposable
     public DateTimeOffset? LastHeartbeatUtc { get; private set; }
     public Mt5BridgeStatus Mt5Bridge { get; private set; } = Mt5BridgeStatus.Offline;
     public OverviewSnapshot Overview { get; private set; } = OverviewSnapshot.Empty;
+    public OrdersPositionsSnapshot OrdersPositions { get; private set; } = OrdersPositionsSnapshot.Empty;
     public ConfigurationSummary Configuration { get; private set; } = ConfigurationSummary.Default;
     public StrategySnapshot Strategy { get; private set; } = StrategySnapshot.Empty;
 
@@ -111,6 +114,7 @@ public sealed class EngineProcessSupervisor : IDisposable
             _restartAttempts = 0;
             Mt5Bridge = Mt5BridgeStatus.Offline;
             Overview = OverviewSnapshot.Empty;
+            OrdersPositions = OrdersPositionsSnapshot.Empty;
             Configuration = ConfigurationSummary.Default;
             Strategy = StrategySnapshot.Empty;
 
@@ -174,6 +178,7 @@ public sealed class EngineProcessSupervisor : IDisposable
         TerminateOwnedProcess();
         Mt5Bridge = Mt5BridgeStatus.Offline;
         Overview = OverviewSnapshot.Empty;
+        OrdersPositions = OrdersPositionsSnapshot.Empty;
         Strategy = StrategySnapshot.Empty;
         SetState(EngineConnectionState.Stopped, "Python Engine đã dừng.");
     }
@@ -200,6 +205,7 @@ public sealed class EngineProcessSupervisor : IDisposable
                     _process = StartOwnedProcess();
                     Mt5Bridge = Mt5BridgeStatus.Offline;
                     Overview = OverviewSnapshot.Empty;
+                    OrdersPositions = OrdersPositionsSnapshot.Empty;
                     Strategy = StrategySnapshot.Empty;
                     SetState(
                         EngineConnectionState.Starting,
@@ -233,7 +239,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
                     var heartbeat = ProtocolEnvelope.Create(
                         "heartbeat",
-                        new { component = "desktop", desktop_version = "0.8.0-task008" });
+                        new { component = "desktop", desktop_version = "0.9.0-task009" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
@@ -249,8 +255,10 @@ public sealed class EngineProcessSupervisor : IDisposable
                     RejectUnexpectedExecutionEnable(response);
                     Mt5Bridge = ParseBridgeStatus(response.Payload);
                     Overview = OverviewSnapshot.FromHeartbeatPayload(response.Payload);
+                    OrdersPositions = OrdersPositionsSnapshot.FromHeartbeatPayload(response.Payload);
                     Strategy = StrategySnapshot.FromHeartbeatPayload(response.Payload);
                     RejectUnexpectedStrategyExecutionEnable(Strategy);
+                    RejectUnexpectedOrdersExecutionEnable(OrdersPositions);
 
                     LastHeartbeatUtc = DateTimeOffset.UtcNow;
                     SetState(
@@ -268,6 +276,7 @@ public sealed class EngineProcessSupervisor : IDisposable
                 CloseConnection();
                 Mt5Bridge = Mt5BridgeStatus.Offline;
                 Overview = OverviewSnapshot.Empty;
+                OrdersPositions = OrdersPositionsSnapshot.Empty;
                 Strategy = StrategySnapshot.Empty;
 
                 if (_stopRequested || cancellationToken.IsCancellationRequested)
@@ -302,7 +311,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "0.8.0-task008" });
+            new { component = "desktop", desktop_version = "0.9.0-task009" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -316,7 +325,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         var configRequest = ProtocolEnvelope.Create(
             "config_active_get",
-            new { component = "desktop", desktop_version = "0.8.0-task008" });
+            new { component = "desktop", desktop_version = "0.9.0-task009" });
 
         var configResponse = await SendReceiveAsync(
             configRequest,
@@ -335,20 +344,26 @@ public sealed class EngineProcessSupervisor : IDisposable
         if (response.Payload.TryGetProperty("trading_enabled", out var trading) &&
             trading.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 008 Engine unexpectedly reported trading_enabled=true.");
+            throw new InvalidDataException("Task 009 Engine unexpectedly reported trading_enabled=true.");
         }
 
         if (response.Payload.TryGetProperty("execution_enabled", out var execution) &&
             execution.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 008 Engine unexpectedly reported execution_enabled=true.");
+            throw new InvalidDataException("Task 009 Engine unexpectedly reported execution_enabled=true.");
         }
     }
 
     private static void RejectUnexpectedStrategyExecutionEnable(StrategySnapshot strategy)
     {
         if (strategy.TradingEnabled || strategy.ExecutionEnabled)
-            throw new InvalidDataException("Task 008 strategy projection unexpectedly enabled execution.");
+            throw new InvalidDataException("Task 009 strategy projection unexpectedly enabled execution.");
+    }
+
+    private static void RejectUnexpectedOrdersExecutionEnable(OrdersPositionsSnapshot orders)
+    {
+        if (!orders.BrokerExecutionLocked || !orders.SimulationOnly)
+            throw new InvalidDataException("Task 009 order-book projection unexpectedly unlocked broker execution.");
     }
 
     private static Mt5BridgeStatus ParseBridgeStatus(JsonElement payload)
@@ -508,6 +523,59 @@ public sealed class EngineProcessSupervisor : IDisposable
         return result;
     }
 
+    public async Task<ManualActionResult> SimulateManualActionAsync(
+        string action,
+        bool confirmed,
+        long? ticket = null,
+        double? volume = null,
+        double? slPoints = null,
+        double? tpPoints = null,
+        double? percent = null,
+        double? price = null,
+        double? sl = null,
+        double? tp = null,
+        string? intentId = null,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+
+        var payload = new Dictionary<string, object?>
+        {
+            ["intent_id"] = intentId ?? Guid.NewGuid().ToString(),
+            ["action"] = action,
+            ["confirmed"] = confirmed
+        };
+
+        if (ticket.HasValue) payload["ticket"] = ticket.Value;
+        if (volume.HasValue) payload["volume"] = volume.Value;
+        if (slPoints.HasValue) payload["sl_points"] = slPoints.Value;
+        if (tpPoints.HasValue) payload["tp_points"] = tpPoints.Value;
+        if (percent.HasValue) payload["percent"] = percent.Value;
+        if (price.HasValue) payload["price"] = price.Value;
+        if (sl.HasValue) payload["sl"] = sl.Value;
+        if (tp.HasValue) payload["tp"] = tp.Value;
+
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create("manual_action_simulate", payload),
+            TimeSpan.FromSeconds(3),
+            cancellationToken);
+
+        if (response.Type != "manual_action_simulate_ack")
+            throw new InvalidDataException($"Unexpected manual simulation response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        var result = ManualActionResult.FromAck(response.Payload);
+
+        if (!result.Simulated || result.BrokerMutated ||
+            result.TradingEnabled || result.ExecutionEnabled)
+        {
+            throw new InvalidDataException(
+                "Task 009 manual action response violated simulation-only safety.");
+        }
+
+        return result;
+    }
+
     private static JsonElement ExtractProfile(ProtocolEnvelope response, string responseName)
     {
         if (!response.Payload.TryGetProperty("profile", out var profile) ||
@@ -643,6 +711,7 @@ public sealed class EngineProcessSupervisor : IDisposable
                 LastHeartbeatUtc,
                 Mt5Bridge,
                 Overview,
+                OrdersPositions,
                 Configuration,
                 Strategy));
     }

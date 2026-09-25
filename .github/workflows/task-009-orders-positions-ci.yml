@@ -1,0 +1,23 @@
+name: Task 009 - UI Reference Extract
+
+on:
+  push:
+    branches:
+      - 'task/009-orders-positions-guarded-actions'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload approved Orders Positions UI reference
+        uses: actions/upload-artifact@v4
+        with:
+          name: XAUPY-Task009-UI-reference
+          path: 'docs/ui-reference/Tab Lệnh & Vị thế.png'
+          if-no-files-found: error
+          retention-days: 2

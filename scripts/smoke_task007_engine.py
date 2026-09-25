@@ -113,7 +113,13 @@ def main() -> int:
 
         heartbeat = exchange(file, "heartbeat")
         assert heartbeat["type"] == "heartbeat_ack"
-        assert heartbeat["payload"]["engine_version"] == "0.7.0-task007"
+        # Strategy regression smoke is intentionally forward-compatible:
+        # later tasks may advance the Engine version while preserving Task 007 behavior.
+        assert heartbeat["payload"]["engine_version"] in {
+            "0.7.0-task007",
+            "0.8.0-task008",
+            "0.9.0-task009",
+        }
         assert heartbeat["payload"]["strategy"]["state"] == "STALE"
         assert heartbeat["payload"]["strategy"]["execution_enabled"] is False
 

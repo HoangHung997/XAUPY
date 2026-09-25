@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   cleanup:
-    runs-on: macos-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 5
     steps:
       - name: Cancel stale Task 012 branch runs

@@ -672,6 +672,52 @@ class WalkForwardTests(unittest.TestCase):
         )
         self.assertEqual("2024-01-01", anchored[1]["train_from"])
 
+    def test_real_walk_forward_completes_on_multi_day_fixture(self):
+        dataset = multi_day_dataset(12)
+        profile = optimizer_profile()
+        ranges = parse_parameter_ranges(
+            [
+                {
+                    "path": "risk.fixed_lot",
+                    "min": 0.05,
+                    "max": 0.10,
+                    "step": 0.05,
+                },
+                {
+                    "path": "risk.cooldown_minutes",
+                    "min": 0,
+                    "max": 1,
+                    "step": 1,
+                },
+            ],
+            profile,
+        )
+        result = OptimizerEngine(
+            profile,
+            initial_balance=10000,
+            spread_pips=0,
+            commission_per_lot=0,
+            min_trades=1,
+            max_workers=2,
+        ).walk_forward(
+            dataset,
+            from_date="2024-01-01",
+            to_date="2024-01-12",
+            parameter_ranges=ranges,
+            folds=3,
+            train_ratio=0.75,
+            rolling=True,
+        )
+
+        self.assertEqual(3, result["fold_count"])
+        self.assertTrue(result["leakage_guard_passed"])
+        self.assertEqual(3, len(result["folds"]))
+        for fold in result["folds"]:
+            self.assertEqual("TRAIN_ONLY", fold["selection_source"])
+            self.assertTrue(fold["leakage_guard_passed"])
+            self.assertLess(fold["train_to"], fold["test_from"])
+        self.assertIn("stability", result["aggregate"])
+
     def test_walk_forward_selection_is_train_only_even_when_test_prefers_other_param(self):
         dataset = multi_day_dataset(12)
         profile = optimizer_profile()

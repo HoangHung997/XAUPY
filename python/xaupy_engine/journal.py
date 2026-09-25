@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import csv
 from datetime import datetime, timezone
 import json
 import os
@@ -60,6 +61,7 @@ class StructuredJournal:
         self.root_dir.mkdir(parents=True, exist_ok=True)
 
         self.events_path = self.root_dir / "journal-v1.jsonl"
+        self.csv_path = self.root_dir / "journal-v1.csv"
         self.bookmarks_path = self.root_dir / "bookmarks-v1.json"
         self._now_provider = now_provider or (lambda: datetime.now(timezone.utc))
         self._events: list[dict[str, Any]] = []
@@ -92,6 +94,7 @@ class StructuredJournal:
         symbol: str | None = None,
         profile_hash: str | None = None,
         timestamp_utc: str | None = None,
+        mirror_csv: bool = False,
     ) -> dict[str, Any]:
         normalized_level = str(level).strip().upper()
         normalized_source = str(source).strip()
@@ -145,6 +148,10 @@ class StructuredJournal:
         self._events.append(stored)
         self._events_by_sequence[event["sequence"]] = stored
         self._next_sequence += 1
+
+        if mirror_csv:
+            self._append_csv_best_effort(stored)
+
         return self._public_event(stored)
 
     def query(
@@ -355,6 +362,57 @@ class StructuredJournal:
             if self._events_by_sequence
             else 1
         )
+
+    def _append_csv_best_effort(self, event: dict[str, Any]) -> None:
+        try:
+            write_header = (
+                not self.csv_path.exists()
+                or self.csv_path.stat().st_size == 0
+            )
+            with self.csv_path.open(
+                "a",
+                encoding="utf-8",
+                newline="",
+            ) as handle:
+                writer = csv.writer(handle)
+                if write_header:
+                    writer.writerow(
+                        (
+                            "sequence",
+                            "timestamp_utc",
+                            "level",
+                            "source",
+                            "tag",
+                            "message",
+                            "correlation_id",
+                            "symbol",
+                            "profile_hash",
+                            "details_json",
+                        )
+                    )
+                writer.writerow(
+                    (
+                        event["sequence"],
+                        event["timestamp_utc"],
+                        event["level"],
+                        event["source"],
+                        event["tag"],
+                        event["message"],
+                        event.get("correlation_id") or "",
+                        event.get("symbol") or "",
+                        event.get("profile_hash") or "",
+                        json.dumps(
+                            event.get("details", {}),
+                            ensure_ascii=False,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ),
+                    )
+                )
+        except OSError:
+            # CSV is a convenience mirror. JSONL remains the authoritative
+            # append-only replay evidence and must not be rolled back.
+            pass
 
     def _load_bookmarks(self) -> None:
         if not self.bookmarks_path.exists():

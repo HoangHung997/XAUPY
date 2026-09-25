@@ -64,7 +64,7 @@
     <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*" RowSpacing="8">
       <!-- Approved profile/header toolbar -->
       <Border Grid.Row="0" Classes="panel">
-        <Grid ColumnDefinitions="1.6*,0.9*,Auto" Padding="12,8" ColumnSpacing="10">
+        <Grid ColumnDefinitions="1.6*,0.9*,Auto" Margin="12,8" ColumnSpacing="10">
           <StackPanel>
             <TextBlock Text="Cấu hình chiến lược giao dịch" FontSize="20" FontWeight="SemiBold"/>
             <TextBlock Text="Thiết lập đầy đủ thông số cho hệ thống giao dịch tự động - XAUUSD" Classes="dim" FontSize="12"/>
@@ -90,7 +90,7 @@
 
       <!-- Quick controls / status -->
       <Border Grid.Row="1" Classes="panel">
-        <Grid ColumnDefinitions="1.4*,1*,1*,1*,Auto" Padding="10,8" ColumnSpacing="10">
+        <Grid ColumnDefinitions="1.4*,1*,1*,1*,Auto" Margin="10,8" ColumnSpacing="10">
           <StackPanel Grid.Column="0">
             <TextBlock Text="Tìm tham số" Classes="dim" FontSize="10"/>
             <TextBox x:Name="SearchBox" PlaceholderText="Tên, path, mô tả, .set key..." TextChanged="SearchBox_OnTextChanged"/>

@@ -200,6 +200,7 @@ public sealed class EngineProcessSupervisor : IDisposable
                     _process = StartOwnedProcess();
                     Mt5Bridge = Mt5BridgeStatus.Offline;
                     Overview = OverviewSnapshot.Empty;
+                    Strategy = StrategySnapshot.Empty;
                     SetState(
                         EngineConnectionState.Starting,
                         $"Engine đã tự khởi động lại ({_restartAttempts}/{MaxRestartAttempts}), PID {_process.Id}.");

@@ -19,15 +19,17 @@ class OverviewUiSourceTests(unittest.TestCase):
 
     def test_overview_contains_all_reference_information_groups(self):
         required_text = (
-            "XAUUSD • Live Quote",
+            "N30 Control Center",
+            "XAUUSD",
+            "Trạng thái EA",
+            "Tài khoản giao dịch",
+            "Kết nối &amp; Hệ thống",
             "Python Engine",
-            "MT5 Bridge",
-            "BALANCE",
-            "EQUITY",
-            "FREE MARGIN",
-            "Chiến lược realtime",
+            "EA Bridge",
+            "Thông tin chiến lược (Realtime)",
+            "Công cụ &amp; Tham số đầy đủ (Trung tâm cấu hình)",
             "Lệnh gần đây",
-            "Log nhanh",
+            "Nhật ký hệ thống",
         )
         for value in required_text:
             with self.subTest(value=value):
@@ -55,13 +57,23 @@ class OverviewUiSourceTests(unittest.TestCase):
                 self.assertIn(f'x:Name="{name}"', self.xaml)
                 self.assertIn(f'"{name}"', self.code)
 
+    def test_overview_uses_approved_horizontal_shell_not_old_sidebar_navigation(self):
+        self.assertIn('ColumnDefinitions="*,*,*,*,*,*,*,*,*,*,175"', self.xaml)
+        self.assertIn('Classes="navTab active"', self.xaml)
+        self.assertIn('x:Name="LiveSidebar"', self.xaml)
+        self.assertNotIn('ColumnDefinitions="220,*"', self.xaml)
+
     def test_unimplemented_tabs_have_explicit_placeholder_instead_of_fake_data(self):
         self.assertIn('x:Name="PlaceholderContent"', self.xaml)
-        self.assertIn("Không hiển thị dữ liệu giả", self.xaml)
+        self.assertIn("không hiển thị dữ liệu giao dịch giả", self.xaml)
         self.assertIn("đã triển khai Tổng quan + Cấu hình", self.code)
 
     def test_execution_lock_remains_visible(self):
-        self.assertIn("EXECUTION LOCKED", self.xaml)
+        # The approved screenshot does not require a giant global lock badge,
+        # but the hard safety state must remain visible in the rendered shell.
+        self.assertIn('x:Name="GuardianReasonValue"', self.xaml)
+        self.assertIn('Text="LOCKED"', self.xaml)
+        self.assertIn("Execution vẫn khóa", self.code)
 
 
 if __name__ == "__main__":

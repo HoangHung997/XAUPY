@@ -290,7 +290,7 @@ At Task 006 delivery, XAUPY-007 was still PLANNED.
 
 # XAUPY-007 — Strategy engine Direction → Pullback → Trigger
 
-Status: ACTIVE
+Status: DONE
 
 ## Goal
 
@@ -346,4 +346,35 @@ XAUPY-Task007-win-x64.zip
 
 ## Evidence
 
-Pending final Task 007 CI/build verification.
+- Final CI source commit: 00624e2d09771c9c23c41f2cee21b24c3a88ca3f
+- Branch: task/007-strategy-engine
+- GitHub Actions final run: 36084243977
+- Validate deterministic strategy engine job: SUCCESS
+- Windows x64 full strategy build job: SUCCESS
+- Python tests: 78/78 PASS
+- C# IPC regression self-tests: 23/23 PASS
+- Avalonia/.NET Release build: SUCCESS, 0 warnings, 0 errors
+- Packaged Task 007 Python Engine deterministic strategy/safety smoke: PASS
+- Packaged xaupy-config regression smoke: PASS
+- MetaEditor locked Bridge regression: Result: 0 errors, 0 warnings, 2185 ms elapsed
+- GitHub artifact: XAUPY-Task007-win-x64
+- GitHub artifact id: 10843277438
+- Artifact size: 101031427 bytes
+- Artifact outer SHA-256: da319de8a0800acd90ccf7e3a54c11a3b5fe7701c288f9b5f43522f8e4995c8e
+- Direct full-build ZIP SHA-256: fa0fe51abc0733ac0530aa839a7100d46ccf43448dc374fedaf7f645e2e676fe
+- Artifact expiry: 2026-10-09T02:00:44Z
+- Independent artifact inspection: 249 entries
+- XAUPY.Desktop.exe: present, PE32+ Windows x86-64
+- engine/xaupy-engine.exe: present, PE32+ Windows x86-64
+- tools/xaupy-config.exe: present, PE32+ Windows x86-64
+- profiles/Baseline_M30_M5_M1.json: Direction=M30, Pullback=M5, Trigger=M1
+- profiles/config-schema-v1.json: field_count=133; exact TF options M1/M3/M5/M15/M30/H1/H2/H4
+- locked packaged safety verified: allow_real_account=false, demo_only=true, max_retry_count=0, never_widen_sl=true, require_server_sl=true, block_on_stale_market_data=true
+- mt5/XAUPY_Bridge_EA.mq5/.ex5/compile.log: present
+- Task 007 strategy/acceptance docs: present
+- approved Overview/Configuration/Strategy/Monitoring UI reference PNGs: present with UTF-8 filenames
+
+## Delivery
+
+The complete Task 007 Windows x64 build is ready. The realtime Strategy and
+Monitoring UI remains correctly deferred to XAUPY-008.

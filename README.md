@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-007 DONE. XAUPY-008 vẫn PLANNED và chưa bắt đầu.
+Trạng thái hiện tại: TASK XAUPY-008 ACTIVE trên nhánh `task/008-strategy-monitoring-tabs`. XAUPY-001–007 đã DONE.
 
 ## Tài liệu bắt buộc
 
@@ -20,6 +20,8 @@ Trạng thái hiện tại: TASK XAUPY-007 DONE. XAUPY-008 vẫn PLANNED và ch�
 - [IPC protocol](docs/IPC_PROTOCOL.md)
 - [Task 007 strategy spec](docs/TASK007_STRATEGY_ENGINE.md)
 - [Task 007 acceptance](docs/TASK007_STRATEGY_TEST.md)
+- [Strategy + Monitoring UI spec](docs/STRATEGY_MONITORING_UI_SPEC.md)
+- [Task 008 acceptance](docs/TASK008_STRATEGY_MONITORING_TEST.md)
 - [UI reference](docs/ui-reference/README.md)
 
 ## Nguyên tắc triển khai
@@ -102,3 +104,15 @@ Final Task 007 evidence:
 - packaged Config regression smoke: PASS;
 - MetaEditor Bridge regression: 0 errors / 0 warnings;
 - verified Windows x64 artifact: XAUPY-Task007-win-x64.
+
+
+## Task 008 đang triển khai
+
+Phạm vi:
+
+- tab Chiến lược realtime đọc typed StrategySnapshot từ Python Engine;
+- tab Giám sát dùng quote/snapshot/bar thật từ MT5 Bridge/Overview;
+- chart chỉ tích lũy snapshot mới trong phiên, không backfill giả;
+- state/indicator/warm-up/signal evidence hiển thị read-only;
+- backend Session/News/CPU/RAM chưa có được ghi rõ unavailable;
+- execution tiếp tục hard-locked.

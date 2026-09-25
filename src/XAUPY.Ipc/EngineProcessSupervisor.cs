@@ -48,6 +48,7 @@ public sealed class EngineStateChangedEventArgs(
     OverviewSnapshot overview,
     OrdersPositionsSnapshot ordersPositions,
     JournalSummarySnapshot journalSummary,
+    OptimizerStatusSnapshot optimizerStatus,
     ConfigurationSummary configuration,
     StrategySnapshot strategy) : EventArgs
 {
@@ -58,6 +59,7 @@ public sealed class EngineStateChangedEventArgs(
     public OverviewSnapshot Overview { get; } = overview;
     public OrdersPositionsSnapshot OrdersPositions { get; } = ordersPositions;
     public JournalSummarySnapshot JournalSummary { get; } = journalSummary;
+    public OptimizerStatusSnapshot OptimizerStatus { get; } = optimizerStatus;
     public ConfigurationSummary Configuration { get; } = configuration;
     public StrategySnapshot Strategy { get; } = strategy;
 }
@@ -101,6 +103,7 @@ public sealed class EngineProcessSupervisor : IDisposable
     public OverviewSnapshot Overview { get; private set; } = OverviewSnapshot.Empty;
     public OrdersPositionsSnapshot OrdersPositions { get; private set; } = OrdersPositionsSnapshot.Empty;
     public JournalSummarySnapshot JournalSummary { get; private set; } = JournalSummarySnapshot.Empty;
+    public OptimizerStatusSnapshot OptimizerStatus { get; private set; } = OptimizerStatusSnapshot.Idle;
     public ConfigurationSummary Configuration { get; private set; } = ConfigurationSummary.Default;
     public StrategySnapshot Strategy { get; private set; } = StrategySnapshot.Empty;
 
@@ -119,6 +122,7 @@ public sealed class EngineProcessSupervisor : IDisposable
             Overview = OverviewSnapshot.Empty;
             OrdersPositions = OrdersPositionsSnapshot.Empty;
             JournalSummary = JournalSummarySnapshot.Empty;
+            OptimizerStatus = OptimizerStatusSnapshot.Idle;
             Configuration = ConfigurationSummary.Default;
             Strategy = StrategySnapshot.Empty;
 
@@ -184,6 +188,7 @@ public sealed class EngineProcessSupervisor : IDisposable
         Overview = OverviewSnapshot.Empty;
         OrdersPositions = OrdersPositionsSnapshot.Empty;
         JournalSummary = JournalSummarySnapshot.Empty;
+        OptimizerStatus = OptimizerStatusSnapshot.Idle;
         Strategy = StrategySnapshot.Empty;
         SetState(EngineConnectionState.Stopped, "Python Engine đã dừng.");
     }
@@ -212,6 +217,7 @@ public sealed class EngineProcessSupervisor : IDisposable
                     Overview = OverviewSnapshot.Empty;
                     OrdersPositions = OrdersPositionsSnapshot.Empty;
                     JournalSummary = JournalSummarySnapshot.Empty;
+                    OptimizerStatus = OptimizerStatusSnapshot.Idle;
                     Strategy = StrategySnapshot.Empty;
                     SetState(
                         EngineConnectionState.Starting,
@@ -245,7 +251,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
                     var heartbeat = ProtocolEnvelope.Create(
                         "heartbeat",
-                        new { component = "desktop", desktop_version = "0.11.0-task011" });
+                        new { component = "desktop", desktop_version = "0.12.0-task012" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
@@ -263,6 +269,7 @@ public sealed class EngineProcessSupervisor : IDisposable
                     Overview = OverviewSnapshot.FromHeartbeatPayload(response.Payload);
                     OrdersPositions = OrdersPositionsSnapshot.FromHeartbeatPayload(response.Payload);
                     JournalSummary = JournalSummarySnapshot.FromHeartbeatPayload(response.Payload);
+                    OptimizerStatus = OptimizerStatusSnapshot.FromHeartbeatPayload(response.Payload);
                     Strategy = StrategySnapshot.FromHeartbeatPayload(response.Payload);
                     RejectUnexpectedStrategyExecutionEnable(Strategy);
                     RejectUnexpectedOrdersExecutionEnable(OrdersPositions);
@@ -285,6 +292,7 @@ public sealed class EngineProcessSupervisor : IDisposable
                 Overview = OverviewSnapshot.Empty;
                 OrdersPositions = OrdersPositionsSnapshot.Empty;
                 JournalSummary = JournalSummarySnapshot.Empty;
+                OptimizerStatus = OptimizerStatusSnapshot.Idle;
                 Strategy = StrategySnapshot.Empty;
 
                 if (_stopRequested || cancellationToken.IsCancellationRequested)
@@ -319,7 +327,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "0.11.0-task011" });
+            new { component = "desktop", desktop_version = "0.12.0-task012" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -333,7 +341,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         var configRequest = ProtocolEnvelope.Create(
             "config_active_get",
-            new { component = "desktop", desktop_version = "0.11.0-task011" });
+            new { component = "desktop", desktop_version = "0.12.0-task012" });
 
         var configResponse = await SendReceiveAsync(
             configRequest,
@@ -352,26 +360,26 @@ public sealed class EngineProcessSupervisor : IDisposable
         if (response.Payload.TryGetProperty("trading_enabled", out var trading) &&
             trading.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 011 Engine unexpectedly reported trading_enabled=true.");
+            throw new InvalidDataException("Task 012 Engine unexpectedly reported trading_enabled=true.");
         }
 
         if (response.Payload.TryGetProperty("execution_enabled", out var execution) &&
             execution.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 011 Engine unexpectedly reported execution_enabled=true.");
+            throw new InvalidDataException("Task 012 Engine unexpectedly reported execution_enabled=true.");
         }
     }
 
     private static void RejectUnexpectedStrategyExecutionEnable(StrategySnapshot strategy)
     {
         if (strategy.TradingEnabled || strategy.ExecutionEnabled)
-            throw new InvalidDataException("Task 011 strategy projection unexpectedly enabled execution.");
+            throw new InvalidDataException("Task 012 strategy projection unexpectedly enabled execution.");
     }
 
     private static void RejectUnexpectedOrdersExecutionEnable(OrdersPositionsSnapshot orders)
     {
         if (!orders.BrokerExecutionLocked || !orders.SimulationOnly)
-            throw new InvalidDataException("Task 011 order-book projection unexpectedly unlocked broker execution.");
+            throw new InvalidDataException("Task 012 order-book projection unexpectedly unlocked broker execution.");
     }
 
     private static Mt5BridgeStatus ParseBridgeStatus(JsonElement payload)
@@ -415,7 +423,7 @@ public sealed class EngineProcessSupervisor : IDisposable
         }
 
         if (executionReady || !executionLocked)
-            throw new InvalidDataException("Task 011 bridge guardian unexpectedly reported execution ready.");
+            throw new InvalidDataException("Task 012 bridge guardian unexpectedly reported execution ready.");
 
         return new Mt5BridgeStatus(
             connected,
@@ -578,7 +586,7 @@ public sealed class EngineProcessSupervisor : IDisposable
             result.TradingEnabled || result.ExecutionEnabled)
         {
             throw new InvalidDataException(
-                "Task 011 manual action response violated simulation-only safety.");
+                "Task 012 manual action response violated simulation-only safety.");
         }
 
         return result;
@@ -776,6 +784,224 @@ public sealed class EngineProcessSupervisor : IDisposable
         return BacktestApiParser.ParseDelete(response.Payload);
     }
 
+    public async Task<OptimizerStatusSnapshot> StartOptimizerAsync(
+        string path,
+        string fromDate,
+        string toDate,
+        double initialBalance,
+        double spreadPips,
+        double commissionPerLot,
+        int minTrades,
+        int maxWorkers,
+        JsonElement parameterRanges,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "optimizer_start",
+                new
+                {
+                    path,
+                    from_date = fromDate,
+                    to_date = toDate,
+                    initial_balance = initialBalance,
+                    spread_pips = spreadPips,
+                    commission_per_lot = commissionPerLot,
+                    min_trades = minTrades,
+                    max_workers = maxWorkers,
+                    parameter_ranges = parameterRanges
+                }),
+            TimeSpan.FromSeconds(15),
+            cancellationToken);
+
+        if (response.Type != "optimizer_start_ack")
+            throw new InvalidDataException($"Unexpected optimizer start response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        OptimizerStatus = OptimizerApiParser.ParseStartOrStatus(response.Payload);
+        SetState(State, "Optimizer started.");
+        return OptimizerStatus;
+    }
+
+    public async Task<OptimizerStatusSnapshot> StartWalkForwardAsync(
+        string path,
+        string fromDate,
+        string toDate,
+        double initialBalance,
+        double spreadPips,
+        double commissionPerLot,
+        int minTrades,
+        int maxWorkers,
+        JsonElement parameterRanges,
+        int folds,
+        double trainRatio,
+        bool rolling,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "walk_forward_start",
+                new
+                {
+                    path,
+                    from_date = fromDate,
+                    to_date = toDate,
+                    initial_balance = initialBalance,
+                    spread_pips = spreadPips,
+                    commission_per_lot = commissionPerLot,
+                    min_trades = minTrades,
+                    max_workers = maxWorkers,
+                    parameter_ranges = parameterRanges,
+                    folds,
+                    train_ratio = trainRatio,
+                    rolling
+                }),
+            TimeSpan.FromSeconds(15),
+            cancellationToken);
+
+        if (response.Type != "walk_forward_start_ack")
+            throw new InvalidDataException($"Unexpected walk-forward start response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        OptimizerStatus = OptimizerApiParser.ParseStartOrStatus(response.Payload);
+        SetState(State, "Walk-forward started.");
+        return OptimizerStatus;
+    }
+
+    public async Task<OptimizerStatusSnapshot> QueryOptimizerStatusAsync(
+        string? jobId = null,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "optimizer_status",
+                new { job_id = jobId }),
+            TimeSpan.FromSeconds(5),
+            cancellationToken);
+
+        if (response.Type != "optimizer_status_ack")
+            throw new InvalidDataException($"Unexpected optimizer status response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        OptimizerStatus = OptimizerApiParser.ParseStartOrStatus(response.Payload);
+        return OptimizerStatus;
+    }
+
+    public async Task<OptimizerStatusSnapshot> CancelOptimizerAsync(
+        string jobId,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "optimizer_cancel",
+                new { job_id = jobId }),
+            TimeSpan.FromSeconds(5),
+            cancellationToken);
+
+        if (response.Type != "optimizer_cancel_ack")
+            throw new InvalidDataException($"Unexpected optimizer cancel response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        OptimizerStatus = OptimizerApiParser.ParseStartOrStatus(response.Payload);
+        return OptimizerStatus;
+    }
+
+    public async Task<OptimizerResultSnapshot> GetOptimizerResultAsync(
+        string runId,
+        int candidateOffset = 0,
+        int candidateLimit = 100,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "optimizer_result_get",
+                new
+                {
+                    run_id = runId,
+                    candidate_offset = candidateOffset,
+                    candidate_limit = candidateLimit
+                }),
+            TimeSpan.FromSeconds(15),
+            cancellationToken);
+
+        if (response.Type != "optimizer_result_get_ack")
+            throw new InvalidDataException($"Unexpected optimizer result response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        return OptimizerApiParser.ParseResult(response.Payload);
+    }
+
+    public async Task<OptimizerHeatmapSnapshot> GetOptimizerHeatmapAsync(
+        string runId,
+        string xPath,
+        string yPath,
+        string metric,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "optimizer_heatmap",
+                new
+                {
+                    run_id = runId,
+                    x_path = xPath,
+                    y_path = yPath,
+                    metric
+                }),
+            TimeSpan.FromSeconds(15),
+            cancellationToken);
+
+        if (response.Type != "optimizer_heatmap_ack")
+            throw new InvalidDataException($"Unexpected optimizer heatmap response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        return OptimizerApiParser.ParseHeatmap(response.Payload);
+    }
+
+    public async Task<OptimizerHistoryResult> QueryOptimizerHistoryAsync(
+        int limit = 50,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "optimizer_history_query",
+                new { limit }),
+            TimeSpan.FromSeconds(10),
+            cancellationToken);
+
+        if (response.Type != "optimizer_history_query_ack")
+            throw new InvalidDataException($"Unexpected optimizer history response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        return OptimizerApiParser.ParseHistory(response.Payload);
+    }
+
+    public async Task<OptimizerDeleteResult> DeleteOptimizerResultAsync(
+        string runId,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "optimizer_result_delete",
+                new { run_id = runId }),
+            TimeSpan.FromSeconds(10),
+            cancellationToken);
+
+        if (response.Type != "optimizer_result_delete_ack")
+            throw new InvalidDataException($"Unexpected optimizer delete response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        return OptimizerApiParser.ParseDelete(response.Payload);
+    }
+
     private static JsonElement ExtractProfile(ProtocolEnvelope response, string responseName)
     {
         if (!response.Payload.TryGetProperty("profile", out var profile) ||
@@ -913,6 +1139,7 @@ public sealed class EngineProcessSupervisor : IDisposable
                 Overview,
                 OrdersPositions,
                 JournalSummary,
+                OptimizerStatus,
                 Configuration,
                 Strategy));
     }

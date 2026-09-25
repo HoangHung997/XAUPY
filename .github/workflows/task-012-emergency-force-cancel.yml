@@ -1,0 +1,42 @@
+name: Task 012 - Emergency Force Cancel Zombies
+
+on:
+  push:
+    branches:
+      - 'ci/task012-force-cancel-zombies'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: macos-15
+    timeout-minutes: 5
+    steps:
+      - name: Force-cancel stale Task 012 runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEEP_RUN_ID: "36183113929"
+        run: |
+          set -euo pipefail
+
+          api="$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs?branch=task%2F012-optimizer-walk-forward&per_page=100"
+          payload="$(curl -fsSL             -H "Authorization: Bearer $GH_TOKEN"             -H "Accept: application/vnd.github+json"             -H "X-GitHub-Api-Version: 2022-11-28"             "$api")"
+
+          echo "$payload"             | jq -r               --argjson keep "$KEEP_RUN_ID"               '.workflow_runs[]
+               | select(
+                   (.status == "queued"
+                    or .status == "in_progress"
+                    or .status == "cancel_requested")
+                   and .id != $keep
+                 )
+               | .id'             | while read -r run_id; do
+                [ -n "$run_id" ] || continue
+                echo "Force-cancelling stale run $run_id"
+                curl -fsSL -X POST                   -H "Authorization: Bearer $GH_TOKEN"                   -H "Accept: application/vnd.github+json"                   -H "X-GitHub-Api-Version: 2022-11-28"                   "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$run_id/force-cancel"                   >/dev/null || true
+              done
+
+          echo "Kept final Task 012 run $KEEP_RUN_ID"

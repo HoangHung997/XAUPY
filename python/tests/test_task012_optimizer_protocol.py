@@ -409,6 +409,62 @@ class Task012OptimizerProtocolTests(unittest.IsolatedAsyncioTestCase):
         writer.close()
         await writer.wait_closed()
 
+    async def test_engine_close_cancels_active_optimizer_without_hanging(self):
+        reader, writer = await self.connect()
+        original = OptimizerEngine._evaluate_candidate
+
+        def slow(engine, index, parameters, dataset, from_date, to_date):
+            time.sleep(0.15)
+            return original(
+                engine,
+                index,
+                parameters,
+                dataset,
+                from_date,
+                to_date,
+            )
+
+        request = self.sweep_request()
+        request["max_workers"] = 1
+        request["parameter_ranges"] = [
+            {
+                "path": "risk.fixed_lot",
+                "min": 0.01,
+                "max": 0.20,
+                "step": 0.01,
+            }
+        ]
+
+        with patch.object(
+            OptimizerEngine,
+            "_evaluate_candidate",
+            slow,
+        ):
+            started = await exchange(
+                reader,
+                writer,
+                "optimizer_start",
+                request,
+            )
+            self.assertTrue(started.payload["ok"])
+            job_id = started.payload["status"]["job_id"]
+
+            await asyncio.wait_for(
+                self.server.close(),
+                timeout=15,
+            )
+
+            terminal = self.server.optimizer_jobs.status(job_id)
+            self.assertEqual("CANCELLED", terminal["status"])
+            self.assertIsNone(terminal["result_run_id"])
+            self.assertEqual(
+                [],
+                self.server.optimizers.history(),
+            )
+
+        writer.close()
+        await writer.wait_closed()
+
     async def test_second_job_is_blocked_while_first_is_active(self):
         reader, writer = await self.connect()
         original = OptimizerEngine._evaluate_candidate

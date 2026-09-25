@@ -86,6 +86,59 @@ Check(overview.Bid == 4281.10, "overview bid");
 Check(overview.Bars.ContainsKey("M1"), "overview M1 bar");
 Check(overview.PositionsCount == 1, "overview position count");
 
+var strategyPayload = JsonSerializer.SerializeToElement(new
+{
+    strategy = new
+    {
+        available = true,
+        ready = true,
+        state = "ARMED_BUY",
+        internal_state = "ARMED_BUY",
+        blocked_reason = "WAIT_TRIGGER_REVERSAL",
+        profile_name = "Baseline M30-M5-M1",
+        profile_hash = "abcdef0123456789",
+        symbol = "XAUUSD",
+        timeframes = new { direction = "M30", pullback = "M5", trigger = "M1" },
+        direction = "BUY",
+        armed_side = "BUY",
+        signal_sequence = 3,
+        last_signal = new { sequence = 3, side = "BUY", bar_time = 1790240000L, direction = "BUY" },
+        warmup_reasons = Array.Empty<string>(),
+        bars_seen = new { M1 = 120, M5 = 80, M30 = 60 },
+        indicators = new
+        {
+            direction = new { timeframe = "M30", ma = 4280.5, ma_previous = 4279.7, open_reference = (double?)null },
+            pullback = new { timeframe = "M5", rsi = 31.2, z = -1.4 },
+            trigger = new { timeframe = "M1", rsi = 44.5, z = -0.3 },
+            filters = new { adx = 27.1, atr = 3.2, open_reference = 4275.0 }
+        },
+        conditions = new
+        {
+            pullback = new { BUY = true, SELL = false },
+            trigger = new { passed = false }
+        },
+        last_data_error = (string?)null,
+        last_reset_reason = "PROFILE_CHANGED",
+        last_evaluated_trigger_time = 1790240000L,
+        trading_enabled = false,
+        execution_enabled = false
+    }
+});
+
+var strategy = StrategySnapshot.FromHeartbeatPayload(strategyPayload);
+Check(strategy.Available && strategy.Ready, "strategy projection available and ready");
+Check(strategy.State == "ARMED_BUY" && strategy.Direction == "BUY", "strategy state and direction");
+Check(strategy.DirectionTimeframe == "M30" && strategy.PullbackTimeframe == "M5" && strategy.TriggerTimeframe == "M1", "strategy independent timeframes");
+Check(strategy.DirectionIndicators.Ma == 4280.5, "strategy MA projection");
+Check(strategy.PullbackIndicators.Rsi == 31.2 && strategy.TriggerIndicators.Rsi == 44.5, "strategy RSI projections");
+Check(strategy.Filters.Adx == 27.1 && strategy.Filters.Atr == 3.2, "strategy filter projections");
+Check(strategy.PullbackBuyPassed == true && strategy.PullbackSellPassed == false, "strategy pullback condition evidence");
+Check(strategy.LastSignal?.Side == "BUY" && strategy.SignalSequence == 3, "strategy signal evidence");
+Check(!strategy.TradingEnabled && !strategy.ExecutionEnabled, "strategy execution remains disabled");
+
+var emptyStrategy = StrategySnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new { }));
+Check(!emptyStrategy.Available && emptyStrategy.State == "STALE", "missing strategy projects explicit stale state");
+
 var configPayload = JsonSerializer.SerializeToElement(new
 {
     profile = new

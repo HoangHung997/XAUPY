@@ -454,7 +454,6 @@ class StrategyEngine:
         self._armed_trigger_time = None
         self._trigger_rsi_extreme = None
         self._trigger_z_extreme = None
-        self.last_signal = None
         self.state = "WAIT_DIRECTION"
         self.blocked_reason = reason
 
@@ -581,7 +580,7 @@ class StrategyEngine:
         else:
             sides = {"BUY", "SELL"}
 
-        if direction_cfg["open_filter_enabled"]:
+        if direction_cfg["open_filter_enabled"] and direction_cfg["open_reference_mode"] != "NONE":
             reference = metrics["direction"]["open_reference"]
             assert reference is not None
             sides = {
@@ -609,7 +608,7 @@ class StrategyEngine:
                 return set(), self._label_sides(sides), "ATR_FILTER"
 
         open_cfg = cfg["filters"]["open"]
-        if open_cfg["enabled"]:
+        if open_cfg["enabled"] and open_cfg["reference_mode"] != "NONE":
             reference = metrics["filters"]["open_reference"]
             assert reference is not None
             buffer_value = open_cfg["buffer_price_units"]

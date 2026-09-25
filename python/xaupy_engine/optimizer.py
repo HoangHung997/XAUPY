@@ -797,6 +797,8 @@ class OptimizerEngine:
                 from_date=fold["test_from"],
                 to_date=fold["test_to"],
             )
+            if cancel_event is not None and cancel_event.is_set():
+                raise OptimizationCancelled("walk-forward cancelled")
             test_sharpe = trade_sample_sharpe(test_result)
             completed_work += 1
 
@@ -824,6 +826,9 @@ class OptimizerEngine:
                     "test_metrics": deepcopy(test_result["metrics"]),
                 }
             )
+
+        if cancel_event is not None and cancel_event.is_set():
+            raise OptimizationCancelled("walk-forward cancelled")
 
         aggregate = walk_forward_aggregate(fold_results)
         deterministic = {

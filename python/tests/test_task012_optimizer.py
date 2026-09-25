@@ -391,6 +391,7 @@ class OptimizerJobPreflightTests(unittest.TestCase):
             write_dataset(dataset_path, days=2)
             repo = OptimizerRepository(root / "results")
             manager = OptimizerJobManager(repo)
+            self.addCleanup(manager.shutdown, 5.0)
 
             with self.assertRaisesRegex(
                 OptimizerError,
@@ -1016,6 +1017,7 @@ class RepositoryAndJobTests(unittest.TestCase):
             write_dataset(dataset_path, days=1)
             repo = OptimizerRepository(root / "results")
             manager = OptimizerJobManager(repo)
+            self.addCleanup(manager.shutdown, 5.0)
 
             started = manager.start_sweep(
                 {
@@ -1062,6 +1064,7 @@ class RepositoryAndJobTests(unittest.TestCase):
             write_dataset(dataset_path, days=1)
             repo = OptimizerRepository(root / "results")
             manager = OptimizerJobManager(repo)
+            self.addCleanup(manager.shutdown, 5.0)
 
             entered_save = threading.Event()
             release_save = threading.Event()
@@ -1121,6 +1124,7 @@ class RepositoryAndJobTests(unittest.TestCase):
             write_dataset(dataset_path, days=2)
             repo = OptimizerRepository(root / "results")
             manager = OptimizerJobManager(repo)
+            self.addCleanup(manager.shutdown, 5.0)
 
             gate = threading.Event()
             original = OptimizerEngine.run_sweep
@@ -1174,6 +1178,7 @@ class RepositoryAndJobTests(unittest.TestCase):
             write_dataset(dataset_path, days=2)
             repo = OptimizerRepository(root / "results")
             manager = OptimizerJobManager(repo)
+            self.addCleanup(manager.shutdown, 5.0)
 
             request = {
                 "path": str(dataset_path),
@@ -1257,6 +1262,7 @@ class RepositoryAndJobTests(unittest.TestCase):
             write_dataset(dataset_path, days=2)
             repo = OptimizerRepository(root / "results")
             manager = OptimizerJobManager(repo)
+            self.addCleanup(manager.shutdown, 5.0)
 
             original = OptimizerEngine._evaluate_candidate
 
@@ -1347,6 +1353,7 @@ class RepositoryAndJobTests(unittest.TestCase):
             write_dataset(dataset_path, days=2)
             repo = OptimizerRepository(root / "results")
             manager = OptimizerJobManager(repo)
+            self.addCleanup(manager.shutdown, 5.0)
 
             original = OptimizerEngine._evaluate_candidate
 

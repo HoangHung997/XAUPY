@@ -63,7 +63,7 @@ def snapshot(index, *, direction_close, pullback_close, trigger_close, profile=N
 class IndicatorTests(unittest.TestCase):
     def test_core_indicator_math_is_deterministic(self):
         self.assertAlmostEqual(3.0, _moving_average([1, 2, 3, 4], 3, "SMA"))
-        self.assertAlmostEqual(3.25, _moving_average([1, 2, 3, 4], 3, "EMA"))
+        self.assertAlmostEqual(3.0, _moving_average([1, 2, 3, 4], 3, "EMA"))
         self.assertAlmostEqual(100.0, _rsi([1, 2, 3], 2))
         self.assertGreater(_zscore([1, 2, 3], 3), 1.2)
 

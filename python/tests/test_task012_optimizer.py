@@ -656,6 +656,59 @@ class RepositoryAndJobTests(unittest.TestCase):
             self.assertEqual("COMPLETED", latest["status"])
             self.assertEqual(terminal["result_run_id"], latest["result_run_id"])
 
+    def test_immediate_cancel_never_persists_empty_completed_result(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            dataset_path = root / "data.json"
+            write_dataset(dataset_path, days=2)
+            repo = OptimizerRepository(root / "results")
+            manager = OptimizerJobManager(repo)
+
+            gate = threading.Event()
+            original = OptimizerEngine.run_sweep
+
+            def delayed_run(engine, *args, **kwargs):
+                gate.wait(timeout=1)
+                return original(engine, *args, **kwargs)
+
+            with patch.object(OptimizerEngine, "run_sweep", delayed_run):
+                started = manager.start_sweep(
+                    {
+                        "path": str(dataset_path),
+                        "from_date": "2024-01-01",
+                        "to_date": "2024-01-02",
+                        "initial_balance": 10000,
+                        "spread_pips": 0,
+                        "commission_per_lot": 0,
+                        "min_trades": 1,
+                        "max_workers": 1,
+                        "parameter_ranges": [
+                            {
+                                "path": "risk.fixed_lot",
+                                "min": 0.01,
+                                "max": 0.02,
+                                "step": 0.01,
+                            }
+                        ],
+                    },
+                    optimizer_profile(),
+                )
+                manager.cancel(started["job_id"])
+                gate.set()
+
+                deadline = time.time() + 10
+                terminal = None
+                while time.time() < deadline:
+                    terminal = manager.status(started["job_id"])
+                    if terminal["status"] in {"CANCELLED", "FAILED", "COMPLETED"}:
+                        break
+                    time.sleep(0.02)
+
+            self.assertIsNotNone(terminal)
+            self.assertEqual("CANCELLED", terminal["status"])
+            self.assertIsNone(terminal["result_run_id"])
+            self.assertEqual([], repo.history())
+
     def test_job_cancel_is_cooperative_and_does_not_persist_completed_result(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)

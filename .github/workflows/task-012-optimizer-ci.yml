@@ -11,13 +11,28 @@ permissions:
   contents: read
 
 jobs:
-  validate-python:
-    name: Validate optimizer reproducibility and leakage guards
+  validate:
+    name: Validate optimizer reproducibility leakage guards and UI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+
       - name: Python Task 012 and regression tests
         run: python -m unittest discover -s python/tests -v
+
+      - name: Restore Desktop and IPC projects
+        run: dotnet restore src/XAUPY.Desktop/XAUPY.Desktop.csproj
+
+      - name: Build Avalonia regression Release
+        run: dotnet build src/XAUPY.Desktop/XAUPY.Desktop.csproj -c Release --no-restore
+
+      - name: CSharp IPC/Optimizer regression self-test
+        run: dotnet run --project tests/XAUPY.Ipc.ContractTests/XAUPY.Ipc.ContractTests.csproj -c Release

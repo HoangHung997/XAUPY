@@ -72,7 +72,7 @@
           <StackPanel Grid.Column="0">
             <TextBlock Text="Tìm tham số" Classes="configMuted" FontSize="12"/>
             <TextBox x:Name="SearchBox"
-                     Watermark="Tên, path, mô tả, .set key..."
+                     PlaceholderText="Tên, path, mô tả, .set key..."
                      TextChanged="SearchBox_OnTextChanged"/>
           </StackPanel>
 

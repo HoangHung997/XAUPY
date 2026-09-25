@@ -191,8 +191,7 @@ public partial class BacktestDashboard : UserControl
                 commission);
 
             _tradePage = 0;
-            _current = result;
-            ApplyResult(result);
+            await LoadRunAsync(result.RunId, page: 0);
             SetStatus(
                 $"Backtest hoàn thành • hash {ShortHash(result.ResultHash)} • {result.Metrics.TotalTrades} lệnh.",
                 Brushes.LightGreen);
@@ -459,6 +458,7 @@ public partial class BacktestDashboard : UserControl
             await using var writer = new StreamWriter(
                 stream,
                 new UTF8Encoding(false),
+                1024,
                 leaveOpen: true);
 
             await writer.WriteLineAsync(

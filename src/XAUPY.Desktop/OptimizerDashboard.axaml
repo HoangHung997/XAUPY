@@ -342,12 +342,35 @@
               </StackPanel>
             </Grid>
 
-            <ScrollViewer Grid.Row="2"
-                          HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Auto"
-                          Margin="8,4,8,8">
-              <Grid x:Name="HeatmapGridHost"/>
-            </ScrollViewer>
+            <Grid Grid.Row="2" ColumnDefinitions="*,46" ColumnSpacing="6" Margin="8,4,8,8">
+              <ScrollViewer Grid.Column="0"
+                            HorizontalScrollBarVisibility="Auto"
+                            VerticalScrollBarVisibility="Auto">
+                <Grid x:Name="HeatmapGridHost"/>
+              </ScrollViewer>
+
+              <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto,*,Auto">
+                <TextBlock x:Name="HeatmapMaxText" Text="—" FontSize="9" HorizontalAlignment="Center"/>
+                <Border Grid.Row="1" Width="14" HorizontalAlignment="Center" CornerRadius="2">
+                  <Border.Background>
+                    <LinearGradientBrush StartPoint="50%,0%" EndPoint="50%,100%">
+                      <GradientStop Color="#25CE6A" Offset="0"/>
+                      <GradientStop Color="#F7D548" Offset="0.5"/>
+                    </LinearGradientBrush>
+                  </Border.Background>
+                </Border>
+                <TextBlock x:Name="HeatmapMidText" Grid.Row="2" Text="0" FontSize="9" HorizontalAlignment="Center"/>
+                <Border Grid.Row="3" Width="14" HorizontalAlignment="Center" CornerRadius="2">
+                  <Border.Background>
+                    <LinearGradientBrush StartPoint="50%,0%" EndPoint="50%,100%">
+                      <GradientStop Color="#F7D548" Offset="0"/>
+                      <GradientStop Color="#D92F4B" Offset="1"/>
+                    </LinearGradientBrush>
+                  </Border.Background>
+                </Border>
+                <TextBlock x:Name="HeatmapMinText" Grid.Row="4" Text="—" FontSize="9" HorizontalAlignment="Center"/>
+              </Grid>
+            </Grid>
           </Grid>
         </Border>
 

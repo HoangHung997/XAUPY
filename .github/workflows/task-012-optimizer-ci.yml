@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - 'task/012-optimizer-walk-forward'
+      - 'release/xaupy012-isolated-verify'
   pull_request:
   workflow_dispatch:
 

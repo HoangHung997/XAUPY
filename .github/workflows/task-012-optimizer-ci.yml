@@ -17,7 +17,7 @@ concurrency:
 jobs:
   validate:
     name: Validate Optimizer reproducibility leakage guards and UI
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 15
     steps:
       - name: Checkout
@@ -34,6 +34,7 @@ jobs:
           python-version: '3.13'
 
       - name: Python Task 012 and regression tests
+        shell: bash
         run: |
           python - <<'PY'
           import faulthandler

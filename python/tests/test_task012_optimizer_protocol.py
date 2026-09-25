@@ -319,7 +319,11 @@ class Task012OptimizerProtocolTests(unittest.IsolatedAsyncioTestCase):
         job_id = start.payload["status"]["job_id"]
 
         terminal = await self.wait_for_terminal(reader, writer, job_id)
-        self.assertEqual("COMPLETED", terminal["status"])
+        self.assertEqual(
+            "COMPLETED",
+            terminal["status"],
+            msg=json.dumps(terminal, sort_keys=True),
+        )
 
         result = await exchange(
             reader,

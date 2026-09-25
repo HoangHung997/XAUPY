@@ -28,7 +28,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-006 | DONE | Full Configuration tab | 004 | schema-driven 133-field editor + validation/profile/.set tests + verified Windows build |
 | XAUPY-007 | DONE | Strategy engine Direction → Pullback → Trigger | 002,004 | deterministic state tests + verified Windows build |
 | XAUPY-008 | DONE | Strategy + Monitoring realtime tabs | 005,007 | projection tests + verified Windows build |
-| XAUPY-009 | PLANNED | Orders & Positions + guarded manual actions | 003,005 | execution simulation |
+| XAUPY-009 | ACTIVE | Orders & Positions + guarded manual actions | 003,005 | execution simulation |
 | XAUPY-010 | PLANNED | Structured logging + Journal tab | 002,003 | schema/replay tests |
 | XAUPY-011 | PLANNED | Backtest engine parity | 007,010 | deterministic replay |
 | XAUPY-012 | PLANNED | Optimizer + walk-forward | 011 | reproducibility/leakage guards |

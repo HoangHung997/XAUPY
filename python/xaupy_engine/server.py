@@ -35,6 +35,7 @@ class EngineServer:
         self._started_monotonic = time.monotonic()
         self._connections_total = 0
         self.bridge = BridgeRegistry(stale_seconds=bridge_stale_seconds)
+        self.active_profile = default_profile()
 
     async def start(self) -> None:
         if self._server is not None:
@@ -166,6 +167,65 @@ class EngineServer:
                 False,
             )
 
+        if request.type == "config_active_get":
+            return (
+                Envelope.response(
+                    "config_active_ack",
+                    request.request_id,
+                    {
+                        **common,
+                        "profile": normalized_profile(self.active_profile),
+                    },
+                ),
+                False,
+            )
+
+        if request.type == "config_active_set":
+            profile = request.payload.get("profile")
+            if not isinstance(profile, dict):
+                return (
+                    Envelope.response(
+                        "config_active_set_ack",
+                        request.request_id,
+                        {
+                            **common,
+                            "applied": False,
+                            "errors": ["profile must be an object"],
+                        },
+                    ),
+                    False,
+                )
+
+            errors = validate_profile(profile)
+            if errors:
+                return (
+                    Envelope.response(
+                        "config_active_set_ack",
+                        request.request_id,
+                        {
+                            **common,
+                            "applied": False,
+                            "errors": errors,
+                        },
+                    ),
+                    False,
+                )
+
+            self.active_profile = normalized_profile(profile)
+            return (
+                Envelope.response(
+                    "config_active_set_ack",
+                    request.request_id,
+                    {
+                        **common,
+                        "applied": True,
+                        "errors": [],
+                        "profile": normalized_profile(self.active_profile),
+                    },
+                ),
+                False,
+            )
+
         if request.type == "config_validate":
             profile = request.payload.get("profile")
             if not isinstance(profile, dict):
@@ -271,7 +331,7 @@ class EngineServer:
                 request.request_id,
                 {
                     "code": "UNSUPPORTED_MESSAGE",
-                    "message": f"Unsupported Task 005 message type: {request.type}",
+                    "message": f"Unsupported Task 006 message type: {request.type}",
                     "trading_enabled": False,
                     "execution_enabled": False,
                 },

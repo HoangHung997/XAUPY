@@ -259,6 +259,7 @@ public partial class MainWindow : Window
         _journalDashboard.ApplySummary(e.JournalSummary);
         _backtestDashboard.ApplyConfiguration(e.Configuration);
         _optimizerDashboard.ApplyStatus(e.OptimizerStatus);
+        _optimizerDashboard.ApplyEngineState(e.State);
         ApplyOrdersFooter(e.OrdersPositions);
         _ = _configurationEditor.NotifyEngineStateAsync(e.State);
     }

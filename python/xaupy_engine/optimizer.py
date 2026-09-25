@@ -1243,6 +1243,7 @@ class OptimizerJobManager:
         self._lock = threading.Lock()
         self._jobs: dict[str, dict[str, Any]] = {}
         self._active_job_id: str | None = None
+        self._last_job_id: str | None = None
         self._cancel_events: dict[str, threading.Event] = {}
 
     def start_sweep(
@@ -1368,6 +1369,7 @@ class OptimizerJobManager:
             self._jobs[job_id] = state
             self._cancel_events[job_id] = cancel_event
             self._active_job_id = job_id
+            self._last_job_id = job_id
 
         thread = threading.Thread(
             target=self._run_job,
@@ -1590,7 +1592,7 @@ class OptimizerJobManager:
 
     def status(self, job_id: str | None = None) -> dict[str, Any]:
         with self._lock:
-            target = job_id or self._active_job_id
+            target = job_id or self._active_job_id or self._last_job_id
             if target is None:
                 return {
                     "job_id": None,

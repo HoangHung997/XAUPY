@@ -28,7 +28,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-006 | DONE | Full Configuration tab | 004 | schema-driven 133-field editor + validation/profile/.set tests + verified Windows build |
 | XAUPY-007 | DONE | Strategy engine Direction → Pullback → Trigger | 002,004 | deterministic state tests + verified Windows build |
 | XAUPY-008 | DONE | Strategy + Monitoring realtime tabs | 005,007 | projection tests + verified Windows build |
-| XAUPY-009 | ACTIVE | Orders & Positions + guarded manual actions | 003,005 | execution simulation |
+| XAUPY-009 | DONE | Orders & Positions + guarded manual actions | 003,005 | execution simulation |
 | XAUPY-010 | PLANNED | Structured logging + Journal tab | 002,003 | schema/replay tests |
 | XAUPY-011 | PLANNED | Backtest engine parity | 007,010 | deterministic replay |
 | XAUPY-012 | PLANNED | Optimizer + walk-forward | 011 | reproducibility/leakage guards |
@@ -466,3 +466,92 @@ XAUPY-Task008-win-x64.zip
 
 The complete Task 008 Windows x64 build is ready. XAUPY-009 is the next planned
 task and remains unstarted.
+
+
+# XAUPY-009 — Orders & Positions + guarded manual actions
+
+Status: DONE
+
+## Goal completed
+
+Implement the approved `Lệnh & Vị thế` workspace using real strategy-owned MT5
+position/order/deal data, while adding a deterministic guarded manual-action
+simulation layer without unlocking broker execution.
+
+## Scope completed
+
+- MQL5 Bridge exports strategy-owned ticket-level `positions[]`, `orders[]` and
+  recent realized `deals[]`, plus leverage and strategy-owned realized P/L;
+- Python heartbeat projects `orders_positions` with real quote/account/ticket
+  state, open P/L, realized P/L, exposure and server-SL-based current risk;
+- market-snapshot freshness is tracked independently from bridge heartbeat so a
+  connection heartbeat cannot keep stale ticket/market data visually live;
+- typed C# `OrdersPositionsSnapshot` / ticket / deal models;
+- approved full-width Orders & Positions Avalonia tab;
+- five real-data KPI cards, open positions, pending orders and deals tables;
+- per-ticket Close / Partial / BE / Trailing / Modify / Cancel controls;
+- bulk Close All / Close Profit / Close Loss / Partial / BE / Trailing /
+  Cancel Pending controls;
+- right-side XAUUSD quote/chart and Market BUY/SELL panel;
+- guarded `manual_action_simulate` IPC;
+- deterministic idempotency by `intent_id`;
+- explicit confirmation, DEMO-only, ownership, volume, max-position,
+  required-server-SL and never-widen-SL guards;
+- packaged execution-simulation smoke test.
+
+## Hard boundary retained
+
+- `trade_intent` remains unsupported;
+- broker mutation is not performed;
+- `trading_enabled=false`;
+- `execution_enabled=false`;
+- `broker_mutated=false`;
+- MQL5 contains no `OrderSend`, `OrderSendAsync`, `CTrade`,
+  `PositionClose`, `PositionModify` or `OrderDelete` path;
+- demo-only, no retry, mandatory server SL, stale-data blocking and
+  never-widen-SL remain locked.
+
+## Automated evidence
+
+- Final implementation CI source commit: 441b5814d4f5146b46cdcef75bd2260a63219cfd
+- Branch: task/009-orders-positions-guarded-actions
+- GitHub Actions final successful run: 36092406560
+- Validate order book simulation and UI job: SUCCESS
+- Windows x64 full Task 009 build job: SUCCESS
+- Python regression/source tests: 122/122 PASS
+- C# IPC/order-book contract self-tests: 42/42 PASS
+- Avalonia/.NET Release build: SUCCESS, 0 warnings, 0 errors
+- Packaged Task 009 order-book/manual-simulation safety smoke: PASS
+- Packaged Task 007 strategy/safety regression smoke: PASS
+- Packaged xaupy-config regression smoke: PASS
+- MetaEditor Task 009 Bridge: Result: 0 errors, 0 warnings, 3739 ms elapsed
+- GitHub artifact: XAUPY-Task009-win-x64
+- GitHub artifact id: 10846411922
+- GitHub artifact size: 102841346 bytes
+- GitHub outer artifact SHA-256: 7ef9ff95721652adbbfb745acb0de63390d090dba3744e2239e13576526a47eb
+- Direct full-build ZIP size: 103063375 bytes
+- Direct full-build ZIP SHA-256: fcd3ec52ac23453605758573d2f07c176f61218cdcb159d61792a2303437b41a
+- Artifact expiry: 2026-10-09T04:03:30Z
+- Independent artifact inspection: 254 entries
+- `XAUPY.Desktop.exe`: present
+- `engine/xaupy-engine.exe`: present
+- `tools/xaupy-config.exe`: present
+- `profiles/config-schema-v1.json`: field_count=133
+- packaged baseline: Direction=M30, Pullback=M5, Trigger=M1
+- packaged hard safety verified:
+  `max_retry_count=0`, `demo_only=true`, `allow_real_account=false`,
+  `never_widen_sl=true`, `require_server_sl=true`,
+  `block_on_stale_market_data=true`
+- `mt5/XAUPY_Bridge_EA.mq5/.ex5/compile.log`: present
+- approved `docs/ui-reference/Tab Lệnh & Vị thế.png`: present in artifact
+- independent MQ5 inspection found no forbidden broker-mutation tokens.
+
+## Required artifact
+
+XAUPY-Task009-win-x64.zip
+
+## Delivery
+
+The complete Task 009 Windows x64 build is ready for manual DEMO smoke testing
+using `docs/TASK009_ORDERS_POSITIONS_TEST.md`. XAUPY-010 remains PLANNED and
+has not been started.

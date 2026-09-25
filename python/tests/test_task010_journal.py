@@ -64,7 +64,7 @@ class StructuredJournalTests(unittest.TestCase):
             store = self.make_store(tmp)
             store.append(
                 "INFO",
-                "System",
+                "Python Engine",
                 "SYSTEM",
                 "first",
                 details={"a": 1},
@@ -92,10 +92,10 @@ class StructuredJournalTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             store = self.make_store(tmp)
             for kwargs in (
-                {"level": "TRACE", "source": "System", "tag": "SYSTEM", "message": "x"},
+                {"level": "TRACE", "source": "Python Engine", "tag": "SYSTEM", "message": "x"},
                 {"level": "INFO", "source": "Unknown", "tag": "SYSTEM", "message": "x"},
-                {"level": "INFO", "source": "System", "tag": "bad tag", "message": "x"},
-                {"level": "INFO", "source": "System", "tag": "SYSTEM", "message": "",},
+                {"level": "INFO", "source": "Python Engine", "tag": "bad tag", "message": "x"},
+                {"level": "INFO", "source": "Python Engine", "tag": "SYSTEM", "message": "",},
             ):
                 with self.subTest(kwargs=kwargs):
                     with self.assertRaises(JournalSchemaError):
@@ -104,7 +104,7 @@ class StructuredJournalTests(unittest.TestCase):
             with self.assertRaises(JournalSchemaError):
                 store.append(
                     "INFO",
-                    "System",
+                    "Python Engine",
                     "SYSTEM",
                     "bad details",
                     details=["not", "object"],
@@ -169,7 +169,7 @@ class StructuredJournalTests(unittest.TestCase):
             store = self.make_store(tmp)
             store.append(
                 "INFO",
-                "System",
+                "Python Engine",
                 "SYSTEM",
                 "today",
                 timestamp_utc="2026-09-25T04:00:00+00:00",
@@ -202,7 +202,7 @@ class StructuredJournalTests(unittest.TestCase):
     def test_restart_replay_continues_sequence_and_preserves_bookmark(self):
         with tempfile.TemporaryDirectory() as tmp:
             first = self.make_store(tmp)
-            e1 = first.append("INFO", "System", "SYSTEM", "boot 1")
+            e1 = first.append("INFO", "Python Engine", "SYSTEM", "boot 1")
             e2 = first.append("WARN", "EA Bridge", "CONNECTION", "reconnect")
             first.set_bookmark(e2["sequence"], True)
 
@@ -213,14 +213,14 @@ class StructuredJournalTests(unittest.TestCase):
             self.assertIsNotNone(replayed)
             self.assertTrue(replayed["bookmarked"])
 
-            e3 = second.append("INFO", "System", "SYSTEM", "boot 2")
+            e3 = second.append("INFO", "Python Engine", "SYSTEM", "boot 2")
             self.assertEqual(3, e3["sequence"])
             self.assertEqual(e1["event_id"], second.get_event(1)["event_id"])
 
     def test_corrupt_and_duplicate_lines_do_not_block_replay(self):
         with tempfile.TemporaryDirectory() as tmp:
             store = self.make_store(tmp)
-            good = store.append("INFO", "System", "SYSTEM", "valid")
+            good = store.append("INFO", "Python Engine", "SYSTEM", "valid")
             path = pathlib.Path(tmp, "journal-v1.jsonl")
 
             duplicate = {
@@ -246,7 +246,7 @@ class StructuredJournalTests(unittest.TestCase):
             self.assertEqual(1, replay.event_count)
             self.assertEqual(2, replay.invalid_replay_lines)
             self.assertEqual(1, replay.duplicate_replay_lines)
-            next_event = replay.append("INFO", "System", "SYSTEM", "next")
+            next_event = replay.append("INFO", "Python Engine", "SYSTEM", "next")
             self.assertEqual(2, next_event["sequence"])
 
     def test_bookmark_unknown_sequence_is_rejected(self):
@@ -258,7 +258,7 @@ class StructuredJournalTests(unittest.TestCase):
     def test_query_rejects_unsupported_filters(self):
         with tempfile.TemporaryDirectory() as tmp:
             store = self.make_store(tmp)
-            store.append("INFO", "System", "SYSTEM", "valid")
+            store.append("INFO", "Python Engine", "SYSTEM", "valid")
 
             with self.assertRaises(JournalSchemaError):
                 store.query(levels=["TRACE"], date_scope="ALL")

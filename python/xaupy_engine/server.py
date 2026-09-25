@@ -56,6 +56,7 @@ class EngineServer:
         self.port = port
         self.bound_port = port
         self._server: asyncio.AbstractServer | None = None
+        self._client_writers: set[asyncio.StreamWriter] = set()
         self._shutdown_event = asyncio.Event()
         self._started_monotonic = time.monotonic()
         self._connections_total = 0
@@ -140,9 +141,25 @@ class EngineServer:
             "SYSTEM",
             "Python Engine shutdown requested",
         )
-        self._server.close()
-        await self._server.wait_closed()
+        server = self._server
         self._server = None
+        server.close()
+
+        # Python 3.13 Server.wait_closed() waits for active connections too.
+        # Engine shutdown must therefore close current Desktop/Bridge sockets
+        # explicitly instead of waiting forever for clients to disconnect.
+        writers = list(self._client_writers)
+        for writer in writers:
+            if not writer.is_closing():
+                writer.close()
+
+        if writers:
+            await asyncio.gather(
+                *(writer.wait_closed() for writer in writers),
+                return_exceptions=True,
+            )
+
+        await server.wait_closed()
 
     async def _handle_client(
         self,
@@ -150,6 +167,7 @@ class EngineServer:
         writer: asyncio.StreamWriter,
     ) -> None:
         self._connections_total += 1
+        self._client_writers.add(writer)
         peer = writer.get_extra_info("peername")
         self._log(
             "DEBUG",
@@ -214,6 +232,7 @@ class EngineServer:
                     self._shutdown_event.set()
                     break
         finally:
+            self._client_writers.discard(writer)
             self._log(
                 "DEBUG",
                 "Python Engine",

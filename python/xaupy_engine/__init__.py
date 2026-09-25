@@ -1,8 +1,8 @@
 """XAUPY Python Engine.
 
-Task 006 adds active-profile lifecycle used by the full Avalonia Configuration tab.
-All 133 canonical fields remain Python-owned and validated.
-Trading execution remains locked.
+Task 007 adds the deterministic Direction -> Pullback -> Trigger strategy state
+machine and exposes read-only strategy state over IPC. Trading execution remains
+hard-locked; no trade intent or broker action is introduced by this task.
 """
 
-__version__ = "0.6.0-task006"
+__version__ = "0.7.0-task007"

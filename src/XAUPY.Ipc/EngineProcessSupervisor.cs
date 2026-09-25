@@ -227,7 +227,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
                     var heartbeat = ProtocolEnvelope.Create(
                         "heartbeat",
-                        new { component = "desktop", desktop_version = "0.5.0-task005" });
+                        new { component = "desktop", desktop_version = "0.6.0-task006" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
@@ -293,7 +293,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "0.5.0-task005" });
+            new { component = "desktop", desktop_version = "0.6.0-task006" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -306,16 +306,16 @@ public sealed class EngineProcessSupervisor : IDisposable
         RejectUnexpectedExecutionEnable(response);
 
         var configRequest = ProtocolEnvelope.Create(
-            "config_defaults_get",
-            new { component = "desktop", desktop_version = "0.5.0-task005" });
+            "config_active_get",
+            new { component = "desktop", desktop_version = "0.6.0-task006" });
 
         var configResponse = await SendReceiveAsync(
             configRequest,
             TimeSpan.FromSeconds(3),
             cancellationToken);
 
-        if (configResponse.Type != "config_defaults_ack")
-            throw new InvalidDataException($"Unexpected config defaults response: {configResponse.Type}");
+        if (configResponse.Type != "config_active_ack")
+            throw new InvalidDataException($"Unexpected active config response: {configResponse.Type}");
 
         RejectUnexpectedExecutionEnable(configResponse);
         Configuration = ConfigurationSummary.FromConfigDefaultsAck(configResponse.Payload);
@@ -326,13 +326,13 @@ public sealed class EngineProcessSupervisor : IDisposable
         if (response.Payload.TryGetProperty("trading_enabled", out var trading) &&
             trading.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 005 Engine unexpectedly reported trading_enabled=true.");
+            throw new InvalidDataException("Task 006 Engine unexpectedly reported trading_enabled=true.");
         }
 
         if (response.Payload.TryGetProperty("execution_enabled", out var execution) &&
             execution.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 005 Engine unexpectedly reported execution_enabled=true.");
+            throw new InvalidDataException("Task 006 Engine unexpectedly reported execution_enabled=true.");
         }
     }
 
@@ -377,7 +377,7 @@ public sealed class EngineProcessSupervisor : IDisposable
         }
 
         if (executionReady || !executionLocked)
-            throw new InvalidDataException("Task 005 bridge guardian unexpectedly reported execution ready.");
+            throw new InvalidDataException("Task 006 bridge guardian unexpectedly reported execution ready.");
 
         return new Mt5BridgeStatus(
             connected,
@@ -396,6 +396,112 @@ public sealed class EngineProcessSupervisor : IDisposable
         return parent.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
             ? value.GetString()
             : null;
+    }
+
+    public async Task<JsonElement> GetConfigSchemaAsync(CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create("config_schema_get", new { component = "desktop" }),
+            TimeSpan.FromSeconds(3),
+            cancellationToken);
+
+        if (response.Type != "config_schema_ack")
+            throw new InvalidDataException($"Unexpected config schema response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+
+        if (!response.Payload.TryGetProperty("config_schema", out var schema) ||
+            schema.ValueKind != JsonValueKind.Object)
+        {
+            throw new InvalidDataException("Engine config schema response is missing config_schema.");
+        }
+
+        return schema.Clone();
+    }
+
+    public async Task<JsonElement> GetDefaultConfigAsync(CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create("config_defaults_get", new { component = "desktop" }),
+            TimeSpan.FromSeconds(3),
+            cancellationToken);
+
+        if (response.Type != "config_defaults_ack")
+            throw new InvalidDataException($"Unexpected config defaults response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        return ExtractProfile(response, "config_defaults_ack");
+    }
+
+    public async Task<JsonElement> GetActiveConfigAsync(CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create("config_active_get", new { component = "desktop" }),
+            TimeSpan.FromSeconds(3),
+            cancellationToken);
+
+        if (response.Type != "config_active_ack")
+            throw new InvalidDataException($"Unexpected active config response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        return ExtractProfile(response, "config_active_ack");
+    }
+
+    public async Task<ConfigValidationResult> ValidateConfigAsync(
+        JsonElement profile,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create("config_validate", new { profile }),
+            TimeSpan.FromSeconds(5),
+            cancellationToken);
+
+        if (response.Type != "config_validate_ack")
+            throw new InvalidDataException($"Unexpected config validation response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        return ConfigurationApiParser.ParseValidation(response.Payload);
+    }
+
+    public async Task<ConfigApplyResult> ApplyActiveConfigAsync(
+        JsonElement profile,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create("config_active_set", new { profile }),
+            TimeSpan.FromSeconds(5),
+            cancellationToken);
+
+        if (response.Type != "config_active_set_ack")
+            throw new InvalidDataException($"Unexpected config apply response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        var result = ConfigurationApiParser.ParseApply(response.Payload);
+
+        if (result.Applied && result.Profile is { } appliedProfile)
+        {
+            var wrapper = JsonSerializer.SerializeToElement(new { profile = appliedProfile });
+            Configuration = ConfigurationSummary.FromConfigDefaultsAck(wrapper);
+            SetState(State, "Active configuration updated and validated.");
+        }
+
+        return result;
+    }
+
+    private static JsonElement ExtractProfile(ProtocolEnvelope response, string responseName)
+    {
+        if (!response.Payload.TryGetProperty("profile", out var profile) ||
+            profile.ValueKind != JsonValueKind.Object)
+        {
+            throw new InvalidDataException($"{responseName} is missing profile.");
+        }
+
+        return profile.Clone();
     }
 
     private async Task<ProtocolEnvelope> SendReceiveAsync(

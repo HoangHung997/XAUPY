@@ -316,7 +316,8 @@
               <TextBlock Text="▣" Foreground="#55B8FF"/>
               <TextBlock Text="Tổng quan nhật ký" Classes="panelTitle"/>
             </StackPanel>
-            <TextBlock Grid.Column="1"
+            <TextBlock x:Name="SummaryScopeText"
+                       Grid.Column="1"
                        Text="Hôm nay"
                        Classes="dim"
                        VerticalAlignment="Center"

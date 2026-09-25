@@ -806,6 +806,60 @@ class RepositoryAndJobTests(unittest.TestCase):
             self.assertIsNone(terminal["result_run_id"])
             self.assertEqual([], repo.history())
 
+    def test_manager_shutdown_cancels_and_joins_active_job(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            dataset_path = root / "data.json"
+            write_dataset(dataset_path, days=2)
+            repo = OptimizerRepository(root / "results")
+            manager = OptimizerJobManager(repo)
+
+            original = OptimizerEngine._evaluate_candidate
+
+            def slow(self, index, parameters, dataset, from_date, to_date):
+                time.sleep(0.12)
+                return original(
+                    self,
+                    index,
+                    parameters,
+                    dataset,
+                    from_date,
+                    to_date,
+                )
+
+            with patch.object(
+                OptimizerEngine,
+                "_evaluate_candidate",
+                slow,
+            ):
+                started = manager.start_sweep(
+                    {
+                        "path": str(dataset_path),
+                        "from_date": "2024-01-01",
+                        "to_date": "2024-01-02",
+                        "initial_balance": 10000,
+                        "spread_pips": 0,
+                        "commission_per_lot": 0,
+                        "min_trades": 1,
+                        "max_workers": 1,
+                        "parameter_ranges": [
+                            {
+                                "path": "risk.fixed_lot",
+                                "min": 0.01,
+                                "max": 0.20,
+                                "step": 0.01,
+                            }
+                        ],
+                    },
+                    optimizer_profile(),
+                )
+                self.assertTrue(manager.shutdown(timeout_seconds=5.0))
+
+            terminal = manager.status(started["job_id"])
+            self.assertEqual("CANCELLED", terminal["status"])
+            self.assertIsNone(terminal["result_run_id"])
+            self.assertEqual([], repo.history())
+
     def test_job_cancel_is_cooperative_and_does_not_persist_completed_result(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)

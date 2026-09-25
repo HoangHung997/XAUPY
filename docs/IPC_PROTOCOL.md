@@ -139,7 +139,7 @@ heartbeat_ack adds journal_summary:
 - date_scope;
 - total;
 - level_counts for INFO/WARN/ERROR/DEBUG;
-- source_counts for System/MT5/EA Bridge/Python Engine/Strategy/Orders/Alerts;
+- source_counts for MT5/EA Bridge/Python Engine/Strategy/Orders/Alerts;
 - latest_sequence;
 - recent_alerts;
 - bookmarks;

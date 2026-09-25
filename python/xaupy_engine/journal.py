@@ -14,7 +14,6 @@ from uuid import UUID, uuid4
 JOURNAL_SCHEMA_VERSION = 1
 JOURNAL_LEVELS = ("INFO", "WARN", "ERROR", "DEBUG")
 JOURNAL_SOURCES = (
-    "System",
     "MT5",
     "EA Bridge",
     "Python Engine",

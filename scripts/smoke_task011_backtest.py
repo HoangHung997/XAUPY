@@ -212,7 +212,10 @@ def main() -> int:
         try:
             heartbeat = exchange(file1, "heartbeat")
             assert heartbeat["type"] == "heartbeat_ack"
-            assert heartbeat["payload"]["engine_version"] == "0.11.0-task011"
+            assert heartbeat["payload"]["engine_version"] in {
+                "0.11.0-task011",
+                "0.12.0-task012",
+            }
             assert heartbeat["payload"]["trading_enabled"] is False
             assert heartbeat["payload"]["execution_enabled"] is False
 

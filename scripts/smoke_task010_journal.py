@@ -117,6 +117,7 @@ def main() -> int:
             assert heartbeat["payload"]["engine_version"] in {
                 "0.10.0-task010",
                 "0.11.0-task011",
+                "0.12.0-task012",
             }
             assert heartbeat["payload"]["execution_enabled"] is False
             assert heartbeat["payload"]["trading_enabled"] is False

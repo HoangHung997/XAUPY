@@ -30,7 +30,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-008 | DONE | Strategy + Monitoring realtime tabs | 005,007 | projection tests + verified Windows build |
 | XAUPY-009 | DONE | Orders & Positions + guarded manual actions | 003,005 | execution simulation |
 | XAUPY-010 | DONE | Structured logging + Journal tab | 002,003 | schema/replay tests |
-| XAUPY-011 | PLANNED | Backtest engine parity | 007,010 | deterministic replay |
+| XAUPY-011 | ACTIVE | Backtest engine parity | 007,010 | deterministic replay |
 | XAUPY-012 | PLANNED | Optimizer + walk-forward | 011 | reproducibility/leakage guards |
 | XAUPY-013 | PLANNED | Dynamic TP/SL + stop-confirm entry | 003,007,011 | state/broker simulation |
 | XAUPY-014 | PLANNED | Tools tab + diagnostics | 003,004,010 | diagnostics tests |

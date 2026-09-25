@@ -239,7 +239,7 @@
                 </Grid>
 
                 <Grid ColumnDefinitions="*,*,*,*,*,*" ColumnSpacing="8">
-                  <StackPanel Grid.Column="0"><TextBlock Text="Tổng công việc" Classes="dim" FontSize="10"/><TextBlock x:Name="TotalWorkText" Text="0" FontWeight="Bold"/></StackPanel>
+                  <StackPanel Grid.Column="0"><TextBlock x:Name="TotalWorkLabelText" Text="Tổng tổ hợp" Classes="dim" FontSize="10"/><TextBlock x:Name="TotalWorkText" Text="0" FontWeight="Bold"/></StackPanel>
                   <StackPanel Grid.Column="1"><TextBlock Text="Đã hoàn thành" Classes="dim" FontSize="10"/><TextBlock x:Name="CompletedWorkText" Text="0" FontWeight="Bold"/></StackPanel>
                   <StackPanel Grid.Column="2"><TextBlock Text="Đang xử lý" Classes="dim" FontSize="10"/><TextBlock x:Name="InFlightText" Text="0" FontWeight="Bold"/></StackPanel>
                   <StackPanel Grid.Column="3"><TextBlock Text="Còn lại" Classes="dim" FontSize="10"/><TextBlock x:Name="RemainingWorkText" Text="0" FontWeight="Bold"/></StackPanel>

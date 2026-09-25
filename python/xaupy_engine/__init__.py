@@ -1,8 +1,7 @@
 """XAUPY Python Engine.
 
-Task 009 adds real read-only MT5 ticket/order/deal projection and a deterministic
-manual-action execution simulator. Broker mutation remains hard-locked and
-trade_intent remains unsupported.
+Task 010 adds persistent structured evidence logging and Journal query/bookmark
+IPC while preserving the Task 009 simulation-only broker boundary.
 """
 
-__version__ = "0.9.0-task009"
+__version__ = "0.10.0-task010"

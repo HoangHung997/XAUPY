@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import re
+import threading
 from typing import Any, Callable
 from uuid import UUID, uuid4
 
@@ -63,6 +64,7 @@ class StructuredJournal:
         self.csv_path = self.root_dir / "journal-v1.csv"
         self.bookmarks_path = self.root_dir / "bookmarks-v1.json"
         self._now_provider = now_provider or (lambda: datetime.now(timezone.utc))
+        self._lock = threading.RLock()
         self._events: list[dict[str, Any]] = []
         self._events_by_sequence: dict[int, dict[str, Any]] = {}
         self._bookmarks: set[int] = set()
@@ -112,46 +114,53 @@ class StructuredJournal:
             now = self._now_provider()
             if now.tzinfo is None:
                 now = now.replace(tzinfo=timezone.utc)
-            timestamp_utc = now.astimezone(timezone.utc).isoformat()
+            normalized_time = now.astimezone(timezone.utc).isoformat()
         else:
-            timestamp_utc = self._normalize_timestamp(timestamp_utc)
+            normalized_time = self._normalize_timestamp(timestamp_utc)
 
-        event = {
-            "schema_version": JOURNAL_SCHEMA_VERSION,
-            "sequence": self._next_sequence,
-            "event_id": str(uuid4()),
-            "timestamp_utc": timestamp_utc,
-            "level": normalized_level,
-            "source": normalized_source,
-            "tag": normalized_tag,
-            "message": message.strip(),
-            "details": self._safe_json_object(details),
-            "correlation_id": self._optional_string(correlation_id),
-            "symbol": self._optional_string(symbol),
-            "profile_hash": self._optional_string(profile_hash),
-        }
-        self.validate_event(event)
+        safe_details = self._safe_json_object(details)
 
-        encoded = json.dumps(
-            event,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        )
-        with self.events_path.open("a", encoding="utf-8", newline="\n") as handle:
-            handle.write(encoded)
-            handle.write("\n")
-            handle.flush()
+        with self._lock:
+            event = {
+                "schema_version": JOURNAL_SCHEMA_VERSION,
+                "sequence": self._next_sequence,
+                "event_id": str(uuid4()),
+                "timestamp_utc": normalized_time,
+                "level": normalized_level,
+                "source": normalized_source,
+                "tag": normalized_tag,
+                "message": message.strip(),
+                "details": safe_details,
+                "correlation_id": self._optional_string(correlation_id),
+                "symbol": self._optional_string(symbol),
+                "profile_hash": self._optional_string(profile_hash),
+            }
+            self.validate_event(event)
 
-        stored = deepcopy(event)
-        self._events.append(stored)
-        self._events_by_sequence[event["sequence"]] = stored
-        self._next_sequence += 1
+            encoded = json.dumps(
+                event,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            with self.events_path.open(
+                "a",
+                encoding="utf-8",
+                newline="\n",
+            ) as handle:
+                handle.write(encoded)
+                handle.write("\n")
+                handle.flush()
 
-        if mirror_csv:
-            self._append_csv_best_effort(stored)
+            stored = deepcopy(event)
+            self._events.append(stored)
+            self._events_by_sequence[event["sequence"]] = stored
+            self._next_sequence += 1
 
-        return self._public_event(stored)
+            if mirror_csv:
+                self._append_csv_best_effort(stored)
+
+            return self._public_event(stored)
 
     def query(
         self,

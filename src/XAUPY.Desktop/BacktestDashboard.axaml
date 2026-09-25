@@ -1,0 +1,351 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:XAUPY.Desktop"
+             x:Class="XAUPY.Desktop.BacktestDashboard">
+  <UserControl.Styles>
+    <Style Selector="TextBlock.btHeader">
+      <Setter Property="Foreground" Value="#BED3E8"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button.btRow">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="CornerRadius" Value="0"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    </Style>
+    <Style Selector="Button.btRow:pointerover">
+      <Setter Property="Background" Value="#0A2844"/>
+    </Style>
+    <Style Selector="Button.btAction">
+      <Setter Property="Background" Value="#0A2E50"/>
+      <Setter Property="Foreground" Value="#D8EBFF"/>
+      <Setter Property="BorderBrush" Value="#1D6396"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="4"/>
+      <Setter Property="Padding" Value="8,4"/>
+      <Setter Property="FontSize" Value="10"/>
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="8">
+      <!-- Approved Backtest configuration zone -->
+      <Border Classes="panel">
+        <Grid RowDefinitions="34,Auto,28">
+          <Border Grid.Row="0" Background="#082038" Padding="12,7">
+            <TextBlock Text="Cấu hình Backtest" Classes="panelTitle"/>
+          </Border>
+
+          <Grid Grid.Row="1"
+                ColumnDefinitions="0.9*,0.8*,0.95*,0.95*,1.2*,0.75*,0.85*,0.95*"
+                ColumnSpacing="8"
+                Margin="12,8,12,6">
+            <StackPanel Grid.Column="0" Spacing="3">
+              <TextBlock Text="Symbol" Classes="label"/>
+              <Border Classes="panelSoft" Padding="10,8">
+                <TextBlock x:Name="BacktestSymbolText" Text="XAUUSD"/>
+              </Border>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Spacing="3">
+              <TextBlock Text="Khung dữ liệu" Classes="label"/>
+              <ComboBox x:Name="BacktestTimeframeCombo" SelectedIndex="0" IsEnabled="False">
+                <ComboBoxItem Content="M1"/>
+              </ComboBox>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Spacing="3">
+              <TextBlock Text="Từ ngày" Classes="label"/>
+              <TextBox x:Name="BacktestFromDateBox" Text="2024-01-01"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="3" Spacing="3">
+              <TextBlock Text="Đến ngày" Classes="label"/>
+              <TextBox x:Name="BacktestToDateBox" Text="2024-01-31"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="4" Spacing="3">
+              <TextBlock Text="Model" Classes="label"/>
+              <ComboBox SelectedIndex="0" IsEnabled="False">
+                <ComboBoxItem Content="M1 OHLC deterministic parity"/>
+              </ComboBox>
+            </StackPanel>
+
+            <StackPanel Grid.Column="5" Spacing="3">
+              <TextBlock Text="Spread (pip)" Classes="label"/>
+              <TextBox x:Name="BacktestSpreadBox" Text="20"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="6" Spacing="3">
+              <TextBlock Text="Hoa hồng (USD/lot)" Classes="label"/>
+              <TextBox x:Name="BacktestCommissionBox" Text="7.00"/>
+            </StackPanel>
+
+            <Button x:Name="RunBacktestButton"
+                    Grid.Column="7"
+                    Classes="primary"
+                    Content="▶  Chạy Backtest"
+                    VerticalAlignment="Bottom"
+                    MinHeight="38"
+                    Click="RunBacktest_OnClick"/>
+          </Grid>
+
+          <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="12,0,12,5">
+            <TextBlock x:Name="DatasetStatusText"
+                       Text="Dữ liệu: chưa chọn file M1 JSON/CSV"
+                       Classes="dim"
+                       FontSize="10"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="12,0">
+              <TextBlock Text="Vốn ban đầu:" Classes="dim" FontSize="10" VerticalAlignment="Center"/>
+              <TextBox x:Name="InitialBalanceBox" Width="110" Height="24" Text="10000"/>
+            </StackPanel>
+            <TextBlock x:Name="BacktestRunStatusText"
+                       Grid.Column="2"
+                       Text="Chờ dữ liệu"
+                       Foreground="#FFD34D"
+                       FontSize="10"
+                       VerticalAlignment="Center"/>
+          </Grid>
+        </Grid>
+      </Border>
+
+      <!-- Result title/actions -->
+      <Border Classes="panel">
+        <Grid ColumnDefinitions="*,Auto" Margin="12,5">
+          <TextBlock x:Name="BacktestResultHeaderText"
+                     Text="Kết quả Backtest — chưa có run"
+                     FontSize="16"
+                     FontWeight="SemiBold"
+                     VerticalAlignment="Center"/>
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+            <Button Classes="secondary"
+                    Content="⇄  So sánh kết quả"
+                    IsEnabled="False"
+                    ToolTip.Tip="Thuộc Task 012 Optimizer/compare"/>
+            <Button Classes="secondary"
+                    Content="⬇  Xuất báo cáo"
+                    Click="ExportReport_OnClick"/>
+            <Button Classes="secondary"
+                    Content="💾  Lưu kết quả"
+                    Click="SaveResult_OnClick"/>
+            <Button Classes="secondary"
+                    Content="⬆  Tải từ file"
+                    Click="LoadDataset_OnClick"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Approved six KPI cards -->
+      <Grid ColumnDefinitions="*,*,*,*,*,*" ColumnSpacing="8">
+        <Border Grid.Column="0" Background="#062D24" BorderBrush="#08A86D" BorderThickness="1" CornerRadius="5" Padding="12">
+          <Grid ColumnDefinitions="48,*">
+            <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#15D98B" BorderThickness="2">
+              <TextBlock Text="$" Foreground="#19E58C" FontSize="25" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel Grid.Column="1" Margin="10,0,0,0">
+              <TextBlock Text="Lợi nhuận ròng" Classes="label"/>
+              <TextBlock x:Name="NetProfitText" Text="—" FontSize="21" FontWeight="Bold" Foreground="#18E58B"/>
+              <TextBlock x:Name="NetProfitPctText" Text="—" FontSize="11" Foreground="#18E58B"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Border Grid.Column="1" Background="#06233E" BorderBrush="#0B74D6" BorderThickness="1" CornerRadius="5" Padding="12">
+          <Grid ColumnDefinitions="48,*">
+            <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#258DF1" BorderThickness="2">
+              <TextBlock Text="↗" Foreground="#6DB9FF" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel Grid.Column="1" Margin="10,0,0,0">
+              <TextBlock Text="Tỷ lệ thắng" Classes="label"/>
+              <TextBlock x:Name="WinRateText" Text="—" FontSize="21" FontWeight="Bold" Foreground="#6DB9FF"/>
+              <TextBlock x:Name="WinDetailText" Text="—" FontSize="11" Classes="dim"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Border Grid.Column="2" Background="#21163A" BorderBrush="#7344C2" BorderThickness="1" CornerRadius="5" Padding="12">
+          <Grid ColumnDefinitions="48,*">
+            <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#A36BFF" BorderThickness="2">
+              <TextBlock Text="▤" Foreground="#B98CFF" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel Grid.Column="1" Margin="10,0,0,0">
+              <TextBlock Text="Profit Factor" Classes="label"/>
+              <TextBlock x:Name="ProfitFactorText" Text="—" FontSize="21" FontWeight="Bold" Foreground="#BB8BFF"/>
+              <TextBlock Text="Tổng lãi / Tổng lỗ" FontSize="10" Classes="dim"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Border Grid.Column="3" Background="#351321" BorderBrush="#D92F4B" BorderThickness="1" CornerRadius="5" Padding="12">
+          <Grid ColumnDefinitions="48,*">
+            <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#FF3F5C" BorderThickness="2">
+              <TextBlock Text="⌁" Foreground="#FF526C" FontSize="23" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel Grid.Column="1" Margin="10,0,0,0">
+              <TextBlock Text="Drawdown tối đa" Classes="label"/>
+              <TextBlock x:Name="DrawdownPctText" Text="—" FontSize="21" FontWeight="Bold" Foreground="#FF526C"/>
+              <TextBlock x:Name="DrawdownUsdText" Text="—" FontSize="11" Foreground="#FF6C82"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Border Grid.Column="4" Background="#06283C" BorderBrush="#0D85B6" BorderThickness="1" CornerRadius="5" Padding="12">
+          <Grid ColumnDefinitions="48,*">
+            <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#21B9E8" BorderThickness="2">
+              <TextBlock Text="☷" Foreground="#53D7FF" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel Grid.Column="1" Margin="10,0,0,0">
+              <TextBlock Text="Tổng số lệnh" Classes="label"/>
+              <TextBlock x:Name="TotalTradesText" Text="—" FontSize="21" FontWeight="Bold" Foreground="#53D7FF"/>
+              <TextBlock Text="Lệnh đã đóng" FontSize="10" Classes="dim"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Border Grid.Column="5" Background="#332A0D" BorderBrush="#9A7A17" BorderThickness="1" CornerRadius="5" Padding="12">
+          <Grid ColumnDefinitions="48,*">
+            <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#D6A82A" BorderThickness="2">
+              <TextBlock Text="≈" Foreground="#FFD04B" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel Grid.Column="1" Margin="10,0,0,0">
+              <TextBlock Text="Lợi nhuận trung bình" Classes="label"/>
+              <TextBlock x:Name="AverageTradeText" Text="—" FontSize="21" FontWeight="Bold" Foreground="#FFD04B"/>
+              <TextBlock x:Name="AverageTradePctText" Text="—" FontSize="11" Classes="dim"/>
+            </StackPanel>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- Equity + drawdown -->
+      <Grid ColumnDefinitions="1.05*,1*" ColumnSpacing="8">
+        <Border Grid.Column="0" Classes="panel" Height="275">
+          <Grid RowDefinitions="36,*,24">
+            <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="*,Auto" Margin="0">
+              <TextBlock Text="Đường cong vốn (Equity Curve)" Classes="panelTitle" Margin="12,8"/>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" Margin="0,4,8,4">
+                <Border Classes="panelSoft" Padding="10,4"><TextBlock Text="Balance" FontSize="10"/></Border>
+                <Border Background="#0866F4" CornerRadius="4" Padding="10,4"><TextBlock Text="Equity" FontSize="10"/></Border>
+                <Border Classes="panelSoft" Padding="10,4"><TextBlock Text="Cả hai" FontSize="10"/></Border>
+              </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="1" Margin="10,6">
+              <local:BacktestChartControl x:Name="EquityChart"/>
+              <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="8,5">
+                <TextBlock Text="— Balance" Foreground="#30D08A" FontSize="10"/>
+                <TextBlock Text="— Equity" Foreground="#1B8FFF" FontSize="10"/>
+              </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="12,0">
+              <TextBlock x:Name="EquityRangeText" Text="Range: —" Classes="dim" FontSize="10"/>
+              <TextBlock x:Name="EquityLastText" Grid.Column="1" Text="Last: —" Foreground="#67B9FF" FontSize="10"/>
+            </Grid>
+          </Grid>
+        </Border>
+
+        <Border Grid.Column="1" Classes="panel" Height="275">
+          <Grid RowDefinitions="36,*,24">
+            <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="*,Auto">
+              <TextBlock Text="Drawdown (Mức sụt giảm vốn)" Classes="panelTitle" Margin="12,8"/>
+              <ComboBox Grid.Column="1" Width="150" SelectedIndex="0" IsEnabled="False" Margin="0,4,8,4">
+                <ComboBoxItem Content="Phần trăm (%)"/>
+              </ComboBox>
+            </Grid>
+
+            <Grid Grid.Row="1" Margin="10,6">
+              <local:BacktestChartControl x:Name="DrawdownChart"/>
+            </Grid>
+
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="12,0">
+              <TextBlock Text="0% → Max DD" Classes="dim" FontSize="10"/>
+              <TextBlock x:Name="DrawdownRangeText" Grid.Column="1" Text="Max: —" Foreground="#FF526C" FontSize="10"/>
+            </Grid>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- History + trade list -->
+      <Grid ColumnDefinitions="1.42*,1*" ColumnSpacing="8">
+        <Border Grid.Column="0" Classes="panel" MinHeight="270">
+          <Grid RowDefinitions="36,Auto,*,32">
+            <Border Grid.Row="0" Background="#082038" Padding="12,8">
+              <TextBlock Text="Danh sách kết quả Backtest" Classes="panelTitle"/>
+            </Border>
+
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="34,138,72,52,88,88,100,82,60,74,70,*"
+                  Margin="8,6,8,3">
+              <TextBlock Text="#" Classes="btHeader"/>
+              <TextBlock Grid.Column="1" Text="Thời gian chạy" Classes="btHeader"/>
+              <TextBlock Grid.Column="2" Text="Symbol" Classes="btHeader"/>
+              <TextBlock Grid.Column="3" Text="TF" Classes="btHeader"/>
+              <TextBlock Grid.Column="4" Text="Từ ngày" Classes="btHeader"/>
+              <TextBlock Grid.Column="5" Text="Đến ngày" Classes="btHeader"/>
+              <TextBlock Grid.Column="6" Text="Lợi nhuận ròng" Classes="btHeader"/>
+              <TextBlock Grid.Column="7" Text="DD tối đa" Classes="btHeader"/>
+              <TextBlock Grid.Column="8" Text="PF" Classes="btHeader"/>
+              <TextBlock Grid.Column="9" Text="Tỷ lệ thắng" Classes="btHeader"/>
+              <TextBlock Grid.Column="10" Text="Số lệnh" Classes="btHeader"/>
+              <TextBlock Grid.Column="11" Text="Trạng thái" Classes="btHeader"/>
+            </Grid>
+
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+              <StackPanel x:Name="BacktestHistoryRowsHost" Margin="6,0,6,4"/>
+            </ScrollViewer>
+
+            <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="10,2,10,4">
+              <TextBlock x:Name="HistoryCountText" Text="Tổng: 0 kết quả" Classes="dim" FontSize="10" VerticalAlignment="Center"/>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                <Button Classes="secondary" Content="↻  Làm mới" Click="RefreshHistory_OnClick"/>
+                <Button Classes="secondary" Content="Xem báo cáo" Click="ViewSelectedHistory_OnClick"/>
+                <Button Background="#351321" BorderBrush="#D92F4B" BorderThickness="1" CornerRadius="4" Foreground="#FF6379" Content="🗑  Xóa kết quả" Click="DeleteSelectedHistory_OnClick"/>
+              </StackPanel>
+            </Grid>
+          </Grid>
+        </Border>
+
+        <Border Grid.Column="1" Classes="panel" MinHeight="270">
+          <Grid RowDefinitions="36,Auto,*,32">
+            <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="*,Auto">
+              <TextBlock Text="Danh sách giao dịch (Backtest)" Classes="panelTitle" Margin="12,8"/>
+              <TextBlock x:Name="TradeFilterText" Grid.Column="1" Text="Tất cả" Classes="dim" VerticalAlignment="Center" Margin="0,0,12,0"/>
+            </Grid>
+
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="34,135,58,52,88,88,82,86,*"
+                  Margin="8,6,8,3">
+              <TextBlock Text="#" Classes="btHeader"/>
+              <TextBlock Grid.Column="1" Text="Thời gian" Classes="btHeader"/>
+              <TextBlock Grid.Column="2" Text="Loại" Classes="btHeader"/>
+              <TextBlock Grid.Column="3" Text="Lot" Classes="btHeader"/>
+              <TextBlock Grid.Column="4" Text="Giá vào" Classes="btHeader"/>
+              <TextBlock Grid.Column="5" Text="Giá thoát" Classes="btHeader"/>
+              <TextBlock Grid.Column="6" Text="Lợi nhuận" Classes="btHeader"/>
+              <TextBlock Grid.Column="7" Text="Thời gian giữ" Classes="btHeader"/>
+              <TextBlock Grid.Column="8" Text="Lý do" Classes="btHeader"/>
+            </Grid>
+
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+              <StackPanel x:Name="BacktestTradeRowsHost" Margin="6,0,6,4"/>
+            </ScrollViewer>
+
+            <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="10,2,10,4">
+              <TextBlock x:Name="TradePageSummaryText" Text="Hiển thị 0 / 0 giao dịch" Classes="dim" FontSize="10" VerticalAlignment="Center"/>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                <Button x:Name="PrevTradePageButton" Classes="secondary" Content="‹" Click="PrevTradePage_OnClick"/>
+                <TextBlock x:Name="TradePageText" Text="1 / 1" VerticalAlignment="Center" Margin="6,0"/>
+                <Button x:Name="NextTradePageButton" Classes="secondary" Content="›" Click="NextTradePage_OnClick"/>
+              </StackPanel>
+            </Grid>
+          </Grid>
+        </Border>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

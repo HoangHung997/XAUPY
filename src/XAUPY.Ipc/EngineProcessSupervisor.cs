@@ -245,7 +245,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
                     var heartbeat = ProtocolEnvelope.Create(
                         "heartbeat",
-                        new { component = "desktop", desktop_version = "0.10.0-task010" });
+                        new { component = "desktop", desktop_version = "0.11.0-task011" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
@@ -319,7 +319,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "0.10.0-task010" });
+            new { component = "desktop", desktop_version = "0.11.0-task011" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -333,7 +333,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         var configRequest = ProtocolEnvelope.Create(
             "config_active_get",
-            new { component = "desktop", desktop_version = "0.10.0-task010" });
+            new { component = "desktop", desktop_version = "0.11.0-task011" });
 
         var configResponse = await SendReceiveAsync(
             configRequest,
@@ -352,26 +352,26 @@ public sealed class EngineProcessSupervisor : IDisposable
         if (response.Payload.TryGetProperty("trading_enabled", out var trading) &&
             trading.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 010 Engine unexpectedly reported trading_enabled=true.");
+            throw new InvalidDataException("Task 011 Engine unexpectedly reported trading_enabled=true.");
         }
 
         if (response.Payload.TryGetProperty("execution_enabled", out var execution) &&
             execution.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 010 Engine unexpectedly reported execution_enabled=true.");
+            throw new InvalidDataException("Task 011 Engine unexpectedly reported execution_enabled=true.");
         }
     }
 
     private static void RejectUnexpectedStrategyExecutionEnable(StrategySnapshot strategy)
     {
         if (strategy.TradingEnabled || strategy.ExecutionEnabled)
-            throw new InvalidDataException("Task 010 strategy projection unexpectedly enabled execution.");
+            throw new InvalidDataException("Task 011 strategy projection unexpectedly enabled execution.");
     }
 
     private static void RejectUnexpectedOrdersExecutionEnable(OrdersPositionsSnapshot orders)
     {
         if (!orders.BrokerExecutionLocked || !orders.SimulationOnly)
-            throw new InvalidDataException("Task 010 order-book projection unexpectedly unlocked broker execution.");
+            throw new InvalidDataException("Task 011 order-book projection unexpectedly unlocked broker execution.");
     }
 
     private static Mt5BridgeStatus ParseBridgeStatus(JsonElement payload)
@@ -415,7 +415,7 @@ public sealed class EngineProcessSupervisor : IDisposable
         }
 
         if (executionReady || !executionLocked)
-            throw new InvalidDataException("Task 010 bridge guardian unexpectedly reported execution ready.");
+            throw new InvalidDataException("Task 011 bridge guardian unexpectedly reported execution ready.");
 
         return new Mt5BridgeStatus(
             connected,
@@ -578,7 +578,7 @@ public sealed class EngineProcessSupervisor : IDisposable
             result.TradingEnabled || result.ExecutionEnabled)
         {
             throw new InvalidDataException(
-                "Task 010 manual action response violated simulation-only safety.");
+                "Task 011 manual action response violated simulation-only safety.");
         }
 
         return result;
@@ -654,6 +654,126 @@ public sealed class EngineProcessSupervisor : IDisposable
         }
 
         return result;
+    }
+
+    public async Task<BacktestDatasetInfo> InspectBacktestDatasetAsync(
+        string path,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "backtest_dataset_inspect",
+                new { path }),
+            TimeSpan.FromSeconds(15),
+            cancellationToken);
+
+        if (response.Type != "backtest_dataset_inspect_ack")
+            throw new InvalidDataException($"Unexpected backtest dataset response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        return BacktestDatasetInfo.FromAck(response.Payload);
+    }
+
+    public async Task<BacktestResultSnapshot> RunBacktestAsync(
+        string path,
+        string fromDate,
+        string toDate,
+        double initialBalance,
+        double spreadPips,
+        double commissionPerLot,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "backtest_run",
+                new
+                {
+                    path,
+                    from_date = fromDate,
+                    to_date = toDate,
+                    initial_balance = initialBalance,
+                    spread_pips = spreadPips,
+                    commission_per_lot = commissionPerLot
+                }),
+            TimeSpan.FromMinutes(5),
+            cancellationToken);
+
+        if (response.Type != "backtest_run_ack")
+            throw new InvalidDataException($"Unexpected backtest run response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        return BacktestApiParser.ParseRunOrGet(response.Payload);
+    }
+
+    public async Task<BacktestHistoryResult> QueryBacktestHistoryAsync(
+        int limit = 50,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "backtest_history_query",
+                new { limit }),
+            TimeSpan.FromSeconds(10),
+            cancellationToken);
+
+        if (response.Type != "backtest_history_query_ack")
+            throw new InvalidDataException($"Unexpected backtest history response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        return BacktestApiParser.ParseHistory(response.Payload);
+    }
+
+    public async Task<BacktestResultSnapshot> GetBacktestResultAsync(
+        string runId,
+        int tradeOffset = 0,
+        int tradeLimit = 100,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "backtest_result_get",
+                new
+                {
+                    run_id = runId,
+                    trade_offset = tradeOffset,
+                    trade_limit = tradeLimit
+                }),
+            TimeSpan.FromSeconds(15),
+            cancellationToken);
+
+        if (response.Type != "backtest_result_get_ack")
+            throw new InvalidDataException($"Unexpected backtest result response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        return BacktestApiParser.ParseRunOrGet(response.Payload);
+    }
+
+    public async Task<BacktestDeleteResult> DeleteBacktestResultAsync(
+        string runId,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "backtest_result_delete",
+                new { run_id = runId }),
+            TimeSpan.FromSeconds(10),
+            cancellationToken);
+
+        if (response.Type != "backtest_result_delete_ack")
+            throw new InvalidDataException($"Unexpected backtest delete response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        return BacktestApiParser.ParseDelete(response.Payload);
     }
 
     private static JsonElement ExtractProfile(ProtocolEnvelope response, string responseName)

@@ -1,6 +1,6 @@
 # XAUPY IPC Protocol v1
 
-Status: extended by Task XAUPY-010
+Status: extended by Task XAUPY-011
 Transport: TCP loopback
 Default endpoint: 127.0.0.1:39421
 Framing: UTF-8 JSON Lines, one JSON object per line
@@ -17,6 +17,7 @@ Task 006 adds active-profile get/set lifecycle for the Avalonia Configuration ed
 Task 007 adds read-only deterministic strategy state projected from real closed-bar Bridge data.
 Task 009 adds strategy-owned ticket/order/deal projection plus guarded manual-action simulation.
 Task 010 adds persistent structured journal summary/query/bookmark messages.
+Task 011 adds deterministic historical Backtest dataset/run/history/result messages.
 
 ## 2. Security boundary
 
@@ -191,7 +192,104 @@ trading_enabled=false and execution_enabled=false.
 
 
 
-## 7. Configuration messages
+## 7. Task 011 Backtest messages
+
+Task 011 reuses the exact Python `StrategyEngine` used by live processing. The
+historical model is explicitly `M1_OHLC_PARITY_V1`; it is not an Every-tick
+claim.
+
+All Backtest responses retain:
+
+- trading_enabled=false
+- execution_enabled=false
+
+### backtest_dataset_inspect
+
+Request:
+
+{
+  "path": "absolute local .json/.csv historical dataset path"
+}
+
+Response:
+
+backtest_dataset_inspect_ack
+
+with ok and dataset metadata including symbol, bar count, date range,
+point/tick/volume metadata and SHA-256 dataset_fingerprint.
+
+### backtest_run
+
+Request:
+
+{
+  "path": "...",
+  "from_date": "YYYY-MM-DD",
+  "to_date": "YYYY-MM-DD",
+  "initial_balance": 10000,
+  "spread_pips": 20,
+  "commission_per_lot": 7
+}
+
+Response:
+
+backtest_run_ack
+
+with ok and persisted result. The result includes model, profile hash, dataset
+fingerprint, deterministic result_hash, metrics, skipped-signal reasons,
+equity/drawdown curves and a paged trade slice.
+
+Task 011 rejects execution modes whose historical semantics are not yet
+implemented rather than silently approximating them.
+
+### backtest_history_query
+
+Request:
+
+{
+  "limit": 50
+}
+
+Response:
+
+backtest_history_query_ack
+
+with newest persisted runs and summary metrics.
+
+### backtest_result_get
+
+Request:
+
+{
+  "run_id": "UUID",
+  "trade_offset": 0,
+  "trade_limit": 100
+}
+
+Response:
+
+backtest_result_get_ack
+
+with the stored result and requested trade page.
+
+### backtest_result_delete
+
+Request:
+
+{
+  "run_id": "UUID"
+}
+
+Response:
+
+backtest_result_delete_ack
+
+with ok/deleted state.
+
+Backtest IPC does not send `trade_intent`, does not call MT5 execution APIs and
+does not mutate the broker account.
+
+## 8. Configuration messages
 
 ### config_schema_get
 
@@ -270,13 +368,13 @@ with:
 
 A profile attempting to set execution.allow_real_account=true, execution.demo_only=false, max retry > 0 or disable mandatory safety values is rejected.
 
-## 8. MT5 .set file conversion
+## 9. MT5 .set file conversion
 
 File conversion itself is implemented in the Python config backend and packaged xaupy-config.exe, rather than transmitting arbitrary file paths over IPC.
 
 This keeps IPC messages data-oriented and allows the future Avalonia UI to choose files locally, parse them through the Engine/backend and present a preview.
 
-## 9. Compatibility
+## 10. Compatibility
 
 - Unknown schema_version is rejected.
 - New optional payload fields may be ignored by an older peer.

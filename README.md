@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-010 DONE. XAUPY-011 vẫn PLANNED và chưa bắt đầu.
+Trạng thái hiện tại: TASK XAUPY-011 DONE. XAUPY-012 vẫn PLANNED và chưa bắt đầu.
 
 ## Tài liệu bắt buộc
 
@@ -26,6 +26,8 @@ Trạng thái hiện tại: TASK XAUPY-010 DONE. XAUPY-011 vẫn PLANNED và ch�
 - [Task 009 acceptance](docs/TASK009_ORDERS_POSITIONS_TEST.md)
 - [Task 010 structured Journal spec](docs/TASK010_STRUCTURED_LOGGING_JOURNAL_SPEC.md)
 - [Task 010 acceptance](docs/TASK010_STRUCTURED_LOGGING_JOURNAL_TEST.md)
+- [Task 011 Backtest parity spec](docs/TASK011_BACKTEST_PARITY_SPEC.md)
+- [Task 011 acceptance](docs/TASK011_BACKTEST_PARITY_TEST.md)
 - [UI reference](docs/ui-reference/README.md)
 
 ## Nguyên tắc triển khai
@@ -194,4 +196,37 @@ Final Task 010 evidence:
 - branch direct build SHA-256:
   9cf6f5bb97f4328f0dcff0cb1d975d9cc6a66f253f978dd808d52d2d3b61eee8.
 
-XAUPY-011 chưa bắt đầu.
+## Task 011 đã hoàn thành
+
+Phạm vi:
+
+- Backtest dùng đúng `StrategyEngine` live của Task 007, không có state machine riêng;
+- dữ liệu đầu vào M1 JSON/CSV có metadata point/tick/volume + SHA-256 fingerprint;
+- deterministic aggregation M1 → M3/M5/M15/M30/H1/H2/H4;
+- next-bar MARKET entry, không look-ahead;
+- conservative SL-first nếu cùng M1 bar chạm cả SL và TP;
+- FIXED/STRUCTURE SL, FIXED/RR TP, fixed-lot/risk-percent sizing;
+- risk/session/cooldown/daily guards, MAE/MFE, equity/drawdown;
+- persisted run history + result_hash reproducible;
+- Journal ghi BACKTEST_DATASET/BACKTEST_RUN evidence;
+- tab **Backtest** bám `docs/ui-reference/Tab BackTest.png`;
+- UI ghi rõ `M1 OHLC deterministic parity`, không claim Every tick;
+- runtime không hard-code profit/chart/trade demo từ ảnh;
+- broker execution vẫn hard-locked.
+
+Final Task 011 evidence:
+
+- 178/178 Python regression/source/backtest tests PASS;
+- 63/63 C# IPC/Backtest checks PASS;
+- Avalonia Release build: 0 warnings / 0 errors;
+- packaged Task 011 deterministic Backtest parity/restart smoke: PASS;
+- packaged Task 010 Journal regression smoke: PASS;
+- packaged Task 009 execution-simulation regression smoke: PASS;
+- packaged Task 007 strategy/safety regression smoke: PASS;
+- packaged Config regression smoke: PASS;
+- MetaEditor Bridge: 0 errors / 0 warnings;
+- verified Windows x64 artifact: XAUPY-Task011-win-x64;
+- branch direct ZIP SHA-256:
+  59f5fc95ce8c4444a7ca2b707cf46f5078ec656e1019090dec0bdf43bbb266d9.
+
+XAUPY-012 chưa bắt đầu.

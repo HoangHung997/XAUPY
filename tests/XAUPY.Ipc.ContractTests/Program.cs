@@ -450,4 +450,182 @@ var journalBookmark = JournalBookmarkResult.FromAck(journalBookmarkPayload);
 Check(journalBookmark.Ok && journalBookmark.Event?.Bookmarked == true, "journal bookmark ack parser");
 Check(journalBookmark.Summary.LatestSequence == 44, "journal bookmark summary parser");
 
+var backtestDatasetPayload = JsonSerializer.SerializeToElement(new
+{
+    ok = true,
+    dataset = new
+    {
+        schema_version = 1,
+        path = @"C:\data\xau.json",
+        file_name = "xau.json",
+        dataset_fingerprint = new string('a', 64),
+        timeframe = "M1",
+        bar_count = 1000,
+        first_time = 1704067200L,
+        last_time = 1704127140L,
+        first_date = "2024-01-01",
+        last_date = "2024-01-01",
+        metadata = new
+        {
+            symbol = "XAUUSD",
+            point_size = 0.01,
+            tick_size = 0.01,
+            tick_value = 1.0,
+            volume_min = 0.01,
+            volume_max = 100.0,
+            volume_step = 0.01,
+            timezone_offset_minutes = 0
+        }
+    },
+    trading_enabled = false,
+    execution_enabled = false
+});
+var backtestDataset = BacktestDatasetInfo.FromAck(backtestDatasetPayload);
+Check(backtestDataset.FileName == "xau.json" && backtestDataset.BarCount == 1000, "backtest dataset parser");
+Check(backtestDataset.Metadata.Symbol == "XAUUSD" && backtestDataset.Metadata.TickValue == 1.0, "backtest dataset metadata parser");
+
+var backtestResultObject = new
+{
+    run_id = Guid.NewGuid().ToString(),
+    created_at_utc = "2026-09-25T07:00:00+00:00",
+    result_hash = new string('b', 64),
+    model = "M1_OHLC_PARITY_V1",
+    dataset_file_name = "xau.json",
+    dataset_fingerprint = new string('a', 64),
+    engine_profile_hash = new string('c', 64),
+    dataset_metadata = new
+    {
+        symbol = "XAUUSD",
+        point_size = 0.01,
+        tick_size = 0.01,
+        tick_value = 1.0,
+        volume_min = 0.01,
+        volume_max = 100.0,
+        volume_step = 0.01,
+        timezone_offset_minutes = 0
+    },
+    from_date = "2024-01-01",
+    to_date = "2024-06-30",
+    initial_balance = 10000.0,
+    spread_pips = 20.0,
+    commission_per_lot = 7.0,
+    metrics = new
+    {
+        net_profit = 1250.0,
+        net_profit_pct = 12.5,
+        gross_profit = 1800.0,
+        gross_loss = -550.0,
+        profit_factor = 3.2727,
+        total_trades = 20,
+        wins = 12,
+        losses = 8,
+        win_rate = 60.0,
+        average_trade = 62.5,
+        max_drawdown_usd = 400.0,
+        max_drawdown_pct = 3.6,
+        initial_balance = 10000.0,
+        final_balance = 11250.0,
+        final_equity = 11250.0
+    },
+    skipped_signals = new Dictionary<string, int>
+    {
+        ["COOLDOWN"] = 2
+    },
+    equity_curve = new[]
+    {
+        new { time = 1704067260L, balance = 10000.0, equity = 10000.0 },
+        new { time = 1704067320L, balance = 10042.0, equity = 10042.0 }
+    },
+    drawdown_curve = new[]
+    {
+        new { time = 1704067260L, drawdown_usd = 0.0, drawdown_pct = 0.0 },
+        new { time = 1704067320L, drawdown_usd = 12.0, drawdown_pct = 0.12 }
+    },
+    trade_total = 20,
+    trade_offset = 0,
+    trade_limit = 1,
+    trades = new[]
+    {
+        new
+        {
+            trade_id = 1,
+            signal_sequence = 1,
+            signal_time = 1704067200L,
+            side = "BUY",
+            entry_time = 1704067260L,
+            exit_time = 1704069000L,
+            entry_price = 2039.28,
+            exit_price = 2038.56,
+            volume = 0.10,
+            original_sl = 2037.28,
+            final_sl = 2039.38,
+            tp = 2042.28,
+            breakeven_applied = true,
+            gross_pl = -7.2,
+            commission = 0.7,
+            net_pl = -7.9,
+            duration_seconds = 1740L,
+            exit_reason = "SL",
+            mae_price_units = 0.9,
+            mfe_price_units = 1.4,
+            mae_usd = 9.0,
+            mfe_usd = 14.0,
+            profile_hash = new string('c', 64),
+            dataset_fingerprint = new string('a', 64)
+        }
+    }
+};
+
+var backtestRunPayload = JsonSerializer.SerializeToElement(new
+{
+    ok = true,
+    result = backtestResultObject,
+    trading_enabled = false,
+    execution_enabled = false
+});
+var backtestResult = BacktestApiParser.ParseRunOrGet(backtestRunPayload);
+Check(backtestResult.Model == "M1_OHLC_PARITY_V1" && backtestResult.Metrics.TotalTrades == 20, "backtest result metrics parser");
+Check(backtestResult.EquityCurve.Count == 2 && backtestResult.DrawdownCurve.Count == 2, "backtest chart parser");
+Check(backtestResult.TradeTotal == 20 && backtestResult.Trades.Count == 1, "backtest trade paging parser");
+Check(backtestResult.Trades[0].SignalTime < backtestResult.Trades[0].EntryTime, "backtest next-bar trade parser");
+Check(backtestResult.SkippedSignals["COOLDOWN"] == 2, "backtest skipped signal parser");
+
+var backtestHistoryPayload = JsonSerializer.SerializeToElement(new
+{
+    ok = true,
+    history = new[]
+    {
+        new
+        {
+            run_id = backtestResult.RunId,
+            created_at_utc = backtestResult.CreatedAtUtc,
+            symbol = "XAUUSD",
+            model = backtestResult.Model,
+            from_date = backtestResult.FromDate,
+            to_date = backtestResult.ToDate,
+            dataset_file_name = backtestResult.DatasetFileName,
+            dataset_fingerprint = backtestResult.DatasetFingerprint,
+            result_hash = backtestResult.ResultHash,
+            profile_hash = backtestResult.ProfileHash,
+            metrics = backtestResultObject.metrics
+        }
+    },
+    trading_enabled = false,
+    execution_enabled = false
+});
+var backtestHistory = BacktestApiParser.ParseHistory(backtestHistoryPayload);
+Check(backtestHistory.Ok && backtestHistory.Items.Count == 1, "backtest history parser");
+Check(backtestHistory.Items[0].Metrics.NetProfit == 1250.0, "backtest history metrics parser");
+
+var backtestDeletePayload = JsonSerializer.SerializeToElement(new
+{
+    ok = true,
+    deleted = true,
+    run_id = backtestResult.RunId,
+    trading_enabled = false,
+    execution_enabled = false
+});
+var backtestDelete = BacktestApiParser.ParseDelete(backtestDeletePayload);
+Check(backtestDelete.Ok && backtestDelete.Deleted, "backtest delete parser");
+
 Console.WriteLine($"XAUPY IPC contract self-test complete: {passed} checks passed.");

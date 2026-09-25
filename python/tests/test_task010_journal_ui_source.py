@@ -101,10 +101,10 @@ class Task010JournalUiSourceTests(unittest.TestCase):
         self.assertIn("_events.OrderBy", self.code)
 
     def test_task010_desktop_version_and_previous_execution_guards_remain(self):
-        self.assertIn('desktop_version = "0.10.0-task010"', self.supervisor)
+        self.assertIn('desktop_version = "0.11.0-task011"', self.supervisor)
         self.assertIn("RejectUnexpectedExecutionEnable", self.supervisor)
         self.assertIn("RejectUnexpectedOrdersExecutionEnable", self.supervisor)
-        self.assertIn("Task 010 manual action response violated simulation-only safety", self.supervisor)
+        self.assertIn("Task 011 manual action response violated simulation-only safety", self.supervisor)
 
 
 if __name__ == "__main__":

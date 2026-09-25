@@ -316,6 +316,28 @@ string JsonOrders()
    return json;
 }
 
+double HistoryPositionEntryPrice(long position_id)
+{
+   int total = HistoryDealsTotal();
+   for(int i=0; i<total; i++)
+   {
+      ulong deal_ticket = HistoryDealGetTicket(i);
+      if(deal_ticket == 0)
+         continue;
+      if((long)HistoryDealGetInteger(deal_ticket, DEAL_POSITION_ID) != position_id)
+         continue;
+      if(HistoryDealGetString(deal_ticket, DEAL_SYMBOL) != _Symbol)
+         continue;
+      if((long)HistoryDealGetInteger(deal_ticket, DEAL_MAGIC) != InpMagic)
+         continue;
+
+      long entry = HistoryDealGetInteger(deal_ticket, DEAL_ENTRY);
+      if(entry == DEAL_ENTRY_IN || entry == DEAL_ENTRY_INOUT)
+         return HistoryDealGetDouble(deal_ticket, DEAL_PRICE);
+   }
+   return 0.0;
+}
+
 string JsonDeals()
 {
    datetime now = TimeCurrent();
@@ -345,6 +367,9 @@ string JsonDeals()
       double profit = HistoryDealGetDouble(ticket, DEAL_PROFIT);
       double commission = HistoryDealGetDouble(ticket, DEAL_COMMISSION);
       double swap = HistoryDealGetDouble(ticket, DEAL_SWAP);
+      long position_id = HistoryDealGetInteger(ticket, DEAL_POSITION_ID);
+      double price_in = HistoryPositionEntryPrice(position_id);
+      double price_out = HistoryDealGetDouble(ticket, DEAL_PRICE);
 
       if(!first)
          json += ",";
@@ -358,7 +383,8 @@ string JsonDeals()
       item += JsonKey("side") + JsonString(DealTypeText(HistoryDealGetInteger(ticket, DEAL_TYPE))) + ",";
       item += JsonKey("entry") + JsonString(DealEntryText(entry)) + ",";
       item += JsonKey("volume") + JsonNumber(HistoryDealGetDouble(ticket, DEAL_VOLUME), 2) + ",";
-      item += JsonKey("price") + JsonNumber(HistoryDealGetDouble(ticket, DEAL_PRICE), _Digits) + ",";
+      item += JsonKey("price_in") + JsonNumber(price_in, _Digits) + ",";
+      item += JsonKey("price_out") + JsonNumber(price_out, _Digits) + ",";
       item += JsonKey("profit") + JsonNumber(profit, 2) + ",";
       item += JsonKey("commission") + JsonNumber(commission, 2) + ",";
       item += JsonKey("swap") + JsonNumber(swap, 2) + ",";

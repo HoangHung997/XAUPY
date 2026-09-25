@@ -121,7 +121,7 @@ async def exchange(reader, writer, message_type, payload=None):
     request = Envelope.create(message_type, payload or {})
     writer.write((request.to_json() + "\n").encode("utf-8"))
     await writer.drain()
-    line = await asyncio.wait_for(reader.readline(), timeout=15)
+    line = await asyncio.wait_for(reader.readline(), timeout=5)
     response = Envelope.from_json(line.decode("utf-8").rstrip("\r\n"))
     if response.request_id != request.request_id:
         raise AssertionError("response request_id mismatch")
@@ -145,7 +145,7 @@ class Task012OptimizerProtocolTests(unittest.IsolatedAsyncioTestCase):
         await self.server.start()
 
     async def asyncTearDown(self):
-        await self.server.close()
+        await asyncio.wait_for(self.server.close(), timeout=15)
         self.temp.cleanup()
 
     async def connect(self):
@@ -181,7 +181,7 @@ class Task012OptimizerProtocolTests(unittest.IsolatedAsyncioTestCase):
         }
 
     async def wait_for_terminal(self, reader, writer, job_id):
-        deadline = time.monotonic() + 20
+        deadline = time.monotonic() + 10
         latest = None
         while time.monotonic() < deadline:
             response = await exchange(

@@ -165,6 +165,18 @@ class OrdersProjectionTests(unittest.TestCase):
         self.assertEqual([], book["orders"])
         self.assertEqual([], book["deals"])
 
+    def test_bridge_heartbeat_does_not_keep_stale_order_book_live(self):
+        registry = BridgeRegistry(stale_seconds=0.01)
+        registry.record_snapshot(bridge_snapshot())
+        time.sleep(0.02)
+        registry.record_heartbeat({"bridge_version": "0.9.0-task009"})
+
+        self.assertTrue(registry.status().connected)
+        self.assertFalse(registry.snapshot_fresh())
+        self.assertFalse(registry.market_data_connected())
+        self.assertFalse(registry.orders_positions_payload()["available"])
+        self.assertIsNone(registry.latest_fresh_snapshot())
+
     def test_count_mismatch_is_rejected(self):
         payload = bridge_snapshot()
         payload["positions_count"] = 99

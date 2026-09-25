@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-006 DONE. XAUPY-007 vẫn PLANNED và chưa bắt đầu.
+Trạng thái hiện tại: TASK XAUPY-007 ACTIVE trên nhánh `task/007-strategy-engine`. XAUPY-001–006 đã DONE.
 
 ## Tài liệu bắt buộc
 
@@ -18,6 +18,8 @@ Trạng thái hiện tại: TASK XAUPY-006 DONE. XAUPY-007 vẫn PLANNED và ch�
 - [Configuration UI smoke test](docs/TASK006_CONFIGURATION_TEST.md)
 - [Canonical config/profile spec](docs/CONFIG_PROFILE_SPEC.md)
 - [IPC protocol](docs/IPC_PROTOCOL.md)
+- [Task 007 strategy spec](docs/TASK007_STRATEGY_ENGINE.md)
+- [Task 007 acceptance](docs/TASK007_STRATEGY_TEST.md)
 - [UI reference](docs/ui-reference/README.md)
 
 ## Nguyên tắc triển khai
@@ -75,3 +77,18 @@ Configuration tab Avalonia được xây theo schema canonical thay vì hard-cod
 - Overview phản ánh active profile sau Apply;
 - execution tiếp tục bị khóa;
 - final CI: 66 Python tests PASS, 23 C# checks PASS, Avalonia/.NET 0 warnings / 0 errors, MetaEditor 0 errors / 0 warnings.
+
+
+## Task 007 đang triển khai
+
+Phạm vi hiện tại:
+
+- Python Strategy Engine Direction → Pullback → Trigger dùng closed bars thật từ Bridge;
+- MA / RSI / Z-Score cùng optional ADX / ATR / Open filters;
+- tích lũy lịch sử theo timestamp, không bịa historical bars;
+- deterministic state machine và signal evidence;
+- heartbeat/bridge acknowledgement có read-only strategy projection;
+- profile/reconnect reset để không phát tín hiệu từ setup cũ;
+- execution vẫn hard-locked, không có trade_intent hay OrderSend.
+
+Xem chi tiết tại docs/TASK007_STRATEGY_ENGINE.md.

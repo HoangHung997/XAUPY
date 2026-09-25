@@ -1,6 +1,6 @@
 # XAUPY IPC Protocol v1
 
-Status: extended by Task XAUPY-007
+Status: extended by Task XAUPY-009
 Transport: TCP loopback
 Default endpoint: 127.0.0.1:39421
 Framing: UTF-8 JSON Lines, one JSON object per line
@@ -15,6 +15,7 @@ Task 003 added MT5 Bridge → Python data snapshots.
 Task 004 adds canonical configuration schema/defaults/validation messages.
 Task 006 adds active-profile get/set lifecycle for the Avalonia Configuration editor.
 Task 007 adds read-only deterministic strategy state projected from real closed-bar Bridge data.
+Task 009 adds strategy-owned ticket/order/deal projection plus guarded manual-action simulation.
 
 ## 2. Security boundary
 
@@ -49,7 +50,7 @@ heartbeat → heartbeat_ack
 shutdown → shutdown_ack
 
 heartbeat_ack includes MT5 bridge health from Task 003, Overview projection from
-Task 005, and Task 007 strategy projection.
+Task 005, Task 007 strategy projection, and Task 009 orders_positions projection.
 
 The strategy object includes read-only state such as state, blocked_reason,
 profile_hash, exact strategy timeframes, direction, armed_side, signal_sequence,
@@ -77,6 +78,50 @@ Task 007 keeps all Task 003 execution locks:
 Task 007 bridge_snapshot_ack also includes the current read-only strategy
 projection. Strategy evaluation only advances from newer closed-bar timestamps.
 A terminal reconnect resets the armed setup before resumed data is evaluated.
+
+### Task 009 read-only order book
+
+bridge_snapshot may additionally include strategy-owned arrays filtered by the
+configured symbol and magic number:
+
+- positions;
+- pending orders;
+- recent realized deals;
+- account leverage and strategy-owned daily realized P/L.
+
+heartbeat_ack exposes these as orders_positions together with deterministic KPI
+fields (open P/L, realized P/L, exposure, current SL-based risk) and broker
+metadata. If Bridge data becomes stale, orders_positions.available=false and all
+ticket rows are cleared.
+
+### Task 009 guarded manual simulation
+
+Desktop may send:
+
+manual_action_simulate → manual_action_simulate_ack
+
+The request contains a unique intent_id, an action name, explicit confirmation
+and any action-specific fields such as ticket, volume, SL/TP points or partial
+percentage.
+
+Supported Task 009 actions are MARKET_BUY, MARKET_SELL, CLOSE_POSITION,
+PARTIAL_CLOSE, MOVE_SL_BE, START_TRAILING, MODIFY_PENDING, CANCEL_PENDING,
+CLOSE_ALL, CLOSE_PROFIT, CLOSE_LOSS and CANCEL_ALL_PENDING.
+
+The Python Engine validates fresh market data, DEMO account mode, locked safety
+profile, strategy ownership, broker volume constraints, max open positions,
+server-SL requirements and never-widen-SL. Duplicate intent_id with identical
+content is idempotent; reuse with different content is rejected.
+
+Task 009 is simulation-only. Every ack keeps:
+
+- simulated=true;
+- broker_mutated=false;
+- trading_enabled=false;
+- execution_enabled=false.
+
+No automatic retry is performed. trade_intent remains unsupported and the MQL5
+Bridge still contains no broker mutation path.
 
 ## 6. Configuration messages
 

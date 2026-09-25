@@ -10,6 +10,7 @@ from .bridge_state import BridgeRegistry, BridgeSnapshotError
 from .contracts import Envelope, PROTOCOL_VERSION, ProtocolError
 from .config_schema import default_profile, normalized_profile, schema_payload, validate_profile
 from .strategy_engine import StrategyEngine
+from .execution_simulator import ManualActionSimulator
 
 DEFAULT_HOST: Final = "127.0.0.1"
 DEFAULT_PORT: Final = 39421
@@ -38,6 +39,7 @@ class EngineServer:
         self.bridge = BridgeRegistry(stale_seconds=bridge_stale_seconds)
         self.active_profile = default_profile()
         self.strategy = StrategyEngine(self.active_profile)
+        self.manual_actions = ManualActionSimulator(self.bridge)
 
     async def start(self) -> None:
         if self._server is not None:
@@ -135,13 +137,14 @@ class EngineServer:
 
         if request.type == "heartbeat":
             bridge_status = self.bridge.status()
-            market_connected = bridge_status.connected and bridge_status.terminal_connected
+            market_connected = self.bridge.market_data_connected()
             payload = {
                 **common,
                 "uptime_ms": int((time.monotonic() - self._started_monotonic) * 1000),
                 "connections_total": self._connections_total,
                 "bridge": bridge_status.to_payload(),
                 "overview": self.bridge.overview_payload(),
+                "orders_positions": self.bridge.orders_positions_payload(),
                 "strategy": self.strategy.status_payload(
                     market_connected=market_connected
                 ),
@@ -342,6 +345,17 @@ class EngineServer:
                 False,
             )
 
+        if request.type == "manual_action_simulate":
+            result = self.manual_actions.simulate(request.payload, self.active_profile)
+            return (
+                Envelope.response(
+                    "manual_action_simulate_ack",
+                    request.request_id,
+                    {**common, **result},
+                ),
+                False,
+            )
+
         if request.type == "shutdown":
             return (
                 Envelope.response(
@@ -358,7 +372,7 @@ class EngineServer:
                 request.request_id,
                 {
                     "code": "UNSUPPORTED_MESSAGE",
-                    "message": f"Unsupported Task 007 message type: {request.type}",
+                    "message": f"Unsupported Task 009 message type: {request.type}",
                     "trading_enabled": False,
                     "execution_enabled": False,
                 },

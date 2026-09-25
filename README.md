@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-008 DONE. XAUPY-009 vẫn PLANNED và chưa bắt đầu.
+Trạng thái hiện tại: TASK XAUPY-009 DONE. XAUPY-010 vẫn PLANNED và chưa bắt đầu.
 
 ## Tài liệu bắt buộc
 
@@ -22,6 +22,8 @@ Trạng thái hiện tại: TASK XAUPY-008 DONE. XAUPY-009 vẫn PLANNED và ch�
 - [Task 007 acceptance](docs/TASK007_STRATEGY_TEST.md)
 - [Strategy + Monitoring UI spec](docs/STRATEGY_MONITORING_UI_SPEC.md)
 - [Task 008 acceptance](docs/TASK008_STRATEGY_MONITORING_TEST.md)
+- [Task 009 Orders & Positions spec](docs/TASK009_ORDERS_POSITIONS_SPEC.md)
+- [Task 009 acceptance](docs/TASK009_ORDERS_POSITIONS_TEST.md)
 - [UI reference](docs/ui-reference/README.md)
 
 ## Nguyên tắc triển khai
@@ -127,3 +129,33 @@ Final Task 008 evidence:
 - packaged Config regression smoke: PASS;
 - MetaEditor Bridge regression: 0 errors / 0 warnings;
 - verified Windows x64 artifact: XAUPY-Task008-win-x64.
+
+
+## Task 009 đã hoàn thành
+
+Phạm vi:
+
+- tab **Lệnh & Vị thế** bám ảnh `docs/ui-reference/Tab Lệnh & Vị thế.png`;
+- đọc position, pending order và realized deal thật theo symbol + magic từ MT5;
+- KPI open P/L, realized P/L, exposure và risk dựa trên server SL thật;
+- stale market snapshot bị xoá dù Bridge heartbeat vẫn còn;
+- các nút BUY/SELL/Close/Partial/BE/Trailing/Modify/Cancel chạy qua
+  **guarded execution simulator**;
+- explicit confirmation + DEMO-only + volume/ownership/max-position/server-SL/
+  never-widen-SL guard;
+- duplicate `intent_id` idempotent, conflict bị từ chối;
+- broker execution vẫn hard-locked và `trade_intent` vẫn unsupported.
+
+Final Task 009 evidence:
+
+- 122/122 Python regression/source tests PASS;
+- 42/42 C# IPC/order-book checks PASS;
+- Avalonia Release build: 0 warnings / 0 errors;
+- packaged Task 009 order-book/manual-simulation safety smoke: PASS;
+- packaged Task 007 strategy/safety regression smoke: PASS;
+- packaged Config regression smoke: PASS;
+- MetaEditor Task 009 Bridge: 0 errors / 0 warnings;
+- verified Windows x64 artifact: XAUPY-Task009-win-x64;
+- direct build SHA-256: fcd3ec52ac23453605758573d2f07c176f61218cdcb159d61792a2303437b41a.
+
+XAUPY-010 chưa bắt đầu.

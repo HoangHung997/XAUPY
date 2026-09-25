@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     private readonly ConfigurationEditor _configurationEditor;
     private readonly StrategyDashboard _strategyDashboard;
     private readonly MonitoringDashboard _monitoringDashboard;
+    private readonly OrdersPositionsDashboard _ordersPositionsDashboard;
     private readonly List<double> _priceHistory = new();
     private readonly Queue<string> _quickLogs = new();
     private readonly DispatcherTimer _clockTimer;
@@ -44,7 +45,7 @@ public partial class MainWindow : Window
                 "NavMonitoring"),
             ["orders"] = (
                 "Lệnh & Vị thế",
-                "Execution và màn hình quản lý lệnh thuộc Task 009.",
+                "Vị thế, pending orders, deals và manual-action simulation có guard; broker execution vẫn khóa.",
                 "NavOrders"),
             ["backtest"] = (
                 "Backtest",
@@ -82,6 +83,9 @@ public partial class MainWindow : Window
             ?? throw new InvalidOperationException("StrategyDashboard missing.");
         _monitoringDashboard = this.FindControl<MonitoringDashboard>("MonitoringDashboard")
             ?? throw new InvalidOperationException("MonitoringDashboard missing.");
+        _ordersPositionsDashboard = this.FindControl<OrdersPositionsDashboard>("OrdersPositionsDashboard")
+            ?? throw new InvalidOperationException("OrdersPositionsDashboard missing.");
+        _ordersPositionsDashboard.AttachSupervisor(_engineSupervisor);
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clockTimer.Tick += (_, _) => UpdateClock();
@@ -120,6 +124,7 @@ public partial class MainWindow : Window
         bool configuration = string.Equals(key, "configuration", StringComparison.Ordinal);
         bool strategy = string.Equals(key, "strategy", StringComparison.Ordinal);
         bool monitoring = string.Equals(key, "monitoring", StringComparison.Ordinal);
+        bool orders = string.Equals(key, "orders", StringComparison.Ordinal);
         bool liveSidebar = overview || strategy || monitoring;
 
         this.FindControl<ScrollViewer>("OverviewScroll")!.IsVisible = overview;
@@ -128,18 +133,19 @@ public partial class MainWindow : Window
         _configurationEditor.IsVisible = configuration;
         _strategyDashboard.IsVisible = strategy;
         _monitoringDashboard.IsVisible = monitoring;
+        _ordersPositionsDashboard.IsVisible = orders;
         this.FindControl<Border>("PlaceholderContent")!.IsVisible =
-            !overview && !configuration && !strategy && !monitoring;
+            !overview && !configuration && !strategy && !monitoring && !orders;
 
         if (configuration)
         {
             _ = _configurationEditor.EnsureLoadedAsync();
         }
-        else if (!overview && !strategy && !monitoring)
+        else if (!overview && !strategy && !monitoring && !orders)
         {
             FindText("PlaceholderTitle").Text = $"{page.Title} — chưa triển khai";
             FindText("PlaceholderDetail").Text =
-                $"Task 008 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát. {page.Subtitle}";
+                $"Task 009 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát + Lệnh & Vị thế. {page.Subtitle}";
         }
     }
 
@@ -219,6 +225,8 @@ public partial class MainWindow : Window
         ApplyStrategySnapshot(e.Strategy);
         _strategyDashboard.Apply(e.Strategy, e.Configuration);
         _monitoringDashboard.Apply(e.Strategy, e.Overview, e.Mt5Bridge, e.Configuration);
+        _ordersPositionsDashboard.Apply(e.OrdersPositions, e.Overview, e.Mt5Bridge, e.Configuration);
+        ApplyOrdersFooter(e.OrdersPositions);
         _ = _configurationEditor.NotifyEngineStateAsync(e.State);
     }
 
@@ -340,8 +348,8 @@ public partial class MainWindow : Window
 
         FindText("RecentOrdersEmptyText").Text =
             overview.PositionsCount == 0 && overview.OrdersCount == 0
-                ? "Không có position/pending order thuộc bridge snapshot hiện tại. Execution vẫn khóa."
-                : $"Bridge báo {overview.PositionsCount} position và {overview.OrdersCount} order. Chi tiết ticket thuộc Task 009.";
+                ? "Không có position/pending order thuộc bridge snapshot hiện tại. Broker execution vẫn khóa."
+                : $"Bridge báo {overview.PositionsCount} position và {overview.OrdersCount} order. Mở tab Lệnh & Vị thế để xem ticket thật.";
 
         if (overview.Bid.HasValue)
         {
@@ -373,7 +381,17 @@ public partial class MainWindow : Window
         FindText("SidebarPositionsText").Text = "0";
         FindText("FooterSpreadText").Text = "—";
         FindText("RecentOrdersEmptyText").Text =
-            "Chưa có dữ liệu lệnh. Task 008 chỉ hiển thị dữ liệu thật; execution hiện đang khóa.";
+            "Chưa có dữ liệu lệnh. Task 009 chỉ hiển thị dữ liệu thật; broker execution hiện đang khóa.";
+    }
+
+    private void ApplyOrdersFooter(OrdersPositionsSnapshot orders)
+    {
+        FindText("FooterAccountText").Text = orders.AccountLogin.HasValue
+            ? orders.AccountLogin.Value.ToString()
+            : "—";
+        FindText("FooterLeverageText").Text = orders.Leverage.HasValue
+            ? $"1:{orders.Leverage.Value}"
+            : "—";
     }
 
     private void UpdateChart()

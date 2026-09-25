@@ -47,6 +47,7 @@ public sealed class EngineStateChangedEventArgs(
     Mt5BridgeStatus mt5Bridge,
     OverviewSnapshot overview,
     OrdersPositionsSnapshot ordersPositions,
+    JournalSummarySnapshot journalSummary,
     ConfigurationSummary configuration,
     StrategySnapshot strategy) : EventArgs
 {
@@ -56,6 +57,7 @@ public sealed class EngineStateChangedEventArgs(
     public Mt5BridgeStatus Mt5Bridge { get; } = mt5Bridge;
     public OverviewSnapshot Overview { get; } = overview;
     public OrdersPositionsSnapshot OrdersPositions { get; } = ordersPositions;
+    public JournalSummarySnapshot JournalSummary { get; } = journalSummary;
     public ConfigurationSummary Configuration { get; } = configuration;
     public StrategySnapshot Strategy { get; } = strategy;
 }
@@ -98,6 +100,7 @@ public sealed class EngineProcessSupervisor : IDisposable
     public Mt5BridgeStatus Mt5Bridge { get; private set; } = Mt5BridgeStatus.Offline;
     public OverviewSnapshot Overview { get; private set; } = OverviewSnapshot.Empty;
     public OrdersPositionsSnapshot OrdersPositions { get; private set; } = OrdersPositionsSnapshot.Empty;
+    public JournalSummarySnapshot JournalSummary { get; private set; } = JournalSummarySnapshot.Empty;
     public ConfigurationSummary Configuration { get; private set; } = ConfigurationSummary.Default;
     public StrategySnapshot Strategy { get; private set; } = StrategySnapshot.Empty;
 
@@ -115,6 +118,7 @@ public sealed class EngineProcessSupervisor : IDisposable
             Mt5Bridge = Mt5BridgeStatus.Offline;
             Overview = OverviewSnapshot.Empty;
             OrdersPositions = OrdersPositionsSnapshot.Empty;
+            JournalSummary = JournalSummarySnapshot.Empty;
             Configuration = ConfigurationSummary.Default;
             Strategy = StrategySnapshot.Empty;
 
@@ -179,6 +183,7 @@ public sealed class EngineProcessSupervisor : IDisposable
         Mt5Bridge = Mt5BridgeStatus.Offline;
         Overview = OverviewSnapshot.Empty;
         OrdersPositions = OrdersPositionsSnapshot.Empty;
+        JournalSummary = JournalSummarySnapshot.Empty;
         Strategy = StrategySnapshot.Empty;
         SetState(EngineConnectionState.Stopped, "Python Engine đã dừng.");
     }
@@ -206,6 +211,7 @@ public sealed class EngineProcessSupervisor : IDisposable
                     Mt5Bridge = Mt5BridgeStatus.Offline;
                     Overview = OverviewSnapshot.Empty;
                     OrdersPositions = OrdersPositionsSnapshot.Empty;
+                    JournalSummary = JournalSummarySnapshot.Empty;
                     Strategy = StrategySnapshot.Empty;
                     SetState(
                         EngineConnectionState.Starting,
@@ -239,7 +245,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
                     var heartbeat = ProtocolEnvelope.Create(
                         "heartbeat",
-                        new { component = "desktop", desktop_version = "0.9.0-task009" });
+                        new { component = "desktop", desktop_version = "0.10.0-task010" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
@@ -256,6 +262,7 @@ public sealed class EngineProcessSupervisor : IDisposable
                     Mt5Bridge = ParseBridgeStatus(response.Payload);
                     Overview = OverviewSnapshot.FromHeartbeatPayload(response.Payload);
                     OrdersPositions = OrdersPositionsSnapshot.FromHeartbeatPayload(response.Payload);
+                    JournalSummary = JournalSummarySnapshot.FromHeartbeatPayload(response.Payload);
                     Strategy = StrategySnapshot.FromHeartbeatPayload(response.Payload);
                     RejectUnexpectedStrategyExecutionEnable(Strategy);
                     RejectUnexpectedOrdersExecutionEnable(OrdersPositions);
@@ -277,6 +284,7 @@ public sealed class EngineProcessSupervisor : IDisposable
                 Mt5Bridge = Mt5BridgeStatus.Offline;
                 Overview = OverviewSnapshot.Empty;
                 OrdersPositions = OrdersPositionsSnapshot.Empty;
+                JournalSummary = JournalSummarySnapshot.Empty;
                 Strategy = StrategySnapshot.Empty;
 
                 if (_stopRequested || cancellationToken.IsCancellationRequested)
@@ -311,7 +319,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "0.9.0-task009" });
+            new { component = "desktop", desktop_version = "0.10.0-task010" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -325,7 +333,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         var configRequest = ProtocolEnvelope.Create(
             "config_active_get",
-            new { component = "desktop", desktop_version = "0.9.0-task009" });
+            new { component = "desktop", desktop_version = "0.10.0-task010" });
 
         var configResponse = await SendReceiveAsync(
             configRequest,
@@ -344,26 +352,26 @@ public sealed class EngineProcessSupervisor : IDisposable
         if (response.Payload.TryGetProperty("trading_enabled", out var trading) &&
             trading.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 009 Engine unexpectedly reported trading_enabled=true.");
+            throw new InvalidDataException("Task 010 Engine unexpectedly reported trading_enabled=true.");
         }
 
         if (response.Payload.TryGetProperty("execution_enabled", out var execution) &&
             execution.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 009 Engine unexpectedly reported execution_enabled=true.");
+            throw new InvalidDataException("Task 010 Engine unexpectedly reported execution_enabled=true.");
         }
     }
 
     private static void RejectUnexpectedStrategyExecutionEnable(StrategySnapshot strategy)
     {
         if (strategy.TradingEnabled || strategy.ExecutionEnabled)
-            throw new InvalidDataException("Task 009 strategy projection unexpectedly enabled execution.");
+            throw new InvalidDataException("Task 010 strategy projection unexpectedly enabled execution.");
     }
 
     private static void RejectUnexpectedOrdersExecutionEnable(OrdersPositionsSnapshot orders)
     {
         if (!orders.BrokerExecutionLocked || !orders.SimulationOnly)
-            throw new InvalidDataException("Task 009 order-book projection unexpectedly unlocked broker execution.");
+            throw new InvalidDataException("Task 010 order-book projection unexpectedly unlocked broker execution.");
     }
 
     private static Mt5BridgeStatus ParseBridgeStatus(JsonElement payload)
@@ -407,7 +415,7 @@ public sealed class EngineProcessSupervisor : IDisposable
         }
 
         if (executionReady || !executionLocked)
-            throw new InvalidDataException("Task 008 bridge guardian unexpectedly reported execution ready.");
+            throw new InvalidDataException("Task 010 bridge guardian unexpectedly reported execution ready.");
 
         return new Mt5BridgeStatus(
             connected,
@@ -570,7 +578,79 @@ public sealed class EngineProcessSupervisor : IDisposable
             result.TradingEnabled || result.ExecutionEnabled)
         {
             throw new InvalidDataException(
-                "Task 009 manual action response violated simulation-only safety.");
+                "Task 010 manual action response violated simulation-only safety.");
+        }
+
+        return result;
+    }
+
+    public async Task<JournalQueryResult> QueryJournalAsync(
+        IReadOnlyCollection<string>? levels = null,
+        IReadOnlyCollection<string>? sources = null,
+        string? search = null,
+        string dateScope = "TODAY",
+        bool bookmarksOnly = false,
+        int limit = 500,
+        long? beforeSequence = null,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+
+        var payload = new Dictionary<string, object?>
+        {
+            ["levels"] = levels?.ToArray(),
+            ["sources"] = sources?.ToArray(),
+            ["search"] = search,
+            ["date_scope"] = dateScope,
+            ["bookmarks_only"] = bookmarksOnly,
+            ["limit"] = limit,
+            ["before_sequence"] = beforeSequence
+        };
+
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create("journal_query", payload),
+            TimeSpan.FromSeconds(5),
+            cancellationToken);
+
+        if (response.Type != "journal_query_ack")
+            throw new InvalidDataException($"Unexpected journal query response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        var result = JournalQueryResult.FromAck(response.Payload);
+
+        if (result.Ok)
+        {
+            JournalSummary = result.Summary;
+            SetState(State, "Journal query updated.");
+        }
+
+        return result;
+    }
+
+    public async Task<JournalBookmarkResult> SetJournalBookmarkAsync(
+        long sequence,
+        bool bookmarked,
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfDisposed();
+
+        var response = await SendReceiveAsync(
+            ProtocolEnvelope.Create(
+                "journal_bookmark_set",
+                new { sequence, bookmarked }),
+            TimeSpan.FromSeconds(5),
+            cancellationToken);
+
+        if (response.Type != "journal_bookmark_set_ack")
+            throw new InvalidDataException($"Unexpected journal bookmark response: {response.Type}");
+
+        RejectUnexpectedExecutionEnable(response);
+        var result = JournalBookmarkResult.FromAck(response.Payload);
+
+        if (result.Ok)
+        {
+            JournalSummary = result.Summary;
+            SetState(State, "Journal bookmark updated.");
         }
 
         return result;
@@ -712,6 +792,7 @@ public sealed class EngineProcessSupervisor : IDisposable
                 Mt5Bridge,
                 Overview,
                 OrdersPositions,
+                JournalSummary,
                 Configuration,
                 Strategy));
     }

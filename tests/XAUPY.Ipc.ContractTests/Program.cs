@@ -313,4 +313,141 @@ Check(!invalidApply.Applied, "config apply parser rejects invalid");
 Check(invalidApply.Errors.Count == 1, "config apply parser error count");
 Check(invalidApply.Profile is null, "config apply parser no profile on rejection");
 
+var journalHeartbeatPayload = JsonSerializer.SerializeToElement(new
+{
+    journal_summary = new
+    {
+        schema_version = 1,
+        date_scope = "TODAY",
+        total = 12,
+        level_counts = new { INFO = 7, WARN = 2, ERROR = 1, DEBUG = 2 },
+        source_counts = new Dictionary<string, int>
+        {
+            ["MT5"] = 2,
+            ["EA Bridge"] = 2,
+            ["Python Engine"] = 2,
+            ["Strategy"] = 2,
+            ["Orders"] = 2,
+            ["Alerts"] = 1
+        },
+        latest_sequence = 44L,
+        recent_alerts = new[]
+        {
+            new
+            {
+                schema_version = 1,
+                sequence = 43L,
+                event_id = Guid.NewGuid().ToString(),
+                timestamp_utc = "2026-09-25T04:00:00+00:00",
+                level = "WARN",
+                source = "Alerts",
+                tag = "RISK",
+                message = "Safety guard blocked MARKET_BUY",
+                details = new { code = "STALE_MARKET_DATA" },
+                correlation_id = Guid.NewGuid().ToString(),
+                symbol = "XAUUSD",
+                profile_hash = "abc123",
+                bookmarked = false
+            }
+        },
+        bookmarks = new[]
+        {
+            new
+            {
+                schema_version = 1,
+                sequence = 40L,
+                event_id = Guid.NewGuid().ToString(),
+                timestamp_utc = "2026-09-25T03:50:00+00:00",
+                level = "INFO",
+                source = "Orders",
+                tag = "ORDER",
+                message = "Manual action simulation CLOSE_POSITION",
+                details = new { accepted = true },
+                correlation_id = Guid.NewGuid().ToString(),
+                symbol = "XAUUSD",
+                profile_hash = (string?)null,
+                bookmarked = true
+            }
+        },
+        invalid_replay_lines = 1,
+        duplicate_replay_lines = 2
+    }
+});
+
+var journalSummary = JournalSummarySnapshot.FromHeartbeatPayload(journalHeartbeatPayload);
+Check(journalSummary.Total == 12 && journalSummary.LatestSequence == 44, "journal summary counts");
+Check(journalSummary.LevelCounts["WARN"] == 2 && journalSummary.SourceCounts["Orders"] == 2, "journal summary dictionaries");
+Check(journalSummary.RecentAlerts.Count == 1 && journalSummary.RecentAlerts[0].Tag == "RISK", "journal recent alert parser");
+Check(journalSummary.Bookmarks.Count == 1 && journalSummary.Bookmarks[0].Bookmarked, "journal bookmark summary parser");
+Check(journalSummary.InvalidReplayLines == 1 && journalSummary.DuplicateReplayLines == 2, "journal replay integrity counters");
+
+var journalQueryPayload = JsonSerializer.SerializeToElement(new
+{
+    ok = true,
+    journal = new
+    {
+        schema_version = 1,
+        date_scope = "ALL",
+        total_matched = 1,
+        latest_sequence = 44L,
+        invalid_replay_lines = 1,
+        events = new[]
+        {
+            new
+            {
+                schema_version = 1,
+                sequence = 44L,
+                event_id = Guid.NewGuid().ToString(),
+                timestamp_utc = "2026-09-25T04:01:00+00:00",
+                level = "DEBUG",
+                source = "Strategy",
+                tag = "DECISION_TRACE",
+                message = "Strategy evaluation: ARMED_BUY",
+                details = new { direction = "BUY", rsi = 31.2 },
+                correlation_id = Guid.NewGuid().ToString(),
+                symbol = "XAUUSD",
+                profile_hash = "abcdef",
+                bookmarked = false
+            }
+        }
+    },
+    summary = journalHeartbeatPayload.GetProperty("journal_summary"),
+    trading_enabled = false,
+    execution_enabled = false
+});
+
+var journalQuery = JournalQueryResult.FromAck(journalQueryPayload);
+Check(journalQuery.Ok && journalQuery.TotalMatched == 1, "journal query parser");
+Check(journalQuery.Events.Count == 1 && journalQuery.Events[0].Sequence == 44, "journal event row parser");
+Check(journalQuery.Events[0].Details.GetProperty("direction").GetString() == "BUY", "journal structured details parser");
+Check(journalQuery.Summary.Total == 12, "journal query summary parser");
+
+var journalBookmarkPayload = JsonSerializer.SerializeToElement(new
+{
+    ok = true,
+    @event = new
+    {
+        schema_version = 1,
+        sequence = 44L,
+        event_id = journalQuery.Events[0].EventId,
+        timestamp_utc = journalQuery.Events[0].TimestampUtc,
+        level = "DEBUG",
+        source = "Strategy",
+        tag = "DECISION_TRACE",
+        message = "Strategy evaluation: ARMED_BUY",
+        details = new { direction = "BUY" },
+        correlation_id = journalQuery.Events[0].CorrelationId,
+        symbol = "XAUUSD",
+        profile_hash = "abcdef",
+        bookmarked = true
+    },
+    summary = journalHeartbeatPayload.GetProperty("journal_summary"),
+    trading_enabled = false,
+    execution_enabled = false
+});
+
+var journalBookmark = JournalBookmarkResult.FromAck(journalBookmarkPayload);
+Check(journalBookmark.Ok && journalBookmark.Event?.Bookmarked == true, "journal bookmark ack parser");
+Check(journalBookmark.Summary.LatestSequence == 44, "journal bookmark summary parser");
+
 Console.WriteLine($"XAUPY IPC contract self-test complete: {passed} checks passed.");

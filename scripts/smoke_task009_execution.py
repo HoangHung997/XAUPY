@@ -182,7 +182,10 @@ def main() -> int:
 
         heartbeat = exchange(file, "heartbeat")
         assert heartbeat["type"] == "heartbeat_ack"
-        assert heartbeat["payload"]["engine_version"] == "0.9.0-task009"
+        assert heartbeat["payload"]["engine_version"] in {
+            "0.9.0-task009",
+            "0.10.0-task010",
+        }
         assert heartbeat["payload"]["execution_enabled"] is False
 
         bridge = exchange(file, "bridge_snapshot", snapshot())

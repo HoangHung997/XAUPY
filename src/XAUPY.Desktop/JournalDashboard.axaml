@@ -1,0 +1,435 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="XAUPY.Desktop.JournalDashboard">
+  <UserControl.Styles>
+    <Style Selector="Button.sourceFilter">
+      <Setter Property="Background" Value="#081C32"/>
+      <Setter Property="Foreground" Value="#D9E7F5"/>
+      <Setter Property="BorderBrush" Value="#14517A"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="5"/>
+      <Setter Property="Padding" Value="12,8"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+    </Style>
+    <Style Selector="Button.sourceFilter:pointerover">
+      <Setter Property="Background" Value="#0B2A49"/>
+      <Setter Property="BorderBrush" Value="#2374AD"/>
+    </Style>
+    <Style Selector="Button.sourceFilter.activeSource">
+      <Setter Property="Background" Value="#0866F4"/>
+      <Setter Property="BorderBrush" Value="#2D8BFF"/>
+      <Setter Property="Foreground" Value="White"/>
+    </Style>
+    <Style Selector="Button.journalRow">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="0"/>
+      <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+      <Setter Property="CornerRadius" Value="0"/>
+    </Style>
+    <Style Selector="Button.journalRow:pointerover">
+      <Setter Property="Background" Value="#0A2844"/>
+    </Style>
+    <Style Selector="Button.journalRow.selectedRow">
+      <Setter Property="Background" Value="#0759C7"/>
+    </Style>
+    <Style Selector="TextBlock.journalHeader">
+      <Setter Property="Foreground" Value="#B8CCE1"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+  </UserControl.Styles>
+
+  <Grid ColumnDefinitions="3.9*,1.05*" ColumnSpacing="8">
+    <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="8">
+      <!-- Title -->
+      <Border Grid.Row="0" Classes="panel">
+        <Grid ColumnDefinitions="Auto,*" Margin="14,10">
+          <Border Width="34" Height="34"
+                  CornerRadius="4"
+                  BorderBrush="#16A0FF"
+                  BorderThickness="2"
+                  Background="#06243E">
+            <TextBlock Text="▤"
+                       Foreground="#48B8FF"
+                       FontSize="22"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+          </Border>
+          <StackPanel Grid.Column="1" Margin="12,0,0,0">
+            <TextBlock Text="Nhật ký hệ thống"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       Foreground="#DCEBFA"/>
+            <TextBlock Text="Theo dõi hoạt động chi tiết của hệ thống, EA và các thành phần giao dịch"
+                       Classes="dim"
+                       FontSize="12"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Source filters -->
+      <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*,*,*" ColumnSpacing="7">
+        <Button x:Name="SourceAllButton"
+                Grid.Column="0"
+                Classes="sourceFilter activeSource"
+                Tag="ALL"
+                Click="SourceFilter_OnClick">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <TextBlock Text="▥" Foreground="#8FD0FF" FontSize="18" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="Tất cả" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            <Border Grid.Column="2" Background="#154D99" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourceAllCountText" Text="0" FontSize="11"/>
+            </Border>
+          </Grid>
+        </Button>
+
+        <Button x:Name="SourceMt5Button"
+                Grid.Column="1"
+                Classes="sourceFilter"
+                Tag="MT5"
+                Click="SourceFilter_OnClick">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <TextBlock Text="▣" Foreground="#20E08B" FontSize="17" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="MT5" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourceMt5CountText" Text="0" FontSize="11"/>
+            </Border>
+          </Grid>
+        </Button>
+
+        <Button x:Name="SourceBridgeButton"
+                Grid.Column="2"
+                Classes="sourceFilter"
+                Tag="EA Bridge"
+                Click="SourceFilter_OnClick">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <TextBlock Text="⌁" Foreground="#4EA8FF" FontSize="17" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="EA Bridge" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourceBridgeCountText" Text="0" FontSize="11"/>
+            </Border>
+          </Grid>
+        </Button>
+
+        <Button x:Name="SourcePythonButton"
+                Grid.Column="3"
+                Classes="sourceFilter"
+                Tag="Python Engine"
+                Click="SourceFilter_OnClick">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <TextBlock Text="●" Foreground="#FFD34D" FontSize="16" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="Python Engine" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourcePythonCountText" Text="0" FontSize="11"/>
+            </Border>
+          </Grid>
+        </Button>
+
+        <Button x:Name="SourceStrategyButton"
+                Grid.Column="4"
+                Classes="sourceFilter"
+                Tag="Strategy"
+                Click="SourceFilter_OnClick">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <TextBlock Text="▥" Foreground="#1FE090" FontSize="17" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="Strategy" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourceStrategyCountText" Text="0" FontSize="11"/>
+            </Border>
+          </Grid>
+        </Button>
+
+        <Button x:Name="SourceOrdersButton"
+                Grid.Column="5"
+                Classes="sourceFilter"
+                Tag="Orders"
+                Click="SourceFilter_OnClick">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <TextBlock Text="▤" Foreground="#9FD0FF" FontSize="17" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="Orders" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourceOrdersCountText" Text="0" FontSize="11"/>
+            </Border>
+          </Grid>
+        </Button>
+
+        <Button x:Name="SourceAlertsButton"
+                Grid.Column="6"
+                Classes="sourceFilter"
+                Tag="Alerts"
+                Click="SourceFilter_OnClick">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <TextBlock Text="♧" Foreground="#FF5577" FontSize="18" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="1" Text="Alerts" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourceAlertsCountText" Text="0" FontSize="11"/>
+            </Border>
+          </Grid>
+        </Button>
+      </Grid>
+
+      <!-- Level/search/date/actions -->
+      <Border Grid.Row="2" Classes="panel">
+        <Grid ColumnDefinitions="Auto,1.3*,Auto,Auto,Auto,Auto"
+              ColumnSpacing="10"
+              Margin="12,8">
+          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+            <TextBlock Text="Mức độ:" Classes="label" VerticalAlignment="Center"/>
+            <CheckBox x:Name="InfoLevelCheck" Content="INFO" IsChecked="True" Click="LevelFilter_OnClick"/>
+            <CheckBox x:Name="WarnLevelCheck" Content="WARN" IsChecked="True" Click="LevelFilter_OnClick"/>
+            <CheckBox x:Name="ErrorLevelCheck" Content="ERROR" IsChecked="True" Click="LevelFilter_OnClick"/>
+            <CheckBox x:Name="DebugLevelCheck" Content="DEBUG" IsChecked="True" Click="LevelFilter_OnClick"/>
+          </StackPanel>
+
+          <TextBox x:Name="JournalSearchBox"
+                   Grid.Column="1"
+                   PlaceholderText="🔎  Tìm kiếm trong nhật ký..."
+                   TextChanged="JournalSearchBox_OnTextChanged"/>
+
+          <ComboBox x:Name="DateScopeCombo"
+                    Grid.Column="2"
+                    Width="150"
+                    SelectedIndex="0"
+                    SelectionChanged="DateScope_OnSelectionChanged">
+            <ComboBoxItem Content="Hôm nay" Tag="TODAY"/>
+            <ComboBoxItem Content="Tất cả thời gian" Tag="ALL"/>
+          </ComboBox>
+
+          <Button x:Name="BookmarksOnlyButton"
+                  Grid.Column="3"
+                  Classes="secondary"
+                  Content="🔖  Dấu trang"
+                  Click="BookmarksOnly_OnClick"/>
+
+          <Button Grid.Column="4"
+                  Classes="secondary"
+                  Content="⬇  Xuất log"
+                  Click="ExportLog_OnClick"/>
+
+          <Button Grid.Column="5"
+                  Classes="secondary"
+                  Content="↻  Làm mới"
+                  Click="Refresh_OnClick"/>
+        </Grid>
+      </Border>
+
+      <!-- Main log table -->
+      <Border Grid.Row="3" Classes="panel">
+        <Grid RowDefinitions="Auto,*">
+          <Grid Grid.Row="0"
+                Background="#082038"
+                ColumnDefinitions="64,160,110,150,*,135"
+                Margin="0">
+            <TextBlock Text="#" Classes="journalHeader" Margin="12,8"/>
+            <TextBlock Grid.Column="1" Text="Thời gian" Classes="journalHeader" Margin="10,8"/>
+            <TextBlock Grid.Column="2" Text="Mức độ" Classes="journalHeader" Margin="10,8"/>
+            <TextBlock Grid.Column="3" Text="Nguồn" Classes="journalHeader" Margin="10,8"/>
+            <TextBlock Grid.Column="4" Text="Thông điệp" Classes="journalHeader" Margin="10,8"/>
+            <TextBlock Grid.Column="5" Text="Tag" Classes="journalHeader" Margin="10,8"/>
+          </Grid>
+
+          <ScrollViewer Grid.Row="1"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Disabled">
+            <StackPanel x:Name="JournalRowsHost"/>
+          </ScrollViewer>
+        </Grid>
+      </Border>
+
+      <!-- Selected detail -->
+      <Border Grid.Row="4" Classes="panel" MinHeight="150">
+        <Grid RowDefinitions="Auto,*">
+          <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="*,Auto">
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,7">
+              <TextBlock Text="▤" Foreground="#86C8FF"/>
+              <TextBlock Text="Chi tiết nhật ký" Classes="panelTitle"/>
+            </StackPanel>
+            <TextBlock x:Name="DetailBookmarkText"
+                       Grid.Column="1"
+                       Text="Chưa chọn dòng"
+                       Classes="dim"
+                       VerticalAlignment="Center"
+                       Margin="0,0,12,0"/>
+          </Grid>
+
+          <Grid Grid.Row="1"
+                ColumnDefinitions="310,1,*"
+                ColumnSpacing="18"
+                Margin="14,10">
+            <Grid Grid.Column="0"
+                  ColumnDefinitions="105,*"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                  RowSpacing="5">
+              <TextBlock Grid.Row="0" Text="Thời gian:" Classes="label"/>
+              <TextBlock x:Name="DetailTimeText" Grid.Row="0" Grid.Column="1" Text="—"/>
+
+              <TextBlock Grid.Row="1" Text="Mức độ:" Classes="label"/>
+              <TextBlock x:Name="DetailLevelText" Grid.Row="1" Grid.Column="1" Text="—"/>
+
+              <TextBlock Grid.Row="2" Text="Nguồn:" Classes="label"/>
+              <TextBlock x:Name="DetailSourceText" Grid.Row="2" Grid.Column="1" Text="—"/>
+
+              <TextBlock Grid.Row="3" Text="Tag:" Classes="label"/>
+              <TextBlock x:Name="DetailTagText" Grid.Row="3" Grid.Column="1" Text="—"/>
+
+              <TextBlock Grid.Row="4" Text="ID dòng:" Classes="label"/>
+              <TextBlock x:Name="DetailSequenceText" Grid.Row="4" Grid.Column="1" Text="—"/>
+            </Grid>
+
+            <Border Grid.Column="1" Width="1" Background="#24506F"/>
+
+            <Grid Grid.Column="2" RowDefinitions="Auto,*">
+              <Grid ColumnDefinitions="105,*">
+                <TextBlock Text="Thông điệp:" Classes="label"/>
+                <TextBlock x:Name="DetailMessageText"
+                           Grid.Column="1"
+                           Text="Chọn một dòng để xem chi tiết."
+                           TextWrapping="Wrap"/>
+              </Grid>
+
+              <Grid Grid.Row="1" ColumnDefinitions="105,*" Margin="0,8,0,0">
+                <TextBlock Text="Chi tiết đầy đủ:" Classes="label"/>
+                <Border Grid.Column="1"
+                        Classes="panelSoft"
+                        Padding="10,7">
+                  <TextBlock x:Name="DetailJsonText"
+                             Text="—"
+                             FontFamily="Consolas"
+                             FontSize="11"
+                             Foreground="#B6CBE0"
+                             TextWrapping="Wrap"/>
+                </Border>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- Right rail -->
+    <StackPanel Grid.Column="1" Spacing="8">
+      <Border Classes="panel">
+        <StackPanel>
+          <Grid Background="#082038" ColumnDefinitions="*,Auto">
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,8">
+              <TextBlock Text="▣" Foreground="#55B8FF"/>
+              <TextBlock Text="Tổng quan nhật ký" Classes="panelTitle"/>
+            </StackPanel>
+            <TextBlock x:Name="SummaryScopeText"
+                       Grid.Column="1"
+                       Text="Hôm nay"
+                       Classes="dim"
+                       VerticalAlignment="Center"
+                       Margin="0,0,12,0"/>
+          </Grid>
+
+          <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="6" RowSpacing="6" Margin="10">
+            <Border Grid.Row="0" Grid.Column="0" Classes="panelSoft" Padding="12">
+              <Grid ColumnDefinitions="Auto,*">
+                <Border Width="42" Height="42" CornerRadius="21" Background="#0A7BE9">
+                  <TextBlock Text="i" FontSize="27" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                  <TextBlock Text="INFO" Classes="label"/>
+                  <TextBlock x:Name="InfoCountText" Text="0" FontSize="22" FontWeight="Bold" Foreground="#3DA5FF"/>
+                </StackPanel>
+              </Grid>
+            </Border>
+
+            <Border Grid.Row="0" Grid.Column="1" Classes="panelSoft" Padding="12">
+              <Grid ColumnDefinitions="Auto,*">
+                <Border Width="42" Height="42" CornerRadius="21" Background="#594A07">
+                  <TextBlock Text="!" FontSize="25" FontWeight="Bold" Foreground="#FFD34D" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                  <TextBlock Text="WARN" Classes="label"/>
+                  <TextBlock x:Name="WarnCountText" Text="0" FontSize="22" FontWeight="Bold" Foreground="#FFD34D"/>
+                </StackPanel>
+              </Grid>
+            </Border>
+
+            <Border Grid.Row="1" Grid.Column="0" Classes="panelSoft" Padding="12">
+              <Grid ColumnDefinitions="Auto,*">
+                <Border Width="42" Height="42" CornerRadius="21" Background="#5B1A27">
+                  <TextBlock Text="×" FontSize="30" FontWeight="Bold" Foreground="#FF5B72" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                  <TextBlock Text="ERROR" Classes="label"/>
+                  <TextBlock x:Name="ErrorCountText" Text="0" FontSize="22" FontWeight="Bold" Foreground="#FF5B72"/>
+                </StackPanel>
+              </Grid>
+            </Border>
+
+            <Border Grid.Row="1" Grid.Column="1" Classes="panelSoft" Padding="12">
+              <Grid ColumnDefinitions="Auto,*">
+                <Border Width="42" Height="42" CornerRadius="21" Background="#16476E">
+                  <TextBlock Text="⚙" FontSize="24" Foreground="#7DC7FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                  <TextBlock Text="DEBUG" Classes="label"/>
+                  <TextBlock x:Name="DebugCountText" Text="0" FontSize="22" FontWeight="Bold" Foreground="#75BFFF"/>
+                </StackPanel>
+              </Grid>
+            </Border>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="panel">
+        <StackPanel>
+          <Grid Background="#082038" ColumnDefinitions="*,Auto">
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,8">
+              <TextBlock Text="♧" Foreground="#FFD34D" FontSize="17"/>
+              <TextBlock Text="Cảnh báo gần đây" Classes="panelTitle"/>
+            </StackPanel>
+            <Button Grid.Column="1"
+                    Classes="secondary"
+                    Content="Xem tất cả"
+                    Click="ShowAlerts_OnClick"
+                    Margin="0,4,8,4"/>
+          </Grid>
+          <StackPanel x:Name="RecentAlertsHost" Margin="8,4,8,8"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="panel">
+        <StackPanel>
+          <Grid Background="#082038" ColumnDefinitions="*,Auto">
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,8">
+              <TextBlock Text="🔖" Foreground="#FFD34D"/>
+              <TextBlock Text="Dấu trang (Bookmarks)" Classes="panelTitle"/>
+            </StackPanel>
+            <Button Grid.Column="1"
+                    Classes="secondary"
+                    Content="Xem tất cả"
+                    Click="ShowBookmarks_OnClick"
+                    Margin="0,4,8,4"/>
+          </Grid>
+
+          <StackPanel x:Name="BookmarksHost" Margin="8,4,8,6"/>
+
+          <Button Content="+  Thêm dấu trang hiện tại"
+                  Classes="secondary"
+                  Margin="8,0,8,8"
+                  Click="ToggleSelectedBookmark_OnClick"/>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="panelSoft" Padding="10">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Tính toàn vẹn replay" Classes="label"/>
+          <TextBlock x:Name="ReplayIntegrityText"
+                     Text="Invalid: 0 • Duplicate: 0"
+                     FontSize="11"
+                     Foreground="#86A0BA"/>
+          <TextBlock x:Name="JournalStatusText"
+                     Text="Đang chờ Engine..."
+                     FontSize="11"
+                     Foreground="#FFD34D"
+                     TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </Grid>
+</UserControl>

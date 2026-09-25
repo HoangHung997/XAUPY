@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-009 DONE. XAUPY-010 vẫn PLANNED và chưa bắt đầu.
+Trạng thái hiện tại: TASK XAUPY-010 DONE. XAUPY-011 vẫn PLANNED và chưa bắt đầu.
 
 ## Tài liệu bắt buộc
 
@@ -24,6 +24,8 @@ Trạng thái hiện tại: TASK XAUPY-009 DONE. XAUPY-010 vẫn PLANNED và ch�
 - [Task 008 acceptance](docs/TASK008_STRATEGY_MONITORING_TEST.md)
 - [Task 009 Orders & Positions spec](docs/TASK009_ORDERS_POSITIONS_SPEC.md)
 - [Task 009 acceptance](docs/TASK009_ORDERS_POSITIONS_TEST.md)
+- [Task 010 structured Journal spec](docs/TASK010_STRUCTURED_LOGGING_JOURNAL_SPEC.md)
+- [Task 010 acceptance](docs/TASK010_STRUCTURED_LOGGING_JOURNAL_TEST.md)
 - [UI reference](docs/ui-reference/README.md)
 
 ## Nguyên tắc triển khai
@@ -158,4 +160,38 @@ Final Task 009 evidence:
 - verified Windows x64 artifact: XAUPY-Task009-win-x64;
 - direct build SHA-256: fcd3ec52ac23453605758573d2f07c176f61218cdcb159d61792a2303437b41a.
 
-XAUPY-010 chưa bắt đầu.
+
+
+## Task 010 đã hoàn thành
+
+Phạm vi:
+
+- persistent structured journal schema v1 theo dạng append-only JSONL;
+- replay/sequence continuation qua restart và bỏ qua dòng hỏng có đếm lỗi;
+- bookmark sidecar persisted;
+- CSV mirror tùy chọn theo `logging.csv_enabled`;
+- log evidence cho MT5, EA Bridge, Python Engine, Strategy, Orders và Alerts;
+- decision trace được deduplicate theo closed-bar/decision change, không log spam mỗi timer;
+- heartbeat chỉ mang journal summary nhỏ;
+- query/search/filter/date/bookmark qua IPC;
+- tab **Nhật ký** full-width bám `docs/ui-reference/Tab Nhật Kí.png`;
+- source filters đúng mockup, INFO/WARN/ERROR/DEBUG, search, date scope,
+  log table, structured detail, summary, recent alerts, bookmarks và JSONL export;
+- không hard-code message/số liệu mẫu từ ảnh;
+- broker execution vẫn hard-locked.
+
+Final Task 010 evidence:
+
+- 146/146 Python regression/source tests PASS;
+- 53/53 C# IPC/journal checks PASS;
+- Avalonia Release build: 0 warnings / 0 errors;
+- packaged Task 010 structured journal replay/bookmark smoke: PASS;
+- packaged Task 009 execution-simulation regression smoke: PASS;
+- packaged Task 007 strategy/safety regression smoke: PASS;
+- packaged Config regression smoke: PASS;
+- MetaEditor Bridge regression: 0 errors / 0 warnings;
+- verified Windows x64 artifact: XAUPY-Task010-win-x64;
+- branch direct build SHA-256:
+  9cf6f5bb97f4328f0dcff0cb1d975d9cc6a66f253f978dd808d52d2d3b61eee8.
+
+XAUPY-011 chưa bắt đầu.

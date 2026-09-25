@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private readonly StrategyDashboard _strategyDashboard;
     private readonly MonitoringDashboard _monitoringDashboard;
     private readonly OrdersPositionsDashboard _ordersPositionsDashboard;
+    private readonly JournalDashboard _journalDashboard;
     private readonly List<double> _priceHistory = new();
     private readonly Queue<string> _quickLogs = new();
     private readonly DispatcherTimer _clockTimer;
@@ -57,7 +58,7 @@ public partial class MainWindow : Window
                 "NavOptimization"),
             ["logs"] = (
                 "Nhật ký",
-                "Structured trading journal thuộc Task 010.",
+                "Structured journal persisted/replay: MT5, Bridge, Engine, Strategy, Orders, Alerts, filter/search/bookmark.",
                 "NavLogs"),
             ["tools"] = (
                 "Công cụ",
@@ -86,6 +87,9 @@ public partial class MainWindow : Window
         _ordersPositionsDashboard = this.FindControl<OrdersPositionsDashboard>("OrdersPositionsDashboard")
             ?? throw new InvalidOperationException("OrdersPositionsDashboard missing.");
         _ordersPositionsDashboard.AttachSupervisor(_engineSupervisor);
+        _journalDashboard = this.FindControl<JournalDashboard>("JournalDashboard")
+            ?? throw new InvalidOperationException("JournalDashboard missing.");
+        _journalDashboard.AttachSupervisor(_engineSupervisor);
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clockTimer.Tick += (_, _) => UpdateClock();
@@ -125,6 +129,7 @@ public partial class MainWindow : Window
         bool strategy = string.Equals(key, "strategy", StringComparison.Ordinal);
         bool monitoring = string.Equals(key, "monitoring", StringComparison.Ordinal);
         bool orders = string.Equals(key, "orders", StringComparison.Ordinal);
+        bool logs = string.Equals(key, "logs", StringComparison.Ordinal);
         bool liveSidebar = overview || strategy || monitoring;
 
         this.FindControl<ScrollViewer>("OverviewScroll")!.IsVisible = overview;
@@ -134,18 +139,23 @@ public partial class MainWindow : Window
         _strategyDashboard.IsVisible = strategy;
         _monitoringDashboard.IsVisible = monitoring;
         _ordersPositionsDashboard.IsVisible = orders;
+        _journalDashboard.IsVisible = logs;
         this.FindControl<Border>("PlaceholderContent")!.IsVisible =
-            !overview && !configuration && !strategy && !monitoring && !orders;
+            !overview && !configuration && !strategy && !monitoring && !orders && !logs;
 
         if (configuration)
         {
             _ = _configurationEditor.EnsureLoadedAsync();
         }
-        else if (!overview && !strategy && !monitoring && !orders)
+        else if (logs)
+        {
+            _ = _journalDashboard.EnsureLoadedAsync(force: true);
+        }
+        else if (!overview && !strategy && !monitoring && !orders && !logs)
         {
             FindText("PlaceholderTitle").Text = $"{page.Title} — chưa triển khai";
             FindText("PlaceholderDetail").Text =
-                $"Task 009 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát + Lệnh & Vị thế. {page.Subtitle}";
+                $"Task 010 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát + Lệnh & Vị thế + Nhật ký. {page.Subtitle}";
         }
     }
 
@@ -226,6 +236,7 @@ public partial class MainWindow : Window
         _strategyDashboard.Apply(e.Strategy, e.Configuration);
         _monitoringDashboard.Apply(e.Strategy, e.Overview, e.Mt5Bridge, e.Configuration);
         _ordersPositionsDashboard.Apply(e.OrdersPositions, e.Overview, e.Mt5Bridge, e.Configuration);
+        _journalDashboard.ApplySummary(e.JournalSummary);
         ApplyOrdersFooter(e.OrdersPositions);
         _ = _configurationEditor.NotifyEngineStateAsync(e.State);
     }

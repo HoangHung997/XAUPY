@@ -1,6 +1,6 @@
 # XAUPY IPC Protocol v1
 
-Status: extended by Task XAUPY-009
+Status: extended by Task XAUPY-010
 Transport: TCP loopback
 Default endpoint: 127.0.0.1:39421
 Framing: UTF-8 JSON Lines, one JSON object per line
@@ -16,6 +16,7 @@ Task 004 adds canonical configuration schema/defaults/validation messages.
 Task 006 adds active-profile get/set lifecycle for the Avalonia Configuration editor.
 Task 007 adds read-only deterministic strategy state projected from real closed-bar Bridge data.
 Task 009 adds strategy-owned ticket/order/deal projection plus guarded manual-action simulation.
+Task 010 adds persistent structured journal summary/query/bookmark messages.
 
 ## 2. Security boundary
 
@@ -50,7 +51,8 @@ heartbeat → heartbeat_ack
 shutdown → shutdown_ack
 
 heartbeat_ack includes MT5 bridge health from Task 003, Overview projection from
-Task 005, Task 007 strategy projection, and Task 009 orders_positions projection.
+Task 005, Task 007 strategy projection, Task 009 orders_positions projection,
+and a compact Task 010 journal_summary.
 
 The strategy object includes read-only state such as state, blocked_reason,
 profile_hash, exact strategy timeframes, direction, armed_side, signal_sequence,
@@ -123,7 +125,73 @@ Task 009 is simulation-only. Every ack keeps:
 No automatic retry is performed. trade_intent remains unsupported and the MQL5
 Bridge still contains no broker mutation path.
 
-## 6. Configuration messages
+## 6. Task 010 structured journal messages
+
+The Engine persists journal schema v1 as append-only UTF-8 JSON Lines and keeps
+bookmark state separately. Desktop does not receive the full journal on every
+heartbeat.
+
+### heartbeat journal_summary
+
+heartbeat_ack adds journal_summary:
+
+- schema_version;
+- date_scope;
+- total;
+- level_counts for INFO/WARN/ERROR/DEBUG;
+- source_counts for MT5/EA Bridge/Python Engine/Strategy/Orders/Alerts;
+- latest_sequence;
+- recent_alerts;
+- bookmarks;
+- invalid_replay_lines;
+- duplicate_replay_lines.
+
+### journal_query
+
+Request:
+
+{
+  "levels": ["INFO", "WARN", "ERROR", "DEBUG"],
+  "sources": ["Strategy", "Orders"],
+  "search": "optional text",
+  "date_scope": "TODAY",
+  "bookmarks_only": false,
+  "limit": 500,
+  "before_sequence": null
+}
+
+Response:
+
+journal_query_ack
+
+with ok, journal and summary. journal.events contains persisted structured
+records with sequence, event_id, timestamp_utc, level, source, tag, message,
+details, correlation_id, symbol, profile_hash and bookmarked.
+
+Filtering is deterministic. Empty level/source arrays mean match no events.
+TODAY uses the Engine machine local calendar day; ALL ignores the date filter.
+
+### journal_bookmark_set
+
+Request:
+
+{
+  "sequence": 42,
+  "bookmarked": true
+}
+
+Response:
+
+journal_bookmark_set_ack
+
+with ok, the updated event and current summary.
+
+Journal IPC never changes trading state. All responses keep
+trading_enabled=false and execution_enabled=false.
+
+
+
+## 7. Configuration messages
 
 ### config_schema_get
 
@@ -202,13 +270,13 @@ with:
 
 A profile attempting to set execution.allow_real_account=true, execution.demo_only=false, max retry > 0 or disable mandatory safety values is rejected.
 
-## 7. MT5 .set file conversion
+## 8. MT5 .set file conversion
 
 File conversion itself is implemented in the Python config backend and packaged xaupy-config.exe, rather than transmitting arbitrary file paths over IPC.
 
 This keeps IPC messages data-oriented and allows the future Avalonia UI to choose files locally, parse them through the Engine/backend and present a preview.
 
-## 8. Compatibility
+## 9. Compatibility
 
 - Unknown schema_version is rejected.
 - New optional payload fields may be ignored by an older peer.

@@ -1,0 +1,23 @@
+name: Task 012 - UI Reference Extract
+
+on:
+  push:
+    branches:
+      - 'task/012-optimizer-walk-forward'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload approved Optimizer UI reference
+        uses: actions/upload-artifact@v4
+        with:
+          name: XAUPY-Task012-UI-reference
+          path: 'docs/ui-reference/Tab Tối Ưu.png'
+          if-no-files-found: error
+          retention-days: 2

@@ -59,6 +59,35 @@ class StructuredJournalTests(unittest.TestCase):
             self.assertEqual(1, json.loads(lines[0])["sequence"])
             self.assertEqual(2, json.loads(lines[1])["sequence"])
 
+    def test_optional_csv_mirror_has_one_header_and_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = self.make_store(tmp)
+            store.append(
+                "INFO",
+                "System",
+                "SYSTEM",
+                "first",
+                details={"a": 1},
+                mirror_csv=True,
+            )
+            store.append(
+                "WARN",
+                "Alerts",
+                "RISK",
+                "second",
+                details={"b": "x"},
+                mirror_csv=True,
+            )
+
+            csv_lines = pathlib.Path(tmp, "journal-v1.csv").read_text(
+                encoding="utf-8"
+            ).splitlines()
+            self.assertEqual(3, len(csv_lines))
+            self.assertTrue(csv_lines[0].startswith("sequence,timestamp_utc,level"))
+            self.assertEqual(1, csv_lines[0].count("sequence"))
+            self.assertIn(",INFO,System,SYSTEM,first,", csv_lines[1])
+            self.assertIn(",WARN,Alerts,RISK,second,", csv_lines[2])
+
     def test_schema_rejects_invalid_level_source_tag_and_details(self):
         with tempfile.TemporaryDirectory() as tmp:
             store = self.make_store(tmp)

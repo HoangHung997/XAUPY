@@ -621,6 +621,10 @@ public partial class OptimizerDashboard : UserControl
 
         Progress("OptimizerProgressBar").Value = Math.Clamp(_status.ProgressPct, 0, 100);
         Text("OptimizerProgressText").Text = $"{_status.ProgressPct:0.0}%";
+        Text("TotalWorkLabelText").Text =
+            string.Equals(_status.Mode, "WALK_FORWARD", StringComparison.Ordinal)
+                ? "Tổng công việc"
+                : "Tổng tổ hợp";
         Text("TotalWorkText").Text = _status.TotalWork.ToString("N0");
         Text("CompletedWorkText").Text = _status.CompletedWork.ToString("N0");
         Text("InFlightText").Text = _status.InFlight.ToString("N0");

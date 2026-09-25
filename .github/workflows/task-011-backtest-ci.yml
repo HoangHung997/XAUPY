@@ -1,0 +1,23 @@
+name: Task 011 - UI Reference Extract
+
+on:
+  push:
+    branches:
+      - 'task/011-backtest-parity'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload approved Backtest UI reference
+        uses: actions/upload-artifact@v4
+        with:
+          name: XAUPY-Task011-UI-reference
+          path: 'docs/ui-reference/Tab BackTest.png'
+          if-no-files-found: error
+          retention-days: 2

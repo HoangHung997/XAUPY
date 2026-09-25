@@ -1,0 +1,23 @@
+name: Task 010 - UI Reference Extract
+
+on:
+  push:
+    branches:
+      - 'task/010-structured-logging-journal'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload approved Journal UI reference
+        uses: actions/upload-artifact@v4
+        with:
+          name: XAUPY-Task010-UI-reference
+          path: 'docs/ui-reference/Tab Nhật Kí.png'
+          if-no-files-found: error
+          retention-days: 2

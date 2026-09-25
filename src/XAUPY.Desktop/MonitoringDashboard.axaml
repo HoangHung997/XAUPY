@@ -131,7 +131,7 @@
                 <StackPanel HorizontalAlignment="Center">
                   <TextBlock Text="Z-Score" Classes="label"/>
                   <Border Width="74" Height="38" CornerRadius="37,37,0,0" BorderBrush="#4C9BFF" BorderThickness="7,7,7,0" Margin="0,8,0,0"/>
-                  <TextBlock x:Name="MonitorPbRsiText" Text="—" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                  <TextBlock x:Name="MonitorPbZText" Text="—" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
                   <TextBlock Text="Pullback" Classes="dim" FontSize="10"/>
                 </StackPanel>
               </Border>

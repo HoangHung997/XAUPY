@@ -541,6 +541,38 @@ class OptimizerEngine:
             commission_per_lot=self.commission_per_lot,
         )
 
+    def _validate_dataset_range(
+        self,
+        dataset: HistoricalDataset,
+        from_date: str,
+        to_date: str,
+    ) -> tuple[date, date]:
+        if dataset.metadata.symbol != self.base_profile["strategy"]["symbol"]:
+            raise OptimizerError(
+                f"dataset symbol {dataset.metadata.symbol} does not match "
+                f"profile symbol {self.base_profile['strategy']['symbol']}"
+            )
+
+        try:
+            start = date.fromisoformat(str(from_date))
+            end = date.fromisoformat(str(to_date))
+        except ValueError as exc:
+            raise OptimizerError(
+                "optimizer dates must be YYYY-MM-DD"
+            ) from exc
+
+        if end < start:
+            raise OptimizerError("to_date must be >= from_date")
+
+        if not any(
+            start <= dataset.local_date(bar.time) <= end
+            for bar in dataset.bars
+        ):
+            raise OptimizerError(
+                "requested optimizer date range contains no M1 bars"
+            )
+        return start, end
+
     def run_sweep(
         self,
         dataset: HistoricalDataset,
@@ -552,6 +584,7 @@ class OptimizerEngine:
         progress: Callable[[int, int, int], None] | None = None,
     ) -> dict[str, Any]:
         self._cancel_event = cancel_event
+        self._validate_dataset_range(dataset, from_date, to_date)
         combinations = parameter_combinations(parameter_ranges)
         total = len(combinations)
         if cancel_event is not None and cancel_event.is_set():
@@ -740,6 +773,7 @@ class OptimizerEngine:
         cancel_event: threading.Event | None = None,
         progress: Callable[[int, int, int, int, str], None] | None = None,
     ) -> dict[str, Any]:
+        self._validate_dataset_range(dataset, from_date, to_date)
         plan = build_walk_forward_plan(
             dataset,
             from_date=from_date,

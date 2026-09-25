@@ -1,122 +1,138 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="XAUPY.Desktop.ConfigurationEditor">
-  <UserControl.Styles>
-    <Style Selector="Button.configAction">
-      <Setter Property="Background" Value="#123B66"/>
-      <Setter Property="Foreground" Value="#E8F4FF"/>
-      <Setter Property="BorderBrush" Value="#245F96"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="7"/>
-      <Setter Property="Padding" Value="12,8"/>
-      <Setter Property="Margin" Value="0,0,7,7"/>
-    </Style>
-    <Style Selector="Border.configCard">
-      <Setter Property="Background" Value="#0C1929"/>
-      <Setter Property="BorderBrush" Value="#193956"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="10"/>
-      <Setter Property="Padding" Value="15"/>
-    </Style>
-    <Style Selector="TextBlock.configMuted">
-      <Setter Property="Foreground" Value="#8097AE"/>
-    </Style>
-  </UserControl.Styles>
+  <Grid ColumnDefinitions="270,*" ColumnSpacing="8">
+    <!-- Approved configuration category rail -->
+    <Border Grid.Column="0" Classes="panel">
+      <Grid RowDefinitions="Auto,*,Auto">
+        <Border Grid.Row="0" Background="#082038" Padding="12,8">
+          <TextBlock Text="Danh mục cấu hình" Classes="panelTitle"/>
+        </Border>
 
-  <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
-    <Border Grid.Row="0" Classes="configCard">
-      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
-        <StackPanel Grid.Column="0" Spacing="4">
-          <TextBlock Text="Trung tâm cấu hình đầy đủ"
-                     FontSize="21"
-                     FontWeight="SemiBold"/>
-          <TextBlock Text="Schema-driven editor: toàn bộ tham số từ Python Engine, không hard-code số lượng field trong UI."
-                     Classes="configMuted"
-                     TextWrapping="Wrap"/>
-          <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,6,0,0">
-            <TextBlock x:Name="ProfileNameText" Text="Profile: —" Foreground="#59D9FF"/>
-            <TextBlock x:Name="DirtyStateText" Text="UNCHANGED" Foreground="#69D48C"/>
-            <TextBlock x:Name="ValidationStateText" Text="NOT VALIDATED" Foreground="#E9C46A"/>
-            <TextBlock x:Name="FieldCountText" Text="0 tham số" Classes="configMuted"/>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Margin="8" Spacing="3">
+            <Button Classes="navTab active" HorizontalContentAlignment="Left">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="🛡" FontSize="18"/><StackPanel><TextBlock Text="Khởi tạo &amp; an toàn" FontWeight="SemiBold"/><TextBlock Text="Tài khoản, lot, rủi ro, giới hạn" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            </Button>
+            <Button Classes="navTab" HorizontalContentAlignment="Left">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="⇄" FontSize="18"/><StackPanel><TextBlock Text="Hướng giao dịch" FontWeight="SemiBold"/><TextBlock Text="Chỉ buy/sell hoặc 2 chiều" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            </Button>
+            <Button Classes="navTab" HorizontalContentAlignment="Left">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="⌁" FontSize="18"/><StackPanel><TextBlock Text="Nhận diện nhịp hồi" FontWeight="SemiBold"/><TextBlock Text="Pullback &amp; điều kiện hồi" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            </Button>
+            <Button Classes="navTab" HorizontalContentAlignment="Left">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="✓" FontSize="18"/><StackPanel><TextBlock Text="Xác nhận vào lệnh" FontWeight="SemiBold"/><TextBlock Text="Chỉ báo &amp; tín hiệu trigger" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            </Button>
+            <Button Classes="navTab" HorizontalContentAlignment="Left">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="🛡" FontSize="18"/><StackPanel><TextBlock Text="Stop loss" FontWeight="SemiBold"/><TextBlock Text="SL structure / fixed / ATR" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            </Button>
+            <Button Classes="navTab" HorizontalContentAlignment="Left">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="◎" FontSize="18"/><StackPanel><TextBlock Text="Take profit" FontWeight="SemiBold"/><TextBlock Text="TP fixed / dynamic" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            </Button>
+            <Button Classes="navTab" HorizontalContentAlignment="Left">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="⚙" FontSize="18"/><StackPanel><TextBlock Text="Quản lý sau vào" FontWeight="SemiBold"/><TextBlock Text="BE, trailing, scale out" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            </Button>
+            <Button Classes="navTab" HorizontalContentAlignment="Left">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="◷" FontSize="18"/><StackPanel><TextBlock Text="Phiên giao dịch" FontWeight="SemiBold"/><TextBlock Text="Khung giờ, bộ lọc phiên" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            </Button>
+            <Button Classes="navTab" HorizontalContentAlignment="Left">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="▤" FontSize="18"/><StackPanel><TextBlock Text="Lọc tin" FontWeight="SemiBold"/><TextBlock Text="Tin tức, thời gian tránh giao dịch" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            </Button>
+            <Button Classes="navTab" HorizontalContentAlignment="Left">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="▱" FontSize="18"/><StackPanel><TextBlock Text="MTF Pullback" FontWeight="SemiBold"/><TextBlock Text="Đa khung thời gian - Pullback" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            </Button>
+            <Button Classes="navTab" HorizontalContentAlignment="Left">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="▱" FontSize="18"/><StackPanel><TextBlock Text="MTF Trigger" FontWeight="SemiBold"/><TextBlock Text="Đa khung thời gian - Trigger" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            </Button>
           </StackPanel>
-        </StackPanel>
+        </ScrollViewer>
 
-        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-          <Border Background="#302B17"
-                  BorderBrush="#6A5C24"
-                  BorderThickness="1"
-                  CornerRadius="10"
-                  Padding="10,5">
-            <TextBlock Text="REAL ACCOUNT LOCKED"
-                       Foreground="#E9C46A"
-                       FontWeight="Bold"/>
-          </Border>
-        </StackPanel>
+        <Border Grid.Row="2" Classes="panelSoft" Margin="8" Padding="10">
+          <StackPanel Spacing="5">
+            <TextBlock Text="Cấu hình hiện tại" FontWeight="SemiBold"/>
+            <Grid ColumnDefinitions="Auto,*">
+              <TextBlock Text="Profile:" Classes="dim"/><TextBlock x:Name="ProfileNameText" Grid.Column="1" Text="—" Foreground="#18E58B" Margin="8,0,0,0"/>
+            </Grid>
+            <TextBlock x:Name="DirtyStateText" Text="UNCHANGED" Foreground="#18E58B" FontSize="11"/>
+            <TextBlock x:Name="ValidationStateText" Text="NOT VALIDATED" Foreground="#FFD34D" FontSize="11"/>
+            <TextBlock x:Name="FieldCountText" Text="0 tham số" Classes="dim" FontSize="11"/>
+          </StackPanel>
+        </Border>
       </Grid>
     </Border>
 
-    <Border Grid.Row="1" Classes="configCard">
-      <StackPanel>
-        <WrapPanel>
-          <Button Classes="configAction" Content="Mặc định" Click="Defaults_OnClick"/>
-          <Button Classes="configAction" Content="Hoàn tác Active" Click="ReloadActive_OnClick"/>
-          <Button Classes="configAction" Content="Xác thực" Click="Validate_OnClick"/>
-          <Button Classes="configAction" Content="Áp dụng Active" Click="Apply_OnClick"/>
-          <Button Classes="configAction" Content="Mở JSON" Click="LoadJson_OnClick"/>
-          <Button Classes="configAction" Content="Lưu JSON" Click="SaveJson_OnClick"/>
-          <Button Classes="configAction" Content="Nhập .set" Click="ImportSet_OnClick"/>
-          <Button Classes="configAction" Content="Xuất .set" Click="ExportSet_OnClick"/>
-        </WrapPanel>
-
-        <Grid ColumnDefinitions="1.5*,1*,1*,1*" ColumnSpacing="10" Margin="0,8,0,0">
-          <StackPanel Grid.Column="0">
-            <TextBlock Text="Tìm tham số" Classes="configMuted" FontSize="12"/>
-            <TextBox x:Name="SearchBox"
-                     PlaceholderText="Tên, path, mô tả, .set key..."
-                     TextChanged="SearchBox_OnTextChanged"/>
+    <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*" RowSpacing="8">
+      <!-- Approved profile/header toolbar -->
+      <Border Grid.Row="0" Classes="panel">
+        <Grid ColumnDefinitions="1.6*,0.9*,Auto" Padding="12,8" ColumnSpacing="10">
+          <StackPanel>
+            <TextBlock Text="Cấu hình chiến lược giao dịch" FontSize="20" FontWeight="SemiBold"/>
+            <TextBlock Text="Thiết lập đầy đủ thông số cho hệ thống giao dịch tự động - XAUUSD" Classes="dim" FontSize="12"/>
           </StackPanel>
 
           <StackPanel Grid.Column="1">
-            <TextBlock Text="Direction TF" Classes="configMuted" FontSize="12"/>
-            <TextBlock x:Name="DirectionQuickValue" Text="M30" FontSize="19" FontWeight="SemiBold"/>
+            <TextBlock Text="Chọn profile" Classes="dim" FontSize="10"/>
+            <Border Classes="panelSoft" Padding="10,7">
+              <TextBlock x:Name="ProfileHeaderText" Text="Active profile từ Python Engine"/>
+            </Border>
           </StackPanel>
 
-          <StackPanel Grid.Column="2">
-            <TextBlock Text="Pullback TF" Classes="configMuted" FontSize="12"/>
-            <TextBlock x:Name="PullbackQuickValue" Text="M5" FontSize="19" FontWeight="SemiBold"/>
-          </StackPanel>
+          <WrapPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <Button Classes="primary" Content="💾  Lưu JSON" Click="SaveJson_OnClick" Margin="0,0,6,6"/>
+            <Button Classes="secondary" Content="💾  Lưu thành..." Click="SaveJson_OnClick" Margin="0,0,6,6"/>
+            <Button Classes="secondary" Content="🗑  Mặc định" Click="Defaults_OnClick" Margin="0,0,6,6"/>
+            <Button Classes="secondary" Content="⬆  Nhập JSON" Click="LoadJson_OnClick" Margin="0,0,6,6"/>
+            <Button Classes="secondary" Content="⬇  Xuất .set" Click="ExportSet_OnClick" Margin="0,0,6,6"/>
+            <Button Classes="secondary" Content="⬆  Nhập .set" Click="ImportSet_OnClick" Margin="0,0,0,6"/>
+          </WrapPanel>
+        </Grid>
+      </Border>
 
-          <StackPanel Grid.Column="3">
-            <TextBlock Text="Trigger TF" Classes="configMuted" FontSize="12"/>
-            <TextBlock x:Name="TriggerQuickValue" Text="M1" FontSize="19" FontWeight="SemiBold"/>
+      <!-- Quick controls / status -->
+      <Border Grid.Row="1" Classes="panel">
+        <Grid ColumnDefinitions="1.4*,1*,1*,1*,Auto" Padding="10,8" ColumnSpacing="10">
+          <StackPanel Grid.Column="0">
+            <TextBlock Text="Tìm tham số" Classes="dim" FontSize="10"/>
+            <TextBox x:Name="SearchBox" PlaceholderText="Tên, path, mô tả, .set key..." TextChanged="SearchBox_OnTextChanged"/>
+          </StackPanel>
+          <Border Grid.Column="1" Classes="panelSoft" Padding="10">
+            <StackPanel><TextBlock Text="Direction TF" Classes="dim" FontSize="10"/><TextBlock x:Name="DirectionQuickValue" Text="M30" FontSize="18" FontWeight="SemiBold"/></StackPanel>
+          </Border>
+          <Border Grid.Column="2" Classes="panelSoft" Padding="10">
+            <StackPanel><TextBlock Text="Pullback TF" Classes="dim" FontSize="10"/><TextBlock x:Name="PullbackQuickValue" Text="M5" FontSize="18" FontWeight="SemiBold"/></StackPanel>
+          </Border>
+          <Border Grid.Column="3" Classes="panelSoft" Padding="10">
+            <StackPanel><TextBlock Text="Trigger TF" Classes="dim" FontSize="10"/><TextBlock x:Name="TriggerQuickValue" Text="M1" FontSize="18" FontWeight="SemiBold"/></StackPanel>
+          </Border>
+          <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Spacing="6">
+            <Button Classes="secondary" Content="Hoàn tác" Click="ReloadActive_OnClick"/>
+            <Button Classes="secondary" Content="Xác thực" Click="Validate_OnClick"/>
+            <Button Classes="primary" Content="▶  Áp dụng cấu hình" Click="Apply_OnClick"/>
           </StackPanel>
         </Grid>
-      </StackPanel>
-    </Border>
+      </Border>
 
-    <Border Grid.Row="2" Classes="configCard" Padding="12">
-      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-        <TextBlock x:Name="StatusText"
-                   Text="Đang chờ Python Engine..."
-                   Foreground="#B9CBE0"
-                   TextWrapping="Wrap"/>
-        <TextBlock x:Name="VisibleCountText"
-                   Grid.Column="1"
-                   Text="0 / 0"
-                   Classes="configMuted"/>
-      </Grid>
-    </Border>
-
-    <ScrollViewer Grid.Row="3"
-                  VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled">
-      <StackPanel x:Name="FieldsHost" Spacing="12" Margin="0,0,4,12">
-        <Border Classes="configCard">
-          <TextBlock Text="Đang tải schema và active profile..."
-                     Classes="configMuted"
-                     HorizontalAlignment="Center"/>
+      <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="6">
+        <Border Grid.Row="0" Classes="panelSoft" Padding="10,6">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBlock x:Name="StatusText" Text="Đang chờ Python Engine..." Foreground="#C9DDEF" TextWrapping="Wrap"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="REAL ACCOUNT LOCKED" Foreground="#FFD34D" FontWeight="Bold"/>
+              <TextBlock x:Name="VisibleCountText" Text="0 / 0" Classes="dim"/>
+            </StackPanel>
+          </Grid>
         </Border>
-      </StackPanel>
-    </ScrollViewer>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <StackPanel x:Name="FieldsHost" Spacing="8" Margin="0,0,4,8">
+            <Border Classes="panel" Padding="16">
+              <TextBlock Text="Đang tải schema và active profile..."
+                         Classes="dim"
+                         HorizontalAlignment="Center"/>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </Grid>
+    </Grid>
   </Grid>
 </UserControl>

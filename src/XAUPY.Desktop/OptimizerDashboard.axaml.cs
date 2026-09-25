@@ -36,7 +36,6 @@ public partial class OptimizerDashboard : UserControl
     private OptimizerStatusSnapshot _status = OptimizerStatusSnapshot.Idle;
     private OptimizerResultSnapshot? _currentSweep;
     private OptimizerResultSnapshot? _currentWalkForward;
-    private string? _loadedResultRunId;
     private bool _initialized;
     private bool _loading;
     private bool _suppressInputEvents;
@@ -110,10 +109,7 @@ public partial class OptimizerDashboard : UserControl
 
         if (status.Status == "COMPLETED" &&
             !string.IsNullOrWhiteSpace(status.ResultRunId) &&
-            !string.Equals(
-                _loadedResultRunId,
-                status.ResultRunId,
-                StringComparison.Ordinal))
+            !IsResultLoaded(status.ResultRunId!))
         {
             _ = LoadCompletedResultAsync(status.ResultRunId!);
         }
@@ -130,6 +126,10 @@ public partial class OptimizerDashboard : UserControl
             return;
         }
 
+        string? terminalRunId = null;
+        string? latestSweepRunId = null;
+        string? latestWalkForwardRunId = null;
+
         try
         {
             _loading = true;
@@ -141,19 +141,45 @@ public partial class OptimizerDashboard : UserControl
             }
 
             var status = await _supervisor.QueryOptimizerStatusAsync();
-            ApplyStatus(status);
+            _status = status;
+            RenderStatus();
 
-            if (!status.IsActive &&
-                status.Status != "COMPLETED" &&
-                _currentSweep is null &&
-                _currentWalkForward is null)
+            if (!status.IsActive)
             {
-                var history = await _supervisor.QueryOptimizerHistoryAsync(20);
-                if (history.Ok)
+                if (status.Status == "COMPLETED" &&
+                    !string.IsNullOrWhiteSpace(status.ResultRunId) &&
+                    !IsResultLoaded(status.ResultRunId!))
                 {
-                    var latest = history.Items.FirstOrDefault();
-                    if (latest is not null)
-                        await LoadCompletedResultAsync(latest.RunId);
+                    terminalRunId = status.ResultRunId;
+                }
+
+                if (_currentSweep is null || _currentWalkForward is null)
+                {
+                    var history = await _supervisor.QueryOptimizerHistoryAsync(50);
+                    if (history.Ok)
+                    {
+                        if (_currentSweep is null)
+                        {
+                            latestSweepRunId = history.Items
+                                .FirstOrDefault(item =>
+                                    string.Equals(
+                                        item.Mode,
+                                        "SWEEP",
+                                        StringComparison.Ordinal))
+                                ?.RunId;
+                        }
+
+                        if (_currentWalkForward is null)
+                        {
+                            latestWalkForwardRunId = history.Items
+                                .FirstOrDefault(item =>
+                                    string.Equals(
+                                        item.Mode,
+                                        "WALK_FORWARD",
+                                        StringComparison.Ordinal))
+                                ?.RunId;
+                        }
+                    }
                 }
             }
         }
@@ -164,6 +190,21 @@ public partial class OptimizerDashboard : UserControl
         finally
         {
             _loading = false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(terminalRunId))
+            await LoadCompletedResultAsync(terminalRunId!);
+
+        if (!string.IsNullOrWhiteSpace(latestSweepRunId) &&
+            !IsResultLoaded(latestSweepRunId!))
+        {
+            await LoadCompletedResultAsync(latestSweepRunId!);
+        }
+
+        if (!string.IsNullOrWhiteSpace(latestWalkForwardRunId) &&
+            !IsResultLoaded(latestWalkForwardRunId!))
+        {
+            await LoadCompletedResultAsync(latestWalkForwardRunId!);
         }
     }
 
@@ -471,7 +512,6 @@ public partial class OptimizerDashboard : UserControl
                     rangeJson);
             }
 
-            _loadedResultRunId = null;
             ApplyStatus(status);
         }
         catch (Exception ex)
@@ -500,7 +540,7 @@ public partial class OptimizerDashboard : UserControl
 
     private async Task LoadCompletedResultAsync(string runId)
     {
-        if (_supervisor is null || _loading)
+        if (_supervisor is null || _loading || IsResultLoaded(runId))
             return;
 
         try
@@ -511,7 +551,6 @@ public partial class OptimizerDashboard : UserControl
                 candidateOffset: 0,
                 candidateLimit: 10);
 
-            _loadedResultRunId = runId;
             if (result.Mode == "SWEEP")
             {
                 _currentSweep = result;
@@ -537,6 +576,18 @@ public partial class OptimizerDashboard : UserControl
         {
             _loading = false;
         }
+    }
+
+    private bool IsResultLoaded(string runId)
+    {
+        return string.Equals(
+                   _currentSweep?.RunId,
+                   runId,
+                   StringComparison.Ordinal)
+               || string.Equals(
+                   _currentWalkForward?.RunId,
+                   runId,
+                   StringComparison.Ordinal);
     }
 
     private void RenderStatus()

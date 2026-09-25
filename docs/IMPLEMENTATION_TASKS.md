@@ -30,7 +30,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-008 | DONE | Strategy + Monitoring realtime tabs | 005,007 | projection tests + verified Windows build |
 | XAUPY-009 | DONE | Orders & Positions + guarded manual actions | 003,005 | execution simulation |
 | XAUPY-010 | DONE | Structured logging + Journal tab | 002,003 | schema/replay tests |
-| XAUPY-011 | ACTIVE | Backtest engine parity | 007,010 | deterministic replay |
+| XAUPY-011 | DONE | Backtest engine parity | 007,010 | deterministic replay |
 | XAUPY-012 | PLANNED | Optimizer + walk-forward | 011 | reproducibility/leakage guards |
 | XAUPY-013 | PLANNED | Dynamic TP/SL + stop-confirm entry | 003,007,011 | state/broker simulation |
 | XAUPY-014 | PLANNED | Tools tab + diagnostics | 003,004,010 | diagnostics tests |
@@ -643,4 +643,117 @@ Journal UI using `docs/ui-reference/Tab Nhật Kí.png` and
 The complete Task 010 Windows x64 build is ready for manual smoke testing using
 `docs/TASK010_STRUCTURED_LOGGING_JOURNAL_TEST.md`.
 
-XAUPY-011 remains PLANNED and has not started.
+# XAUPY-011 — Backtest engine parity
+
+Status: DONE
+
+## Goal completed
+
+Implement deterministic historical Backtest parity using the exact Task 007
+`StrategyEngine`, persisted reproducible evidence, and the approved Backtest UI
+from `docs/ui-reference/Tab BackTest.png`.
+
+## Scope completed
+
+- canonical JSON/CSV M1 historical dataset contract with symbol/point/tick/
+  volume/timezone metadata and SHA-256 dataset fingerprint;
+- strict increasing M1 timestamps; duplicate/out-of-order input rejected;
+- complete epoch-aligned M1 aggregation into M3/M5/M15/M30/H1/H2/H4;
+- incomplete/gapped higher-timeframe buckets are not fabricated;
+- replay calls the same `StrategyEngine.ingest_snapshot(...)` used by live;
+- MARKET entries occur on the next M1 bar, never the signal bar;
+- deterministic bid/ask spread and commission assumptions;
+- conservative SL-first rule when one M1 OHLC bar touches both SL and TP;
+- fixed and structure SL; fixed and RR TP;
+- fixed-lot and risk-percent sizing with dataset broker volume constraints;
+- max-open, max-trades/day, cooldown, consecutive-loss, daily-loss, daily-target
+  and session/weekday guards;
+- breakeven tightening without same-bar hindsight;
+- MAE/MFE, balance/equity curves and drawdown metrics;
+- deterministic `result_hash` for identical dataset/profile/range/assumptions;
+- persisted run history/get/delete and restart replay;
+- Journal BACKTEST_DATASET/BACKTEST_RUN evidence;
+- typed C# Backtest dataset/result/history/trade models;
+- Backtest UI with live sidebar, configuration, six KPI cards, Equity/Drawdown,
+  persisted history and paged trades;
+- JSON result save and CSV trade export;
+- explicit technical departure from mock “Every tick”: runtime model is
+  `M1 OHLC deterministic parity` because authoritative tick history is not
+  available in Task 011.
+
+## Explicitly rejected in Task 011
+
+The following modes are rejected rather than silently approximated:
+
+- STOP_CONFIRM entry;
+- ATR stop;
+- ZRSI_DYNAMIC TP;
+- partial close;
+- trailing;
+- non-OFF SL tighten;
+- news-enabled historical execution without a historical news dataset.
+
+Task 013 owns dynamic TP/SL + stop-confirm behavior.
+
+## Hard boundary retained
+
+- no `trade_intent`;
+- no MT5 broker mutation;
+- `trading_enabled=false`;
+- `execution_enabled=false`;
+- Task 009 manual actions remain simulation-only;
+- MQL5 still contains no OrderSend / OrderSendAsync / CTrade / PositionClose /
+  PositionModify / OrderDelete path;
+- demo-only/no-retry/server-SL/stale-data/never-widen-SL locks remain intact.
+
+## Automated evidence
+
+- Final implementation CI source commit before ledger-only updates:
+  ba4f323735954a9f299955d64324c8f37ec53cf1
+- Branch: task/011-backtest-parity
+- GitHub Actions final successful branch/PR run: 36107902671
+- Validate deterministic Backtest parity and UI job: SUCCESS
+- Windows x64 full Task 011 build job: SUCCESS
+- Python regression/source/backtest tests: 178/178 PASS
+- C# IPC/Backtest self-tests: 63/63 PASS
+- Avalonia/.NET Release build: SUCCESS, 0 warnings, 0 errors
+- Packaged Task 011 deterministic Backtest parity/restart smoke: PASS
+- Packaged Task 010 structured Journal replay/bookmark regression smoke: PASS
+- Packaged Task 009 order-book/manual-simulation regression smoke: PASS
+- Packaged Task 007 deterministic strategy/safety regression smoke: PASS
+- Packaged xaupy-config regression smoke: PASS
+- MetaEditor locked Bridge regression: Result: 0 errors, 0 warnings, 3534 ms elapsed
+- GitHub artifact: XAUPY-Task011-win-x64
+- GitHub artifact id: 10851557566
+- GitHub artifact size: 106390546 bytes
+- GitHub artifact outer SHA-256:
+  21184251db1e359ce2f5046f6f83b4cac8367065aea8db79ab8e114f3dc4e944
+- Direct full-build ZIP size: 106613465 bytes
+- Direct full-build ZIP SHA-256:
+  59f5fc95ce8c4444a7ca2b707cf46f5078ec656e1019090dec0bdf43bbb266d9
+- Independent artifact inspection: 260 entries
+- XAUPY.Desktop.exe: present
+- engine/xaupy-engine.exe: present
+- tools/xaupy-config.exe: present
+- profiles/config-schema-v1.json: field_count=133
+- baseline Direction=M30 / Pullback=M5 / Trigger=M1
+- docs/ui-reference/Tab BackTest.png: present
+- docs/TASK011_BACKTEST_PARITY_SPEC.md and TEST.md: present
+- packaged safety verified:
+  max_retry_count=0, demo_only=true, allow_real_account=false,
+  never_widen_sl=true, require_server_sl=true,
+  block_on_stale_market_data=true
+- forbidden broker mutation APIs in packaged MQ5: absent
+- independent artifact verification: PASS
+
+## Required artifact
+
+XAUPY-Task011-win-x64.zip
+
+## Delivery
+
+Task 011 implementation is complete. After merging this task to `main`, the
+Task 011 workflow must be rerun on `main` and the resulting main artifact must
+be independently inspected before delivery.
+
+XAUPY-012 remains PLANNED and has not started.

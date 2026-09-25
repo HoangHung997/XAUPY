@@ -1,6 +1,6 @@
 #property strict
-#property version   "1.003"
-#property description "XAUPY Task 003 MT5 data bridge. Execution is hard-locked."
+#property version   "1.009"
+#property description "XAUPY Task 009 MT5 data/order-book bridge. Broker execution is hard-locked."
 
 input string InpHost               = "127.0.0.1";
 input uint   InpPort               = 39421;
@@ -138,6 +138,241 @@ int OwnOrdersCount()
       count++;
    }
    return count;
+}
+
+
+string PositionTypeText(long value)
+{
+   if(value == POSITION_TYPE_BUY)
+      return "BUY";
+   if(value == POSITION_TYPE_SELL)
+      return "SELL";
+   return "UNKNOWN";
+}
+
+string OrderTypeText(long value)
+{
+   if(value == ORDER_TYPE_BUY_LIMIT)       return "BUY LIMIT";
+   if(value == ORDER_TYPE_SELL_LIMIT)      return "SELL LIMIT";
+   if(value == ORDER_TYPE_BUY_STOP)        return "BUY STOP";
+   if(value == ORDER_TYPE_SELL_STOP)       return "SELL STOP";
+   if(value == ORDER_TYPE_BUY_STOP_LIMIT)  return "BUY STOP LIMIT";
+   if(value == ORDER_TYPE_SELL_STOP_LIMIT) return "SELL STOP LIMIT";
+   return IntegerToString((int)value);
+}
+
+string OrderStateText(long value)
+{
+   if(value == ORDER_STATE_STARTED)  return "STARTED";
+   if(value == ORDER_STATE_PLACED)   return "PLACED";
+   if(value == ORDER_STATE_CANCELED) return "CANCELED";
+   if(value == ORDER_STATE_PARTIAL)  return "PARTIAL";
+   if(value == ORDER_STATE_FILLED)   return "FILLED";
+   if(value == ORDER_STATE_REJECTED) return "REJECTED";
+   if(value == ORDER_STATE_EXPIRED)  return "EXPIRED";
+   return IntegerToString((int)value);
+}
+
+string DealTypeText(long value)
+{
+   if(value == DEAL_TYPE_BUY)
+      return "BUY";
+   if(value == DEAL_TYPE_SELL)
+      return "SELL";
+   return IntegerToString((int)value);
+}
+
+string DealEntryText(long value)
+{
+   if(value == DEAL_ENTRY_IN)     return "IN";
+   if(value == DEAL_ENTRY_OUT)    return "OUT";
+   if(value == DEAL_ENTRY_OUT_BY) return "OUT_BY";
+   if(value == DEAL_ENTRY_INOUT)  return "INOUT";
+   return IntegerToString((int)value);
+}
+
+string DealReasonText(long value)
+{
+   if(value == DEAL_REASON_SL)     return "SL";
+   if(value == DEAL_REASON_TP)     return "TP";
+   if(value == DEAL_REASON_CLIENT) return "MANUAL";
+   if(value == DEAL_REASON_EXPERT) return "EXPERT";
+   return IntegerToString((int)value);
+}
+
+double OwnDailyRealized()
+{
+   datetime now = TimeCurrent();
+   string date_text = TimeToString(now, TIME_DATE);
+   datetime start = StringToTime(date_text);
+
+   if(!HistorySelect(start, now))
+      return 0.0;
+
+   double realized = 0.0;
+   int total = HistoryDealsTotal();
+   for(int i=0; i<total; i++)
+   {
+      ulong ticket = HistoryDealGetTicket(i);
+      if(ticket == 0)
+         continue;
+      if(HistoryDealGetString(ticket, DEAL_SYMBOL) != _Symbol)
+         continue;
+      if((long)HistoryDealGetInteger(ticket, DEAL_MAGIC) != InpMagic)
+         continue;
+
+      ENUM_DEAL_ENTRY entry = (ENUM_DEAL_ENTRY)HistoryDealGetInteger(ticket, DEAL_ENTRY);
+      if(entry != DEAL_ENTRY_OUT && entry != DEAL_ENTRY_OUT_BY && entry != DEAL_ENTRY_INOUT)
+         continue;
+
+      realized += HistoryDealGetDouble(ticket, DEAL_PROFIT);
+      realized += HistoryDealGetDouble(ticket, DEAL_COMMISSION);
+      realized += HistoryDealGetDouble(ticket, DEAL_SWAP);
+   }
+   return realized;
+}
+
+string JsonPositions()
+{
+   string json = "[";
+   bool first = true;
+   int total = PositionsTotal();
+
+   for(int i=0; i<total; i++)
+   {
+      ulong ticket = PositionGetTicket(i);
+      if(ticket == 0)
+         continue;
+      if(PositionGetString(POSITION_SYMBOL) != _Symbol)
+         continue;
+      if((long)PositionGetInteger(POSITION_MAGIC) != InpMagic)
+         continue;
+
+      if(!first)
+         json += ",";
+      first = false;
+
+      string item = "{";
+      item += JsonKey("ticket") + StringFormat("%I64u", ticket) + ",";
+      item += JsonKey("magic") + StringFormat("%I64d", (long)PositionGetInteger(POSITION_MAGIC)) + ",";
+      item += JsonKey("symbol") + JsonString(PositionGetString(POSITION_SYMBOL)) + ",";
+      item += JsonKey("side") + JsonString(PositionTypeText(PositionGetInteger(POSITION_TYPE))) + ",";
+      item += JsonKey("volume") + JsonNumber(PositionGetDouble(POSITION_VOLUME), 2) + ",";
+      item += JsonKey("price_open") + JsonNumber(PositionGetDouble(POSITION_PRICE_OPEN), _Digits) + ",";
+      item += JsonKey("price_current") + JsonNumber(PositionGetDouble(POSITION_PRICE_CURRENT), _Digits) + ",";
+      item += JsonKey("sl") + JsonNumber(PositionGetDouble(POSITION_SL), _Digits) + ",";
+      item += JsonKey("tp") + JsonNumber(PositionGetDouble(POSITION_TP), _Digits) + ",";
+      item += JsonKey("profit") + JsonNumber(PositionGetDouble(POSITION_PROFIT), 2) + ",";
+      item += JsonKey("swap") + JsonNumber(PositionGetDouble(POSITION_SWAP), 2) + ",";
+      item += JsonKey("time") + StringFormat("%I64d", PositionGetInteger(POSITION_TIME)) + ",";
+      item += JsonKey("comment") + JsonString(PositionGetString(POSITION_COMMENT));
+      item += "}";
+      json += item;
+   }
+
+   json += "]";
+   return json;
+}
+
+string JsonOrders()
+{
+   string json = "[";
+   bool first = true;
+   int total = OrdersTotal();
+
+   for(int i=0; i<total; i++)
+   {
+      ulong ticket = OrderGetTicket(i);
+      if(ticket == 0)
+         continue;
+      if(OrderGetString(ORDER_SYMBOL) != _Symbol)
+         continue;
+      if((long)OrderGetInteger(ORDER_MAGIC) != InpMagic)
+         continue;
+
+      if(!first)
+         json += ",";
+      first = false;
+
+      string item = "{";
+      item += JsonKey("ticket") + StringFormat("%I64u", ticket) + ",";
+      item += JsonKey("magic") + StringFormat("%I64d", (long)OrderGetInteger(ORDER_MAGIC)) + ",";
+      item += JsonKey("symbol") + JsonString(OrderGetString(ORDER_SYMBOL)) + ",";
+      item += JsonKey("type") + JsonString(OrderTypeText(OrderGetInteger(ORDER_TYPE))) + ",";
+      item += JsonKey("volume_initial") + JsonNumber(OrderGetDouble(ORDER_VOLUME_INITIAL), 2) + ",";
+      item += JsonKey("volume_current") + JsonNumber(OrderGetDouble(ORDER_VOLUME_CURRENT), 2) + ",";
+      item += JsonKey("price_open") + JsonNumber(OrderGetDouble(ORDER_PRICE_OPEN), _Digits) + ",";
+      item += JsonKey("price_current") + JsonNumber(OrderGetDouble(ORDER_PRICE_CURRENT), _Digits) + ",";
+      item += JsonKey("sl") + JsonNumber(OrderGetDouble(ORDER_SL), _Digits) + ",";
+      item += JsonKey("tp") + JsonNumber(OrderGetDouble(ORDER_TP), _Digits) + ",";
+      item += JsonKey("state") + JsonString(OrderStateText(OrderGetInteger(ORDER_STATE))) + ",";
+      item += JsonKey("time_setup") + StringFormat("%I64d", OrderGetInteger(ORDER_TIME_SETUP)) + ",";
+      item += JsonKey("comment") + JsonString(OrderGetString(ORDER_COMMENT));
+      item += "}";
+      json += item;
+   }
+
+   json += "]";
+   return json;
+}
+
+string JsonDeals()
+{
+   datetime now = TimeCurrent();
+   datetime from = now - (datetime)(7 * 24 * 60 * 60);
+   if(!HistorySelect(from, now))
+      return "[]";
+
+   string json = "[";
+   bool first = true;
+   int emitted = 0;
+   int total = HistoryDealsTotal();
+
+   for(int i=total-1; i>=0 && emitted<50; i--)
+   {
+      ulong ticket = HistoryDealGetTicket(i);
+      if(ticket == 0)
+         continue;
+      if(HistoryDealGetString(ticket, DEAL_SYMBOL) != _Symbol)
+         continue;
+      if((long)HistoryDealGetInteger(ticket, DEAL_MAGIC) != InpMagic)
+         continue;
+
+      long entry = HistoryDealGetInteger(ticket, DEAL_ENTRY);
+      if(entry != DEAL_ENTRY_OUT && entry != DEAL_ENTRY_OUT_BY && entry != DEAL_ENTRY_INOUT)
+         continue;
+
+      double profit = HistoryDealGetDouble(ticket, DEAL_PROFIT);
+      double commission = HistoryDealGetDouble(ticket, DEAL_COMMISSION);
+      double swap = HistoryDealGetDouble(ticket, DEAL_SWAP);
+
+      if(!first)
+         json += ",";
+      first = false;
+
+      string item = "{";
+      item += JsonKey("ticket") + StringFormat("%I64u", ticket) + ",";
+      item += JsonKey("order_ticket") + StringFormat("%I64u", (ulong)HistoryDealGetInteger(ticket, DEAL_ORDER)) + ",";
+      item += JsonKey("magic") + StringFormat("%I64d", (long)HistoryDealGetInteger(ticket, DEAL_MAGIC)) + ",";
+      item += JsonKey("symbol") + JsonString(HistoryDealGetString(ticket, DEAL_SYMBOL)) + ",";
+      item += JsonKey("side") + JsonString(DealTypeText(HistoryDealGetInteger(ticket, DEAL_TYPE))) + ",";
+      item += JsonKey("entry") + JsonString(DealEntryText(entry)) + ",";
+      item += JsonKey("volume") + JsonNumber(HistoryDealGetDouble(ticket, DEAL_VOLUME), 2) + ",";
+      item += JsonKey("price") + JsonNumber(HistoryDealGetDouble(ticket, DEAL_PRICE), _Digits) + ",";
+      item += JsonKey("profit") + JsonNumber(profit, 2) + ",";
+      item += JsonKey("commission") + JsonNumber(commission, 2) + ",";
+      item += JsonKey("swap") + JsonNumber(swap, 2) + ",";
+      item += JsonKey("realized_total") + JsonNumber(profit + commission + swap, 2) + ",";
+      item += JsonKey("reason") + JsonString(DealReasonText(HistoryDealGetInteger(ticket, DEAL_REASON))) + ",";
+      item += JsonKey("time") + StringFormat("%I64d", HistoryDealGetInteger(ticket, DEAL_TIME)) + ",";
+      item += JsonKey("comment") + JsonString(HistoryDealGetString(ticket, DEAL_COMMENT));
+      item += "}";
+      json += item;
+      emitted++;
+   }
+
+   json += "]";
+   return json;
 }
 
 double AccountDailyRealized()
@@ -295,6 +530,7 @@ string BuildSnapshotPayload()
    json += JsonKey("account_trade_mode") + JsonString(AccountTradeModeText()) + ",";
    json += JsonKey("account_login") + StringFormat("%I64d", AccountInfoInteger(ACCOUNT_LOGIN)) + ",";
    json += JsonKey("account_currency") + JsonString(AccountInfoString(ACCOUNT_CURRENCY)) + ",";
+   json += JsonKey("leverage") + StringFormat("%I64d", AccountInfoInteger(ACCOUNT_LEVERAGE)) + ",";
    json += JsonKey("balance") + JsonNumber(AccountInfoDouble(ACCOUNT_BALANCE), 2) + ",";
    json += JsonKey("equity") + JsonNumber(AccountInfoDouble(ACCOUNT_EQUITY), 2) + ",";
    json += JsonKey("margin_free") + JsonNumber(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2) + ",";
@@ -312,6 +548,10 @@ string BuildSnapshotPayload()
    json += JsonKey("freeze_level") + IntegerToString((int)SymbolInfoInteger(_Symbol, SYMBOL_TRADE_FREEZE_LEVEL)) + ",";
    json += JsonKey("positions_count") + IntegerToString(OwnPositionsCount()) + ",";
    json += JsonKey("orders_count") + IntegerToString(OwnOrdersCount()) + ",";
+   json += JsonKey("own_daily_realized") + JsonNumber(OwnDailyRealized(), 2) + ",";
+   json += JsonKey("positions") + JsonPositions() + ",";
+   json += JsonKey("orders") + JsonOrders() + ",";
+   json += JsonKey("deals") + JsonDeals() + ",";
    json += JsonKey("guardian") + JsonGuardian() + ",";
    json += JsonKey("bars") + JsonBars();
    json += "}";
@@ -475,7 +715,7 @@ int OnInit()
       return INIT_FAILED;
    }
 
-   Print("XAUPY_BRIDGE Task 003 initialized. EXECUTION LOCKED.");
+   Print("XAUPY_BRIDGE Task 009 initialized. ORDER BOOK ACTIVE; BROKER EXECUTION LOCKED.");
    return INIT_SUCCEEDED;
 }
 
@@ -503,5 +743,5 @@ void OnTimer()
 
 void OnTick()
 {
-   // Task 003 uses timer-based snapshots. No trading logic exists here.
+   // Task 009 remains timer-based and read-only. No broker trading logic exists here.
 }

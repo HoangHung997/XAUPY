@@ -12,6 +12,8 @@ public partial class MainWindow : Window
 
     private readonly EngineProcessSupervisor _engineSupervisor;
     private readonly ConfigurationEditor _configurationEditor;
+    private readonly StrategyDashboard _strategyDashboard;
+    private readonly MonitoringDashboard _monitoringDashboard;
     private readonly List<double> _priceHistory = new();
     private readonly Queue<string> _quickLogs = new();
 
@@ -30,10 +32,10 @@ public partial class MainWindow : Window
                 "Full schema-driven editor: 133 tham số, JSON profile, MT5 .set import/export, validation và active profile."),
             ["strategy"] = (
                 "Chiến lược",
-                "Direction → Pullback → Trigger và state machine thật thuộc Task 007."),
+                "Direction → Pullback → Trigger realtime từ Python Strategy Engine và active profile."),
             ["monitoring"] = (
                 "Giám sát",
-                "Realtime strategy/indicator monitoring chi tiết thuộc Task 008."),
+                "Quote, closed bars, indicator và condition state realtime; không hiển thị dữ liệu giả."),
             ["orders"] = (
                 "Lệnh & Vị thế",
                 "Execution và màn hình quản lý lệnh thuộc Task 009."),
@@ -64,8 +66,12 @@ public partial class MainWindow : Window
         _configurationEditor = this.FindControl<ConfigurationEditor>("ConfigurationEditor")
             ?? throw new InvalidOperationException("ConfigurationEditor missing.");
         _configurationEditor.AttachSupervisor(_engineSupervisor);
+        _strategyDashboard = this.FindControl<StrategyDashboard>("StrategyDashboard")
+            ?? throw new InvalidOperationException("StrategyDashboard missing.");
+        _monitoringDashboard = this.FindControl<MonitoringDashboard>("MonitoringDashboard")
+            ?? throw new InvalidOperationException("MonitoringDashboard missing.");
 
-        AppendQuickLog("Control Center Task 006 khởi tạo.");
+        AppendQuickLog("Control Center Task 008 khởi tạo.");
         ApplyConfigurationSummary(ConfigurationSummary.Default);
         ResetOverviewValues();
 
@@ -88,20 +94,25 @@ public partial class MainWindow : Window
 
         bool overview = string.Equals(key, "overview", StringComparison.Ordinal);
         bool configuration = string.Equals(key, "configuration", StringComparison.Ordinal);
+        bool strategy = string.Equals(key, "strategy", StringComparison.Ordinal);
+        bool monitoring = string.Equals(key, "monitoring", StringComparison.Ordinal);
 
         this.FindControl<StackPanel>("OverviewContent")!.IsVisible = overview;
         _configurationEditor.IsVisible = configuration;
-        this.FindControl<Border>("PlaceholderContent")!.IsVisible = !overview && !configuration;
+        _strategyDashboard.IsVisible = strategy;
+        _monitoringDashboard.IsVisible = monitoring;
+        this.FindControl<Border>("PlaceholderContent")!.IsVisible =
+            !overview && !configuration && !strategy && !monitoring;
 
         if (configuration)
         {
             _ = _configurationEditor.EnsureLoadedAsync();
         }
-        else if (!overview)
+        else if (!overview && !strategy && !monitoring)
         {
             FindText("PlaceholderTitle").Text = $"{page.Title} — chưa triển khai";
             FindText("PlaceholderDetail").Text =
-                $"Task 006 đã triển khai Tổng quan + Cấu hình. {page.Subtitle}";
+                $"Task 008 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát. {page.Subtitle}";
         }
     }
 
@@ -145,6 +156,9 @@ public partial class MainWindow : Window
         ApplyBridgeStatus(e.Mt5Bridge);
         ApplyConfigurationSummary(e.Configuration);
         ApplyOverviewSnapshot(e.Overview);
+        ApplyStrategySnapshot(e.Strategy);
+        _strategyDashboard.Apply(e.Strategy, e.Configuration);
+        _monitoringDashboard.Apply(e.Strategy, e.Overview, e.Mt5Bridge, e.Configuration);
         _ = _configurationEditor.NotifyEngineStateAsync(e.State);
     }
 
@@ -196,6 +210,19 @@ public partial class MainWindow : Window
             $"Direction: {config.DirectionMaType}{config.DirectionMaPeriod} • BUY={(config.AllowBuy ? "ON" : "OFF")} • SELL={(config.AllowSell ? "ON" : "OFF")}";
         FindText("TpSlValue").Text =
             $"SL {config.StopLossMode} • TP {config.TakeProfitMode} • Max lot {config.MaxLot:0.###} • {config.MaxTradesPerDay} lệnh/ngày";
+    }
+
+    private void ApplyStrategySnapshot(StrategySnapshot strategy)
+    {
+        FindText("StrategyStateValue").Text = strategy.State;
+        FindText("StrategyStateValue").Foreground = StrategyStateColor(strategy.State);
+
+        if (!string.IsNullOrWhiteSpace(strategy.ProfileName))
+            FindText("ProfileValue").Text = $"Profile: {strategy.ProfileName}";
+
+        FindText("DirectionTfValue").Text = strategy.DirectionTimeframe;
+        FindText("PullbackTfValue").Text = strategy.PullbackTimeframe;
+        FindText("TriggerTfValue").Text = strategy.TriggerTimeframe;
     }
 
     private void ApplyOverviewSnapshot(OverviewSnapshot overview)
@@ -268,7 +295,7 @@ public partial class MainWindow : Window
         FindText("PositionsCountValue").Text = "0";
         FindText("OrdersCountValue").Text = "0";
         FindText("RecentOrdersEmptyText").Text =
-            "Chưa có dữ liệu lệnh. Task 006 chỉ hiển thị dữ liệu thật; execution hiện đang khóa.";
+            "Chưa có dữ liệu lệnh. Task 008 chỉ hiển thị dữ liệu thật; execution hiện đang khóa.";
     }
 
     private void UpdateChart()
@@ -337,6 +364,17 @@ public partial class MainWindow : Window
         EngineConnectionState.Faulted => "FAULTED",
         _ => state.ToString().ToUpperInvariant()
     };
+
+    private static IBrush StrategyStateColor(string state)
+    {
+        if (state.StartsWith("TRIGGERED_", StringComparison.Ordinal))
+            return Brushes.LightGreen;
+        if (state.StartsWith("ARMED_", StringComparison.Ordinal))
+            return Brushes.LightBlue;
+        if (state is "STALE" or "FILTER_BLOCKED")
+            return Brushes.Gold;
+        return Brushes.LightGray;
+    }
 
     private static IBrush EngineStateColor(EngineConnectionState state) => state switch
     {

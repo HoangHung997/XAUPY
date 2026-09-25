@@ -107,4 +107,31 @@ Check(config.PullbackTimeframe == "M5", "overview pullback timeframe");
 Check(config.TriggerTimeframe == "M1", "overview trigger timeframe");
 Check(config.DirectionMaType == "EMA" && config.DirectionMaPeriod == 50, "overview MA summary");
 
+var validConfigPayload = JsonSerializer.SerializeToElement(new
+{
+    valid = true,
+    errors = Array.Empty<string>(),
+    profile = new
+    {
+        schema_version = 1,
+        timeframes = new { direction = "H1", pullback = "M15", trigger = "M3" }
+    }
+});
+
+var validConfig = ConfigurationApiParser.ParseValidation(validConfigPayload);
+Check(validConfig.Valid, "config validation parser valid");
+Check(validConfig.Errors.Count == 0, "config validation parser empty errors");
+Check(validConfig.Profile is not null, "config validation parser profile");
+
+var invalidConfigPayload = JsonSerializer.SerializeToElement(new
+{
+    applied = false,
+    errors = new[] { "execution.allow_real_account: locked safety value must be False" }
+});
+
+var invalidApply = ConfigurationApiParser.ParseApply(invalidConfigPayload);
+Check(!invalidApply.Applied, "config apply parser rejects invalid");
+Check(invalidApply.Errors.Count == 1, "config apply parser error count");
+Check(invalidApply.Profile is null, "config apply parser no profile on rejection");
+
 Console.WriteLine($"XAUPY IPC contract self-test complete: {passed} checks passed.");

@@ -25,7 +25,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-003 | DONE | MQL5 Bridge data channel + execution guardian | 002 | MetaEditor compile + CI/static + bridge probe + verified Windows build |
 | XAUPY-004 | DONE | Canonical configuration/profile model + .set import/export | 002 | schema/validation + .set round-trip/property + packaged tool + verified Windows build |
 | XAUPY-005 | DONE | Overview tab implementation | 002,004 | UI/reference structure + real overview projection + verified Windows build |
-| XAUPY-006 | PLANNED | Full Configuration tab | 004 | validation/profile tests |
+| XAUPY-006 | ACTIVE | Full Configuration tab | 004 | schema-driven 133-field editor + validation/profile/.set tests + Windows build |
 | XAUPY-007 | PLANNED | Strategy engine Direction → Pullback → Trigger | 002,004 | deterministic state tests |
 | XAUPY-008 | PLANNED | Strategy + Monitoring realtime tabs | 005,007 | projection tests + build |
 | XAUPY-009 | PLANNED | Orders & Positions + guarded manual actions | 003,005 | execution simulation |
@@ -163,4 +163,83 @@ The helper was renamed to GetEngineStateLabel and the complete CI/build pipeline
 
 The Task 005 Windows x64 full build is ready for manual smoke testing using docs/TASK005_OVERVIEW_TEST.md.
 
-XAUPY-006 and XAUPY-007 remain PLANNED and have not started.
+XAUPY-007 remains PLANNED and has not started.
+
+
+# XAUPY-006 — Full Configuration tab
+
+Status: ACTIVE
+
+## Goal
+
+Implement the approved full Avalonia configuration workspace using the Task 004 canonical schema as the only field source.
+
+## Visual source-of-truth
+
+docs/ui-reference/Tab Cấu Hình.png
+
+## Scope
+
+- schema-driven rendering of all 133 canonical fields;
+- grouped field cards and parameter search;
+- bool/enum/string/time/int/float editors;
+- disabled controls for locked safety values;
+- exact independent Direction/Pullback/Trigger timeframe options;
+- Defaults, Revert Active, Validate and Apply Active;
+- active-profile get/set IPC owned by Python Engine;
+- JSON open/save;
+- MT5 .set import/export via packaged xaupy-config.exe;
+- template preservation after .set import;
+- Overview active-profile summary updates after Apply;
+- full Task 003/004/005 regression coverage;
+- complete Windows x64 build artifact.
+
+## Explicitly out of scope
+
+- strategy state machine;
+- trade execution;
+- live-account enablement;
+- automatic startup persistence;
+- backtest/optimizer;
+- finished Strategy/Monitoring tabs.
+
+## Hard safety
+
+UI disables locked fields, but Python remains final authority.
+
+The active profile cannot:
+
+- enable real account;
+- disable demo-only;
+- enable broker retry;
+- permit widening SL;
+- remove required server SL;
+- permit stale-market operation.
+
+## Acceptance criteria
+
+- [ ] Configuration reference image exists.
+- [ ] all 133 canonical fields render from schema.
+- [ ] search/filter structure is present.
+- [ ] exact TF options remain M1/M3/M5/M15/M30/H1/H2/H4.
+- [ ] unusual timeframe ordering can validate/apply.
+- [ ] active profile get/set protocol tests pass.
+- [ ] invalid safety unlock cannot replace active profile.
+- [ ] JSON load/save actions exist.
+- [ ] .set import/export actions exist.
+- [ ] locked fields are disabled in UI.
+- [ ] Overview remains functional and receives active summary.
+- [ ] Python regression tests pass.
+- [ ] C# IPC/config parser tests pass.
+- [ ] Avalonia Release build succeeds with 0 warnings / 0 errors.
+- [ ] packaged Engine Task 006 active config smoke test passes.
+- [ ] packaged xaupy-config smoke test passes.
+- [ ] MT5 Bridge regression compiles 0 errors / 0 warnings.
+- [ ] Windows full artifact includes Desktop, Engine, config tool, profiles, MQ5/EX5, docs and both Overview/Configuration UI references.
+- [ ] GitHub CI green and uploads XAUPY-Task006-win-x64.
+
+## Required artifact
+
+XAUPY-Task006-win-x64.zip
+
+XAUPY-007 remains PLANNED until Task 006 is complete.

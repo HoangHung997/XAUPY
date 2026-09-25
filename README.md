@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-005 DONE. XAUPY-006 và XAUPY-007 vẫn PLANNED và chưa bắt đầu.
+Trạng thái hiện tại: TASK XAUPY-006 — Full Configuration tab. XAUPY-007 vẫn PLANNED và chưa bắt đầu.
 
 ## Tài liệu bắt buộc
 
@@ -14,6 +14,8 @@ Trạng thái hiện tại: TASK XAUPY-005 DONE. XAUPY-006 và XAUPY-007 vẫn P
 - [Implementation tasks](docs/IMPLEMENTATION_TASKS.md)
 - [Overview UI spec](docs/OVERVIEW_UI_SPEC.md)
 - [Overview smoke test](docs/TASK005_OVERVIEW_TEST.md)
+- [Configuration UI spec](docs/CONFIGURATION_UI_SPEC.md)
+- [Configuration UI smoke test](docs/TASK006_CONFIGURATION_TEST.md)
 - [Canonical config/profile spec](docs/CONFIG_PROFILE_SPEC.md)
 - [IPC protocol](docs/IPC_PROTOCOL.md)
 - [UI reference](docs/ui-reference/README.md)
@@ -54,3 +56,20 @@ Final CI:
 - full Windows x64 artifact produced and independently inspected.
 
 Xem bằng chứng đầy đủ trong docs/IMPLEMENTATION_TASKS.md.
+
+
+## Task 006 đang triển khai
+
+Configuration tab Avalonia được xây theo schema canonical thay vì hard-code từng tham số.
+
+Mục tiêu:
+
+- render đủ 133 field;
+- search/filter tham số;
+- exact TF M1/M3/M5/M15/M30/H1/H2/H4;
+- Defaults / Revert Active / Validate / Apply Active;
+- JSON load/save;
+- MT5 .set import/export qua xaupy-config.exe;
+- locked safety fields không chỉnh được trong UI và vẫn bị Python validator bảo vệ;
+- Overview phản ánh active profile sau Apply;
+- execution tiếp tục bị khóa.

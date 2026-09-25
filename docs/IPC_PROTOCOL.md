@@ -1,6 +1,6 @@
 # XAUPY IPC Protocol v1
 
-Status: extended by Task XAUPY-004
+Status: extended by Task XAUPY-006
 Transport: TCP loopback
 Default endpoint: 127.0.0.1:39421
 Framing: UTF-8 JSON Lines, one JSON object per line
@@ -13,6 +13,7 @@ IPC v1 is the local control channel shared by XAUPY.Desktop, Python Engine and M
 Task 002 established Desktop ↔ Python lifecycle.
 Task 003 added MT5 Bridge → Python data snapshots.
 Task 004 adds canonical configuration schema/defaults/validation messages.
+Task 006 adds active-profile get/set lifecycle for the Avalonia Configuration editor.
 
 ## 2. Security boundary
 
@@ -56,7 +57,7 @@ bridge_snapshot → bridge_snapshot_ack
 
 bridge_heartbeat → bridge_heartbeat_ack
 
-Task 004 keeps all Task 003 execution locks:
+Task 006 keeps all Task 003 execution locks:
 
 - trading_enabled=false
 - execution_enabled=false
@@ -90,6 +91,32 @@ Each field describes its canonical dotted path, type, default, .set key, aliases
 ### config_defaults_get
 
 Returns config_defaults_ack with the complete canonical default profile.
+
+### config_active_get
+
+Returns config_active_ack with the current normalized in-memory active profile.
+
+### config_active_set
+
+Request payload:
+
+{
+  "profile": { ... }
+}
+
+Python validates and normalizes before replacing the active profile.
+
+Response config_active_set_ack contains:
+
+- applied
+- errors
+- normalized profile when applied
+- trading_enabled=false
+- execution_enabled=false
+
+Invalid profiles do not replace the previous active profile.
+
+The active profile is in-memory for Task 006. Explicit JSON/.set save is the persistence path; automatic startup restore belongs to later settings/startup work.
 
 ### config_validate
 

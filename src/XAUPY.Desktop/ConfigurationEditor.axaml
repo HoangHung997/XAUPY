@@ -1,0 +1,122 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="XAUPY.Desktop.ConfigurationEditor">
+  <UserControl.Styles>
+    <Style Selector="Button.configAction">
+      <Setter Property="Background" Value="#123B66"/>
+      <Setter Property="Foreground" Value="#E8F4FF"/>
+      <Setter Property="BorderBrush" Value="#245F96"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="7"/>
+      <Setter Property="Padding" Value="12,8"/>
+      <Setter Property="Margin" Value="0,0,7,7"/>
+    </Style>
+    <Style Selector="Border.configCard">
+      <Setter Property="Background" Value="#0C1929"/>
+      <Setter Property="BorderBrush" Value="#193956"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="10"/>
+      <Setter Property="Padding" Value="15"/>
+    </Style>
+    <Style Selector="TextBlock.configMuted">
+      <Setter Property="Foreground" Value="#8097AE"/>
+    </Style>
+  </UserControl.Styles>
+
+  <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
+    <Border Grid.Row="0" Classes="configCard">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+        <StackPanel Grid.Column="0" Spacing="4">
+          <TextBlock Text="Trung tâm cấu hình đầy đủ"
+                     FontSize="21"
+                     FontWeight="SemiBold"/>
+          <TextBlock Text="Schema-driven editor: toàn bộ tham số từ Python Engine, không hard-code số lượng field trong UI."
+                     Classes="configMuted"
+                     TextWrapping="Wrap"/>
+          <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,6,0,0">
+            <TextBlock x:Name="ProfileNameText" Text="Profile: —" Foreground="#59D9FF"/>
+            <TextBlock x:Name="DirtyStateText" Text="UNCHANGED" Foreground="#69D48C"/>
+            <TextBlock x:Name="ValidationStateText" Text="NOT VALIDATED" Foreground="#E9C46A"/>
+            <TextBlock x:Name="FieldCountText" Text="0 tham số" Classes="configMuted"/>
+          </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+          <Border Background="#302B17"
+                  BorderBrush="#6A5C24"
+                  BorderThickness="1"
+                  CornerRadius="10"
+                  Padding="10,5">
+            <TextBlock Text="REAL ACCOUNT LOCKED"
+                       Foreground="#E9C46A"
+                       FontWeight="Bold"/>
+          </Border>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Border Grid.Row="1" Classes="configCard">
+      <StackPanel>
+        <WrapPanel>
+          <Button Classes="configAction" Content="Mặc định" Click="Defaults_OnClick"/>
+          <Button Classes="configAction" Content="Hoàn tác Active" Click="ReloadActive_OnClick"/>
+          <Button Classes="configAction" Content="Xác thực" Click="Validate_OnClick"/>
+          <Button Classes="configAction" Content="Áp dụng Active" Click="Apply_OnClick"/>
+          <Button Classes="configAction" Content="Mở JSON" Click="LoadJson_OnClick"/>
+          <Button Classes="configAction" Content="Lưu JSON" Click="SaveJson_OnClick"/>
+          <Button Classes="configAction" Content="Nhập .set" Click="ImportSet_OnClick"/>
+          <Button Classes="configAction" Content="Xuất .set" Click="ExportSet_OnClick"/>
+        </WrapPanel>
+
+        <Grid ColumnDefinitions="1.5*,1*,1*,1*" ColumnSpacing="10" Margin="0,8,0,0">
+          <StackPanel Grid.Column="0">
+            <TextBlock Text="Tìm tham số" Classes="configMuted" FontSize="12"/>
+            <TextBox x:Name="SearchBox"
+                     Watermark="Tên, path, mô tả, .set key..."
+                     TextChanged="SearchBox_OnTextChanged"/>
+          </StackPanel>
+
+          <StackPanel Grid.Column="1">
+            <TextBlock Text="Direction TF" Classes="configMuted" FontSize="12"/>
+            <TextBlock x:Name="DirectionQuickValue" Text="M30" FontSize="19" FontWeight="SemiBold"/>
+          </StackPanel>
+
+          <StackPanel Grid.Column="2">
+            <TextBlock Text="Pullback TF" Classes="configMuted" FontSize="12"/>
+            <TextBlock x:Name="PullbackQuickValue" Text="M5" FontSize="19" FontWeight="SemiBold"/>
+          </StackPanel>
+
+          <StackPanel Grid.Column="3">
+            <TextBlock Text="Trigger TF" Classes="configMuted" FontSize="12"/>
+            <TextBlock x:Name="TriggerQuickValue" Text="M1" FontSize="19" FontWeight="SemiBold"/>
+          </StackPanel>
+        </Grid>
+      </StackPanel>
+    </Border>
+
+    <Border Grid.Row="2" Classes="configCard" Padding="12">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+        <TextBlock x:Name="StatusText"
+                   Text="Đang chờ Python Engine..."
+                   Foreground="#B9CBE0"
+                   TextWrapping="Wrap"/>
+        <TextBlock x:Name="VisibleCountText"
+                   Grid.Column="1"
+                   Text="0 / 0"
+                   Classes="configMuted"/>
+      </Grid>
+    </Border>
+
+    <ScrollViewer Grid.Row="3"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+      <StackPanel x:Name="FieldsHost" Spacing="12" Margin="0,0,4,12">
+        <Border Classes="configCard">
+          <TextBlock Text="Đang tải schema và active profile..."
+                     Classes="configMuted"
+                     HorizontalAlignment="Center"/>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

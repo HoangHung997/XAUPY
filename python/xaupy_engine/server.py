@@ -668,7 +668,7 @@ class EngineServer:
                 {
                     "code": "UNSUPPORTED_MESSAGE",
                     "message": (
-                        f"Unsupported Task 010 message type: {request.type}"
+                        f"Unsupported Task 012 message type: {request.type}"
                     ),
                     "trading_enabled": False,
                     "execution_enabled": False,

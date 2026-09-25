@@ -1378,6 +1378,10 @@ class OptimizerJobManager:
             min_trades=min_trades,
             max_workers=workers,
         )
+        # Reject invalid dataset symbol/date range before a background job is
+        # registered so the caller receives a deterministic start error rather
+        # than a transient FAILED job.
+        engine._validate_dataset_range(dataset, from_date, to_date)
 
         plan: list[dict[str, Any]] | None = None
         total_work = combos

@@ -198,8 +198,12 @@ public partial class JournalDashboard : UserControl
 
     private void ShowAlerts_OnClick(object? sender, RoutedEventArgs e)
     {
-        _selectedSource = "Alerts";
+        _selectedSource = "ALL";
         _bookmarksOnly = false;
+        Check("InfoLevelCheck").IsChecked = false;
+        Check("WarnLevelCheck").IsChecked = true;
+        Check("ErrorLevelCheck").IsChecked = true;
+        Check("DebugLevelCheck").IsChecked = false;
         UpdateSourceButtonClasses();
         UpdateBookmarkFilterButton();
         _ = EnsureLoadedAsync(force: true);
@@ -211,6 +215,14 @@ public partial class JournalDashboard : UserControl
         _bookmarksOnly = true;
         UpdateSourceButtonClasses();
         UpdateBookmarkFilterButton();
+
+        var combo = this.FindControl<ComboBox>("DateScopeCombo");
+        if (combo is not null && combo.SelectedIndex != 1)
+        {
+            combo.SelectedIndex = 1;
+            return;
+        }
+
         _ = EnsureLoadedAsync(force: true);
     }
 

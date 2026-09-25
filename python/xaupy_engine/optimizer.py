@@ -1378,6 +1378,13 @@ class OptimizerJobManager:
         }
 
         with self._lock:
+            if self._active_job_id is not None:
+                active = self._jobs.get(self._active_job_id)
+                if active and active["status"] in {"QUEUED", "RUNNING", "STOPPING"}:
+                    raise OptimizerError(
+                        f"optimizer job already active: {self._active_job_id}"
+                    )
+
             self._jobs[job_id] = state
             self._cancel_events[job_id] = cancel_event
             self._active_job_id = job_id

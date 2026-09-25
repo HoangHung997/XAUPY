@@ -110,7 +110,7 @@
               <TextBlock x:Name="PositionsTitleText" Text="Vị thế đang mở (0)" Classes="panelTitle" Margin="12,8"/>
               <CheckBox x:Name="ShowAllSymbolsCheck" Grid.Column="1" Content="Hiển thị tất cả symbol" IsChecked="True" Margin="0,0,12,0" VerticalAlignment="Center"/>
             </Grid>
-            <Grid Margin="10,7,10,4" ColumnDefinitions="38,92,78,68,76,86,86,76,76,96,86,92,*">
+            <Grid Margin="10,7,10,4" ColumnDefinitions="38,92,78,68,76,86,86,76,76,96,86,92,126,*">
               <TextBlock Text="#" Classes="tableHeader"/>
               <TextBlock Grid.Column="1" Text="Ticket" Classes="tableHeader"/>
               <TextBlock Grid.Column="2" Text="Symbol" Classes="tableHeader"/>
@@ -123,7 +123,8 @@
               <TextBlock Grid.Column="9" Text="P/L (USD)" Classes="tableHeader"/>
               <TextBlock Grid.Column="10" Text="P/L (pips)" Classes="tableHeader"/>
               <TextBlock Grid.Column="11" Text="Trạng thái" Classes="tableHeader"/>
-              <TextBlock Grid.Column="12" Text="Thao tác" Classes="tableHeader" HorizontalAlignment="Center"/>
+              <TextBlock Grid.Column="12" Text="Thời gian" Classes="tableHeader"/>
+              <TextBlock Grid.Column="13" Text="Thao tác" Classes="tableHeader" HorizontalAlignment="Center"/>
             </Grid>
             <StackPanel x:Name="PositionsRowsHost" Margin="8,0,8,7"/>
           </StackPanel>
@@ -135,7 +136,7 @@
             <Border Background="#082038" Padding="12,8">
               <TextBlock x:Name="PendingTitleText" Text="Lệnh chờ đang hoạt động (0)" Classes="panelTitle"/>
             </Border>
-            <Grid Margin="10,7,10,4" ColumnDefinitions="38,92,82,92,74,92,78,78,120,100,*">
+            <Grid Margin="10,7,10,4" ColumnDefinitions="38,92,82,92,74,92,78,78,120,100,130,*">
               <TextBlock Text="#" Classes="tableHeader"/>
               <TextBlock Grid.Column="1" Text="Ticket" Classes="tableHeader"/>
               <TextBlock Grid.Column="2" Text="Symbol" Classes="tableHeader"/>
@@ -146,7 +147,8 @@
               <TextBlock Grid.Column="7" Text="TP" Classes="tableHeader"/>
               <TextBlock Grid.Column="8" Text="Khoảng cách" Classes="tableHeader"/>
               <TextBlock Grid.Column="9" Text="Trạng thái" Classes="tableHeader"/>
-              <TextBlock Grid.Column="10" Text="Thao tác" Classes="tableHeader" HorizontalAlignment="Center"/>
+              <TextBlock Grid.Column="10" Text="Thời gian" Classes="tableHeader"/>
+              <TextBlock Grid.Column="11" Text="Thao tác" Classes="tableHeader" HorizontalAlignment="Center"/>
             </Grid>
             <StackPanel x:Name="PendingRowsHost" Margin="8,0,8,7"/>
           </StackPanel>
@@ -184,18 +186,18 @@
               <CheckBox Grid.Column="1" Content="Hiển thị symbol hiện tại" IsChecked="True" Margin="0,0,14,0" VerticalAlignment="Center"/>
               <Button Grid.Column="2" Classes="secondary" Content="⬇  Xuất báo cáo" IsEnabled="False" Margin="0,4,10,4"/>
             </Grid>
-            <Grid Margin="10,7,10,4" ColumnDefinitions="92,145,86,70,76,100,100,94,92,90,*">
+            <Grid Margin="10,7,10,4" ColumnDefinitions="92,145,86,70,76,94,94,100,94,92,90,*">
               <TextBlock Text="#" Classes="tableHeader"/>
               <TextBlock Grid.Column="1" Text="Thời gian" Classes="tableHeader"/>
               <TextBlock Grid.Column="2" Text="Symbol" Classes="tableHeader"/>
               <TextBlock Grid.Column="3" Text="Loại" Classes="tableHeader"/>
               <TextBlock Grid.Column="4" Text="Lot" Classes="tableHeader"/>
-              <TextBlock Grid.Column="5" Text="Giá ra" Classes="tableHeader"/>
-              <TextBlock Grid.Column="6" Text="P/L (USD)" Classes="tableHeader"/>
-              <TextBlock Grid.Column="7" Text="Commission" Classes="tableHeader"/>
-              <TextBlock Grid.Column="8" Text="Swap" Classes="tableHeader"/>
-              <TextBlock Grid.Column="9" Text="Lý do" Classes="tableHeader"/>
-              <TextBlock Grid.Column="10" Text="Comment" Classes="tableHeader"/>
+              <TextBlock Grid.Column="5" Text="Giá vào" Classes="tableHeader"/>
+              <TextBlock Grid.Column="6" Text="Giá ra" Classes="tableHeader"/>
+              <TextBlock Grid.Column="7" Text="P/L (USD)" Classes="tableHeader"/>
+              <TextBlock Grid.Column="8" Text="Commission" Classes="tableHeader"/>
+              <TextBlock Grid.Column="9" Text="Swap" Classes="tableHeader"/>
+              <TextBlock Grid.Column="10" Text="Lý do / Comment" Classes="tableHeader"/>
             </Grid>
             <StackPanel x:Name="DealsRowsHost" Margin="8,0,8,7"/>
           </StackPanel>

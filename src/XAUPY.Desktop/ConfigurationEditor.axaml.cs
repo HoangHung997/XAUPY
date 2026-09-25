@@ -400,7 +400,7 @@ public partial class ConfigurationEditor : UserControl
         var text = new TextBox
         {
             MinHeight = 34,
-            Watermark = descriptor.Kind switch
+            PlaceholderText = descriptor.Kind switch
             {
                 "int" => "Số nguyên",
                 "float" => "Số",

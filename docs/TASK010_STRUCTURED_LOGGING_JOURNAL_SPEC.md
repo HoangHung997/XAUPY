@@ -1,6 +1,6 @@
 # XAUPY Task 010 — Structured Logging + Journal
 
-Status: ACTIVE  
+Status: DONE  
 Dependency: XAUPY-002, XAUPY-003  
 Visual source-of-truth: docs/ui-reference/Tab Nhật Kí.png
 

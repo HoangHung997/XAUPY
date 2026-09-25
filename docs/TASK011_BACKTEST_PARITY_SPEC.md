@@ -1,6 +1,6 @@
 # XAUPY Task 011 — Backtest Engine Parity
 
-Status: ACTIVE  
+Status: DONE  
 Dependencies: XAUPY-007, XAUPY-010  
 Visual source-of-truth: docs/ui-reference/Tab BackTest.png
 
@@ -32,9 +32,10 @@ only and must never appear as runtime results before a real backtest completes.
 
 The approved PNG shows an “Every tick” model. Task 011 does not yet have an
 authoritative historical tick feed. To avoid a false accuracy claim, the real
-control displays **M1 OHLC deterministic parity**. This is an explicit technical
-departure allowed by the UI-reference README rule 10; layout and workflow remain
-aligned with the approved mock.
+control displays **M1 OHLC deterministic parity**. The persisted/internal model
+identifier is `M1_OHLC_PARITY_V1`. This is an explicit technical departure
+allowed by the UI-reference README rule 10; layout and workflow remain aligned
+with the approved mock.
 
 ## 3. Historical dataset contract v1
 

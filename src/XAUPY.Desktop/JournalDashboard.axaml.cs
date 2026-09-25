@@ -426,6 +426,11 @@ public partial class JournalDashboard : UserControl
         Text("ErrorCountText").Text = LevelCount("ERROR").ToString();
         Text("DebugCountText").Text = LevelCount("DEBUG").ToString();
 
+        Text("SummaryScopeText").Text =
+            string.Equals(_summary.DateScope, "ALL", StringComparison.OrdinalIgnoreCase)
+                ? "Tất cả thời gian"
+                : "Hôm nay";
+
         Text("ReplayIntegrityText").Text =
             $"Invalid: {_summary.InvalidReplayLines} • Duplicate: {_summary.DuplicateReplayLines}";
 

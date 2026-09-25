@@ -1,23 +1,23 @@
-name: Task 011 - UI Reference Extract
+name: Task 011 - Backtest Parity CI
 
 on:
   push:
     branches:
       - 'task/011-backtest-parity'
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  reference:
+  validate-python:
+    name: Validate deterministic Backtest backend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Upload approved Backtest UI reference
-        uses: actions/upload-artifact@v4
+      - uses: actions/setup-python@v5
         with:
-          name: XAUPY-Task011-UI-reference
-          path: 'docs/ui-reference/Tab BackTest.png'
-          if-no-files-found: error
-          retention-days: 2
+          python-version: '3.13'
+      - name: Python Task 011 and regression tests
+        run: python -m unittest discover -s python/tests -v

@@ -7,7 +7,7 @@
         MinWidth="1180"
         MinHeight="760"
         Background="#06101D"
-        Title="XAUPY Control Center — Task 006 Configuration">
+        Title="XAUPY Control Center — Task 008 Strategy & Monitoring">
   <Window.Styles>
     <Style Selector="Button.nav">
       <Setter Property="Background" Value="Transparent"/>
@@ -85,7 +85,7 @@
                      FontSize="20"
                      FontWeight="SemiBold"
                      VerticalAlignment="Center"/>
-          <TextBlock Text="Task 006 Configuration"
+          <TextBlock Text="Task 008 Strategy + Monitoring"
                      Classes="muted"
                      VerticalAlignment="Center"/>
         </StackPanel>
@@ -345,7 +345,7 @@
                   </Grid>
                   <TextBlock x:Name="DirectionRuleValue" Text="Direction: EMA50" Foreground="#B9CBE0"/>
                   <TextBlock x:Name="TpSlValue" Text="SL STRUCTURE • TP FIXED" Foreground="#B9CBE0"/>
-                  <TextBlock Text="Strategy Engine thuộc Task 007. Overview không giả lập tín hiệu BUY/SELL trước khi backend chiến lược tồn tại."
+                  <TextBlock Text="Strategy state lấy trực tiếp từ Python Engine. Tín hiệu chỉ hiển thị khi backend thật phát sinh; execution vẫn khóa."
                              Classes="muted"
                              TextWrapping="Wrap"
                              FontSize="12"/>
@@ -378,7 +378,7 @@
                   </Border>
                   <Border Background="#091625" CornerRadius="7" Padding="16">
                     <TextBlock x:Name="RecentOrdersEmptyText"
-                               Text="Chưa có dữ liệu lệnh. Task 005 chỉ hiển thị dữ liệu thật; execution hiện đang khóa."
+                               Text="Chưa có dữ liệu lệnh. Task 008 chỉ hiển thị dữ liệu thật; execution hiện đang khóa."
                                Classes="muted"
                                HorizontalAlignment="Center"
                                TextWrapping="Wrap"/>
@@ -409,6 +409,12 @@
                                      IsVisible="False"
                                      Height="760"/>
 
+          <local:StrategyDashboard x:Name="StrategyDashboard"
+                                   IsVisible="False"/>
+
+          <local:MonitoringDashboard x:Name="MonitoringDashboard"
+                                     IsVisible="False"/>
+
           <Border x:Name="PlaceholderContent" Classes="card" IsVisible="False" MinHeight="420">
             <StackPanel HorizontalAlignment="Center"
                         VerticalAlignment="Center"
@@ -420,7 +426,7 @@
                          FontWeight="SemiBold"
                          HorizontalAlignment="Center"/>
               <TextBlock x:Name="PlaceholderDetail"
-                         Text="Task 006 đã triển khai Tổng quan + Cấu hình. Các tab khác sẽ được hoàn thiện theo đúng thứ tự task."
+                         Text="Task 008 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát. Các tab còn lại sẽ được hoàn thiện theo đúng thứ tự task."
                          Classes="muted"
                          TextWrapping="Wrap"
                          TextAlignment="Center"/>
@@ -438,12 +444,12 @@
             BorderBrush="#183553"
             BorderThickness="0,1,0,0">
       <Grid ColumnDefinitions="*,Auto" Margin="18,0">
-        <TextBlock Text="XAUPY • overview + full configuration editor • execution locked"
+        <TextBlock Text="XAUPY • overview + configuration + realtime strategy/monitoring • execution locked"
                    Classes="muted"
                    VerticalAlignment="Center"
                    FontSize="11"/>
         <TextBlock Grid.Column="1"
-                   Text="TASK XAUPY-006"
+                   Text="TASK XAUPY-008"
                    Foreground="#59D9FF"
                    VerticalAlignment="Center"
                    FontSize="11"/>

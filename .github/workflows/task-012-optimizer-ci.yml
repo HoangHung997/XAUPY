@@ -1,3 +1,4 @@
+# Final XAUPY-012 validation pipeline
 name: Task 012 - Optimizer Walk-Forward CI
 
 on:

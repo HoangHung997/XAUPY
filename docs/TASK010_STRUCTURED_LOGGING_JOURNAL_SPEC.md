@@ -58,7 +58,9 @@ them.
   - Windows: %LOCALAPPDATA%/XAUPY/logs
   - other OS: XDG_STATE_HOME/xaupy/logs or ~/.local/state/xaupy/logs
 - XAUPY_LOG_DIR overrides the directory for tests/portable deployments;
-- journal-v1.jsonl is append-only;
+- journal-v1.jsonl is append-only and is the replay authority;
+- when logging.csv_enabled=true, journal-v1.csv is maintained as a best-effort
+  convenience mirror;
 - bookmarks-v1.json persists bookmark sequence ids;
 - replay reconstructs valid events in sequence order;
 - malformed/corrupt lines are counted and ignored rather than preventing Engine
@@ -118,6 +120,7 @@ Task 010 does not enable broker execution. It preserves all Task 009 locks:
 - corrupt-line recovery tests;
 - restart replay/sequence continuation tests;
 - bookmark persistence/replay tests;
+- optional CSV mirror tests;
 - deterministic query tests;
 - Engine IPC journal query/bookmark tests;
 - strategy/manual-action/bridge event evidence tests;

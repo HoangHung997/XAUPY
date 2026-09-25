@@ -328,6 +328,10 @@
                                  Grid.Column="1"
                                  IsVisible="False"/>
 
+      <local:OrdersPositionsDashboard x:Name="OrdersPositionsDashboard"
+                                      Grid.ColumnSpan="2"
+                                      IsVisible="False"/>
+
       <Border x:Name="PlaceholderContent" Grid.ColumnSpan="2" Classes="panel" IsVisible="False">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" MaxWidth="650">
           <TextBlock x:Name="PlaceholderTitle" Text="Tab chưa triển khai" FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center"/>
@@ -355,6 +359,11 @@
           <TextBlock Text="|" Classes="dim" FontSize="10"/>
           <TextBlock Text="Spread:" Classes="dim" FontSize="10"/>
           <TextBlock x:Name="FooterSpreadText" Text="—" FontSize="10"/>
+          <TextBlock Text="|" Classes="dim" FontSize="10"/>
+          <TextBlock Text="Account:" Classes="dim" FontSize="10"/>
+          <TextBlock x:Name="FooterAccountText" Text="—" FontSize="10"/>
+          <TextBlock Text="Leverage:" Classes="dim" FontSize="10"/>
+          <TextBlock x:Name="FooterLeverageText" Text="—" FontSize="10"/>
         </StackPanel>
       </Grid>
     </Border>

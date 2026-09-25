@@ -19,6 +19,7 @@ from uuid import UUID, uuid4
 
 from .backtest import (
     BACKTEST_MODEL,
+    BacktestCancelled,
     BacktestEngine,
     BacktestError,
     BacktestRepository,
@@ -513,6 +514,7 @@ class OptimizerEngine:
         self.spread_pips = float(spread_pips)
         self.commission_per_lot = float(commission_per_lot)
         self.min_trades = int(min_trades)
+        self._cancel_event: threading.Event | None = None
         self.max_workers = max(
             1,
             min(
@@ -549,6 +551,7 @@ class OptimizerEngine:
         cancel_event: threading.Event | None = None,
         progress: Callable[[int, int, int], None] | None = None,
     ) -> dict[str, Any]:
+        self._cancel_event = cancel_event
         combinations = parameter_combinations(parameter_ranges)
         total = len(combinations)
         if cancel_event is not None and cancel_event.is_set():
@@ -682,6 +685,11 @@ class OptimizerEngine:
                 dataset,
                 from_date=from_date,
                 to_date=to_date,
+                cancel_check=(
+                    self._cancel_event.is_set
+                    if self._cancel_event is not None
+                    else None
+                ),
             )
             return _candidate_summary(
                 index,
@@ -689,6 +697,8 @@ class OptimizerEngine:
                 result,
                 self.min_trades,
             )
+        except BacktestCancelled as exc:
+            raise OptimizationCancelled(str(exc)) from exc
         except (BacktestError, OptimizerError, ValueError) as exc:
             return {
                 "index": index,
@@ -796,6 +806,11 @@ class OptimizerEngine:
                 dataset,
                 from_date=fold["test_from"],
                 to_date=fold["test_to"],
+                cancel_check=(
+                    cancel_event.is_set
+                    if cancel_event is not None
+                    else None
+                ),
             )
             if cancel_event is not None and cancel_event.is_set():
                 raise OptimizationCancelled("walk-forward cancelled")

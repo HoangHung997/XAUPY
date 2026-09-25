@@ -9,7 +9,7 @@ import json
 import math
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from uuid import UUID, uuid4
 
 from .config_schema import normalized_profile
@@ -34,6 +34,17 @@ BACKTEST_SCHEMA_VERSION = 1
 
 class BacktestError(ValueError):
     """Raised when Task 011 dataset/request/profile is unsupported or invalid."""
+
+
+class BacktestCancelled(RuntimeError):
+    """Raised when a long historical replay is cooperatively cancelled."""
+
+
+def _raise_if_cancelled(
+    cancel_check: Callable[[], bool] | None,
+) -> None:
+    if cancel_check is not None and cancel_check():
+        raise BacktestCancelled("backtest cancelled")
 
 
 def default_backtest_directory() -> Path:
@@ -331,7 +342,12 @@ def _validate_bar_sequence(bars: list[Bar]) -> None:
         previous = bar.time
 
 
-def aggregate_timeframe(m1_bars: tuple[Bar, ...] | list[Bar], timeframe: str) -> list[Bar]:
+def aggregate_timeframe(
+    m1_bars: tuple[Bar, ...] | list[Bar],
+    timeframe: str,
+    *,
+    cancel_check: Callable[[], bool] | None = None,
+) -> list[Bar]:
     timeframe = timeframe.upper()
     if timeframe not in TIMEFRAME_SECONDS:
         raise BacktestError(f"unsupported timeframe: {timeframe}")
@@ -342,12 +358,17 @@ def aggregate_timeframe(m1_bars: tuple[Bar, ...] | list[Bar], timeframe: str) ->
     expected_count = seconds // 60
     buckets: dict[int, list[Bar]] = {}
 
-    for bar in m1_bars:
+    for index, bar in enumerate(m1_bars):
+        if index % 1024 == 0:
+            _raise_if_cancelled(cancel_check)
         bucket = (bar.time // seconds) * seconds
         buckets.setdefault(bucket, []).append(bar)
 
+    _raise_if_cancelled(cancel_check)
     result: list[Bar] = []
-    for bucket in sorted(buckets):
+    for index, bucket in enumerate(sorted(buckets)):
+        if index % 256 == 0:
+            _raise_if_cancelled(cancel_check)
         bars = buckets[bucket]
         expected_times = [bucket + index * 60 for index in range(expected_count)]
         if len(bars) != expected_count:
@@ -370,10 +391,17 @@ def aggregate_timeframe(m1_bars: tuple[Bar, ...] | list[Bar], timeframe: str) ->
 
 def build_close_schedule(
     m1_bars: tuple[Bar, ...] | list[Bar],
+    *,
+    cancel_check: Callable[[], bool] | None = None,
 ) -> dict[int, dict[str, Bar]]:
     schedule: dict[int, dict[str, Bar]] = {}
     for timeframe, seconds in TIMEFRAME_SECONDS.items():
-        for bar in aggregate_timeframe(m1_bars, timeframe):
+        _raise_if_cancelled(cancel_check)
+        for bar in aggregate_timeframe(
+            m1_bars,
+            timeframe,
+            cancel_check=cancel_check,
+        ):
             schedule.setdefault(bar.time + seconds, {})[timeframe] = bar
     return schedule
 
@@ -471,7 +499,9 @@ class BacktestEngine:
         *,
         from_date: str,
         to_date: str,
+        cancel_check: Callable[[], bool] | None = None,
     ) -> dict[str, Any]:
+        _raise_if_cancelled(cancel_check)
         if dataset.metadata.symbol != self.profile["strategy"]["symbol"]:
             raise BacktestError(
                 f"dataset symbol {dataset.metadata.symbol} does not match "
@@ -492,7 +522,11 @@ class BacktestEngine:
             raise BacktestError("requested date range contains no M1 bars")
 
         last_allowed_time = in_range[-1].time
-        schedule = build_close_schedule(dataset.bars)
+        schedule = build_close_schedule(
+            dataset.bars,
+            cancel_check=cancel_check,
+        )
+        _raise_if_cancelled(cancel_check)
         strategy = StrategyEngine(self.profile, max_history=4096)
         state = BacktestState(
             balance=self.initial_balance,
@@ -506,6 +540,7 @@ class BacktestEngine:
         process_bars = [bar for bar in dataset.bars if bar.time <= last_allowed_time]
 
         for bar in process_bars:
+            _raise_if_cancelled(cancel_check)
             local_date = dataset.local_date(bar.time)
             allow_entries = start_date <= local_date <= end_date
             if allow_entries:
@@ -568,6 +603,7 @@ class BacktestEngine:
                     spread_price,
                 )
 
+        _raise_if_cancelled(cancel_check)
         if state.positions:
             final_bar = in_range[-1]
             for position in list(state.positions):

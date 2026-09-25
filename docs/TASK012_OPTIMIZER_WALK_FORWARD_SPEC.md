@@ -202,6 +202,9 @@ indices and final ordering are independent of completion order.
 
 Stop is cooperative:
 
+- heartbeat/status retain the latest terminal job after completion/cancel/fail
+  until another job starts or Engine restarts, so UI cannot miss the terminal
+  result id;
 - no new candidates are scheduled after cancel;
 - already-running candidates may finish;
 - partial progress remains visible;

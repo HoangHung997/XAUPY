@@ -56,6 +56,8 @@ class EngineServer:
         self._last_position_signature: tuple[int, ...] | None = None
         self._last_order_signature: tuple[int, ...] | None = None
         self._last_deal_signature: tuple[int, ...] | None = None
+        self._last_market_bar_signature: tuple[tuple[str, int], ...] | None = None
+        self._last_decision_trace_signature: tuple[Any, ...] | None = None
 
         self._log(
             "INFO",
@@ -720,13 +722,19 @@ class EngineServer:
         snapshot = request.payload
         symbol = snapshot.get("symbol")
 
-        if self._decision_trace_enabled():
+        decision_trace_enabled = self._decision_trace_enabled()
+        market_bar_signature = self._bar_time_signature(snapshot.get("bars"))
+        if (
+            decision_trace_enabled
+            and market_bar_signature != self._last_market_bar_signature
+        ):
             self._log(
                 "DEBUG",
                 "MT5",
                 "MARKET_DATA",
-                f"Market snapshot received for {symbol or '?'}",
+                f"Closed-bar snapshot advanced for {symbol or '?'}",
                 details={
+                    "bar_times": dict(market_bar_signature),
                     "bid": snapshot.get("bid"),
                     "ask": snapshot.get("ask"),
                     "spread_points": snapshot.get("spread_points"),
@@ -737,6 +745,7 @@ class EngineServer:
                 correlation_id=request.request_id,
                 symbol=symbol,
             )
+            self._last_market_bar_signature = market_bar_signature
 
         state = str(strategy_status.get("state", "STALE"))
         if state != self._last_strategy_state:
@@ -764,7 +773,18 @@ class EngineServer:
             )
             self._last_strategy_state = state
 
-        if self._decision_trace_enabled():
+        decision_trace_signature = (
+            state,
+            strategy_status.get("last_evaluated_trigger_time"),
+            strategy_status.get("signal_sequence"),
+            strategy_status.get("blocked_reason"),
+            strategy_status.get("direction"),
+            strategy_status.get("armed_side"),
+        )
+        if (
+            decision_trace_enabled
+            and decision_trace_signature != self._last_decision_trace_signature
+        ):
             self._log(
                 "DEBUG",
                 "Strategy",
@@ -784,6 +804,7 @@ class EngineServer:
                 symbol=symbol,
                 profile_hash=strategy_status.get("profile_hash"),
             )
+            self._last_decision_trace_signature = decision_trace_signature
 
         position_signature = self._ticket_signature(
             snapshot.get("positions")
@@ -866,6 +887,19 @@ class EngineServer:
             )
         except KeyError:
             return True
+
+    @staticmethod
+    def _bar_time_signature(value: object) -> tuple[tuple[str, int], ...]:
+        if not isinstance(value, dict):
+            return ()
+        result: list[tuple[str, int]] = []
+        for timeframe, bar in value.items():
+            if not isinstance(timeframe, str) or not isinstance(bar, dict):
+                continue
+            timestamp = bar.get("time")
+            if isinstance(timestamp, int) and not isinstance(timestamp, bool):
+                result.append((timeframe, timestamp))
+        return tuple(sorted(result))
 
     @staticmethod
     def _ticket_signature(value: object) -> tuple[int, ...]:

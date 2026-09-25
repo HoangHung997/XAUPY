@@ -21,6 +21,7 @@ from xaupy_engine.optimizer import (
     OBJECTIVE_ID,
     OptimizerEngine,
     OptimizerError,
+    OptimizationCancelled,
     OptimizerJobManager,
     OptimizerRepository,
     ParameterRange,
@@ -571,6 +572,74 @@ class WalkForwardTests(unittest.TestCase):
         for fold in result["folds"]:
             self.assertEqual("TRAIN_ONLY", fold["selection_source"])
             self.assertEqual(0.05, fold["best_parameters"]["risk.fixed_lot"])
+
+    def test_cancel_during_oos_test_never_returns_completed_result(self):
+        dataset = multi_day_dataset(12)
+        profile = optimizer_profile()
+        ranges = parse_parameter_ranges(
+            [
+                {
+                    "path": "risk.fixed_lot",
+                    "min": 0.05,
+                    "max": 0.10,
+                    "step": 0.05,
+                }
+            ],
+            profile,
+        )
+        engine = OptimizerEngine(
+            profile,
+            initial_balance=10000,
+            spread_pips=0,
+            commission_per_lot=0,
+            min_trades=1,
+            max_workers=1,
+        )
+        cancel_event = threading.Event()
+
+        class FakeBacktest:
+            def __init__(self, candidate_profile, **kwargs):
+                self.profile = candidate_profile
+
+            def run(self, dataset, *, from_date, to_date):
+                if from_date >= "2024-01-10":
+                    cancel_event.set()
+                pnl = 100.0
+                metrics = {
+                    "net_profit": pnl,
+                    "net_profit_pct": 1.0,
+                    "gross_profit": pnl,
+                    "gross_loss": 0.0,
+                    "profit_factor": None,
+                    "total_trades": 2,
+                    "wins": 2,
+                    "losses": 0,
+                    "win_rate": 100.0,
+                    "average_trade": 50.0,
+                    "max_drawdown_usd": 0.0,
+                    "max_drawdown_pct": 0.0,
+                    "initial_balance": 10000.0,
+                    "final_balance": 10100.0,
+                    "final_equity": 10100.0,
+                }
+                return {
+                    "metrics": metrics,
+                    "trades": [{"net_pl": 50.0}, {"net_pl": 50.0}],
+                    "result_hash": f"{from_date}:{to_date}",
+                }
+
+        with patch("xaupy_engine.optimizer.BacktestEngine", FakeBacktest):
+            with self.assertRaises(OptimizationCancelled):
+                engine.walk_forward(
+                    dataset,
+                    from_date="2024-01-01",
+                    to_date="2024-01-12",
+                    parameter_ranges=ranges,
+                    folds=3,
+                    train_ratio=0.75,
+                    rolling=False,
+                    cancel_event=cancel_event,
+                )
 
     def test_walk_forward_aggregate_stability_is_bounded(self):
         folds = [

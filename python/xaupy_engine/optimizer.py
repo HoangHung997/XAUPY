@@ -1532,18 +1532,35 @@ class OptimizerJobManager:
                     progress=wf_progress,
                 )
 
+            if cancel_event.is_set():
+                raise OptimizationCancelled("optimizer cancelled before persistence")
+
             stored = self.repository.save(result)
+
+            should_cancel_after_save = False
             with self._lock:
                 state = self._jobs[job_id]
-                state["status"] = "COMPLETED"
-                state["phase"] = "COMPLETED"
-                state["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
-                state["completed_work"] = state["total_work"]
-                state["in_flight"] = 0
-                state["result_run_id"] = stored["run_id"]
-                state["optimizer_hash"] = stored["optimizer_hash"]
-                state["elapsed_seconds"] = round(time.monotonic() - started, 3)
-                state["eta_seconds"] = 0.0
+                if (
+                    cancel_event.is_set()
+                    or state.get("status") == "STOPPING"
+                ):
+                    should_cancel_after_save = True
+                else:
+                    state["status"] = "COMPLETED"
+                    state["phase"] = "COMPLETED"
+                    state["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
+                    state["completed_work"] = state["total_work"]
+                    state["in_flight"] = 0
+                    state["result_run_id"] = stored["run_id"]
+                    state["optimizer_hash"] = stored["optimizer_hash"]
+                    state["elapsed_seconds"] = round(time.monotonic() - started, 3)
+                    state["eta_seconds"] = 0.0
+
+            if should_cancel_after_save:
+                self.repository.delete(stored["run_id"])
+                raise OptimizationCancelled(
+                    "optimizer cancelled during result persistence"
+                )
 
             self._journal(
                 "OPTIMIZER_COMPLETE" if mode == "SWEEP" else "WALK_FORWARD_COMPLETE",

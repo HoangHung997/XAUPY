@@ -329,6 +329,7 @@ def parse_parameter_ranges(
                 parsed_value = _coerce_enum(field, value)
                 if parsed_value not in values:
                     values.append(parsed_value)
+            values.sort(key=lambda item: field.enum.index(item))
             parsed.append(ParameterRange(path, field.kind, tuple(values)))
             continue
 

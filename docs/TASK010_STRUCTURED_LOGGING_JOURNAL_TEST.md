@@ -1,6 +1,6 @@
 # XAUPY Task 010 — Structured Logging + Journal Test
 
-Status: implementation acceptance  
+Status: DONE  
 Visual source-of-truth: docs/ui-reference/Tab Nhật Kí.png
 
 ## Automated acceptance

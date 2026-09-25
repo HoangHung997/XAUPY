@@ -10,7 +10,7 @@ import math
 import os
 from pathlib import Path
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from .config_schema import normalized_profile
 from .journal import default_journal_directory
@@ -413,6 +413,7 @@ class BacktestState:
     consecutive_losses_by_day: dict[str, int] = field(default_factory=dict)
     last_exit_time: int | None = None
     next_trade_id: int = 1
+    peak_equity: float = 0.0
 
 
 class BacktestEngine:
@@ -493,7 +494,10 @@ class BacktestEngine:
         last_allowed_time = in_range[-1].time
         schedule = build_close_schedule(dataset.bars)
         strategy = StrategyEngine(self.profile, max_history=4096)
-        state = BacktestState(balance=self.initial_balance)
+        state = BacktestState(
+            balance=self.initial_balance,
+            peak_equity=self.initial_balance,
+        )
         last_signal_sequence = 0
         spread_price = self.spread_pips * dataset.metadata.point_size
         first_range_time = in_range[0].time
@@ -504,6 +508,8 @@ class BacktestEngine:
         for bar in process_bars:
             local_date = dataset.local_date(bar.time)
             allow_entries = start_date <= local_date <= end_date
+            if allow_entries:
+                self._ensure_day_state(state, dataset, bar.time)
 
             if allow_entries and state.pending_signals:
                 pending = list(state.pending_signals)
@@ -611,6 +617,14 @@ class BacktestEngine:
         spread_price: float,
     ) -> None:
         side = str(signal.get("side", "")).upper()
+        detected_close_time = int(signal.get("detected_close_time", 0) or 0)
+        max_age_seconds = int(self.profile["entry"]["max_signal_age_bars"]) * 60
+        if (
+            detected_close_time > 0
+            and bar.time - detected_close_time > max_age_seconds
+        ):
+            self._skip(state, "SIGNAL_EXPIRED")
+            return
         if side not in {"BUY", "SELL"}:
             self._skip(state, "INVALID_SIDE")
             return
@@ -624,13 +638,19 @@ class BacktestEngine:
             return
 
         entry_price = bar.open + spread_price if side == "BUY" else bar.open
-        sl, risk_distance = self._initial_stop(
-            strategy,
-            dataset,
-            side,
-            entry_price,
-            spread_price,
-        )
+        try:
+            sl, risk_distance = self._initial_stop(
+                strategy,
+                dataset,
+                side,
+                entry_price,
+                spread_price,
+            )
+        except BacktestError as exc:
+            if str(exc).startswith("not enough "):
+                self._skip(state, "STRUCTURE_WARMUP")
+                return
+            raise
         tp = self._initial_target(side, entry_price, risk_distance)
         volume = self._position_volume(
             state.balance,
@@ -669,9 +689,7 @@ class BacktestEngine:
         timestamp: int,
     ) -> tuple[bool, str]:
         day_key = self._day_key(dataset, timestamp)
-        state.day_start_balance.setdefault(day_key, state.balance)
-        state.pnl_by_day.setdefault(day_key, 0.0)
-        state.consecutive_losses_by_day.setdefault(day_key, 0)
+        self._ensure_day_state(state, dataset, timestamp)
 
         risk = self.profile["risk"]
         if state.trades_by_day.get(day_key, 0) >= int(risk["max_trades_per_day"]):
@@ -703,6 +721,17 @@ class BacktestEngine:
             return False, "SESSION_FILTER"
 
         return True, "OK"
+
+    def _ensure_day_state(
+        self,
+        state: BacktestState,
+        dataset: HistoricalDataset,
+        timestamp: int,
+    ) -> None:
+        day_key = self._day_key(dataset, timestamp)
+        state.day_start_balance.setdefault(day_key, state.balance)
+        state.pnl_by_day.setdefault(day_key, 0.0)
+        state.consecutive_losses_by_day.setdefault(day_key, 0)
 
     def _session_allowed(
         self,
@@ -1043,12 +1072,13 @@ class BacktestEngine:
         else:
             state.equity_curve.append(point)
 
-        peak = max(
-            [self.initial_balance]
-            + [float(item["equity"]) for item in state.equity_curve]
+        state.peak_equity = max(state.peak_equity, equity)
+        dd_usd = max(0.0, state.peak_equity - equity)
+        dd_pct = (
+            0.0
+            if state.peak_equity <= 0
+            else dd_usd / state.peak_equity * 100.0
         )
-        dd_usd = max(0.0, peak - equity)
-        dd_pct = 0.0 if peak <= 0 else dd_usd / peak * 100.0
         drawdown = {
             "time": point["time"],
             "drawdown_usd": self._round(dd_usd),
@@ -1257,7 +1287,7 @@ class BacktestRepository:
     def _run_path(self, run_id: str) -> Path:
         text = str(run_id).strip()
         try:
-            parsed = uuid4().__class__(text)
+            parsed = UUID(text)
         except ValueError as exc:
             raise BacktestError("run_id must be UUID") from exc
         return self.root_dir / f"{parsed}.json"

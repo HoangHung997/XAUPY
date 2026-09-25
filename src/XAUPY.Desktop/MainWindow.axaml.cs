@@ -11,6 +11,7 @@ public partial class MainWindow : Window
     private const int ChartPointCount = 10;
 
     private readonly EngineProcessSupervisor _engineSupervisor;
+    private readonly ConfigurationEditor _configurationEditor;
     private readonly List<double> _priceHistory = new();
     private readonly Queue<string> _quickLogs = new();
 
@@ -26,7 +27,7 @@ public partial class MainWindow : Window
                 "Giá XAUUSD, trạng thái hệ thống, tài khoản, chart, chiến lược, lệnh gần đây và log nhanh."),
             ["configuration"] = (
                 "Cấu hình",
-                "Backend profile/.set đã có từ Task 004. Full editor 133 tham số thuộc Task 006."),
+                "Full schema-driven editor: 133 tham số, JSON profile, MT5 .set import/export, validation và active profile."),
             ["strategy"] = (
                 "Chiến lược",
                 "Direction → Pullback → Trigger và state machine thật thuộc Task 007."),
@@ -60,7 +61,11 @@ public partial class MainWindow : Window
         _engineSupervisor = new EngineProcessSupervisor();
         _engineSupervisor.StateChanged += EngineSupervisor_OnStateChanged;
 
-        AppendQuickLog("Control Center Task 005 khởi tạo.");
+        _configurationEditor = this.FindControl<ConfigurationEditor>("ConfigurationEditor")
+            ?? throw new InvalidOperationException("ConfigurationEditor missing.");
+        _configurationEditor.AttachSupervisor(_engineSupervisor);
+
+        AppendQuickLog("Control Center Task 006 khởi tạo.");
         ApplyConfigurationSummary(ConfigurationSummary.Default);
         ResetOverviewValues();
 
@@ -82,14 +87,21 @@ public partial class MainWindow : Window
         FindText("PageSubtitle").Text = page.Subtitle;
 
         bool overview = string.Equals(key, "overview", StringComparison.Ordinal);
-        this.FindControl<StackPanel>("OverviewContent")!.IsVisible = overview;
-        this.FindControl<Border>("PlaceholderContent")!.IsVisible = !overview;
+        bool configuration = string.Equals(key, "configuration", StringComparison.Ordinal);
 
-        if (!overview)
+        this.FindControl<StackPanel>("OverviewContent")!.IsVisible = overview;
+        _configurationEditor.IsVisible = configuration;
+        this.FindControl<Border>("PlaceholderContent")!.IsVisible = !overview && !configuration;
+
+        if (configuration)
+        {
+            _ = _configurationEditor.EnsureLoadedAsync();
+        }
+        else if (!overview)
         {
             FindText("PlaceholderTitle").Text = $"{page.Title} — chưa triển khai";
             FindText("PlaceholderDetail").Text =
-                $"Task 005 chỉ triển khai hoàn chỉnh tab Tổng quan. {page.Subtitle}";
+                $"Task 006 đã triển khai Tổng quan + Cấu hình. {page.Subtitle}";
         }
     }
 
@@ -133,6 +145,7 @@ public partial class MainWindow : Window
         ApplyBridgeStatus(e.Mt5Bridge);
         ApplyConfigurationSummary(e.Configuration);
         ApplyOverviewSnapshot(e.Overview);
+        _ = _configurationEditor.NotifyEngineStateAsync(e.State);
     }
 
     private void ApplyBridgeStatus(Mt5BridgeStatus bridge)
@@ -255,7 +268,7 @@ public partial class MainWindow : Window
         FindText("PositionsCountValue").Text = "0";
         FindText("OrdersCountValue").Text = "0";
         FindText("RecentOrdersEmptyText").Text =
-            "Chưa có dữ liệu lệnh. Task 005 chỉ hiển thị dữ liệu thật; execution hiện đang khóa.";
+            "Chưa có dữ liệu lệnh. Task 006 chỉ hiển thị dữ liệu thật; execution hiện đang khóa.";
     }
 
     private void UpdateChart()

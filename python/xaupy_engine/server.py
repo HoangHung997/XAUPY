@@ -888,6 +888,17 @@ class EngineServer:
         except KeyError:
             return True
 
+    def _csv_logging_enabled(self) -> bool:
+        try:
+            return bool(
+                get_path(
+                    self.active_profile,
+                    "logging.csv_enabled",
+                )
+            )
+        except KeyError:
+            return True
+
     @staticmethod
     def _bar_time_signature(value: object) -> tuple[tuple[str, int], ...]:
         if not isinstance(value, dict):
@@ -936,6 +947,7 @@ class EngineServer:
                 correlation_id=correlation_id,
                 symbol=symbol,
                 profile_hash=profile_hash,
+                mirror_csv=self._csv_logging_enabled(),
             )
         except (OSError, JournalSchemaError, TypeError, ValueError):
             # Evidence logging must never crash Engine/execution control.

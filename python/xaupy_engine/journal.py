@@ -158,16 +158,18 @@ class StructuredJournal:
         limit: int = 500,
         before_sequence: int | None = None,
     ) -> dict[str, Any]:
+        level_values = JOURNAL_LEVELS if levels is None else levels
         selected_levels = {
             str(level).strip().upper()
-            for level in (levels or JOURNAL_LEVELS)
+            for level in level_values
         }
         if not selected_levels.issubset(set(JOURNAL_LEVELS)):
             raise JournalSchemaError("journal query contains unsupported level")
 
+        source_values = JOURNAL_SOURCES if sources is None else sources
         selected_sources = {
             str(source).strip()
-            for source in (sources or JOURNAL_SOURCES)
+            for source in source_values
         }
         if not selected_sources.issubset(set(JOURNAL_SOURCES)):
             raise JournalSchemaError("journal query contains unsupported source")

@@ -1,8 +1,8 @@
 """XAUPY Python Engine.
 
-Task 007 adds the deterministic Direction -> Pullback -> Trigger strategy state
-machine and exposes read-only strategy state over IPC. Trading execution remains
-hard-locked; no trade intent or broker action is introduced by this task.
+Task 009 adds real read-only MT5 ticket/order/deal projection and a deterministic
+manual-action execution simulator. Broker mutation remains hard-locked and
+trade_intent remains unsupported.
 """
 
-__version__ = "0.7.0-task007"
+__version__ = "0.9.0-task009"

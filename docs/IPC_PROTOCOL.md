@@ -355,8 +355,10 @@ Response:
 
 optimizer_status_ack
 
-with current job progress. Null job id addresses the current active job or
-returns IDLE when none exists.
+with current job progress. Null job id addresses the active job; after a job
+reaches COMPLETED/CANCELLED/FAILED, the latest terminal status remains available
+until another job starts or Engine restarts. This preserves result_run_id/hash
+for heartbeat-driven UI and avoids a completion race.
 
 ### optimizer_cancel
 

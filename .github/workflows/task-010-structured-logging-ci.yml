@@ -225,6 +225,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: XAUPY-Task010-win-x64
-          path: dist/XAUPY-Task009-win-x64.zip
+          path: dist/XAUPY-Task010-win-x64.zip
           if-no-files-found: error
           retention-days: 14

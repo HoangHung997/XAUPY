@@ -1,6 +1,6 @@
 # XAUPY Task 009 — Orders & Positions + Guarded Manual Actions
 
-Status: ACTIVE
+Status: DONE
 Dependencies: XAUPY-003, XAUPY-005
 Visual source-of-truth: docs/ui-reference/Tab Lệnh & Vị thế.png
 

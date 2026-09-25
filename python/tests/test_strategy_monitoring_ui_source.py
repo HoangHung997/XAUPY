@@ -150,17 +150,17 @@ class StrategyMonitoringUiSourceTests(unittest.TestCase):
         self.assertIn("RejectUnexpectedStrategyExecutionEnable", self.supervisor)
         self.assertIn("TradingEnabled", self.model)
         self.assertIn("ExecutionEnabled", self.model)
-        self.assertIn('desktop_version = "0.8.0-task008"', self.supervisor)
+        self.assertIn('desktop_version = "0.9.0-task009"', self.supervisor)
 
     def test_main_overview_now_uses_real_strategy_state(self):
         self.assertIn('x:Name="StrategyStateValue"', self.main_xaml)
         self.assertIn("ApplyStrategySnapshot", self.main_code)
         self.assertIn("strategy.State", self.main_code)
-        self.assertIn("Execution vẫn khóa", self.main_code)
+        self.assertIn("broker execution hiện đang khóa", self.main_code)
 
     def test_future_tabs_keep_explicit_placeholder(self):
         self.assertIn('x:Name="PlaceholderContent"', self.main_xaml)
-        self.assertIn("Task 008 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát", self.main_code)
+        self.assertIn("Task 009 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát + Lệnh & Vị thế", self.main_code)
         self.assertIn("không hiển thị dữ liệu giao dịch giả", self.main_xaml)
 
 

@@ -4,5 +4,99 @@
              RequestedThemeVariant="Dark">
   <Application.Styles>
     <FluentTheme />
+
+    <Style Selector="Window">
+      <Setter Property="FontFamily" Value="Inter"/>
+      <Setter Property="Foreground" Value="#EAF3FF"/>
+    </Style>
+
+    <Style Selector="Button.navTab">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="#D7E5F5"/>
+      <Setter Property="BorderBrush" Value="#103653"/>
+      <Setter Property="BorderThickness" Value="0,0,1,0"/>
+      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="Padding" Value="12,7"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.navTab:pointerover">
+      <Setter Property="Background" Value="#0B2A49"/>
+      <Setter Property="Foreground" Value="White"/>
+    </Style>
+    <Style Selector="Button.navTab.active">
+      <Setter Property="Background" Value="#0967F2"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="BorderBrush" Value="#2491FF"/>
+      <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="#0A64E8"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="BorderBrush" Value="#238AF7"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="5"/>
+      <Setter Property="Padding" Value="14,8"/>
+    </Style>
+    <Style Selector="Button.secondary">
+      <Setter Property="Background" Value="#0B2C4B"/>
+      <Setter Property="Foreground" Value="#DCEBFA"/>
+      <Setter Property="BorderBrush" Value="#23547C"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="5"/>
+      <Setter Property="Padding" Value="12,7"/>
+    </Style>
+
+    <Style Selector="Border.panel">
+      <Setter Property="Background" Value="#061A2E"/>
+      <Setter Property="BorderBrush" Value="#14517A"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="5"/>
+    </Style>
+    <Style Selector="Border.panelSoft">
+      <Setter Property="Background" Value="#081E34"/>
+      <Setter Property="BorderBrush" Value="#123D5D"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="5"/>
+    </Style>
+    <Style Selector="TextBlock.panelTitle">
+      <Setter Property="FontSize" Value="15"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="#C9DDF2"/>
+    </Style>
+    <Style Selector="TextBlock.dim">
+      <Setter Property="Foreground" Value="#86A0BA"/>
+    </Style>
+    <Style Selector="TextBlock.label">
+      <Setter Property="Foreground" Value="#B7CBE0"/>
+      <Setter Property="FontSize" Value="12"/>
+    </Style>
+    <Style Selector="TextBlock.success">
+      <Setter Property="Foreground" Value="#18E58B"/>
+    </Style>
+    <Style Selector="TextBlock.warn">
+      <Setter Property="Foreground" Value="#FFD34D"/>
+    </Style>
+    <Style Selector="TextBlock.danger">
+      <Setter Property="Foreground" Value="#FF415C"/>
+    </Style>
+    <Style Selector="TextBox">
+      <Setter Property="Background" Value="#0B2844"/>
+      <Setter Property="BorderBrush" Value="#23547C"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Foreground" Value="#EDF6FF"/>
+      <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    <Style Selector="ComboBox">
+      <Setter Property="Background" Value="#0B2844"/>
+      <Setter Property="BorderBrush" Value="#23547C"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Foreground" Value="#EDF6FF"/>
+      <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    <Style Selector="CheckBox">
+      <Setter Property="Foreground" Value="#DCEAF8"/>
+    </Style>
   </Application.Styles>
 </Application>

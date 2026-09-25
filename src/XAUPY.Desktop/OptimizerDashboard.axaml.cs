@@ -219,7 +219,7 @@ public partial class OptimizerDashboard : UserControl
             double rsiDelta = GetDouble(profile, "trigger", "rsi_reversal_delta") ?? 3;
             SetNumericRange(
                 "RsiDeltaMinBox", "RsiDeltaMaxBox", "RsiDeltaStepBox",
-                Math.Max(0, rsiDelta - 1), Math.Min(50, rsiDelta + 1), 1);
+                rsiDelta, rsiDelta, 1);
             Text("RsiDeltaDefaultText").Text = Format(rsiDelta);
             SetRowEnabled(
                 _includeRsiDelta,
@@ -229,7 +229,7 @@ public partial class OptimizerDashboard : UserControl
             double ma = GetDouble(profile, "direction", "ma_period") ?? 50;
             SetNumericRange(
                 "EmaMinBox", "EmaMaxBox", "EmaStepBox",
-                Math.Max(1, ma - 20), Math.Min(1000, ma + 20), 20);
+                ma, ma, 20);
             Text("EmaDefaultText").Text = Format(ma);
             SetRowEnabled(_includeEma, "EmaMinBox", "EmaMaxBox", "EmaStepBox");
 
@@ -241,7 +241,7 @@ public partial class OptimizerDashboard : UserControl
                 double value = GetDouble(profile, "stop_loss", "structure_lookback") ?? 3;
                 SetNumericRange(
                     "SlMinBox", "SlMaxBox", "SlStepBox",
-                    Math.Max(1, value - 1), Math.Min(500, value + 1), 1);
+                    value, value, 1);
                 Text("SlDefaultText").Text = Format(value);
                 SetRowEnabled(true, "SlMinBox", "SlMaxBox", "SlStepBox");
             }
@@ -252,7 +252,7 @@ public partial class OptimizerDashboard : UserControl
                 double value = GetDouble(profile, "stop_loss", "fixed_price_units") ?? 5;
                 SetNumericRange(
                     "SlMinBox", "SlMaxBox", "SlStepBox",
-                    Math.Max(0.01, value - 2), value + 2, 2);
+                    value, value, 2);
                 Text("SlDefaultText").Text = Format(value);
                 SetRowEnabled(true, "SlMinBox", "SlMaxBox", "SlStepBox");
             }
@@ -272,7 +272,7 @@ public partial class OptimizerDashboard : UserControl
                 double value = GetDouble(profile, "take_profit", "fixed_price_units") ?? 7;
                 SetNumericRange(
                     "TpMinBox", "TpMaxBox", "TpStepBox",
-                    Math.Max(0.01, value - 2), value + 2, 2);
+                    value, value, 2);
                 Text("TpDefaultText").Text = Format(value);
                 SetRowEnabled(true, "TpMinBox", "TpMaxBox", "TpStepBox");
             }
@@ -283,7 +283,7 @@ public partial class OptimizerDashboard : UserControl
                 double value = GetDouble(profile, "take_profit", "rr_ratio") ?? 1.5;
                 SetNumericRange(
                     "TpMinBox", "TpMaxBox", "TpStepBox",
-                    Math.Max(0.1, value - 0.5), value + 0.5, 0.5);
+                    value, value, 0.5);
                 Text("TpDefaultText").Text = Format(value);
                 SetRowEnabled(true, "TpMinBox", "TpMaxBox", "TpStepBox");
             }

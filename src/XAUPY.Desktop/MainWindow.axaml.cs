@@ -175,7 +175,7 @@ public partial class MainWindow : Window
         {
             FindText("PlaceholderTitle").Text = $"{page.Title} — chưa triển khai";
             FindText("PlaceholderDetail").Text =
-                $"Task 013 đã bổ sung STOP_CONFIRM + ATR SL + Dynamic TP/SL trên Backtest/Tối ưu; broker execution vẫn khóa. {page.Subtitle}";
+                $"Task 013 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát + Lệnh & Vị thế + Backtest + Tối ưu + Nhật ký; đồng thời bổ sung STOP_CONFIRM + ATR SL + Dynamic TP/SL trên Backtest/Tối ưu; broker execution vẫn khóa. {page.Subtitle}";
         }
     }
 

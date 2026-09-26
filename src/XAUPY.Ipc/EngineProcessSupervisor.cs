@@ -251,7 +251,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
                     var heartbeat = ProtocolEnvelope.Create(
                         "heartbeat",
-                        new { component = "desktop", desktop_version = "0.12.0-task012" });
+                        new { component = "desktop", desktop_version = "0.13.0-task013" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
@@ -327,7 +327,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "0.12.0-task012" });
+            new { component = "desktop", desktop_version = "0.13.0-task013" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -341,7 +341,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         var configRequest = ProtocolEnvelope.Create(
             "config_active_get",
-            new { component = "desktop", desktop_version = "0.12.0-task012" });
+            new { component = "desktop", desktop_version = "0.13.0-task013" });
 
         var configResponse = await SendReceiveAsync(
             configRequest,
@@ -360,26 +360,26 @@ public sealed class EngineProcessSupervisor : IDisposable
         if (response.Payload.TryGetProperty("trading_enabled", out var trading) &&
             trading.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 012 Engine unexpectedly reported trading_enabled=true.");
+            throw new InvalidDataException("Task 013 Engine unexpectedly reported trading_enabled=true.");
         }
 
         if (response.Payload.TryGetProperty("execution_enabled", out var execution) &&
             execution.ValueKind == JsonValueKind.True)
         {
-            throw new InvalidDataException("Task 012 Engine unexpectedly reported execution_enabled=true.");
+            throw new InvalidDataException("Task 013 Engine unexpectedly reported execution_enabled=true.");
         }
     }
 
     private static void RejectUnexpectedStrategyExecutionEnable(StrategySnapshot strategy)
     {
         if (strategy.TradingEnabled || strategy.ExecutionEnabled)
-            throw new InvalidDataException("Task 012 strategy projection unexpectedly enabled execution.");
+            throw new InvalidDataException("Task 013 strategy projection unexpectedly enabled execution.");
     }
 
     private static void RejectUnexpectedOrdersExecutionEnable(OrdersPositionsSnapshot orders)
     {
         if (!orders.BrokerExecutionLocked || !orders.SimulationOnly)
-            throw new InvalidDataException("Task 012 order-book projection unexpectedly unlocked broker execution.");
+            throw new InvalidDataException("Task 013 order-book projection unexpectedly unlocked broker execution.");
     }
 
     private static Mt5BridgeStatus ParseBridgeStatus(JsonElement payload)
@@ -423,7 +423,7 @@ public sealed class EngineProcessSupervisor : IDisposable
         }
 
         if (executionReady || !executionLocked)
-            throw new InvalidDataException("Task 012 bridge guardian unexpectedly reported execution ready.");
+            throw new InvalidDataException("Task 013 bridge guardian unexpectedly reported execution ready.");
 
         return new Mt5BridgeStatus(
             connected,
@@ -586,7 +586,7 @@ public sealed class EngineProcessSupervisor : IDisposable
             result.TradingEnabled || result.ExecutionEnabled)
         {
             throw new InvalidDataException(
-                "Task 012 manual action response violated simulation-only safety.");
+                "Task 013 manual action response violated simulation-only safety.");
         }
 
         return result;

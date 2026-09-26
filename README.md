@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-012 ACTIVE. XAUPY-011 DONE; XAUPY-013 chưa bắt đầu.
+Trạng thái hiện tại: TASK XAUPY-012 DONE. XAUPY-013 vẫn PLANNED và chưa bắt đầu.
 
 ## Tài liệu bắt buộc
 
@@ -231,4 +231,35 @@ Final Task 011 evidence:
 - branch direct ZIP SHA-256:
   59f5fc95ce8c4444a7ca2b707cf46f5078ec656e1019090dec0bdf43bbb266d9.
 
-XAUPY-012 chưa bắt đầu.
+## Task 012 đã hoàn thành
+
+Phạm vi:
+
+- parameter sweep dùng chính Task 011 `BacktestEngine`, không có strategy riêng;
+- canonical optimizer allow-list + validation/relevance/combination limit;
+- deterministic `ROBUST_SCORE_V1`, optimizer hash/ranking độc lập worker order;
+- background worker pool có progress/ETA/throughput và cooperative cancel;
+- persisted optimizer history/result/delete + restart replay;
+- heatmap chỉ tổng hợp candidate thật, không interpolation;
+- Walk-Forward rolling/anchored với `selection_source=TRAIN_ONLY`;
+- leakage guard bắt buộc `train_to < test_from`;
+- out-of-sample aggregate/stability metrics;
+- Journal evidence OPTIMIZER/WALK_FORWARD;
+- tab **Tối ưu** bám `docs/ui-reference/Tab Tối Ưu.png`;
+- mock CPU/RAM/Disk không được bịa; diagnostics thật thuộc Task014;
+- runtime không hard-code profit/score/progress/heatmap demo từ ảnh;
+- broker execution vẫn hard-locked.
+
+Final Task 012 evidence:
+
+- 225/225 Python regression/source/optimizer tests PASS;
+- 74/74 C# IPC/Optimizer checks PASS;
+- Avalonia Release build: 0 warnings / 0 errors;
+- packaged Task 012 optimizer/walk-forward reproducibility/restart smoke: PASS;
+- packaged Task 011/010/009/007/config regression smokes: PASS;
+- MetaEditor Bridge: 0 errors / 0 warnings;
+- verified Windows x64 artifact: XAUPY-Task012-win-x64;
+- branch direct ZIP SHA-256:
+  d821d039b1c2a74deb7ec87fb1cbd8c401e35e2a717e2cc0e9e50f1ebc0a9b91.
+
+XAUPY-013 chưa bắt đầu.

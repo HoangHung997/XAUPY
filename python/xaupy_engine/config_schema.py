@@ -398,6 +398,47 @@ def validate_profile(profile: dict[str, Any]) -> list[str]:
     except (KeyError, TypeError, ValueError):
         pass
 
+    try:
+        tp_mode = str(get_path(profile, "take_profit.mode")).upper()
+        if tp_mode == "ZRSI_DYNAMIC":
+            use_z = bool(get_path(profile, "take_profit.dynamic.extend_use_z"))
+            use_rsi = bool(get_path(profile, "take_profit.dynamic.extend_use_rsi"))
+            if not use_z and not use_rsi:
+                errors.append(
+                    "ZRSI_DYNAMIC requires extend_use_z or extend_use_rsi"
+                )
+
+            if bool(
+                get_path(
+                    profile,
+                    "take_profit.dynamic.emergency_server_tp_enabled",
+                )
+            ):
+                original_distance = float(
+                    get_path(profile, "take_profit.fixed_price_units")
+                )
+                emergency_distance = float(
+                    get_path(
+                        profile,
+                        "take_profit.dynamic.emergency_server_tp_price_units",
+                    )
+                )
+                if emergency_distance < original_distance:
+                    errors.append(
+                        "dynamic emergency server TP must be >= original TP distance"
+                    )
+
+        if (
+            str(get_path(profile, "management.sl_tighten_mode")).upper()
+            == "ZRSI_ASSIST"
+            and tp_mode != "ZRSI_DYNAMIC"
+        ):
+            errors.append(
+                "management.sl_tighten_mode ZRSI_ASSIST requires ZRSI_DYNAMIC TP"
+            )
+    except (KeyError, TypeError, ValueError):
+        pass
+
     return errors
 
 

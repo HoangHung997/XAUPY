@@ -32,7 +32,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-010 | DONE | Structured logging + Journal tab | 002,003 | schema/replay tests |
 | XAUPY-011 | DONE | Backtest engine parity | 007,010 | deterministic replay |
 | XAUPY-012 | DONE | Optimizer + walk-forward | 011 | reproducibility/leakage guards + verified Windows build |
-| XAUPY-013 | PLANNED | Dynamic TP/SL + stop-confirm entry | 003,007,011 | state/broker simulation |
+| XAUPY-013 | ACTIVE | Dynamic TP/SL + stop-confirm entry | 003,007,011 | state/broker simulation |
 | XAUPY-014 | PLANNED | Tools tab + diagnostics | 003,004,010 | diagnostics tests |
 | XAUPY-015 | PLANNED | Settings, backup, startup, fail-safe UX | 002,003,004 | restart/recovery tests |
 | XAUPY-016 | PLANNED | Installer, release workflow, demo acceptance | all prior | release + acceptance |
@@ -851,4 +851,24 @@ Task 012 implementation is complete. After merging this task to `main`, rerun
 Task 012 CI on `main` and independently inspect the resulting main artifact
 before delivery.
 
-XAUPY-013 remains PLANNED and has not started.
+# XAUPY-013 — Dynamic TP/SL + stop-confirm entry
+
+Status: ACTIVE
+
+## Goal
+
+Implement the canonical Task 013 trade-management modes on top of the exact
+Task 011 BacktestEngine and Task 009 guarded execution boundary.
+
+Detailed semantics and acceptance are owned by:
+
+- docs/TASK013_DYNAMIC_MANAGEMENT_SPEC.md
+- docs/TASK013_DYNAMIC_MANAGEMENT_TEST.md
+
+## Hard boundary while ACTIVE
+
+- broker execution remains locked;
+- no trade_intent / OrderSend / CTrade mutation path;
+- all hard safety values remain locked;
+- Task 013 cannot be marked DONE until tests, CI, MetaEditor compile and the
+  complete Windows x64 artifact have been verified.

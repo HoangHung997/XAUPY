@@ -50,7 +50,7 @@ def make_profile() -> dict:
     profile["risk"]["max_trades_per_day"] = 20
     profile["risk"]["cooldown_minutes"] = 0
     profile["risk"]["max_consecutive_losses"] = 20
-    profile["risk"]["max_daily_loss_pct"] = 99.0
+    profile["risk"]["max_daily_loss_pct"] = 50.0
     profile["risk"]["stop_after_daily_target"] = False
     profile["stop_loss"]["mode"] = "FIXED"
     profile["stop_loss"]["fixed_price_units"] = 2.0

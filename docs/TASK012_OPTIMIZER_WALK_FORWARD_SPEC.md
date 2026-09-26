@@ -1,6 +1,6 @@
 # XAUPY Task 012 — Optimizer + Walk-Forward
 
-Status: ACTIVE  
+Status: DONE  
 Dependency: XAUPY-011  
 Visual source-of-truth: docs/ui-reference/Tab Tối Ưu.png
 
@@ -361,3 +361,23 @@ No mock optimization result is written.
 - packaged Task 011/010/009/007/config regressions pass;
 - MetaEditor Bridge compile 0 errors / 0 warnings;
 - complete Windows x64 Task 012 artifact produced and independently inspected.
+
+
+## 16. Automated evidence
+
+- Final implementation CI source commit before ledger-only updates:
+  `8e77001c38b513360c8150aa7ee385cf0805d693`
+- Final successful branch run: `36207387702`
+- Python regression/source/optimizer tests: 225/225 PASS
+- C# IPC/Optimizer checks: 74/74 PASS
+- Avalonia Release: 0 warnings / 0 errors
+- Packaged Task012 optimizer/walk-forward reproducibility/restart smoke: PASS
+- Packaged Task011/010/009/007/config regression smokes: PASS
+- MetaEditor Bridge: 0 errors / 0 warnings
+- Artifact id: `10894211806`
+- Artifact: `XAUPY-Task012-win-x64`
+- Artifact outer SHA-256:
+  `9bfe2b9c956d414b8773688b89540c6722090765495eef968fec5f98e8677b6a`
+- Direct build ZIP SHA-256:
+  `d821d039b1c2a74deb7ec87fb1cbd8c401e35e2a717e2cc0e9e50f1ebc0a9b91`
+- Independent artifact inspection: PASS

@@ -123,6 +123,10 @@ Task 011 supports the currently testable execution subset:
 
 Task 013 owns dynamic TP/SL + stop-confirm behavior.
 
+> Current repository note: the limitation above records the completed Task 011
+> boundary. XAUPY-013 extends this same BacktestEngine with those modes; see
+> `docs/TASK013_DYNAMIC_MANAGEMENT_SPEC.md`.
+
 ### Fill assumptions
 
 Historical OHLC bars represent bid prices.

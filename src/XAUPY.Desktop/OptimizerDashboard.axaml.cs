@@ -1146,7 +1146,17 @@ public partial class OptimizerDashboard : UserControl
         }
     }
 
-    private void ParameterInput_OnChanged(object? sender, EventArgs e)
+    private void ParameterSelection_OnChanged(
+        object? sender,
+        SelectionChangedEventArgs e)
+    {
+        if (_initialized && !_suppressInputEvents)
+            UpdateCombinationPreview();
+    }
+
+    private void ParameterText_OnChanged(
+        object? sender,
+        TextChangedEventArgs e)
     {
         if (_initialized && !_suppressInputEvents)
             UpdateCombinationPreview();

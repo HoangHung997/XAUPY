@@ -533,7 +533,6 @@ class BacktestEngine:
             raise BacktestError("; ".join(unsupported))
 
     def run(
-    def run(
         self,
         dataset: HistoricalDataset,
         *,
@@ -1040,7 +1039,6 @@ class BacktestEngine:
         return result if math.isfinite(result) else None
 
     def _entry_allowed(
-    def _entry_allowed(
         self,
         state: BacktestState,
         dataset: HistoricalDataset,
@@ -1248,7 +1246,6 @@ class BacktestEngine:
         )
         return original_tp
 
-    def _position_volume(
     def _position_volume(
         self,
         balance: float,
@@ -1929,7 +1926,6 @@ class BacktestEngine:
             }
         )
 
-    def _append_curve_point(
     def _append_curve_point(
         self,
         state: BacktestState,

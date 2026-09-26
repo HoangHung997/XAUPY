@@ -106,57 +106,57 @@
               <TextBlock Grid.Row="0" Grid.Column="4" Text="Giá trị mặc định" Classes="optHeader"/>
 
               <TextBlock Grid.Row="1" Text="Direction TF" Classes="label" VerticalAlignment="Center"/>
-              <ComboBox x:Name="DirectionTfMinCombo" Grid.Row="1" Grid.Column="1" SelectionChanged="ParameterInput_OnChanged"/>
-              <ComboBox x:Name="DirectionTfMaxCombo" Grid.Row="1" Grid.Column="2" SelectionChanged="ParameterInput_OnChanged"/>
+              <ComboBox x:Name="DirectionTfMinCombo" Grid.Row="1" Grid.Column="1" SelectionChanged="ParameterSelection_OnChanged"/>
+              <ComboBox x:Name="DirectionTfMaxCombo" Grid.Row="1" Grid.Column="2" SelectionChanged="ParameterSelection_OnChanged"/>
               <TextBlock Grid.Row="1" Grid.Column="3" Text="1" HorizontalAlignment="Center" VerticalAlignment="Center" Classes="dim"/>
               <TextBlock x:Name="DirectionTfDefaultText" Grid.Row="1" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
 
               <TextBlock Grid.Row="2" Text="Pullback TF" Classes="label" VerticalAlignment="Center"/>
-              <ComboBox x:Name="PullbackTfMinCombo" Grid.Row="2" Grid.Column="1" SelectionChanged="ParameterInput_OnChanged"/>
-              <ComboBox x:Name="PullbackTfMaxCombo" Grid.Row="2" Grid.Column="2" SelectionChanged="ParameterInput_OnChanged"/>
+              <ComboBox x:Name="PullbackTfMinCombo" Grid.Row="2" Grid.Column="1" SelectionChanged="ParameterSelection_OnChanged"/>
+              <ComboBox x:Name="PullbackTfMaxCombo" Grid.Row="2" Grid.Column="2" SelectionChanged="ParameterSelection_OnChanged"/>
               <TextBlock Grid.Row="2" Grid.Column="3" Text="1" HorizontalAlignment="Center" VerticalAlignment="Center" Classes="dim"/>
               <TextBlock x:Name="PullbackTfDefaultText" Grid.Row="2" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
 
               <TextBlock Grid.Row="3" Text="Trigger TF" Classes="label" VerticalAlignment="Center"/>
-              <ComboBox x:Name="TriggerTfMinCombo" Grid.Row="3" Grid.Column="1" SelectionChanged="ParameterInput_OnChanged"/>
-              <ComboBox x:Name="TriggerTfMaxCombo" Grid.Row="3" Grid.Column="2" SelectionChanged="ParameterInput_OnChanged"/>
+              <ComboBox x:Name="TriggerTfMinCombo" Grid.Row="3" Grid.Column="1" SelectionChanged="ParameterSelection_OnChanged"/>
+              <ComboBox x:Name="TriggerTfMaxCombo" Grid.Row="3" Grid.Column="2" SelectionChanged="ParameterSelection_OnChanged"/>
               <TextBlock Grid.Row="3" Grid.Column="3" Text="1" HorizontalAlignment="Center" VerticalAlignment="Center" Classes="dim"/>
               <TextBlock x:Name="TriggerTfDefaultText" Grid.Row="3" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
 
               <TextBlock Grid.Row="4" Text="RSI Buy (&lt;=)" Classes="label" VerticalAlignment="Center"/>
-              <TextBox x:Name="RsiBuyMinBox" Grid.Row="4" Grid.Column="1" TextChanged="ParameterInput_OnChanged"/>
-              <TextBox x:Name="RsiBuyMaxBox" Grid.Row="4" Grid.Column="2" TextChanged="ParameterInput_OnChanged"/>
-              <TextBox x:Name="RsiBuyStepBox" Grid.Row="4" Grid.Column="3" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="RsiBuyMinBox" Grid.Row="4" Grid.Column="1" TextChanged="ParameterText_OnChanged"/>
+              <TextBox x:Name="RsiBuyMaxBox" Grid.Row="4" Grid.Column="2" TextChanged="ParameterText_OnChanged"/>
+              <TextBox x:Name="RsiBuyStepBox" Grid.Row="4" Grid.Column="3" TextChanged="ParameterText_OnChanged"/>
               <TextBlock x:Name="RsiBuyDefaultText" Grid.Row="4" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
 
               <TextBlock Grid.Row="5" Text="RSI Sell (&gt;=)" Classes="label" VerticalAlignment="Center"/>
-              <TextBox x:Name="RsiSellMinBox" Grid.Row="5" Grid.Column="1" TextChanged="ParameterInput_OnChanged"/>
-              <TextBox x:Name="RsiSellMaxBox" Grid.Row="5" Grid.Column="2" TextChanged="ParameterInput_OnChanged"/>
-              <TextBox x:Name="RsiSellStepBox" Grid.Row="5" Grid.Column="3" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="RsiSellMinBox" Grid.Row="5" Grid.Column="1" TextChanged="ParameterText_OnChanged"/>
+              <TextBox x:Name="RsiSellMaxBox" Grid.Row="5" Grid.Column="2" TextChanged="ParameterText_OnChanged"/>
+              <TextBox x:Name="RsiSellStepBox" Grid.Row="5" Grid.Column="3" TextChanged="ParameterText_OnChanged"/>
               <TextBlock x:Name="RsiSellDefaultText" Grid.Row="5" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
 
               <TextBlock x:Name="TriggerDeltaParameterLabel" Grid.Row="6" Text="Trigger Delta" Classes="label" VerticalAlignment="Center"/>
-              <TextBox x:Name="RsiDeltaMinBox" Grid.Row="6" Grid.Column="1" TextChanged="ParameterInput_OnChanged"/>
-              <TextBox x:Name="RsiDeltaMaxBox" Grid.Row="6" Grid.Column="2" TextChanged="ParameterInput_OnChanged"/>
-              <TextBox x:Name="RsiDeltaStepBox" Grid.Row="6" Grid.Column="3" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="RsiDeltaMinBox" Grid.Row="6" Grid.Column="1" TextChanged="ParameterText_OnChanged"/>
+              <TextBox x:Name="RsiDeltaMaxBox" Grid.Row="6" Grid.Column="2" TextChanged="ParameterText_OnChanged"/>
+              <TextBox x:Name="RsiDeltaStepBox" Grid.Row="6" Grid.Column="3" TextChanged="ParameterText_OnChanged"/>
               <TextBlock x:Name="RsiDeltaDefaultText" Grid.Row="6" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
 
               <TextBlock x:Name="MaParameterLabel" Grid.Row="7" Text="MA Period" Classes="label" VerticalAlignment="Center"/>
-              <TextBox x:Name="EmaMinBox" Grid.Row="7" Grid.Column="1" TextChanged="ParameterInput_OnChanged"/>
-              <TextBox x:Name="EmaMaxBox" Grid.Row="7" Grid.Column="2" TextChanged="ParameterInput_OnChanged"/>
-              <TextBox x:Name="EmaStepBox" Grid.Row="7" Grid.Column="3" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="EmaMinBox" Grid.Row="7" Grid.Column="1" TextChanged="ParameterText_OnChanged"/>
+              <TextBox x:Name="EmaMaxBox" Grid.Row="7" Grid.Column="2" TextChanged="ParameterText_OnChanged"/>
+              <TextBox x:Name="EmaStepBox" Grid.Row="7" Grid.Column="3" TextChanged="ParameterText_OnChanged"/>
               <TextBlock x:Name="EmaDefaultText" Grid.Row="7" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
 
               <TextBlock x:Name="SlParameterLabel" Grid.Row="8" Text="SL Structure Lookback" Classes="label" VerticalAlignment="Center"/>
-              <TextBox x:Name="SlMinBox" Grid.Row="8" Grid.Column="1" TextChanged="ParameterInput_OnChanged"/>
-              <TextBox x:Name="SlMaxBox" Grid.Row="8" Grid.Column="2" TextChanged="ParameterInput_OnChanged"/>
-              <TextBox x:Name="SlStepBox" Grid.Row="8" Grid.Column="3" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="SlMinBox" Grid.Row="8" Grid.Column="1" TextChanged="ParameterText_OnChanged"/>
+              <TextBox x:Name="SlMaxBox" Grid.Row="8" Grid.Column="2" TextChanged="ParameterText_OnChanged"/>
+              <TextBox x:Name="SlStepBox" Grid.Row="8" Grid.Column="3" TextChanged="ParameterText_OnChanged"/>
               <TextBlock x:Name="SlDefaultText" Grid.Row="8" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
 
               <TextBlock x:Name="TpParameterLabel" Grid.Row="9" Text="TP Fixed" Classes="label" VerticalAlignment="Center"/>
-              <TextBox x:Name="TpMinBox" Grid.Row="9" Grid.Column="1" TextChanged="ParameterInput_OnChanged"/>
-              <TextBox x:Name="TpMaxBox" Grid.Row="9" Grid.Column="2" TextChanged="ParameterInput_OnChanged"/>
-              <TextBox x:Name="TpStepBox" Grid.Row="9" Grid.Column="3" TextChanged="ParameterInput_OnChanged"/>
+              <TextBox x:Name="TpMinBox" Grid.Row="9" Grid.Column="1" TextChanged="ParameterText_OnChanged"/>
+              <TextBox x:Name="TpMaxBox" Grid.Row="9" Grid.Column="2" TextChanged="ParameterText_OnChanged"/>
+              <TextBox x:Name="TpStepBox" Grid.Row="9" Grid.Column="3" TextChanged="ParameterText_OnChanged"/>
               <TextBlock x:Name="TpDefaultText" Grid.Row="9" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
             </Grid>
 

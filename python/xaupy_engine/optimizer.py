@@ -52,13 +52,30 @@ OPTIMIZABLE_PATHS = frozenset(
         "trigger.rsi_reversal_delta",
         "trigger.z_period",
         "trigger.z_reversal_delta",
+        "entry.pending_buffer_price_units",
+        "entry.pending_expiration_minutes",
         "stop_loss.fixed_price_units",
+        "stop_loss.atr_timeframe",
+        "stop_loss.atr_period",
+        "stop_loss.atr_multiplier",
         "stop_loss.structure_lookback",
         "stop_loss.structure_buffer_price_units",
         "take_profit.fixed_price_units",
         "take_profit.rr_ratio",
+        "take_profit.dynamic.near_tp_distance",
+        "take_profit.dynamic.exit_z_reverse_delta",
+        "take_profit.dynamic.exit_rsi_reverse_delta",
+        "take_profit.dynamic.lock_profit_buffer",
+        "take_profit.dynamic.max_extension_price_units",
+        "take_profit.dynamic.max_extension_minutes",
+        "take_profit.dynamic.emergency_server_tp_price_units",
         "management.breakeven_trigger_rr",
         "management.breakeven_offset_price_units",
+        "management.partial_close_at_rr",
+        "management.partial_close_percent",
+        "management.trailing_atr_multiplier",
+        "management.trailing_structure_lookback",
+        "management.trailing_step_price_units",
         "risk.risk_percent",
         "risk.fixed_lot",
         "risk.max_trades_per_day",
@@ -136,6 +153,122 @@ def _profile_hash(profile: dict[str, Any]) -> str:
 
 
 def _field_relevant(path: str, profile: dict[str, Any]) -> tuple[bool, str]:
+    dynamic_tp = _get_path(profile, "take_profit.mode") == "ZRSI_DYNAMIC"
+    trailing_enabled = _get_path(profile, "management.trailing_enabled") is True
+    trailing_mode = str(_get_path(profile, "management.trailing_mode"))
+    tighten_mode = str(_get_path(profile, "management.sl_tighten_mode"))
+    initial_sl_mode = str(_get_path(profile, "stop_loss.mode"))
+
+    if path in {
+        "entry.pending_buffer_price_units",
+        "entry.pending_expiration_minutes",
+    }:
+        return (
+            _get_path(profile, "entry.mode") == "STOP_CONFIRM",
+            "entry.mode is not STOP_CONFIRM",
+        )
+
+    if path == "trigger.rsi_period":
+        relevant = (
+            _get_path(profile, "trigger.rsi_enabled") is True
+            or (
+                dynamic_tp
+                and _get_path(profile, "take_profit.dynamic.extend_use_rsi") is True
+            )
+        )
+        return relevant, "Trigger RSI and dynamic TP RSI are disabled"
+
+    if path == "trigger.z_period":
+        relevant = (
+            _get_path(profile, "trigger.z_enabled") is True
+            or (
+                dynamic_tp
+                and _get_path(profile, "take_profit.dynamic.extend_use_z") is True
+            )
+        )
+        return relevant, "Trigger Z and dynamic TP Z are disabled"
+
+    if path in {
+        "stop_loss.atr_timeframe",
+        "stop_loss.atr_period",
+        "stop_loss.atr_multiplier",
+    }:
+        relevant = (
+            initial_sl_mode == "ATR"
+            or (trailing_enabled and trailing_mode == "ATR")
+            or tighten_mode == "ATR"
+        )
+        return relevant, "ATR stop/trailing/tighten is inactive"
+
+    if path in {
+        "stop_loss.structure_lookback",
+        "stop_loss.structure_buffer_price_units",
+    }:
+        relevant = (
+            initial_sl_mode == "STRUCTURE"
+            or (trailing_enabled and trailing_mode == "STRUCTURE")
+            or tighten_mode == "STRUCTURE"
+        )
+        return relevant, "Structure stop/trailing/tighten is inactive"
+
+    if path == "take_profit.fixed_price_units":
+        return (
+            _get_path(profile, "take_profit.mode") in {"FIXED", "ZRSI_DYNAMIC"},
+            "take_profit.mode does not use the canonical fixed/original TP distance",
+        )
+
+    if path.startswith("take_profit.dynamic."):
+        if not dynamic_tp:
+            return False, "take_profit.mode is not ZRSI_DYNAMIC"
+        if path == "take_profit.dynamic.exit_z_reverse_delta":
+            return (
+                _get_path(profile, "take_profit.dynamic.extend_use_z") is True,
+                "dynamic TP Z is disabled",
+            )
+        if path == "take_profit.dynamic.exit_rsi_reverse_delta":
+            return (
+                _get_path(profile, "take_profit.dynamic.extend_use_rsi") is True,
+                "dynamic TP RSI is disabled",
+            )
+        if path == "take_profit.dynamic.lock_profit_buffer":
+            return (
+                _get_path(profile, "take_profit.dynamic.lock_sl_at_original_tp") is True
+                or tighten_mode == "ZRSI_ASSIST",
+                "dynamic TP original-TP lock is disabled",
+            )
+        if path == "take_profit.dynamic.emergency_server_tp_price_units":
+            return (
+                _get_path(
+                    profile,
+                    "take_profit.dynamic.emergency_server_tp_enabled",
+                )
+                is True,
+                "dynamic TP emergency server TP is disabled",
+            )
+        return True, ""
+
+    if path in {
+        "management.partial_close_at_rr",
+        "management.partial_close_percent",
+    }:
+        return (
+            _get_path(profile, "management.partial_close_enabled") is True,
+            "partial close is disabled",
+        )
+
+    if path == "management.trailing_atr_multiplier":
+        return (
+            trailing_enabled and trailing_mode == "ATR",
+            "ATR trailing is disabled",
+        )
+    if path == "management.trailing_structure_lookback":
+        return (
+            trailing_enabled and trailing_mode == "STRUCTURE",
+            "Structure trailing is disabled",
+        )
+    if path == "management.trailing_step_price_units":
+        return trailing_enabled, "trailing is disabled"
+
     checks: dict[str, tuple[str, Any, str]] = {
         "direction.ma_period": (
             "direction.ma_enabled",
@@ -157,20 +290,10 @@ def _field_relevant(path: str, profile: dict[str, Any]) -> tuple[bool, str]:
             True,
             "Pullback RSI is disabled",
         ),
-        "trigger.rsi_period": (
-            "trigger.rsi_enabled",
-            True,
-            "Trigger RSI is disabled",
-        ),
         "trigger.rsi_reversal_delta": (
             "trigger.rsi_enabled",
             True,
             "Trigger RSI is disabled",
-        ),
-        "trigger.z_period": (
-            "trigger.z_enabled",
-            True,
-            "Trigger Z is disabled",
         ),
         "trigger.z_reversal_delta": (
             "trigger.z_enabled",
@@ -181,21 +304,6 @@ def _field_relevant(path: str, profile: dict[str, Any]) -> tuple[bool, str]:
             "stop_loss.mode",
             "FIXED",
             "stop_loss.mode is not FIXED",
-        ),
-        "stop_loss.structure_lookback": (
-            "stop_loss.mode",
-            "STRUCTURE",
-            "stop_loss.mode is not STRUCTURE",
-        ),
-        "stop_loss.structure_buffer_price_units": (
-            "stop_loss.mode",
-            "STRUCTURE",
-            "stop_loss.mode is not STRUCTURE",
-        ),
-        "take_profit.fixed_price_units": (
-            "take_profit.mode",
-            "FIXED",
-            "take_profit.mode is not FIXED",
         ),
         "take_profit.rr_ratio": (
             "take_profit.mode",

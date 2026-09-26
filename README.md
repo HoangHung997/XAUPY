@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-011 DONE. XAUPY-012 vẫn PLANNED và chưa bắt đầu.
+Trạng thái hiện tại: TASK XAUPY-012 ACTIVE. XAUPY-011 DONE; XAUPY-013 chưa bắt đầu.
 
 ## Tài liệu bắt buộc
 
@@ -28,6 +28,8 @@ Trạng thái hiện tại: TASK XAUPY-011 DONE. XAUPY-012 vẫn PLANNED và ch�
 - [Task 010 acceptance](docs/TASK010_STRUCTURED_LOGGING_JOURNAL_TEST.md)
 - [Task 011 Backtest parity spec](docs/TASK011_BACKTEST_PARITY_SPEC.md)
 - [Task 011 acceptance](docs/TASK011_BACKTEST_PARITY_TEST.md)
+- [Task 012 Optimizer + Walk-Forward spec](docs/TASK012_OPTIMIZER_WALK_FORWARD_SPEC.md)
+- [Task 012 acceptance](docs/TASK012_OPTIMIZER_WALK_FORWARD_TEST.md)
 - [UI reference](docs/ui-reference/README.md)
 
 ## Nguyên tắc triển khai

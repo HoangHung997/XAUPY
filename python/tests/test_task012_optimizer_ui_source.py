@@ -140,11 +140,11 @@ class Task012OptimizerUiSourceTests(unittest.TestCase):
             self.assertIn(f'"{name}"', self.code)
 
     def test_task012_version_and_safety_guards_remain(self):
-        self.assertIn('desktop_version = "0.12.0-task012"', self.supervisor)
+        self.assertIn('desktop_version = "0.13.0-task013"', self.supervisor)
         self.assertIn("RejectUnexpectedExecutionEnable", self.supervisor)
         self.assertIn("RejectUnexpectedOrdersExecutionEnable", self.supervisor)
         self.assertIn(
-            "Task 012 manual action response violated simulation-only safety",
+            "Task 013 manual action response violated simulation-only safety",
             self.supervisor,
         )
 

@@ -470,6 +470,7 @@ class BacktestState:
     trades: list[dict[str, Any]] = field(default_factory=list)
     pending_signals: list[dict[str, Any]] = field(default_factory=list)
     pending_entries: list[PendingStopEntry] = field(default_factory=list)
+    pending_entry_events: list[dict[str, Any]] = field(default_factory=list)
     equity_curve: list[dict[str, Any]] = field(default_factory=list)
     drawdown_curve: list[dict[str, Any]] = field(default_factory=list)
     skipped_signals: dict[str, int] = field(default_factory=dict)
@@ -677,6 +678,18 @@ class BacktestEngine:
                 )
 
         _raise_if_cancelled(cancel_check)
+        if state.pending_entries:
+            final_time = in_range[-1].time + 60
+            for pending in list(state.pending_entries):
+                self._record_pending_event(
+                    state,
+                    pending,
+                    "END_OF_DATA",
+                    final_time,
+                )
+                self._skip(state, "PENDING_END_OF_DATA")
+            state.pending_entries.clear()
+
         if state.positions:
             final_bar = in_range[-1]
             for position in list(state.positions):
@@ -755,7 +768,13 @@ class BacktestEngine:
                         for item in state.pending_entries
                         if item.side != opposite
                     ]
-                    for _ in removed:
+                    for item in removed:
+                        self._record_pending_event(
+                            state,
+                            item,
+                            "CANCEL_OPPOSITE_SETUP",
+                            bar.time,
+                        )
                         self._skip(state, "PENDING_CANCEL_OPPOSITE_SETUP")
 
             trigger_tf = str(self.profile["timeframes"]["trigger"])
@@ -794,23 +813,28 @@ class BacktestEngine:
             state.pending_entries = [
                 item for item in state.pending_entries if item.side != side
             ]
-            state.pending_entries.append(
-                PendingStopEntry(
-                    signal_sequence=int(signal.get("sequence", 0)),
-                    signal_time=signal_time,
-                    detected_close_time=detected_close_time,
-                    side=side,
-                    trigger_price=trigger_price,
-                    created_time=bar.time,
-                    expires_at=expires_at,
-                    signal_stale_at=stale_at,
-                    profile_hash=str(
-                        signal.get("profile_hash") or strategy.profile_hash
-                    ),
-                    dataset_fingerprint=dataset.fingerprint,
-                    signal_trigger_rsi=signal_rsi,
-                    signal_trigger_z=signal_z,
-                )
+            pending_entry = PendingStopEntry(
+                signal_sequence=int(signal.get("sequence", 0)),
+                signal_time=signal_time,
+                detected_close_time=detected_close_time,
+                side=side,
+                trigger_price=trigger_price,
+                created_time=bar.time,
+                expires_at=expires_at,
+                signal_stale_at=stale_at,
+                profile_hash=str(
+                    signal.get("profile_hash") or strategy.profile_hash
+                ),
+                dataset_fingerprint=dataset.fingerprint,
+                signal_trigger_rsi=signal_rsi,
+                signal_trigger_z=signal_z,
+            )
+            state.pending_entries.append(pending_entry)
+            self._record_pending_event(
+                state,
+                pending_entry,
+                "CREATED",
+                bar.time,
             )
             return
 
@@ -847,10 +871,22 @@ class BacktestEngine:
         for pending in list(state.pending_entries):
             if bar.time >= pending.signal_stale_at:
                 state.pending_entries.remove(pending)
+                self._record_pending_event(
+                    state,
+                    pending,
+                    "SIGNAL_EXPIRED",
+                    bar.time,
+                )
                 self._skip(state, "PENDING_SIGNAL_EXPIRED")
                 continue
             if bar.time >= pending.expires_at:
                 state.pending_entries.remove(pending)
+                self._record_pending_event(
+                    state,
+                    pending,
+                    "EXPIRED",
+                    bar.time,
+                )
                 self._skip(state, "PENDING_EXPIRED")
                 continue
 
@@ -862,6 +898,12 @@ class BacktestEngine:
                 )
                 if not side_allowed:
                     state.pending_entries.remove(pending)
+                    self._record_pending_event(
+                        state,
+                        pending,
+                        "CANCEL_DIRECTION_CHANGE",
+                        bar.time,
+                    )
                     self._skip(state, "PENDING_CANCEL_DIRECTION_CHANGE")
                     continue
 
@@ -888,6 +930,13 @@ class BacktestEngine:
                 continue
 
             state.pending_entries.remove(pending)
+            self._record_pending_event(
+                state,
+                pending,
+                "TRIGGERED",
+                bar.time,
+                fill_price=fill_price,
+            )
             if len(state.positions) >= int(self.profile["risk"]["max_open_positions"]):
                 self._skip(state, "PENDING_FILL_MAX_OPEN_POSITIONS")
                 continue
@@ -2052,6 +2101,7 @@ class BacktestEngine:
             "profile": deepcopy(self.profile),
             "metrics": metrics,
             "skipped_signals": dict(sorted(state.skipped_signals.items())),
+            "pending_entry_events": deepcopy(state.pending_entry_events),
             "equity_curve": self._downsample_curve(state.equity_curve),
             "drawdown_curve": self._downsample_curve(state.drawdown_curve),
             "trades": state.trades,
@@ -2069,6 +2119,33 @@ class BacktestEngine:
             "result_hash": result_hash,
             "dataset_file_name": dataset.path.name,
         }
+
+    def _record_pending_event(
+        self,
+        state: BacktestState,
+        pending: PendingStopEntry,
+        event: str,
+        timestamp: int,
+        *,
+        fill_price: float | None = None,
+    ) -> None:
+        state.pending_entry_events.append(
+            {
+                "event": event,
+                "time": int(timestamp),
+                "signal_sequence": pending.signal_sequence,
+                "signal_time": pending.signal_time,
+                "side": pending.side,
+                "trigger_price": self._round(pending.trigger_price),
+                "fill_price": (
+                    self._round(fill_price)
+                    if fill_price is not None
+                    else None
+                ),
+                "expires_at": pending.expires_at,
+                "signal_stale_at": pending.signal_stale_at,
+            }
+        )
 
     @staticmethod
     def _skip(state: BacktestState, reason: str) -> None:

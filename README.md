@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-012 DONE. XAUPY-013 vẫn PLANNED và chưa bắt đầu.
+Trạng thái hiện tại: TASK XAUPY-013 ACTIVE — Dynamic TP/SL + STOP_CONFIRM research/state simulation. Broker execution vẫn khóa.
 
 ## Tài liệu bắt buộc
 
@@ -30,6 +30,8 @@ Trạng thái hiện tại: TASK XAUPY-012 DONE. XAUPY-013 vẫn PLANNED và ch�
 - [Task 011 acceptance](docs/TASK011_BACKTEST_PARITY_TEST.md)
 - [Task 012 Optimizer + Walk-Forward spec](docs/TASK012_OPTIMIZER_WALK_FORWARD_SPEC.md)
 - [Task 012 acceptance](docs/TASK012_OPTIMIZER_WALK_FORWARD_TEST.md)
+- [Task 013 Dynamic Management spec](docs/TASK013_DYNAMIC_MANAGEMENT_SPEC.md)
+- [Task 013 acceptance](docs/TASK013_DYNAMIC_MANAGEMENT_TEST.md)
 - [UI reference](docs/ui-reference/README.md)
 
 ## Nguyên tắc triển khai
@@ -262,4 +264,16 @@ Final Task 012 evidence:
 - branch direct ZIP SHA-256:
   d821d039b1c2a74deb7ec87fb1cbd8c401e35e2a717e2cc0e9e50f1ebc0a9b91.
 
-XAUPY-013 chưa bắt đầu.
+## Task 013 đang triển khai
+
+Phạm vi Task 013 được khóa theo `docs/TASK013_DYNAMIC_MANAGEMENT_SPEC.md`:
+
+- STOP_CONFIRM deterministic pending-entry simulation;
+- ATR initial SL;
+- ZRSI dynamic TP extension/lock/reversal/time cap;
+- partial close, trailing và SL tightening;
+- Task 012 optimizer parity cho các tham số mới được Backtest hỗ trợ;
+- MT5 broker execution tiếp tục hard-locked.
+
+Task chỉ được đổi sang DONE sau khi full regression, CI, MetaEditor và
+`XAUPY-Task013-win-x64` được xác minh.

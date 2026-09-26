@@ -19,7 +19,7 @@ concurrency:
 jobs:
   validate:
     name: Validate Optimizer reproducibility leakage guards and UI
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout

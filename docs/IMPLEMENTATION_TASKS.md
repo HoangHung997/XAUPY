@@ -31,7 +31,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-009 | DONE | Orders & Positions + guarded manual actions | 003,005 | execution simulation |
 | XAUPY-010 | DONE | Structured logging + Journal tab | 002,003 | schema/replay tests |
 | XAUPY-011 | DONE | Backtest engine parity | 007,010 | deterministic replay |
-| XAUPY-012 | PLANNED | Optimizer + walk-forward | 011 | reproducibility/leakage guards |
+| XAUPY-012 | DONE | Optimizer + walk-forward | 011 | reproducibility/leakage guards + verified Windows build |
 | XAUPY-013 | PLANNED | Dynamic TP/SL + stop-confirm entry | 003,007,011 | state/broker simulation |
 | XAUPY-014 | PLANNED | Tools tab + diagnostics | 003,004,010 | diagnostics tests |
 | XAUPY-015 | PLANNED | Settings, backup, startup, fail-safe UX | 002,003,004 | restart/recovery tests |
@@ -756,4 +756,99 @@ Task 011 implementation is complete. After merging this task to `main`, the
 Task 011 workflow must be rerun on `main` and the resulting main artifact must
 be independently inspected before delivery.
 
-XAUPY-012 remains PLANNED and has not started.
+# XAUPY-012 — Optimizer + walk-forward
+
+Status: DONE
+
+## Goal completed
+
+Implement deterministic parameter optimization and walk-forward validation on
+top of Task 011 `BacktestEngine`, with persisted reproducible evidence and the
+approved Optimizer UI from `docs/ui-reference/Tab Tối Ưu.png`.
+
+## Scope completed
+
+- canonical optimizer allow-list/relevance/schema validation;
+- decimal-safe numeric ranges and schema-ordered enum ranges;
+- deterministic candidate grid, tie-break and `ROBUST_SCORE_V1`;
+- worker-count-independent optimizer hash and ranking;
+- background worker pool with heartbeat-safe progress, throughput and ETA;
+- terminal job status retained so Desktop cannot miss result id;
+- immediate/cooperative cancel never persists a false completed result;
+- persisted SWEEP/WALK_FORWARD history/get/delete + restart replay;
+- Top candidate evidence with Task011 metrics/result hashes;
+- real heatmap aggregation with null missing cells and no interpolation;
+- bounded heatmap grid for Desktop safety;
+- rolling/anchored Walk-Forward plans;
+- strict train/test non-overlap leakage guards;
+- every fold records `selection_source=TRAIN_ONLY`;
+- out-of-sample aggregate P/L, Sharpe, winrate, drawdown, positive-fold ratio
+  and stability;
+- Task010 Journal evidence for optimizer lifecycle;
+- typed C# optimizer status/result/heatmap/fold models and supervisor APIs;
+- approved Optimizer UI with live sidebar, parameter sweep, progress/resources,
+  Top 10, heatmap, preset save/load and Walk-Forward;
+- CPU/RAM/Disk are explicitly unavailable until Task014 rather than fabricated.
+
+## Hard boundary retained
+
+- optimizer candidates call Task011 `BacktestEngine` only;
+- no optimizer-specific strategy implementation;
+- no `trade_intent`;
+- no MT5 broker mutation;
+- `trading_enabled=false`;
+- `execution_enabled=false`;
+- locked execution/risk safety fields cannot be optimized;
+- test folds never influence parameter selection;
+- Task009 broker execution remains hard-locked.
+
+## Automated evidence
+
+- Final implementation CI source commit before ledger-only updates:
+  8e77001c38b513360c8150aa7ee385cf0805d693
+- Branch: task/012-optimizer-walk-forward
+- GitHub Actions final successful branch run: 36207387702
+- Validate Optimizer reproducibility leakage guards and UI job: SUCCESS
+- Windows x64 full Task 012 build job: SUCCESS
+- Python regression/source/optimizer tests: 225/225 PASS
+- C# IPC/Optimizer self-tests: 74/74 PASS
+- Avalonia/.NET Release build: SUCCESS, 0 warnings, 0 errors
+- Packaged Task 012 optimizer/walk-forward reproducibility/restart smoke: PASS
+- Packaged Task 011 deterministic Backtest regression smoke: PASS
+- Packaged Task 010 structured Journal regression smoke: PASS
+- Packaged Task 009 manual-simulation regression smoke: PASS
+- Packaged Task 007 strategy/safety regression smoke: PASS
+- Packaged xaupy-config regression smoke: PASS
+- MetaEditor locked Bridge: Result: 0 errors, 0 warnings, 3696 ms elapsed
+- GitHub artifact: XAUPY-Task012-win-x64
+- GitHub artifact id: 10894211806
+- GitHub artifact size: 108214776 bytes
+- Artifact outer SHA-256:
+  9bfe2b9c956d414b8773688b89540c6722090765495eef968fec5f98e8677b6a
+- Direct full-build ZIP size: 108438748 bytes
+- Direct full-build ZIP SHA-256:
+  d821d039b1c2a74deb7ec87fb1cbd8c401e35e2a717e2cc0e9e50f1ebc0a9b91
+- Independent artifact inspection: 263 entries
+- XAUPY.Desktop.exe / engine / config tool: present
+- profiles/config-schema-v1.json: field_count=133
+- baseline Direction=M30 / Pullback=M5 / Trigger=M1
+- docs/ui-reference/Tab Tối Ưu.png: present
+- docs/TASK012_OPTIMIZER_WALK_FORWARD_SPEC.md and TEST.md: present
+- packaged safety verified:
+  max_retry_count=0, demo_only=true, allow_real_account=false,
+  never_widen_sl=true, require_server_sl=true,
+  block_on_stale_market_data=true
+- forbidden broker mutation APIs in packaged MQ5: absent
+- independent artifact verification: PASS
+
+## Required artifact
+
+XAUPY-Task012-win-x64.zip
+
+## Delivery
+
+Task 012 implementation is complete. After merging this task to `main`, rerun
+Task 012 CI on `main` and independently inspect the resulting main artifact
+before delivery.
+
+XAUPY-013 remains PLANNED and has not started.

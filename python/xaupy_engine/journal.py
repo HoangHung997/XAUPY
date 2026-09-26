@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import re
+import threading
 from typing import Any, Callable
 from uuid import UUID, uuid4
 
@@ -63,6 +64,7 @@ class StructuredJournal:
         self.csv_path = self.root_dir / "journal-v1.csv"
         self.bookmarks_path = self.root_dir / "bookmarks-v1.json"
         self._now_provider = now_provider or (lambda: datetime.now(timezone.utc))
+        self._lock = threading.RLock()
         self._events: list[dict[str, Any]] = []
         self._events_by_sequence: dict[int, dict[str, Any]] = {}
         self._bookmarks: set[int] = set()
@@ -75,11 +77,13 @@ class StructuredJournal:
 
     @property
     def latest_sequence(self) -> int:
-        return self._events[-1]["sequence"] if self._events else 0
+        with self._lock:
+            return self._events[-1]["sequence"] if self._events else 0
 
     @property
     def event_count(self) -> int:
-        return len(self._events)
+        with self._lock:
+            return len(self._events)
 
     def append(
         self,
@@ -112,46 +116,53 @@ class StructuredJournal:
             now = self._now_provider()
             if now.tzinfo is None:
                 now = now.replace(tzinfo=timezone.utc)
-            timestamp_utc = now.astimezone(timezone.utc).isoformat()
+            normalized_time = now.astimezone(timezone.utc).isoformat()
         else:
-            timestamp_utc = self._normalize_timestamp(timestamp_utc)
+            normalized_time = self._normalize_timestamp(timestamp_utc)
 
-        event = {
-            "schema_version": JOURNAL_SCHEMA_VERSION,
-            "sequence": self._next_sequence,
-            "event_id": str(uuid4()),
-            "timestamp_utc": timestamp_utc,
-            "level": normalized_level,
-            "source": normalized_source,
-            "tag": normalized_tag,
-            "message": message.strip(),
-            "details": self._safe_json_object(details),
-            "correlation_id": self._optional_string(correlation_id),
-            "symbol": self._optional_string(symbol),
-            "profile_hash": self._optional_string(profile_hash),
-        }
-        self.validate_event(event)
+        safe_details = self._safe_json_object(details)
 
-        encoded = json.dumps(
-            event,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        )
-        with self.events_path.open("a", encoding="utf-8", newline="\n") as handle:
-            handle.write(encoded)
-            handle.write("\n")
-            handle.flush()
+        with self._lock:
+            event = {
+                "schema_version": JOURNAL_SCHEMA_VERSION,
+                "sequence": self._next_sequence,
+                "event_id": str(uuid4()),
+                "timestamp_utc": normalized_time,
+                "level": normalized_level,
+                "source": normalized_source,
+                "tag": normalized_tag,
+                "message": message.strip(),
+                "details": safe_details,
+                "correlation_id": self._optional_string(correlation_id),
+                "symbol": self._optional_string(symbol),
+                "profile_hash": self._optional_string(profile_hash),
+            }
+            self.validate_event(event)
 
-        stored = deepcopy(event)
-        self._events.append(stored)
-        self._events_by_sequence[event["sequence"]] = stored
-        self._next_sequence += 1
+            encoded = json.dumps(
+                event,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            with self.events_path.open(
+                "a",
+                encoding="utf-8",
+                newline="\n",
+            ) as handle:
+                handle.write(encoded)
+                handle.write("\n")
+                handle.flush()
 
-        if mirror_csv:
-            self._append_csv_best_effort(stored)
+            stored = deepcopy(event)
+            self._events.append(stored)
+            self._events_by_sequence[event["sequence"]] = stored
+            self._next_sequence += 1
 
-        return self._public_event(stored)
+            if mirror_csv:
+                self._append_csv_best_effort(stored)
+
+            return self._public_event(stored)
 
     def query(
         self,
@@ -190,94 +201,98 @@ class StructuredJournal:
         needle = (search or "").strip().casefold()
         matched: list[dict[str, Any]] = []
 
-        for event in reversed(self._events):
-            sequence = int(event["sequence"])
-            if before_sequence is not None and sequence >= before_sequence:
-                continue
-            if event["level"] not in selected_levels:
-                continue
-            if event["source"] not in selected_sources:
-                continue
-            if bookmarks_only and sequence not in self._bookmarks:
-                continue
-            if scope == "TODAY" and not self._is_today_local(event["timestamp_utc"]):
-                continue
-            if needle and needle not in self._search_haystack(event):
-                continue
+        with self._lock:
+            for event in reversed(self._events):
+                sequence = int(event["sequence"])
+                if before_sequence is not None and sequence >= before_sequence:
+                    continue
+                if event["level"] not in selected_levels:
+                    continue
+                if event["source"] not in selected_sources:
+                    continue
+                if bookmarks_only and sequence not in self._bookmarks:
+                    continue
+                if scope == "TODAY" and not self._is_today_local(event["timestamp_utc"]):
+                    continue
+                if needle and needle not in self._search_haystack(event):
+                    continue
 
-            matched.append(self._public_event(event))
+                matched.append(self._public_event(event))
 
-        total_matched = len(matched)
-        return {
-            "schema_version": JOURNAL_SCHEMA_VERSION,
-            "date_scope": scope,
-            "total_matched": total_matched,
-            "events": matched[:limit],
-            "latest_sequence": self.latest_sequence,
-            "invalid_replay_lines": self.invalid_replay_lines,
-        }
+            total_matched = len(matched)
+            return {
+                "schema_version": JOURNAL_SCHEMA_VERSION,
+                "date_scope": scope,
+                "total_matched": total_matched,
+                "events": matched[:limit],
+                "latest_sequence": self.latest_sequence,
+                "invalid_replay_lines": self.invalid_replay_lines,
+            }
 
     def summary(self, *, date_scope: str = "TODAY") -> dict[str, Any]:
         scope = str(date_scope).strip().upper()
         if scope not in {"TODAY", "ALL"}:
             raise JournalSchemaError("date_scope must be TODAY or ALL")
 
-        events = [
-            event
-            for event in self._events
-            if scope == "ALL" or self._is_today_local(event["timestamp_utc"])
-        ]
-        level_counts = {level: 0 for level in JOURNAL_LEVELS}
-        source_counts = {source: 0 for source in JOURNAL_SOURCES}
+        with self._lock:
+            events = [
+                event
+                for event in self._events
+                if scope == "ALL" or self._is_today_local(event["timestamp_utc"])
+            ]
+            level_counts = {level: 0 for level in JOURNAL_LEVELS}
+            source_counts = {source: 0 for source in JOURNAL_SOURCES}
 
-        for event in events:
-            level_counts[event["level"]] += 1
-            source_counts[event["source"]] += 1
+            for event in events:
+                level_counts[event["level"]] += 1
+                source_counts[event["source"]] += 1
 
-        recent_alerts = [
-            self._public_event(event)
-            for event in reversed(events)
-            if event["source"] == "Alerts" or event["level"] in {"WARN", "ERROR"}
-        ][:5]
+            recent_alerts = [
+                self._public_event(event)
+                for event in reversed(events)
+                if event["source"] == "Alerts" or event["level"] in {"WARN", "ERROR"}
+            ][:5]
 
-        bookmarked = [
-            self._public_event(event)
-            for event in reversed(self._events)
-            if int(event["sequence"]) in self._bookmarks
-        ][:5]
+            bookmarked = [
+                self._public_event(event)
+                for event in reversed(self._events)
+                if int(event["sequence"]) in self._bookmarks
+            ][:5]
 
-        return {
-            "schema_version": JOURNAL_SCHEMA_VERSION,
-            "date_scope": scope,
-            "total": len(events),
-            "level_counts": level_counts,
-            "source_counts": source_counts,
-            "latest_sequence": self.latest_sequence,
-            "recent_alerts": recent_alerts,
-            "bookmarks": bookmarked,
-            "invalid_replay_lines": self.invalid_replay_lines,
-            "duplicate_replay_lines": self.duplicate_replay_lines,
-        }
+            return {
+                "schema_version": JOURNAL_SCHEMA_VERSION,
+                "date_scope": scope,
+                "total": len(events),
+                "level_counts": level_counts,
+                "source_counts": source_counts,
+                "latest_sequence": self.latest_sequence,
+                "recent_alerts": recent_alerts,
+                "bookmarks": bookmarked,
+                "invalid_replay_lines": self.invalid_replay_lines,
+                "duplicate_replay_lines": self.duplicate_replay_lines,
+            }
 
     def set_bookmark(self, sequence: int, bookmarked: bool) -> dict[str, Any]:
         if isinstance(sequence, bool) or not isinstance(sequence, int):
             raise JournalSchemaError("bookmark sequence must be an integer")
 
-        event = self._events_by_sequence.get(sequence)
-        if event is None:
-            raise JournalSchemaError("journal event does not exist")
+        with self._lock:
+            event = self._events_by_sequence.get(sequence)
+            if event is None:
+                raise JournalSchemaError("journal event does not exist")
 
-        if bookmarked:
-            self._bookmarks.add(sequence)
-        else:
-            self._bookmarks.discard(sequence)
+            if bookmarked:
+                self._bookmarks.add(sequence)
+            else:
+                self._bookmarks.discard(sequence)
 
-        self._save_bookmarks()
-        return self._public_event(event)
+            self._save_bookmarks()
+            return self._public_event(event)
 
     def get_event(self, sequence: int) -> dict[str, Any] | None:
-        event = self._events_by_sequence.get(sequence)
-        return self._public_event(event) if event is not None else None
+        with self._lock:
+            event = self._events_by_sequence.get(sequence)
+            return self._public_event(event) if event is not None else None
 
     @staticmethod
     def validate_event(event: dict[str, Any]) -> None:

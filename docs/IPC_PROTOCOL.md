@@ -1,6 +1,6 @@
 # XAUPY IPC Protocol v1
 
-Status: extended by Task XAUPY-011
+Status: extended by Task XAUPY-012
 Transport: TCP loopback
 Default endpoint: 127.0.0.1:39421
 Framing: UTF-8 JSON Lines, one JSON object per line
@@ -18,6 +18,7 @@ Task 007 adds read-only deterministic strategy state projected from real closed-
 Task 009 adds strategy-owned ticket/order/deal projection plus guarded manual-action simulation.
 Task 010 adds persistent structured journal summary/query/bookmark messages.
 Task 011 adds deterministic historical Backtest dataset/run/history/result messages.
+Task 012 adds background parameter optimization, heatmap and train-only walk-forward messages.
 
 ## 2. Security boundary
 
@@ -53,7 +54,7 @@ shutdown → shutdown_ack
 
 heartbeat_ack includes MT5 bridge health from Task 003, Overview projection from
 Task 005, Task 007 strategy projection, Task 009 orders_positions projection,
-and a compact Task 010 journal_summary.
+a compact Task 010 journal_summary, and compact Task 012 optimizer_status.
 
 The strategy object includes read-only state such as state, blocked_reason,
 profile_hash, exact strategy timeframes, direction, armed_side, signal_sequence,
@@ -289,7 +290,157 @@ with ok/deleted state.
 Backtest IPC does not send `trade_intent`, does not call MT5 execution APIs and
 does not mutate the broker account.
 
-## 8. Configuration messages
+## 8. Task 012 Optimizer / Walk-Forward messages
+
+Task 012 evaluates candidates only through the Task 011 BacktestEngine and
+persists deterministic optimizer evidence. The optimizer runs in a background
+job so heartbeat remains responsive.
+
+heartbeat_ack adds compact optimizer_status with job id, mode, status, phase,
+combination/work counts, workers, progress, throughput, ETA, result run id/hash
+and error state.
+
+All Task 012 responses retain:
+
+- trading_enabled=false
+- execution_enabled=false
+
+### optimizer_start
+
+Starts a parameter sweep. Request contains:
+
+- path;
+- from_date / to_date;
+- initial_balance;
+- spread_pips;
+- commission_per_lot;
+- min_trades;
+- max_workers;
+- parameter_ranges.
+
+parameter_ranges uses canonical config paths and explicit enum values or
+numeric min/max/step. Locked/unsupported/inactive parameters are rejected.
+
+Response:
+
+optimizer_start_ack
+
+with ok and initial job status.
+
+### walk_forward_start
+
+Same core fields as optimizer_start plus:
+
+- folds;
+- train_ratio;
+- rolling.
+
+Response:
+
+walk_forward_start_ack
+
+Task 012 selects the best parameter set from TRAIN only, freezes it, then
+evaluates the following TEST range. Persisted folds explicitly carry
+selection_source=TRAIN_ONLY and leakage_guard_passed.
+
+### optimizer_status
+
+Request:
+
+{
+  "job_id": "UUID or null"
+}
+
+Response:
+
+optimizer_status_ack
+
+with current job progress. Null job id addresses the active job; after a job
+reaches COMPLETED/CANCELLED/FAILED, the latest terminal status remains available
+until another job starts or Engine restarts. This preserves result_run_id/hash
+for heartbeat-driven UI and avoids a completion race.
+
+### optimizer_cancel
+
+Request:
+
+{
+  "job_id": "UUID"
+}
+
+Response:
+
+optimizer_cancel_ack
+
+Cancellation is cooperative. No cancelled job is persisted as a completed
+optimizer result.
+
+### optimizer_result_get
+
+Request:
+
+{
+  "run_id": "UUID",
+  "candidate_offset": 0,
+  "candidate_limit": 100
+}
+
+Response:
+
+optimizer_result_get_ack
+
+Sweep results include deterministic optimizer_hash, canonical parameter ranges,
+candidate rank/score/Sharpe/Task011 metrics/result hashes and paging metadata.
+Walk-forward results include fold train/test evidence and out-of-sample
+aggregate/stability metrics.
+
+### optimizer_history_query
+
+Request:
+
+{
+  "limit": 50
+}
+
+Response:
+
+optimizer_history_query_ack
+
+with newest persisted SWEEP/WALK_FORWARD runs.
+
+### optimizer_result_delete
+
+Request:
+
+{
+  "run_id": "UUID"
+}
+
+Response:
+
+optimizer_result_delete_ack.
+
+### optimizer_heatmap
+
+Request:
+
+{
+  "run_id": "UUID",
+  "x_path": "canonical optimized parameter",
+  "y_path": "canonical optimized parameter",
+  "metric": "net_profit"
+}
+
+Response:
+
+optimizer_heatmap_ack.
+
+Heatmap cells are arithmetic means of actual eligible candidates sharing the
+X/Y pair. Missing cells remain null and are never interpolated.
+
+Task 012 does not send trade_intent and does not mutate MT5.
+
+## 9. Configuration messages
 
 ### config_schema_get
 
@@ -368,13 +519,13 @@ with:
 
 A profile attempting to set execution.allow_real_account=true, execution.demo_only=false, max retry > 0 or disable mandatory safety values is rejected.
 
-## 9. MT5 .set file conversion
+## 10. MT5 .set file conversion
 
 File conversion itself is implemented in the Python config backend and packaged xaupy-config.exe, rather than transmitting arbitrary file paths over IPC.
 
 This keeps IPC messages data-oriented and allows the future Avalonia UI to choose files locally, parse them through the Engine/backend and present a preview.
 
-## 10. Compatibility
+## 11. Compatibility
 
 - Unknown schema_version is rejected.
 - New optional payload fields may be ignored by an older peer.

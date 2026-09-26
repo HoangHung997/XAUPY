@@ -1,0 +1,254 @@
+# Final XAUPY-012 validation pipeline
+name: Task 012 - Optimizer Walk-Forward CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'task/012-optimizer-walk-forward'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: task-012-optimizer-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Optimizer reproducibility leakage guards and UI
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Python Task 012 and regression tests
+        run: python -X faulthandler -m unittest discover -s python/tests -v
+
+      - name: Restore Desktop and IPC projects
+        run: dotnet restore src/XAUPY.Desktop/XAUPY.Desktop.csproj
+
+      - name: Build Avalonia regression Release
+        run: dotnet build src/XAUPY.Desktop/XAUPY.Desktop.csproj -c Release --no-restore
+
+      - name: CSharp IPC/Optimizer regression self-test
+        run: dotnet run --project tests/XAUPY.Ipc.ContractTests/XAUPY.Ipc.ContractTests.csproj -c Release
+
+  windows-build:
+    name: Windows x64 full Task 012 build
+    runs-on: windows-latest
+    timeout-minutes: 60
+    needs: validate
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install PyInstaller
+        run: python -m pip install "pyinstaller>=6.14,<7"
+
+      - name: Build packaged Python Engine
+        shell: pwsh
+        run: python -m PyInstaller --clean --noconfirm --onefile --name xaupy-engine --paths python --distpath dist/engine --workpath build/pyinstaller-engine --specpath build/pyinstaller-engine python/engine_entry.py
+
+      - name: Build packaged Config tool
+        shell: pwsh
+        run: python -m PyInstaller --clean --noconfirm --onefile --name xaupy-config --paths python --distpath dist/tools --workpath build/pyinstaller-config --specpath build/pyinstaller-config python/config_entry.py
+
+      - name: Task 012 packaged optimizer walk-forward smoke
+        run: python scripts/smoke_task012_optimizer.py dist/engine/xaupy-engine.exe
+
+      - name: Regression Task 011 packaged deterministic Backtest smoke
+        run: python scripts/smoke_task011_backtest.py dist/engine/xaupy-engine.exe
+
+      - name: Regression Task 010 packaged journal replay smoke
+        run: python scripts/smoke_task010_journal.py dist/engine/xaupy-engine.exe
+
+      - name: Regression Task 009 packaged execution-simulation smoke
+        run: python scripts/smoke_task009_execution.py dist/engine/xaupy-engine.exe
+
+      - name: Regression Task 007 packaged strategy smoke
+        run: python scripts/smoke_task007_engine.py dist/engine/xaupy-engine.exe
+
+      - name: Smoke test packaged Config tool
+        run: python scripts/smoke_config_exe.py dist/tools/xaupy-config.exe
+
+      - name: Generate canonical baseline profiles and schema
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/profiles | Out-Null
+          .\dist\tools\xaupy-config.exe defaults --out dist/profiles/Baseline_M30_M5_M1.json
+          .\dist\tools\xaupy-config.exe validate dist/profiles/Baseline_M30_M5_M1.json
+          .\dist\tools\xaupy-config.exe export-set dist/profiles/Baseline_M30_M5_M1.json --out dist/profiles/Baseline_M30_M5_M1.set
+          .\dist\tools\xaupy-config.exe schema --out dist/profiles/config-schema-v1.json
+
+      - name: Download MetaTrader 5 installer
+        shell: pwsh
+        run: |
+          $url = "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\mt5setup.exe"
+          if (-not (Test-Path "$env:RUNNER_TEMP\mt5setup.exe")) { throw "MT5 installer download failed" }
+
+      - name: Install MetaTrader 5
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $mt5 = "C:\Program Files\MetaTrader 5"
+          $editor = "$mt5\MetaEditor64.exe"
+
+          function Wait-ForPath([string]$path, [int]$seconds) {
+            $deadline = (Get-Date).AddSeconds($seconds)
+            while ((Get-Date) -lt $deadline) {
+              if (Test-Path -LiteralPath $path) { return $true }
+              Start-Sleep -Seconds 3
+            }
+            return (Test-Path -LiteralPath $path)
+          }
+
+          Start-Process -FilePath "$env:RUNNER_TEMP\mt5setup.exe" -ArgumentList "/auto" | Out-Null
+          if (-not (Wait-ForPath $editor 420)) { throw "MetaEditor64.exe not found after MT5 install" }
+          Get-Process terminal64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+
+      - name: Compile locked Task 012 MT5 Bridge
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $mt5 = "C:\Program Files\MetaTrader 5"
+          $editor = "$mt5\MetaEditor64.exe"
+          $experts = "$mt5\MQL5\Experts"
+          $src = "$experts\XAUPY_Bridge_EA.mq5"
+          $ex5 = "$experts\XAUPY_Bridge_EA.ex5"
+          $log = "$env:RUNNER_TEMP\XAUPY_Bridge_EA.compile.log"
+
+          New-Item -ItemType Directory -Force -Path $experts | Out-Null
+          Copy-Item "mql5\XAUPY_Bridge_EA.mq5" $src -Force
+          if (Test-Path $ex5) { Remove-Item $ex5 -Force }
+          if (Test-Path $log) { Remove-Item $log -Force }
+
+          $p = Start-Process -FilePath $editor -ArgumentList "/portable", "/compile:`"$src`"", "/log:`"$log`"" -Wait -PassThru
+          Write-Host "MetaEditor exit code: $($p.ExitCode)"
+          if (-not (Test-Path $log)) { throw "MetaEditor did not produce compile log" }
+
+          $text = Get-Content -Path $log -Encoding Unicode -Raw
+          Write-Host "----------- MetaEditor log -----------"
+          Write-Host $text
+          Write-Host "--------------------------------------"
+
+          $errorsMatch = [regex]::Match($text, "Result:\s*(\d+)\s*error")
+          $warningsMatch = [regex]::Match($text, "Result:\s*\d+\s*error[^,]*,\s*(\d+)\s*warning")
+          $errors = if ($errorsMatch.Success) { [int]$errorsMatch.Groups[1].Value } else { 999 }
+          $warnings = if ($warningsMatch.Success) { [int]$warningsMatch.Groups[1].Value } else { 999 }
+
+          if ($errors -ne 0) { throw "MQL5 compile failed with $errors error(s)" }
+          if ($warnings -ne 0) { throw "MQL5 compile produced $warnings warning(s)" }
+          if (-not (Test-Path $ex5)) { throw "MQL5 compile produced no EX5" }
+
+          New-Item -ItemType Directory -Force -Path dist/mt5 | Out-Null
+          Copy-Item $ex5 dist/mt5/XAUPY_Bridge_EA.ex5
+          Copy-Item $log dist/mt5/XAUPY_Bridge_EA.compile.log
+          Copy-Item mql5/XAUPY_Bridge_EA.mq5 dist/mt5/XAUPY_Bridge_EA.mq5
+
+      - name: Publish Avalonia Windows x64 self-contained
+        shell: pwsh
+        run: dotnet publish src/XAUPY.Desktop/XAUPY.Desktop.csproj -c Release -r win-x64 --self-contained true -o dist/app
+
+      - name: Assemble full Task 012 build
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/app/engine | Out-Null
+          Copy-Item dist/engine/xaupy-engine.exe dist/app/engine/xaupy-engine.exe
+
+          New-Item -ItemType Directory -Force -Path dist/app/tools | Out-Null
+          Copy-Item dist/tools/xaupy-config.exe dist/app/tools/xaupy-config.exe
+
+          New-Item -ItemType Directory -Force -Path dist/app/profiles | Out-Null
+          Copy-Item dist/profiles/* dist/app/profiles/ -Force
+
+          New-Item -ItemType Directory -Force -Path dist/app/mt5 | Out-Null
+          Copy-Item dist/mt5/* dist/app/mt5/ -Force
+
+          New-Item -ItemType Directory -Force -Path dist/app/docs | Out-Null
+          Copy-Item docs/PRODUCT_SPEC.md dist/app/docs/PRODUCT_SPEC.md
+          Copy-Item docs/IMPLEMENTATION_TASKS.md dist/app/docs/IMPLEMENTATION_TASKS.md
+          Copy-Item docs/IPC_PROTOCOL.md dist/app/docs/IPC_PROTOCOL.md
+          Copy-Item docs/CONFIG_PROFILE_SPEC.md dist/app/docs/CONFIG_PROFILE_SPEC.md
+          Copy-Item docs/OVERVIEW_UI_SPEC.md dist/app/docs/OVERVIEW_UI_SPEC.md
+          Copy-Item docs/CONFIGURATION_UI_SPEC.md dist/app/docs/CONFIGURATION_UI_SPEC.md
+          Copy-Item docs/TASK007_STRATEGY_ENGINE.md dist/app/docs/TASK007_STRATEGY_ENGINE.md
+          Copy-Item docs/TASK007_STRATEGY_TEST.md dist/app/docs/TASK007_STRATEGY_TEST.md
+          Copy-Item docs/STRATEGY_MONITORING_UI_SPEC.md dist/app/docs/STRATEGY_MONITORING_UI_SPEC.md
+          Copy-Item docs/TASK008_STRATEGY_MONITORING_TEST.md dist/app/docs/TASK008_STRATEGY_MONITORING_TEST.md
+          Copy-Item docs/TASK009_ORDERS_POSITIONS_SPEC.md dist/app/docs/TASK009_ORDERS_POSITIONS_SPEC.md
+          Copy-Item docs/TASK009_ORDERS_POSITIONS_TEST.md dist/app/docs/TASK009_ORDERS_POSITIONS_TEST.md
+          Copy-Item docs/TASK010_STRUCTURED_LOGGING_JOURNAL_SPEC.md dist/app/docs/TASK010_STRUCTURED_LOGGING_JOURNAL_SPEC.md
+          Copy-Item docs/TASK010_STRUCTURED_LOGGING_JOURNAL_TEST.md dist/app/docs/TASK010_STRUCTURED_LOGGING_JOURNAL_TEST.md
+          Copy-Item docs/TASK011_BACKTEST_PARITY_SPEC.md dist/app/docs/TASK011_BACKTEST_PARITY_SPEC.md
+          Copy-Item docs/TASK011_BACKTEST_PARITY_TEST.md dist/app/docs/TASK011_BACKTEST_PARITY_TEST.md
+          Copy-Item docs/TASK012_OPTIMIZER_WALK_FORWARD_SPEC.md dist/app/docs/TASK012_OPTIMIZER_WALK_FORWARD_SPEC.md
+          Copy-Item docs/TASK012_OPTIMIZER_WALK_FORWARD_TEST.md dist/app/docs/TASK012_OPTIMIZER_WALK_FORWARD_TEST.md
+          Copy-Item docs/TASK006_CONFIGURATION_TEST.md dist/app/docs/TASK006_CONFIGURATION_TEST.md
+          Copy-Item docs/TASK005_OVERVIEW_TEST.md dist/app/docs/TASK005_OVERVIEW_TEST.md
+          Copy-Item docs/TASK003_MT5_DEMO_TEST.md dist/app/docs/TASK003_MT5_DEMO_TEST.md
+
+          New-Item -ItemType Directory -Force -Path dist/app/docs/ui-reference | Out-Null
+          Copy-Item "docs/ui-reference/Tab Tổng Quan.png" "dist/app/docs/ui-reference/Tab Tổng Quan.png"
+          Copy-Item "docs/ui-reference/Tab Cấu Hình.png" "dist/app/docs/ui-reference/Tab Cấu Hình.png"
+          Copy-Item "docs/ui-reference/Tab Chiến Lược.png" "dist/app/docs/ui-reference/Tab Chiến Lược.png"
+          Copy-Item "docs/ui-reference/Tab Giám Sát.png" "dist/app/docs/ui-reference/Tab Giám Sát.png"
+          Copy-Item "docs/ui-reference/Tab Lệnh & Vị thế.png" "dist/app/docs/ui-reference/Tab Lệnh & Vị thế.png"
+          Copy-Item "docs/ui-reference/Tab Nhật Kí.png" "dist/app/docs/ui-reference/Tab Nhật Kí.png"
+          Copy-Item "docs/ui-reference/Tab BackTest.png" "dist/app/docs/ui-reference/Tab BackTest.png"
+          Copy-Item "docs/ui-reference/Tab Tối Ưu.png" "dist/app/docs/ui-reference/Tab Tối Ưu.png"
+
+          if (-not (Test-Path dist/app/XAUPY.Desktop.exe)) { throw "XAUPY.Desktop.exe missing" }
+          if (-not (Test-Path dist/app/engine/xaupy-engine.exe)) { throw "xaupy-engine.exe missing" }
+          if (-not (Test-Path dist/app/tools/xaupy-config.exe)) { throw "xaupy-config.exe missing" }
+          if (-not (Test-Path dist/app/profiles/Baseline_M30_M5_M1.json)) { throw "baseline JSON missing" }
+          if (-not (Test-Path dist/app/profiles/Baseline_M30_M5_M1.set)) { throw "baseline SET missing" }
+          if (-not (Test-Path dist/app/mt5/XAUPY_Bridge_EA.ex5)) { throw "Bridge EX5 missing" }
+          if (-not (Test-Path dist/app/docs/TASK009_ORDERS_POSITIONS_SPEC.md)) { throw "Task009 spec missing" }
+          if (-not (Test-Path dist/app/docs/TASK009_ORDERS_POSITIONS_TEST.md)) { throw "Task009 test doc missing" }
+          if (-not (Test-Path dist/app/docs/TASK010_STRUCTURED_LOGGING_JOURNAL_SPEC.md)) { throw "Task010 spec missing" }
+          if (-not (Test-Path dist/app/docs/TASK010_STRUCTURED_LOGGING_JOURNAL_TEST.md)) { throw "Task010 test doc missing" }
+          if (-not (Test-Path dist/app/docs/TASK011_BACKTEST_PARITY_SPEC.md)) { throw "Task011 spec missing" }
+          if (-not (Test-Path dist/app/docs/TASK011_BACKTEST_PARITY_TEST.md)) { throw "Task011 test doc missing" }
+          if (-not (Test-Path dist/app/docs/TASK012_OPTIMIZER_WALK_FORWARD_SPEC.md)) { throw "Task012 spec missing" }
+          if (-not (Test-Path dist/app/docs/TASK012_OPTIMIZER_WALK_FORWARD_TEST.md)) { throw "Task012 test doc missing" }
+          if (-not (Test-Path "dist/app/docs/ui-reference/Tab Lệnh & Vị thế.png")) { throw "Orders reference missing" }
+          if (-not (Test-Path "dist/app/docs/ui-reference/Tab Nhật Kí.png")) { throw "Journal reference missing" }
+          if (-not (Test-Path "dist/app/docs/ui-reference/Tab BackTest.png")) { throw "Backtest reference missing" }
+          if (-not (Test-Path "dist/app/docs/ui-reference/Tab Tối Ưu.png")) { throw "Optimizer reference missing" }
+
+      - name: Package full Task 012 build
+        shell: pwsh
+        run: Compress-Archive -Path dist/app/* -DestinationPath dist/XAUPY-Task012-win-x64.zip -Force
+
+      - name: Upload Task 012 Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: XAUPY-Task012-win-x64
+          path: dist/XAUPY-Task012-win-x64.zip
+          if-no-files-found: error
+          retention-days: 14

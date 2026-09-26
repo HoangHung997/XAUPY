@@ -24,6 +24,12 @@ from .config_schema import (
 )
 from .execution_simulator import ManualActionSimulator
 from .journal import JournalSchemaError, StructuredJournal
+from .optimizer import (
+    OptimizerError,
+    OptimizerJobManager,
+    OptimizerRepository,
+    heatmap_from_result,
+)
 from .strategy_engine import StrategyEngine
 
 DEFAULT_HOST: Final = "127.0.0.1"
@@ -39,6 +45,7 @@ class EngineServer:
         bridge_stale_seconds: float = 5.0,
         journal_dir: str | os.PathLike[str] | None = None,
         backtest_dir: str | os.PathLike[str] | None = None,
+        optimizer_dir: str | os.PathLike[str] | None = None,
     ) -> None:
         if host not in {"127.0.0.1", "localhost"}:
             raise ValueError("XAUPY Engine may bind to loopback only")
@@ -49,6 +56,7 @@ class EngineServer:
         self.port = port
         self.bound_port = port
         self._server: asyncio.AbstractServer | None = None
+        self._client_writers: set[asyncio.StreamWriter] = set()
         self._shutdown_event = asyncio.Event()
         self._started_monotonic = time.monotonic()
         self._connections_total = 0
@@ -58,6 +66,11 @@ class EngineServer:
         self.manual_actions = ManualActionSimulator(self.bridge)
         self.journal = StructuredJournal(journal_dir)
         self.backtests = BacktestRepository(backtest_dir)
+        self.optimizers = OptimizerRepository(optimizer_dir)
+        self.optimizer_jobs = OptimizerJobManager(
+            self.optimizers,
+            journal_callback=self._optimizer_journal,
+        )
 
         self._last_bridge_connected: bool | None = None
         self._last_market_fresh: bool | None = None
@@ -107,6 +120,18 @@ class EngineServer:
         await self._shutdown_event.wait()
 
     async def close(self) -> None:
+        optimizer_stopped = await asyncio.to_thread(
+            self.optimizer_jobs.shutdown,
+            5.0,
+        )
+        if not optimizer_stopped:
+            self._log(
+                "WARN",
+                "Python Engine",
+                "OPTIMIZER_SHUTDOWN",
+                "Optimizer threads did not stop within shutdown timeout",
+            )
+
         if self._server is None:
             return
 
@@ -116,9 +141,48 @@ class EngineServer:
             "SYSTEM",
             "Python Engine shutdown requested",
         )
-        self._server.close()
-        await self._server.wait_closed()
+        server = self._server
         self._server = None
+        server.close()
+
+        # Python 3.13 Server.wait_closed() waits for active connections too.
+        # Engine shutdown must therefore close current Desktop/Bridge sockets
+        # explicitly instead of waiting forever for clients to disconnect.
+        writers = list(self._client_writers)
+        for writer in writers:
+            if not writer.is_closing():
+                writer.close()
+
+        if writers:
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(
+                        *(writer.wait_closed() for writer in writers),
+                        return_exceptions=True,
+                    ),
+                    timeout=2.0,
+                )
+            except TimeoutError:
+                self._log(
+                    "WARN",
+                    "Python Engine",
+                    "CONNECTION",
+                    "Timed out draining client sockets during shutdown",
+                    details={"writers": len(writers)},
+                )
+
+        try:
+            await asyncio.wait_for(
+                server.wait_closed(),
+                timeout=2.0,
+            )
+        except TimeoutError:
+            self._log(
+                "WARN",
+                "Python Engine",
+                "CONNECTION",
+                "Timed out waiting for IPC server close",
+            )
 
     async def _handle_client(
         self,
@@ -126,6 +190,7 @@ class EngineServer:
         writer: asyncio.StreamWriter,
     ) -> None:
         self._connections_total += 1
+        self._client_writers.add(writer)
         peer = writer.get_extra_info("peername")
         self._log(
             "DEBUG",
@@ -190,6 +255,7 @@ class EngineServer:
                     self._shutdown_event.set()
                     break
         finally:
+            self._client_writers.discard(writer)
             self._log(
                 "DEBUG",
                 "Python Engine",
@@ -248,6 +314,7 @@ class EngineServer:
                     market_connected=market_connected
                 ),
                 "journal_summary": self.journal.summary(date_scope="TODAY"),
+                "optimizer_status": self.optimizer_jobs.status(),
             }
             return Envelope.response("heartbeat_ack", request.request_id, payload), False
 
@@ -598,6 +665,30 @@ class EngineServer:
         if request.type == "backtest_result_delete":
             return self._backtest_result_delete_response(request, common), False
 
+        if request.type == "optimizer_start":
+            return self._optimizer_start_response(request, common), False
+
+        if request.type == "walk_forward_start":
+            return self._walk_forward_start_response(request, common), False
+
+        if request.type == "optimizer_status":
+            return self._optimizer_status_response(request, common), False
+
+        if request.type == "optimizer_cancel":
+            return self._optimizer_cancel_response(request, common), False
+
+        if request.type == "optimizer_result_get":
+            return self._optimizer_result_get_response(request, common), False
+
+        if request.type == "optimizer_history_query":
+            return self._optimizer_history_response(request, common), False
+
+        if request.type == "optimizer_result_delete":
+            return self._optimizer_result_delete_response(request, common), False
+
+        if request.type == "optimizer_heatmap":
+            return self._optimizer_heatmap_response(request, common), False
+
         if request.type == "shutdown":
             self._log(
                 "INFO",
@@ -631,7 +722,7 @@ class EngineServer:
                 {
                     "code": "UNSUPPORTED_MESSAGE",
                     "message": (
-                        f"Unsupported Task 010 message type: {request.type}"
+                        f"Unsupported Task 012 message type: {request.type}"
                     ),
                     "trading_enabled": False,
                     "execution_enabled": False,
@@ -1004,6 +1095,297 @@ class EngineServer:
             trades[trade_offset : trade_offset + trade_limit]
         )
         return public
+
+    def _optimizer_start_response(
+        self,
+        request: Envelope,
+        common: dict[str, Any],
+    ) -> Envelope:
+        try:
+            status = self.optimizer_jobs.start_sweep(
+                dict(request.payload),
+                deepcopy(self.active_profile),
+            )
+            payload = {
+                **common,
+                "ok": True,
+                "status": status,
+            }
+        except (OptimizerError, BacktestError, OSError, TypeError, ValueError) as exc:
+            payload = {
+                **common,
+                "ok": False,
+                "errors": [str(exc)],
+            }
+        return Envelope.response(
+            "optimizer_start_ack",
+            request.request_id,
+            payload,
+        )
+
+    def _walk_forward_start_response(
+        self,
+        request: Envelope,
+        common: dict[str, Any],
+    ) -> Envelope:
+        try:
+            status = self.optimizer_jobs.start_walk_forward(
+                dict(request.payload),
+                deepcopy(self.active_profile),
+            )
+            payload = {
+                **common,
+                "ok": True,
+                "status": status,
+            }
+        except (OptimizerError, BacktestError, OSError, TypeError, ValueError) as exc:
+            payload = {
+                **common,
+                "ok": False,
+                "errors": [str(exc)],
+            }
+        return Envelope.response(
+            "walk_forward_start_ack",
+            request.request_id,
+            payload,
+        )
+
+    def _optimizer_status_response(
+        self,
+        request: Envelope,
+        common: dict[str, Any],
+    ) -> Envelope:
+        try:
+            job_id = request.payload.get("job_id")
+            if job_id is not None and not isinstance(job_id, str):
+                raise OptimizerError("job_id must be string or null")
+            status = self.optimizer_jobs.status(job_id)
+            payload = {
+                **common,
+                "ok": True,
+                "status": status,
+            }
+        except (OptimizerError, TypeError, ValueError) as exc:
+            payload = {
+                **common,
+                "ok": False,
+                "errors": [str(exc)],
+            }
+        return Envelope.response(
+            "optimizer_status_ack",
+            request.request_id,
+            payload,
+        )
+
+    def _optimizer_cancel_response(
+        self,
+        request: Envelope,
+        common: dict[str, Any],
+    ) -> Envelope:
+        try:
+            job_id = request.payload.get("job_id")
+            if not isinstance(job_id, str) or not job_id.strip():
+                raise OptimizerError("job_id is required")
+            status = self.optimizer_jobs.cancel(job_id)
+            payload = {
+                **common,
+                "ok": True,
+                "status": status,
+            }
+        except (OptimizerError, TypeError, ValueError) as exc:
+            payload = {
+                **common,
+                "ok": False,
+                "errors": [str(exc)],
+            }
+        return Envelope.response(
+            "optimizer_cancel_ack",
+            request.request_id,
+            payload,
+        )
+
+    def _optimizer_result_get_response(
+        self,
+        request: Envelope,
+        common: dict[str, Any],
+    ) -> Envelope:
+        try:
+            run_id = request.payload.get("run_id")
+            if not isinstance(run_id, str) or not run_id.strip():
+                raise OptimizerError("run_id is required")
+            offset = int(request.payload.get("candidate_offset", 0))
+            limit = int(request.payload.get("candidate_limit", 100))
+            if offset < 0:
+                raise OptimizerError("candidate_offset must be >= 0")
+            if not 1 <= limit <= 500:
+                raise OptimizerError("candidate_limit must be 1..500")
+
+            result = self.optimizers.get(run_id)
+            public = self._public_optimizer_result(
+                result,
+                candidate_offset=offset,
+                candidate_limit=limit,
+            )
+            payload = {
+                **common,
+                "ok": True,
+                "result": public,
+            }
+        except (OptimizerError, OSError, TypeError, ValueError) as exc:
+            payload = {
+                **common,
+                "ok": False,
+                "errors": [str(exc)],
+            }
+        return Envelope.response(
+            "optimizer_result_get_ack",
+            request.request_id,
+            payload,
+        )
+
+    def _optimizer_history_response(
+        self,
+        request: Envelope,
+        common: dict[str, Any],
+    ) -> Envelope:
+        try:
+            limit = int(request.payload.get("limit", 50))
+            payload = {
+                **common,
+                "ok": True,
+                "history": self.optimizers.history(limit=limit),
+            }
+        except (OptimizerError, TypeError, ValueError) as exc:
+            payload = {
+                **common,
+                "ok": False,
+                "errors": [str(exc)],
+            }
+        return Envelope.response(
+            "optimizer_history_query_ack",
+            request.request_id,
+            payload,
+        )
+
+    def _optimizer_result_delete_response(
+        self,
+        request: Envelope,
+        common: dict[str, Any],
+    ) -> Envelope:
+        try:
+            run_id = request.payload.get("run_id")
+            if not isinstance(run_id, str) or not run_id.strip():
+                raise OptimizerError("run_id is required")
+            payload = {
+                **common,
+                "ok": True,
+                "deleted": self.optimizers.delete(run_id),
+                "run_id": run_id,
+            }
+        except (OptimizerError, OSError, TypeError, ValueError) as exc:
+            payload = {
+                **common,
+                "ok": False,
+                "errors": [str(exc)],
+            }
+        return Envelope.response(
+            "optimizer_result_delete_ack",
+            request.request_id,
+            payload,
+        )
+
+    def _optimizer_heatmap_response(
+        self,
+        request: Envelope,
+        common: dict[str, Any],
+    ) -> Envelope:
+        try:
+            run_id = request.payload.get("run_id")
+            x_path = request.payload.get("x_path")
+            y_path = request.payload.get("y_path")
+            metric = request.payload.get("metric", "net_profit")
+            if not isinstance(run_id, str) or not run_id.strip():
+                raise OptimizerError("run_id is required")
+            if not isinstance(x_path, str) or not x_path.strip():
+                raise OptimizerError("x_path is required")
+            if not isinstance(y_path, str) or not y_path.strip():
+                raise OptimizerError("y_path is required")
+            if not isinstance(metric, str):
+                raise OptimizerError("metric must be string")
+
+            result = self.optimizers.get(run_id)
+            heatmap = heatmap_from_result(
+                result,
+                x_path=x_path,
+                y_path=y_path,
+                metric=metric,
+            )
+            payload = {
+                **common,
+                "ok": True,
+                "heatmap": heatmap,
+            }
+        except (OptimizerError, OSError, TypeError, ValueError) as exc:
+            payload = {
+                **common,
+                "ok": False,
+                "errors": [str(exc)],
+            }
+        return Envelope.response(
+            "optimizer_heatmap_ack",
+            request.request_id,
+            payload,
+        )
+
+    @staticmethod
+    def _public_optimizer_result(
+        result: dict[str, Any],
+        *,
+        candidate_offset: int,
+        candidate_limit: int,
+    ) -> dict[str, Any]:
+        public = {
+            key: deepcopy(value)
+            for key, value in result.items()
+            if key != "candidates"
+        }
+        candidates = result.get("candidates")
+        if isinstance(candidates, list):
+            public["candidate_total"] = len(candidates)
+            public["candidate_offset"] = candidate_offset
+            public["candidate_limit"] = candidate_limit
+            public["candidates"] = deepcopy(
+                candidates[
+                    candidate_offset : candidate_offset + candidate_limit
+                ]
+            )
+        else:
+            public["candidate_total"] = 0
+            public["candidate_offset"] = 0
+            public["candidate_limit"] = candidate_limit
+            public["candidates"] = []
+        return public
+
+    def _optimizer_journal(
+        self,
+        tag: str,
+        message: str,
+        details: dict[str, Any],
+    ) -> None:
+        level = (
+            "ERROR"
+            if tag.endswith("_FAILED")
+            else "WARN"
+            if tag.endswith("_CANCELLED")
+            else "INFO"
+        )
+        self._log(
+            level,
+            "Python Engine",
+            tag,
+            message,
+            details=details,
+        )
 
     def _record_bridge_snapshot_evidence(
         self,

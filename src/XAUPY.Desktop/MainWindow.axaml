@@ -340,6 +340,10 @@
                                Grid.Column="1"
                                IsVisible="False"/>
 
+      <local:OptimizerDashboard x:Name="OptimizerDashboard"
+                                Grid.Column="1"
+                                IsVisible="False"/>
+
       <Border x:Name="PlaceholderContent" Grid.ColumnSpan="2" Classes="panel" IsVisible="False">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" MaxWidth="650">
           <TextBlock x:Name="PlaceholderTitle" Text="Tab chưa triển khai" FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center"/>

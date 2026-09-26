@@ -33,7 +33,7 @@ class Task011BacktestUiSourceTests(unittest.TestCase):
         self.assertIn('x:Name="BacktestDashboard"', self.main_xaml)
         self.assertIn('Grid.Column="1"', self.main_xaml)
         self.assertIn('_backtestDashboard.IsVisible = backtest', self.main_code)
-        self.assertIn('liveSidebar = overview || strategy || monitoring || backtest', self.main_code)
+        self.assertIn('liveSidebar = overview || strategy || monitoring || backtest || optimization', self.main_code)
         self.assertIn('_backtestDashboard.EnsureLoadedAsync(force: true)', self.main_code)
 
     def test_reference_configuration_zone_exists(self):
@@ -135,10 +135,10 @@ class Task011BacktestUiSourceTests(unittest.TestCase):
         self.assertNotIn("Every tick (chính xác nhất)", self.xaml)
 
     def test_task011_version_and_safety_guards_remain(self):
-        self.assertIn('desktop_version = "0.11.0-task011"', self.supervisor)
+        self.assertIn('desktop_version = "0.12.0-task012"', self.supervisor)
         self.assertIn("RejectUnexpectedExecutionEnable", self.supervisor)
         self.assertIn("RejectUnexpectedOrdersExecutionEnable", self.supervisor)
-        self.assertIn("Task 011 manual action response violated simulation-only safety", self.supervisor)
+        self.assertIn("Task 012 manual action response violated simulation-only safety", self.supervisor)
 
 
 if __name__ == "__main__":

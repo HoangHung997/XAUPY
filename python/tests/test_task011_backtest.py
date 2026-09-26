@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT))
 
 from xaupy_engine.backtest import (
     BACKTEST_MODEL,
+    BacktestCancelled,
     BacktestEngine,
     BacktestError,
     BacktestRepository,
@@ -266,6 +267,31 @@ class BacktestParityTests(unittest.TestCase):
             from_date="2024-01-01",
             to_date="2024-01-01",
         )
+
+    def test_optional_cancel_check_interrupts_historical_replay(self):
+        dataset = dataset_from_bars(bars_for_trigger())
+        engine = BacktestEngine(
+            test_profile(),
+            initial_balance=10_000,
+            spread_pips=0,
+            commission_per_lot=0,
+        )
+        checks = 0
+
+        def cancel_check():
+            nonlocal checks
+            checks += 1
+            return checks >= 3
+
+        with self.assertRaises(BacktestCancelled):
+            engine.run(
+                dataset,
+                from_date="2024-01-01",
+                to_date="2024-01-01",
+                cancel_check=cancel_check,
+            )
+
+        self.assertGreaterEqual(checks, 3)
 
     def test_backtest_detects_same_signal_as_direct_strategy_replay(self):
         bars = bars_for_trigger()

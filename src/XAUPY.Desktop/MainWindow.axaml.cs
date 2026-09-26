@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     private readonly OrdersPositionsDashboard _ordersPositionsDashboard;
     private readonly JournalDashboard _journalDashboard;
     private readonly BacktestDashboard _backtestDashboard;
+    private readonly OptimizerDashboard _optimizerDashboard;
     private readonly List<double> _priceHistory = new();
     private readonly Queue<string> _quickLogs = new();
     private readonly DispatcherTimer _clockTimer;
@@ -55,7 +56,7 @@ public partial class MainWindow : Window
                 "NavBacktest"),
             ["optimization"] = (
                 "Tối ưu",
-                "Parameter sweep và walk-forward thuộc Task 012.",
+                "Deterministic parameter sweep, Top setups, heatmap và train-only walk-forward validation.",
                 "NavOptimization"),
             ["logs"] = (
                 "Nhật ký",
@@ -94,6 +95,9 @@ public partial class MainWindow : Window
         _backtestDashboard = this.FindControl<BacktestDashboard>("BacktestDashboard")
             ?? throw new InvalidOperationException("BacktestDashboard missing.");
         _backtestDashboard.AttachSupervisor(_engineSupervisor);
+        _optimizerDashboard = this.FindControl<OptimizerDashboard>("OptimizerDashboard")
+            ?? throw new InvalidOperationException("OptimizerDashboard missing.");
+        _optimizerDashboard.AttachSupervisor(_engineSupervisor);
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clockTimer.Tick += (_, _) => UpdateClock();
@@ -134,8 +138,9 @@ public partial class MainWindow : Window
         bool monitoring = string.Equals(key, "monitoring", StringComparison.Ordinal);
         bool orders = string.Equals(key, "orders", StringComparison.Ordinal);
         bool backtest = string.Equals(key, "backtest", StringComparison.Ordinal);
+        bool optimization = string.Equals(key, "optimization", StringComparison.Ordinal);
         bool logs = string.Equals(key, "logs", StringComparison.Ordinal);
-        bool liveSidebar = overview || strategy || monitoring || backtest;
+        bool liveSidebar = overview || strategy || monitoring || backtest || optimization;
 
         this.FindControl<ScrollViewer>("OverviewScroll")!.IsVisible = overview;
         this.FindControl<StackPanel>("OverviewContent")!.IsVisible = overview;
@@ -145,9 +150,10 @@ public partial class MainWindow : Window
         _monitoringDashboard.IsVisible = monitoring;
         _ordersPositionsDashboard.IsVisible = orders;
         _backtestDashboard.IsVisible = backtest;
+        _optimizerDashboard.IsVisible = optimization;
         _journalDashboard.IsVisible = logs;
         this.FindControl<Border>("PlaceholderContent")!.IsVisible =
-            !overview && !configuration && !strategy && !monitoring && !orders && !backtest && !logs;
+            !overview && !configuration && !strategy && !monitoring && !orders && !backtest && !optimization && !logs;
 
         if (configuration)
         {
@@ -157,15 +163,19 @@ public partial class MainWindow : Window
         {
             _ = _backtestDashboard.EnsureLoadedAsync(force: true);
         }
+        else if (optimization)
+        {
+            _ = _optimizerDashboard.EnsureLoadedAsync(force: true);
+        }
         else if (logs)
         {
             _ = _journalDashboard.EnsureLoadedAsync(force: true);
         }
-        else if (!overview && !strategy && !monitoring && !orders && !backtest && !logs)
+        else if (!overview && !strategy && !monitoring && !orders && !backtest && !optimization && !logs)
         {
             FindText("PlaceholderTitle").Text = $"{page.Title} — chưa triển khai";
             FindText("PlaceholderDetail").Text =
-                $"Task 011 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát + Lệnh & Vị thế + Backtest + Nhật ký. {page.Subtitle}";
+                $"Task 012 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát + Lệnh & Vị thế + Backtest + Tối ưu + Nhật ký. {page.Subtitle}";
         }
     }
 
@@ -248,6 +258,8 @@ public partial class MainWindow : Window
         _ordersPositionsDashboard.Apply(e.OrdersPositions, e.Overview, e.Mt5Bridge, e.Configuration);
         _journalDashboard.ApplySummary(e.JournalSummary);
         _backtestDashboard.ApplyConfiguration(e.Configuration);
+        _optimizerDashboard.ApplyStatus(e.OptimizerStatus);
+        _optimizerDashboard.ApplyEngineState(e.State);
         ApplyOrdersFooter(e.OrdersPositions);
         _ = _configurationEditor.NotifyEngineStateAsync(e.State);
     }

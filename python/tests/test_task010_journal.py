@@ -5,6 +5,7 @@ import json
 import pathlib
 import sys
 import tempfile
+import threading
 import unittest
 from uuid import uuid4
 
@@ -87,6 +88,47 @@ class StructuredJournalTests(unittest.TestCase):
             self.assertEqual(1, csv_lines[0].count("sequence"))
             self.assertIn(",INFO,Python Engine,SYSTEM,first,", csv_lines[1])
             self.assertIn(",WARN,Alerts,RISK,second,", csv_lines[2])
+
+    def test_concurrent_append_query_summary_and_bookmark_are_consistent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = self.make_store(tmp)
+            failures = []
+
+            def writer():
+                try:
+                    for index in range(60):
+                        store.append(
+                            "INFO",
+                            "Python Engine",
+                            "SYSTEM",
+                            f"event {index}",
+                            details={"index": index},
+                        )
+                except Exception as exc:
+                    failures.append(exc)
+
+            thread = threading.Thread(target=writer)
+            thread.start()
+
+            while thread.is_alive():
+                summary = store.summary(date_scope="ALL")
+                query = store.query(date_scope="ALL", limit=2000)
+                self.assertGreaterEqual(summary["total"], 0)
+                self.assertGreaterEqual(query["total_matched"], 0)
+
+            thread.join(timeout=5)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual([], failures)
+            self.assertEqual(60, store.event_count)
+            self.assertEqual(60, store.latest_sequence)
+
+            queried = store.query(date_scope="ALL", limit=2000)
+            sequences = [item["sequence"] for item in queried["events"]]
+            self.assertEqual(60, len(sequences))
+            self.assertEqual(60, len(set(sequences)))
+
+            store.set_bookmark(60, True)
+            self.assertTrue(store.get_event(60)["bookmarked"])
 
     def test_schema_rejects_invalid_level_source_tag_and_details(self):
         with tempfile.TemporaryDirectory() as tmp:

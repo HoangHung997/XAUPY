@@ -17,6 +17,7 @@ from xaupy_engine.backtest import (
     PendingStopEntry,
 )
 from xaupy_engine.config_schema import default_profile
+from xaupy_engine.optimizer import OptimizerError, parse_parameter_ranges
 from xaupy_engine.strategy_engine import Bar, StrategyEngine, _atr
 
 
@@ -516,6 +517,129 @@ class PartialAndTrailingTests(unittest.TestCase):
         )
         self.assertIsNotNone(atr_candidate)
         self.assertLess(atr_candidate, 104.0)
+
+
+class OptimizerParityTests(unittest.TestCase):
+    def test_stop_confirm_parameters_are_optimizable_when_active(self):
+        profile = make_profile()
+        profile["entry"]["mode"] = "STOP_CONFIRM"
+        ranges = parse_parameter_ranges(
+            [
+                {
+                    "path": "entry.pending_buffer_price_units",
+                    "min": 0.0,
+                    "max": 0.2,
+                    "step": 0.1,
+                },
+                {
+                    "path": "entry.pending_expiration_minutes",
+                    "min": 2,
+                    "max": 4,
+                    "step": 1,
+                },
+            ],
+            profile,
+        )
+        self.assertEqual(
+            {
+                "entry.pending_buffer_price_units",
+                "entry.pending_expiration_minutes",
+            },
+            {item.path for item in ranges},
+        )
+
+    def test_atr_parameters_are_optimizable_for_initial_or_trailing_atr(self):
+        profile = make_profile()
+        profile["stop_loss"]["mode"] = "ATR"
+        ranges = parse_parameter_ranges(
+            [
+                {
+                    "path": "stop_loss.atr_multiplier",
+                    "min": 1.0,
+                    "max": 2.0,
+                    "step": 0.5,
+                }
+            ],
+            profile,
+        )
+        self.assertEqual("stop_loss.atr_multiplier", ranges[0].path)
+
+        profile = make_profile()
+        profile["management"]["trailing_enabled"] = True
+        profile["management"]["trailing_mode"] = "ATR"
+        ranges = parse_parameter_ranges(
+            [
+                {
+                    "path": "management.trailing_atr_multiplier",
+                    "min": 0.5,
+                    "max": 1.5,
+                    "step": 0.5,
+                },
+                {
+                    "path": "stop_loss.atr_period",
+                    "min": 7,
+                    "max": 14,
+                    "step": 7,
+                },
+            ],
+            profile,
+        )
+        self.assertEqual(2, len(ranges))
+
+    def test_dynamic_tp_parameters_and_indicator_periods_are_optimizable(self):
+        profile = make_profile()
+        profile["take_profit"]["mode"] = "ZRSI_DYNAMIC"
+        profile["trigger"]["rsi_enabled"] = False
+        profile["trigger"]["z_enabled"] = False
+        profile["take_profit"]["dynamic"]["extend_use_rsi"] = True
+        profile["take_profit"]["dynamic"]["extend_use_z"] = True
+
+        ranges = parse_parameter_ranges(
+            [
+                {
+                    "path": "trigger.rsi_period",
+                    "min": 7,
+                    "max": 14,
+                    "step": 7,
+                },
+                {
+                    "path": "trigger.z_period",
+                    "min": 10,
+                    "max": 20,
+                    "step": 10,
+                },
+                {
+                    "path": "take_profit.fixed_price_units",
+                    "min": 2.0,
+                    "max": 4.0,
+                    "step": 1.0,
+                },
+                {
+                    "path": "take_profit.dynamic.max_extension_price_units",
+                    "min": 2.0,
+                    "max": 6.0,
+                    "step": 2.0,
+                },
+            ],
+            profile,
+        )
+        self.assertEqual(4, len(ranges))
+
+    def test_inactive_dynamic_parameter_is_rejected(self):
+        profile = make_profile()
+        with self.assertRaises(OptimizerError):
+            parse_parameter_ranges(
+                [
+                    {
+                        "path": "take_profit.dynamic.max_extension_minutes",
+                        "min": 5,
+                        "max": 10,
+                        "step": 5,
+                    }
+                ],
+                profile,
+            )
+
 
 
 class DeterminismTests(unittest.TestCase):

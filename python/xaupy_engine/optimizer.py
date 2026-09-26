@@ -415,7 +415,7 @@ def parse_parameter_ranges(
 
         path = str(raw.get("path", "")).strip()
         if path not in OPTIMIZABLE_PATHS:
-            raise OptimizerError(f"parameter is not optimizable in Task 012: {path}")
+            raise OptimizerError(f"parameter is not optimizable in Task 013: {path}")
         if path in seen:
             raise OptimizerError(f"duplicate optimizer parameter: {path}")
         seen.add(path)
@@ -445,7 +445,7 @@ def parse_parameter_ranges(
 
         if field.kind not in {"int", "float"}:
             raise OptimizerError(
-                f"Task 012 optimizer supports enum/int/float only: {path}"
+                f"Task 013 optimizer supports enum/int/float only: {path}"
             )
 
         values = _numeric_values(
@@ -461,7 +461,7 @@ def parse_parameter_ranges(
     if count > MAX_COMBINATIONS:
         raise OptimizerError(
             f"parameter sweep expands to {count:,} combinations; "
-            f"Task 012 limit is {MAX_COMBINATIONS:,}"
+            f"Task 013 limit is {MAX_COMBINATIONS:,}"
         )
     return tuple(parsed)
 
@@ -1335,7 +1335,7 @@ def heatmap_from_result(
     if cell_count > MAX_HEATMAP_CELLS:
         raise OptimizerError(
             f"heatmap would contain {cell_count:,} cells; "
-            f"Task 012 limit is {MAX_HEATMAP_CELLS:,}. "
+            f"Task 013 limit is {MAX_HEATMAP_CELLS:,}. "
             "Narrow one or both axes."
         )
     buckets: dict[tuple[str, str], list[float]] = {}

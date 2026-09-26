@@ -1,0 +1,45 @@
+name: Task 013 - Dynamic Management CI
+
+on:
+  push:
+    branches:
+      - 'task/013-dynamic-trade-management'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: task-013-dynamic-management-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Task 013 core and regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Python Task 013 and regression tests
+        run: python -X faulthandler -m unittest discover -s python/tests -v
+
+      - name: Restore Desktop and IPC projects
+        run: dotnet restore src/XAUPY.Desktop/XAUPY.Desktop.csproj
+
+      - name: Build Avalonia regression Release
+        run: dotnet build src/XAUPY.Desktop/XAUPY.Desktop.csproj -c Release --no-restore
+
+      - name: CSharp IPC regression self-test
+        run: dotnet run --project tests/XAUPY.Ipc.ContractTests/XAUPY.Ipc.ContractTests.csproj -c Release

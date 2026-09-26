@@ -381,3 +381,12 @@ No mock optimization result is written.
 - Direct build ZIP SHA-256:
   `d821d039b1c2a74deb7ec87fb1cbd8c401e35e2a717e2cc0e9e50f1ebc0a9b91`
 - Independent artifact inspection: PASS
+
+
+## Task 013 extension note
+
+The Task 012 allow-list above is the completed Task 012 milestone boundary.
+XAUPY-013 extends the same optimizer implementation to newly-supported
+STOP_CONFIRM/ATR/ZRSI/management parameters, guarded by active-mode relevance.
+It does not create a second optimizer or trading model. Locked execution/safety
+fields remain excluded.

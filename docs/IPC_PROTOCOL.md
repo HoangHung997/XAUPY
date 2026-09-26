@@ -533,3 +533,33 @@ This keeps IPC messages data-oriented and allows the future Avalonia UI to choos
 - Breaking envelope changes require a new schema_version.
 - request_id remains correlation/idempotency key.
 - Exactly one JSON object per line.
+
+
+## 9. Task 013 dynamic management extension
+
+Task 013 does not add a broker-execution message. It extends the same
+`backtest_run` path so the active canonical profile may use:
+
+- `entry.mode=STOP_CONFIRM`;
+- `stop_loss.mode=ATR`;
+- `take_profit.mode=ZRSI_DYNAMIC`;
+- partial close;
+- STRUCTURE/ATR trailing;
+- STRUCTURE/ATR/ZRSI_ASSIST SL tightening.
+
+Backtest results add deterministic `pending_entry_events` evidence for
+STOP_CONFIRM lifecycle state and per-trade management evidence such as entry
+mode, original/hard TP, partial-close evidence, trailing/tighten counts and
+dynamic-extension state.
+
+Task 013 also extends Task 012 optimizer relevance to canonical parameters whose
+new Backtest behavior is active. Locked safety/execution paths remain
+non-optimizable.
+
+The execution boundary is unchanged:
+
+- `trade_intent` remains unsupported;
+- `trading_enabled=false`;
+- `execution_enabled=false`;
+- Task 009 manual actions remain simulation-only with `broker_mutated=false`;
+- the MQL5 Bridge remains broker-mutation locked.

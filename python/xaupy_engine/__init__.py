@@ -1,8 +1,8 @@
 """XAUPY Python Engine.
 
-Task 012 adds deterministic parameter optimization and train-only walk-forward
-validation on top of the Task 011 BacktestEngine. Broker execution remains
-hard-locked.
+Task 013 adds deterministic STOP_CONFIRM, ATR stop and dynamic trade-management
+parity on top of the shared BacktestEngine/Optimizer path. Broker execution
+remains hard-locked.
 """
 
-__version__ = "0.12.0-task012"
+__version__ = "0.13.0-task013"

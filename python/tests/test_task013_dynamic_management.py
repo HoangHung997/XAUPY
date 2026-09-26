@@ -385,7 +385,7 @@ class DynamicManagementTests(unittest.TestCase):
     def test_dynamic_original_tp_lock_only_tightens(self):
         profile = self.dynamic_profile()
         profile["take_profit"]["dynamic"]["extend_use_z"] = False
-        profile["take_profit"]["dynamic"]["extend_use_rsi"] = False
+        profile["take_profit"]["dynamic"]["extend_use_rsi"] = True
         profile["take_profit"]["dynamic"]["lock_sl_at_original_tp"] = True
         profile["take_profit"]["dynamic"]["lock_profit_buffer"] = 0.0
         bt = engine(profile)

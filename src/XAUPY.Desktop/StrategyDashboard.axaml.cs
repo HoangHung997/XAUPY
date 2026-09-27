@@ -147,6 +147,8 @@ public partial class StrategyDashboard : UserControl
             : $"Hash: {strategy.ProfileHash[..Math.Min(12, strategy.ProfileHash.Length)]}";
         Text("DirectionText").Text = strategy.Direction;
         Text("DirectionText").Foreground = DirectionBrush(strategy.Direction);
+        Text("DirectionArrow").Text = strategy.Direction switch { "BUY" => "↑", "SELL" => "↓", "BOTH" => "↕", _ => "—" };
+        Text("DirectionArrow").Foreground = DirectionBrush(strategy.Direction);
         Text("DirectionDot").Foreground = DirectionBrush(strategy.Direction);
         Text("PullbackDot").Foreground = strategy.ArmedSide is not null ? Brushes.MediumSpringGreen : Brushes.SlateGray;
         Text("TriggerDot").Foreground = strategy.TriggerPassed == true ? Brushes.MediumSpringGreen : Brushes.SlateGray;
@@ -199,7 +201,7 @@ public partial class StrategyDashboard : UserControl
             $"{strategy.DirectionTimeframe} → {strategy.PullbackTimeframe} → {strategy.TriggerTimeframe}";
         Text("ConfigSummaryText").Text =
             $"Direction {config.DirectionMaType}{config.DirectionMaPeriod} • BUY={(config.AllowBuy ? "ON" : "OFF")} • SELL={(config.AllowSell ? "ON" : "OFF")}";
-        Text("ResetReasonText").Text = $"Reset: {strategy.LastResetReason ?? "—"}";
+        Text("ResetReasonText").Text = strategy.LastResetReason ?? "—";
 
         Text("DirectionConditionText").Text = strategy.Direction;
         Text("DirectionConditionText").Foreground = DirectionBrush(strategy.Direction);

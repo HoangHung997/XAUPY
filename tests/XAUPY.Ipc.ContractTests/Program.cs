@@ -93,13 +93,18 @@ var historyRows = Enumerable.Range(0, 256).Select(index => new
 }).ToArray();
 var historyOverview = OverviewSnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new
 {
-    overview = new { available = true, tick_time_msc = 1704067200123L, bars = new { M1 = historyRows[^1] }, bar_history = new { M1 = historyRows } }
+    overview = new { available = true, tick_time_msc = 1704067200123L, server_time = 1704067215L, bars = new { M1 = historyRows[^1] }, bar_history = new { M1 = historyRows } }
 }));
 Check(historyOverview.BarHistory["M1"].Count == 256, "genuine closed bar history parsed for chart");
 Check(historyOverview.BarHistory["M1"][0].Time == 1704067200L, "bar history preserves original timestamps");
 Check(overview.BarHistory.Count == 0, "older overview clients need no history field");
 Check(historyOverview.TickTimeMsc == 1704067200123L, "broker tick timestamp preserved independently of snapshot arrival");
 Check(overview.TickTimeMsc is null, "legacy missing tick timestamp remains unknown");
+Check(historyOverview.TickAgeMilliseconds == 14877, "quote age uses two broker-clock values rather than desktop UTC");
+Check((historyOverview with { ServerTime = 1704240000L }).TickAgeMilliseconds > 172000000, "weekend tick stays old while snapshots are fresh");
+Check((historyOverview with { ServerTime = 1704000000L }).TickAgeMilliseconds is null, "inconsistent broker clock cannot claim a fresh quote");
+Check((historyOverview with { Available = false }).TickAgeMilliseconds is null, "disconnected quote age is unknown");
+Check(overview.TickAgeMilliseconds is null, "legacy missing broker clock cannot claim a fresh quote");
 var invalidHistoryOverview = OverviewSnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new
 {
     overview = new { available = true, bar_history = new { M1 = historyRows.Reverse().ToArray() } }

@@ -162,11 +162,19 @@ public partial class ConfigurationEditor : UserControl
             var schema = await _supervisor.GetConfigSchemaAsync();
             var active = await _supervisor.GetActiveConfigAsync();
 
+            // A reconnect or a shared asynchronous load must not replace edits
+            // made before or while the requests were in flight. Capture the
+            // current draft immediately before rebuilding its schema controls.
+            bool keepDraft = _dirty && _draft is not null;
+            var profile = keepDraft ? JsonSerializer.SerializeToElement(_draft) : active;
             BuildSchema(schema);
-            LoadDraft(active, dirty: false);
+            LoadDraft(profile, dirty: keepDraft);
 
             _schemaLoaded = true;
-            SetStatus("Đã tải active profile. Tất cả tham số canonical đang sẵn sàng chỉnh sửa.", Brushes.LightGreen);
+            if (keepDraft)
+                SetStatus("Engine đã kết nối lại. Bản nháp chưa áp dụng được giữ nguyên; Python sẽ xác thực lại khi bấm Áp dụng.", Brushes.Gold);
+            else
+                SetStatus("Đã tải active profile. Tất cả tham số canonical đang sẵn sàng chỉnh sửa.", Brushes.LightGreen);
         }
         catch (Exception ex)
         {

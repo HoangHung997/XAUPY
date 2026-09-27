@@ -162,6 +162,7 @@ class BridgeHistoryTests(unittest.TestCase):
         overview = registry.overview_payload()
         self.assertTrue(overview["available"])
         self.assertEqual(friday_tick_msc, overview["tick_time_msc"])
+        self.assertEqual(payload["server_time"], overview["server_time"])
         self.assertIsNotNone(overview["snapshot_received_utc"])
         for invalid in (-1, True, "old"):
             payload["tick_time_msc"] = invalid

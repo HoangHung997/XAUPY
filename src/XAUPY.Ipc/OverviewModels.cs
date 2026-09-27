@@ -30,6 +30,10 @@ public sealed record OverviewSnapshot(
     public IReadOnlyDictionary<string, IReadOnlyList<MarketBar>> BarHistory { get; init; }
         = new Dictionary<string, IReadOnlyList<MarketBar>>(StringComparer.OrdinalIgnoreCase);
     public long? TickTimeMsc { get; init; }
+    public long? ServerTime { get; init; }
+    public double? TickAgeMilliseconds => Available && ServerTime is > 0 && TickTimeMsc is > 0 &&
+        (double)ServerTime.Value * 1000 >= TickTimeMsc.Value - 1000
+            ? Math.Max(0, (double)ServerTime.Value * 1000 - TickTimeMsc.Value) : null;
 
     public static OverviewSnapshot Empty { get; } = new(
         false,
@@ -121,8 +125,10 @@ public sealed record OverviewSnapshot(
             bars)
         {
             BarHistory = history,
-            TickTimeMsc = ReadLong(overview, "tick_time_msc") is > 0
-                ? ReadLong(overview, "tick_time_msc") : null
+            TickTimeMsc = ReadLong(overview, "tick_time_msc") is > 0 and <= 253402300799999
+                ? ReadLong(overview, "tick_time_msc") : null,
+            ServerTime = ReadLong(overview, "server_time") is > 0 and <= 253402300799
+                ? ReadLong(overview, "server_time") : null
         };
     }
 

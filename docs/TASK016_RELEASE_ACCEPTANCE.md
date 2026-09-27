@@ -46,6 +46,26 @@ Exact equality of market values with the mockup is neither expected nor evidence
 of correctness. Pixel-identical appearance has not been certified. Remaining
 visible deviations must be recorded in the acceptance report rather than hidden.
 
+## Local evidence — 2026-09-28
+
+- Source baseline `71902a8`: 283 Python tests, 85 C# contract checks and eight
+  packaged smoke categories passed. The clean portable build records these checks
+  and SHA-256 hashes for every bundled file in `build-manifest.json`.
+- MetaEditor: zero errors and zero warnings; the deployed Bridge is version 1.014.
+- `artifacts/live-final.json` and `artifacts/live-after-ui-restart.json`: all 16
+  read-only acceptance checks passed over 11 samples each. Every timeframe has
+  256 authentic closed bars and all execution locks remain asserted.
+- Native Avalonia stop/start clears unavailable quotes and account values, returns
+  to READY and receives the EA's history again without manually reattaching it.
+- Weekend prices stay labeled as the latest received price; their last tick time
+  is available in the quote tooltip. Fresh heartbeats do not claim fresh ticks.
+- The first CI run passed Linux validation but exposed a Windows temporary-path
+  assertion issue. Its canonical-path comparison is corrected for the next run.
+  Installer verification and final CI evidence remain pending.
+- The final polish passes 283 Python tests, 90 C# contract checks and 20 headless
+  Avalonia interaction checks. The new quote-age checks use the broker clock;
+  the reconnect checks preserve an unsaved configuration draft.
+
 ## Boundaries
 
 Task013 is historical/broker simulation. Broker order placement, modification and

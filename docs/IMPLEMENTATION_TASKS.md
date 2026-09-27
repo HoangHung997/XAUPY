@@ -869,20 +869,26 @@ Validated settings/profile persistence, backup/recovery, startup preferences,
 owned-engine identity and explicit fail-safe states are implemented. The shared
 maintenance suite passes 11 tests. See `TASK015_SETTINGS_RECOVERY_SPEC.md`.
 
-Recorded local combined evidence: 278 Python tests and 85 C# IPC checks pass;
-packaged Task 007/009/010/011/012/013 and config-tool smokes pass in isolated
+Recorded local combined evidence: 283 Python tests and 90 C# IPC checks pass;
+packaged Task 007/009/010/011/012/013/014–015 and config-tool smokes pass in isolated
 temporary storage. These local results do not satisfy the GitHub evidence gate
 or change any execution rule above.
+
+Twenty headless Avalonia checks also pass against an isolated packaged Engine,
+including preservation of an unsaved full-editor draft after reconnect. They
+are retained in `tests/XAUPY.Desktop.InteractionTests` and the Windows build.
 
 XAUPY-016 remains ACTIVE. Installer and release workflow exist; final clean
 packaging, GitHub CI/artifact evidence and packaged UI acceptance are in progress.
 The compiled read-only EA reports 0 errors / 0 warnings. Live MT5 demo evidence
 in `artifacts/live-framed-reader.json` passes 11 samples, with snapshot counters
 203→214, all eight timeframes containing 256 real closed bars, and execution
-locked. The stronger probe in `artifacts/live-framed-reader-tick-locks.json`
-confirms transport, history, strategy readiness and locks but currently fails
-because the running Engine does not yet project `tick_time_msc`; final runtime
-repack/restart and re-probe remain required. Avalonia is verified separately.
+locked. The stronger probes in `artifacts/live-final.json` and
+`artifacts/live-after-ui-restart.json` pass all 16 checks across 11 samples each,
+including tick metadata, history, strategy readiness and execution locks.
+Native Avalonia Stop/Start clears stale quote/account values, automatically
+reconnects the EA, and restores real history. Visual fidelity is documented
+separately in `UI_REFERENCE_PARITY_AUDIT.md`.
 
 Tasks 013–016 are not marked DONE until their remaining required evidence is
 complete. Broker mutation, real-account permission and automatic trading remain

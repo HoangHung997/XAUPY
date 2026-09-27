@@ -2,6 +2,13 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="using:XAUPY.Desktop"
              x:Class="XAUPY.Desktop.MonitoringDashboard">
+  <UserControl.Styles>
+    <Style Selector="Grid.timeframeTable > TextBlock">
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="Margin" Value="0,0,4,0"/>
+    </Style>
+  </UserControl.Styles>
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Spacing="8">
       <Grid ColumnDefinitions="2.35*,1*" ColumnSpacing="8">
@@ -44,7 +51,7 @@
             <Border Background="#082038" Padding="12,8">
               <TextBlock Text="Trạng thái điều kiện đa khung thời gian" Classes="panelTitle"/>
             </Border>
-            <Grid Margin="10,8" ColumnDefinitions="0.8*,1*,1*,1*,1*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="9">
+            <Grid Classes="timeframeTable" Margin="10,8" ColumnDefinitions="0.65*,0.8*,1.05*,1.15*,1*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="9">
               <TextBlock Grid.Row="0" Text="Khung" Classes="dim" FontSize="12"/>
               <TextBlock Grid.Row="0" Grid.Column="1" Text="Direction" Classes="dim" FontSize="12"/>
               <TextBlock Grid.Row="0" Grid.Column="2" Text="Pullback" Classes="dim" FontSize="12"/>

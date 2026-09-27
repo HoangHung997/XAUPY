@@ -26,7 +26,9 @@ class PackagedSmokeIsolationTests(unittest.TestCase):
             with patch.dict(os.environ, {name: str(user_root) for name in names}):
                 environment = runtime.isolated_environment(root / "smoke")
                 for name in names:
-                    self.assertTrue(Path(environment[name]).is_relative_to(root / "smoke"))
+                    # Windows runners may expose TEMP through an 8.3 alias or junction.
+                    # Compare canonical paths, as the runtime helper does when exporting them.
+                    self.assertTrue(Path(environment[name]).resolve().is_relative_to((root / "smoke").resolve()))
                     self.assertTrue(Path(environment[name]).is_dir())
                     self.assertEqual(str(user_root), os.environ[name])
             self.assertEqual('{"user_profile":"must remain untouched"}', sentinel.read_text(encoding="utf-8"))

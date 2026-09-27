@@ -64,6 +64,8 @@ if (-not $SkipTests) {
     }
     Invoke-Checked $Python @('scripts/smoke_config_exe.py',$configTool)
     Invoke-Checked $Python @('scripts/smoke_task014_015_maintenance.py',"$releaseRoot/engine/xaupy-engine.exe")
+    Invoke-Checked $Dotnet @('run','--project',"$projectRoot/tests/XAUPY.Desktop.InteractionTests/XAUPY.Desktop.InteractionTests.csproj",'-c','Release',
+        '--','--engine',"$releaseRoot/engine/xaupy-engine.exe")
 }
 New-Item -ItemType Directory -Force "$releaseRoot/docs" | Out-Null
 Get-ChildItem -LiteralPath 'docs' | Copy-Item -Destination "$releaseRoot/docs" -Recurse -Force

@@ -6,6 +6,7 @@
         Height="941"
         MinWidth="1360"
         MinHeight="780"
+        WindowStartupLocation="CenterScreen"
         Background="#031426"
         WindowDecorations="None"
         Title="N30 Control Center v1.0 (Python) - XAUUSD">
@@ -235,22 +236,22 @@
                 <Button Classes="secondary" Margin="2" Padding="8,6" Content="11. Thời gian" Tag="sessions" Click="ConfigurationShortcut_OnClick"/>
                 <Button Classes="secondary" Margin="2" Padding="8,6" Content="12. Khác" Tag="profile" Click="ConfigurationShortcut_OnClick"/>
               </WrapPanel>
-              <Grid ColumnDefinitions="1.05*,1.05*,1.2*" Margin="12,6,12,12" ColumnSpacing="18">
-                <StackPanel Grid.Column="0" Spacing="8">
+              <Grid ColumnDefinitions="1.05*,1.05*,1.2*" Margin="12,4,12,6" ColumnSpacing="18">
+                <StackPanel Grid.Column="0" Spacing="5">
                   <TextBlock Text="Khung thời gian chính" FontWeight="SemiBold"/>
                   <Grid ColumnDefinitions="*,195"><TextBlock Text="Direction TF" Classes="label" VerticalAlignment="Center"/><ComboBox x:Name="QuickDirection" Grid.Column="1" HorizontalAlignment="Stretch" MinHeight="30"/></Grid>
                   <Grid ColumnDefinitions="*,195"><TextBlock Text="Pullback TF" Classes="label" VerticalAlignment="Center"/><ComboBox x:Name="QuickPullback" Grid.Column="1" HorizontalAlignment="Stretch" MinHeight="30"/></Grid>
                   <Grid ColumnDefinitions="*,195"><TextBlock Text="Trigger TF" Classes="label" VerticalAlignment="Center"/><ComboBox x:Name="QuickTrigger" Grid.Column="1" HorizontalAlignment="Stretch" MinHeight="30"/></Grid>
                   <StackPanel IsVisible="False"><TextBlock x:Name="DirectionTfValue"/><TextBlock x:Name="PullbackTfValue"/><TextBlock x:Name="TriggerTfValue"/></StackPanel>
                 </StackPanel>
-                <StackPanel Grid.Column="1" Spacing="8">
+                <StackPanel Grid.Column="1" Spacing="5">
                   <TextBlock Text="Logic kết hợp" FontWeight="SemiBold"/>
                   <CheckBox x:Name="QuickAllowBuy" Content="Cho phép BUY" MinHeight="24"/>
                   <CheckBox x:Name="QuickAllowSell" Content="Cho phép SELL" MinHeight="24"/>
                   <Button x:Name="QuickApply" Classes="primary" Content="Áp dụng cấu hình nhanh" Click="QuickApply_OnClick"/>
                   <StackPanel IsVisible="False"><TextBlock x:Name="DirectionRuleValue"/><TextBlock x:Name="TpSlValue"/><TextBlock x:Name="TradePermissionsText"/></StackPanel>
                 </StackPanel>
-                <StackPanel Grid.Column="2" Spacing="8">
+                <StackPanel Grid.Column="2" Spacing="5">
                   <TextBlock Text="Preset cấu hình" FontWeight="SemiBold"/>
                   <Border Classes="panelSoft" Padding="10,7"><TextBlock x:Name="ProfileValue" Text="Profile: Baseline"/></Border>
                   <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
@@ -289,7 +290,7 @@
               <StackPanel>
                 <Border Background="#082038" Padding="12,7"><TextBlock Text="Nhật ký hệ thống" Classes="panelTitle"/></Border>
                 <Grid Margin="12,6" ColumnDefinitions="90,80,*"><TextBlock Text="Thời gian" Classes="dim"/><TextBlock Grid.Column="1" Text="Mức" Classes="dim"/><TextBlock Grid.Column="2" Text="Thông tin" Classes="dim"/></Grid>
-                <TextBlock x:Name="QuickLogText" Text="Đang khởi tạo Control Center..." FontFamily="Consolas" FontSize="13" Foreground="#9FC2DE" TextWrapping="Wrap" Margin="12,2,12,8"/>
+                <TextBlock x:Name="QuickLogText" Text="Đang khởi tạo Control Center..." FontFamily="Consolas" FontSize="12" Foreground="#9FC2DE" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="12,2,12,8"/>
               </StackPanel>
             </Border>
           </Grid>

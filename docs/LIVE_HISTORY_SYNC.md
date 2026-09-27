@@ -79,9 +79,20 @@ A stronger probe records the original tick timestamp, monotonic sample/snapshot
 progress and all Engine/Strategy/EA execution locks. Its first run,
 `artifacts/live-framed-reader-tick-locks.json`, passed all transport/history/lock
 checks but failed tick metadata checks because the currently running Engine
-returned a null tick timestamp. Final runtime repack/restart and re-probe are
-pending; old last-session prices are valid evidence while the market is closed.
-Avalonia visual acceptance remains a separate release check.
+returned a null tick timestamp. After repackaging, `artifacts/live-final.json`
+passed all 16 checks across 11 samples, including the original tick timestamp.
+The native Avalonia Stop/Start controls were exercised: quote/account values
+cleared on STOPPED, then the EA reconnected automatically and all 8 × 256 bars
+returned. `artifacts/live-after-ui-restart.json` also passed all 16 checks.
+Old last-session prices are valid evidence while the market is closed. Avalonia
+labels them “Giá gần nhất” and exposes the last tick time in its tooltip;
+connection freshness is measured independently. No broker action was requested.
+
+Quote age compares `tick_time_msc` with the EA's existing `server_time` field,
+which uses [TimeTradeServer](https://www.mql5.com/en/docs/dateandtime/timetradeserver).
+Both values share the broker clock; Desktop must not subtract its UTC/local clock
+from a broker timestamp or relabel that timestamp as local time. Missing or
+inconsistent server-clock metadata leaves freshness unknown.
 
 History synchronization does not enable broker execution, trading
 intents, real-account permission, or automatic retries. Profiles requiring more

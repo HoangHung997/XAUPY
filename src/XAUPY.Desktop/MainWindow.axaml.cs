@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using System.Globalization;
 using XAUPY.Ipc;
 
 namespace XAUPY.Desktop;
@@ -372,7 +373,7 @@ public partial class MainWindow : Window
         FindText("OverviewRsiTrigger").Text = FormatMetric(strategy.TriggerIndicators.Rsi);
         FindText("OverviewZPullback").Text = FormatMetric(strategy.PullbackIndicators.Z);
         FindText("OverviewRsiPullback").Text = FormatMetric(strategy.PullbackIndicators.Rsi);
-        FindText("OverviewMaValue").Text = FormatMetric(strategy.DirectionIndicators.Ma);
+        FindText("OverviewMaValue").Text = FormatPrice(strategy.DirectionIndicators.Ma);
     }
 
     private void ApplyOverviewSnapshot(OverviewSnapshot overview)
@@ -406,10 +407,10 @@ public partial class MainWindow : Window
         if (overview.TickTimeMsc is > 0)
         {
             var lastTick = DateTimeOffset.FromUnixTimeMilliseconds(overview.TickTimeMsc.Value);
-            var recent = DateTimeOffset.UtcNow - lastTick < TimeSpan.FromMinutes(2);
+            var recent = overview.TickAgeMilliseconds is >= 0 and < 120000;
             quoteFreshness.Text = recent ? "Giá mới" : "Giá gần nhất";
             quoteFreshness.Foreground = recent ? Brushes.SpringGreen : Brushes.Gold;
-            ToolTip.SetTip(quoteFreshness, $"Tick cuối: {lastTick.ToLocalTime():dd/MM/yyyy HH:mm:ss zzz}. Kết nối được kiểm tra riêng với thời điểm giá.");
+            ToolTip.SetTip(quoteFreshness, $"Tick cuối (giờ máy chủ MT5): {lastTick:dd/MM/yyyy HH:mm:ss}. Kết nối được kiểm tra riêng với thời điểm giá.");
             SetStatusDot("MarketConnectionDot", recent);
             SetStatusDot("SymbolConnectionDot", recent);
         }
@@ -418,6 +419,8 @@ public partial class MainWindow : Window
             quoteFreshness.Text = "Chưa rõ giờ giá";
             quoteFreshness.Foreground = Brushes.Gold;
             ToolTip.SetTip(quoteFreshness, "Bridge chưa cung cấp thời điểm tick cuối.");
+            SetStatusDot("MarketConnectionDot", false);
+            SetStatusDot("SymbolConnectionDot", false);
         }
 
         FindText("BalanceValue").Text = FormatMoney(overview.Balance, currency);
@@ -565,18 +568,17 @@ public partial class MainWindow : Window
     };
 
     private static string FormatPrice(double? value) =>
-        value.HasValue ? value.Value.ToString("0.00") : "—";
+        value.HasValue ? value.Value.ToString("N2", CultureInfo.InvariantCulture) : "—";
 
     private static string FormatMetric(double? value) =>
-        value.HasValue ? value.Value.ToString("0.###") : "—";
+        value.HasValue ? value.Value.ToString("0.##", CultureInfo.InvariantCulture) : "—";
 
     private static string FormatMoney(double? value, string currency)
     {
         if (!value.HasValue)
             return "—";
 
-        return string.IsNullOrWhiteSpace(currency)
-            ? value.Value.ToString("N2")
-            : $"{value.Value:N2} {currency}";
+        var amount = value.Value.ToString("N2", CultureInfo.InvariantCulture);
+        return string.IsNullOrWhiteSpace(currency) ? amount : $"{amount} {currency}";
     }
 }

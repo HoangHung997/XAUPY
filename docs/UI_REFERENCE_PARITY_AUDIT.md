@@ -4,7 +4,9 @@
 
 - Reviewed all ten approved PNGs in `docs/ui-reference/`.
 - Compared two captures of all ten real Avalonia screens at 1672 × 941: `artifacts/ui-audit-initial/` and `artifacts/ui-audit-second/`.
-- The second capture prompted final fixes to sidebar status columns, the six account rows, monitoring alert space, profile-load state and profile labels. A final capture of the packaged build is required to verify those last fixes visually.
+- Reviewed all ten packaged captures from source `71902a8` at 1672 × 941 in `artifacts/ui-audit-final/`, against all ten approved references. Live MT5 data, connection states, history-backed candles and the six sidebar account rows are visible in that evidence.
+- That packaged review found overlapping chart time labels, long Monitoring table cells, a clipped Strategy timeframe label, clipped Backtest footer buttons and a crowded Journal source badge. Subsequent source changes fix those defects, add actual EMA legends and make the Strategy direction arrow follow the received direction.
+- Reviewed all ten post-polish packaged captures in `artifacts/ui-audit-polished/` at 1672 × 941, captured on 2026-09-28 at 01:23:02–01:23:14 local time. These captures contain the polish changes made after `71902a8`, before their final commit. The corrected chart axes, EMA legends, BUY arrow, wrapped Monitoring cells, complete Backtest footer buttons and separated Journal badge are visible. The shorter Overview configuration panel and single-line quick log also fit above the footer. No further blocking overlap or inaccessible primary control was found in this ten-page review.
 - Desktop Debug build passed with zero warnings/errors; 66 existing UI-source checks passed after updating assertions for real dashboard hosts, the candlestick control and translated safety labels.
 - A headless Avalonia interaction probe passed 12 runtime assertions: real Monitoring chips and keyboard activation, selection persistence across heartbeats, indicator and chart-type toggles, comparison selection/clearing, rendering and Strategy action recovery when the engine is unavailable. The rendering fixture is test-only; it is never loaded into the application.
 - Source checks verify control/data contracts, not pixel equivalence.
@@ -20,6 +22,7 @@
 - Kept table headers and data rows on the same proportional column definitions; stretched journal rows to the table width.
 - Kept the reference heights for empty order tables and fixed optimizer controls spilling into the neighboring panel.
 - Bound strategy indicator mirrors and state dots to actual snapshots; removed permanently positive connection/condition signals.
+- Bound the direction arrow and its color to BUY / SELL / BOTH / neutral state. The arrow no longer remains red and downward beside a BUY label.
 - Fixed loading a profile being incorrectly marked as edited by deferred control events, and synchronized both visible profile labels.
 - The footer labels local time as “Giờ máy”; it does not present the computer clock as MT5 server time.
 
@@ -29,12 +32,16 @@ The UI is **not certified as a 100% pixel match**. Fonts, some spacing and some 
 
 | Area | Remaining difference |
 | --- | --- |
+| Overview | The shared layout and card proportions follow the reference, but quick configuration offers the implemented canonical controls. The capture uses an actual market-closed quote and clearly labels it as the latest available price. |
 | Configuration | The current strategy has 133 canonical fields. Its compact cards retain those real fields and scrolling; the demo's different illustrative parameter set is not substituted. |
 | Strategy | The page is primarily a projection of the active configuration. Save, load and export work; a separate default-profile operation is unavailable. Detailed editing remains in Configuration. |
 | Market charts | Actual series differ from the illustrative chart. Comparison is restricted to received timeframes of the current symbol; an arbitrary-symbol comparison feed is not implemented. |
 | Monitoring | News-calendar data, broker-day drawdown and some monitoring resource metrics remain unavailable in this view. They show waiting/empty states. |
 | Orders | Empty positions/deals stay empty. Broker actions remain explicitly restricted to the supported guarded simulation flow. |
 | Backtest / Optimization | Empty charts and results remain empty until a real run completes. Some data-selection controls are additional to the demo because a valid dataset is required. |
-| Global layout | At smaller viewport sizes, dense canonical content uses scrolling; the audit canvas is 1672 × 941. |
+| Journal | Real messages, categories and counts replace illustrative trades and errors. Source filters and detail panels follow the reference structure; typography and icon treatment still differ. |
+| Tools | The three-column tool/editor/help structure is present. Canonical JSON, diagnostic output and implemented actions replace the illustrative editor content; icons and secondary typography remain simpler. |
+| Settings | The card groups follow the reference, with actual connection, backup and recovery settings. MT5 credentials are not collected; unavailable theme/language choices and automatic trading are not presented as working features. |
+| Global layout | Dense canonical content uses scrolling, including Configuration, Strategy and Optimization. Some long enum/model selector captions remain truncated within their available width. Smaller viewport sizes need additional scrolling; the audit canvas is 1672 × 941. |
 
-The missing interactions and remaining visual differences must stay visible in the handover; a successful build or source test is not evidence that the stricter user requirement of exact visual parity has been met.
+The remaining feature and visual differences must stay visible in the handover; a successful build or source test is not evidence that the stricter user requirement of exact visual parity has been met.

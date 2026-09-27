@@ -13,6 +13,7 @@
 ACTIVE — only task currently being implemented.  
 PLANNED — not started.  
 BLOCKED — dependency/user decision prevents work.  
+IMPLEMENTED_CI_PENDING — implementation and local checks complete; required GitHub CI/artifact evidence is still pending.
 READY_FOR_USER_TEST — CI/build complete, awaiting requested manual acceptance.  
 DONE — implementation, automated evidence and required deliverable complete.
 
@@ -32,10 +33,10 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-010 | DONE | Structured logging + Journal tab | 002,003 | schema/replay tests |
 | XAUPY-011 | DONE | Backtest engine parity | 007,010 | deterministic replay |
 | XAUPY-012 | DONE | Optimizer + walk-forward | 011 | reproducibility/leakage guards + verified Windows build |
-| XAUPY-013 | PLANNED | Dynamic TP/SL + stop-confirm entry | 003,007,011 | state/broker simulation |
-| XAUPY-014 | PLANNED | Tools tab + diagnostics | 003,004,010 | diagnostics tests |
-| XAUPY-015 | PLANNED | Settings, backup, startup, fail-safe UX | 002,003,004 | restart/recovery tests |
-| XAUPY-016 | PLANNED | Installer, release workflow, demo acceptance | all prior | release + acceptance |
+| XAUPY-013 | IMPLEMENTED_CI_PENDING | Dynamic TP/SL + stop-confirm entry | 003,007,011 | Local state/broker simulation and packaged smoke passed; GitHub evidence pending |
+| XAUPY-014 | IMPLEMENTED_CI_PENDING | Tools tab + diagnostics | 003,004,010 | Local diagnostics/contract checks passed; GitHub evidence pending |
+| XAUPY-015 | IMPLEMENTED_CI_PENDING | Settings, backup, startup, fail-safe UX | 002,003,004 | Local persistence/restart/recovery checks passed; GitHub evidence pending |
+| XAUPY-016 | ACTIVE | Installer, release workflow, demo acceptance | all prior | Release packaging, final CI and packaged UI/demo acceptance in progress |
 
 # XAUPY-001
 
@@ -851,4 +852,38 @@ Task 012 implementation is complete. After merging this task to `main`, rerun
 Task 012 CI on `main` and independently inspect the resulting main artifact
 before delivery.
 
-XAUPY-013 remains PLANNED and has not started.
+## Completion work status — 2026-09-28
+
+XAUPY-013 is implemented and locally verified, with GitHub CI evidence pending.
+The recovered dynamic-management implementation supports stop-confirm entries,
+ATR stops, dynamic TP, partial close and stop tightening. Temporal and broker-rule
+regressions pass, including never-widen protection. The packaged Task 013 smoke
+passes. See `TASK013_DYNAMIC_MANAGEMENT_SPEC.md` and its acceptance document.
+
+XAUPY-014 is implemented and locally verified, with GitHub CI evidence pending.
+The Tools surface, canonical profile operations and read-only runtime diagnostics
+are implemented. See `TASK014_TOOLS_DIAGNOSTICS_SPEC.md`.
+
+XAUPY-015 is implemented and locally verified, with GitHub CI evidence pending.
+Validated settings/profile persistence, backup/recovery, startup preferences,
+owned-engine identity and explicit fail-safe states are implemented. The shared
+maintenance suite passes 11 tests. See `TASK015_SETTINGS_RECOVERY_SPEC.md`.
+
+Recorded local combined evidence: 278 Python tests and 85 C# IPC checks pass;
+packaged Task 007/009/010/011/012/013 and config-tool smokes pass in isolated
+temporary storage. These local results do not satisfy the GitHub evidence gate
+or change any execution rule above.
+
+XAUPY-016 remains ACTIVE. Installer and release workflow exist; final clean
+packaging, GitHub CI/artifact evidence and packaged UI acceptance are in progress.
+The compiled read-only EA reports 0 errors / 0 warnings. Live MT5 demo evidence
+in `artifacts/live-framed-reader.json` passes 11 samples, with snapshot counters
+203→214, all eight timeframes containing 256 real closed bars, and execution
+locked. The stronger probe in `artifacts/live-framed-reader-tick-locks.json`
+confirms transport, history, strategy readiness and locks but currently fails
+because the running Engine does not yet project `tick_time_msc`; final runtime
+repack/restart and re-probe remain required. Avalonia is verified separately.
+
+Tasks 013–016 are not marked DONE until their remaining required evidence is
+complete. Broker mutation, real-account permission and automatic trading remain
+disabled.

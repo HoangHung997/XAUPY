@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from _smoke_runtime import isolated_environment
+
 import argparse
 import json
 import socket
@@ -49,6 +51,7 @@ def main() -> int:
         [args.engine_exe, "--host", "127.0.0.1", "--port", str(port)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        env=isolated_environment(),
     )
 
     sock = None

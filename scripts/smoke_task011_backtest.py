@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from _smoke_runtime import isolated_environment
+
 import argparse
 import copy
 import json
@@ -45,7 +47,7 @@ def exchange(file, message_type: str, payload: dict | None = None) -> dict:
 
 def start_engine(engine_exe: str, journal_dir: Path, backtest_dir: Path):
     port = free_port()
-    env = dict(os.environ)
+    env = isolated_environment(journal_dir / ".smoke-runtime", journal_dir=journal_dir)
     env["XAUPY_LOG_DIR"] = str(journal_dir)
     env["XAUPY_BACKTEST_DIR"] = str(backtest_dir)
 
@@ -215,6 +217,7 @@ def main() -> int:
             assert heartbeat["payload"]["engine_version"] in {
                 "0.11.0-task011",
                 "0.12.0-task012",
+                "0.16.0-rc1",
             }
             assert heartbeat["payload"]["trading_enabled"] is False
             assert heartbeat["payload"]["execution_enabled"] is False

@@ -35,7 +35,7 @@
     </Style>
     <Style Selector="TextBlock.journalHeader">
       <Setter Property="Foreground" Value="#B8CCE1"/>
-      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="FontSize" Value="12"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
   </UserControl.Styles>
@@ -63,7 +63,7 @@
                        Foreground="#DCEBFA"/>
             <TextBlock Text="Theo dõi hoạt động chi tiết của hệ thống, EA và các thành phần giao dịch"
                        Classes="dim"
-                       FontSize="12"/>
+                       FontSize="14"/>
           </StackPanel>
         </Grid>
       </Border>
@@ -79,7 +79,7 @@
             <TextBlock Text="▥" Foreground="#8FD0FF" FontSize="18" VerticalAlignment="Center"/>
             <TextBlock Grid.Column="1" Text="Tất cả" Margin="8,0,0,0" VerticalAlignment="Center"/>
             <Border Grid.Column="2" Background="#154D99" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourceAllCountText" Text="0" FontSize="11"/>
+              <TextBlock x:Name="SourceAllCountText" Text="0" FontSize="13"/>
             </Border>
           </Grid>
         </Button>
@@ -93,7 +93,7 @@
             <TextBlock Text="▣" Foreground="#20E08B" FontSize="17" VerticalAlignment="Center"/>
             <TextBlock Grid.Column="1" Text="MT5" Margin="8,0,0,0" VerticalAlignment="Center"/>
             <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourceMt5CountText" Text="0" FontSize="11"/>
+              <TextBlock x:Name="SourceMt5CountText" Text="0" FontSize="13"/>
             </Border>
           </Grid>
         </Button>
@@ -107,7 +107,7 @@
             <TextBlock Text="⌁" Foreground="#4EA8FF" FontSize="17" VerticalAlignment="Center"/>
             <TextBlock Grid.Column="1" Text="EA Bridge" Margin="8,0,0,0" VerticalAlignment="Center"/>
             <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourceBridgeCountText" Text="0" FontSize="11"/>
+              <TextBlock x:Name="SourceBridgeCountText" Text="0" FontSize="13"/>
             </Border>
           </Grid>
         </Button>
@@ -121,7 +121,7 @@
             <TextBlock Text="●" Foreground="#FFD34D" FontSize="16" VerticalAlignment="Center"/>
             <TextBlock Grid.Column="1" Text="Python Engine" Margin="8,0,0,0" VerticalAlignment="Center"/>
             <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourcePythonCountText" Text="0" FontSize="11"/>
+              <TextBlock x:Name="SourcePythonCountText" Text="0" FontSize="13"/>
             </Border>
           </Grid>
         </Button>
@@ -135,7 +135,7 @@
             <TextBlock Text="▥" Foreground="#1FE090" FontSize="17" VerticalAlignment="Center"/>
             <TextBlock Grid.Column="1" Text="Strategy" Margin="8,0,0,0" VerticalAlignment="Center"/>
             <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourceStrategyCountText" Text="0" FontSize="11"/>
+              <TextBlock x:Name="SourceStrategyCountText" Text="0" FontSize="13"/>
             </Border>
           </Grid>
         </Button>
@@ -149,7 +149,7 @@
             <TextBlock Text="▤" Foreground="#9FD0FF" FontSize="17" VerticalAlignment="Center"/>
             <TextBlock Grid.Column="1" Text="Orders" Margin="8,0,0,0" VerticalAlignment="Center"/>
             <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourceOrdersCountText" Text="0" FontSize="11"/>
+              <TextBlock x:Name="SourceOrdersCountText" Text="0" FontSize="13"/>
             </Border>
           </Grid>
         </Button>
@@ -163,7 +163,7 @@
             <TextBlock Text="♧" Foreground="#FF5577" FontSize="18" VerticalAlignment="Center"/>
             <TextBlock Grid.Column="1" Text="Alerts" Margin="8,0,0,0" VerticalAlignment="Center"/>
             <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourceAlertsCountText" Text="0" FontSize="11"/>
+              <TextBlock x:Name="SourceAlertsCountText" Text="0" FontSize="13"/>
             </Border>
           </Grid>
         </Button>
@@ -219,7 +219,7 @@
         <Grid RowDefinitions="Auto,*">
           <Grid Grid.Row="0"
                 Background="#082038"
-                ColumnDefinitions="64,160,110,150,*,135"
+                ColumnDefinitions="0.64*,1.6*,1.1*,1.5*,6*,1.35*"
                 Margin="0">
             <TextBlock Text="#" Classes="journalHeader" Margin="12,8"/>
             <TextBlock Grid.Column="1" Text="Thời gian" Classes="journalHeader" Margin="10,8"/>
@@ -296,7 +296,7 @@
                   <TextBlock x:Name="DetailJsonText"
                              Text="—"
                              FontFamily="Consolas"
-                             FontSize="11"
+                             FontSize="13"
                              Foreground="#B6CBE0"
                              TextWrapping="Wrap"/>
                 </Border>
@@ -421,11 +421,11 @@
           <TextBlock Text="Tính toàn vẹn replay" Classes="label"/>
           <TextBlock x:Name="ReplayIntegrityText"
                      Text="Invalid: 0 • Duplicate: 0"
-                     FontSize="11"
+                     FontSize="13"
                      Foreground="#86A0BA"/>
           <TextBlock x:Name="JournalStatusText"
                      Text="Đang chờ Engine..."
-                     FontSize="11"
+                     FontSize="13"
                      Foreground="#FFD34D"
                      TextWrapping="Wrap"/>
         </StackPanel>

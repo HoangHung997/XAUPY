@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using XAUPY.Ipc;
 
@@ -9,8 +10,6 @@ namespace XAUPY.Desktop;
 
 public partial class MainWindow : Window
 {
-    private const int ChartPointCount = 10;
-
     private readonly EngineProcessSupervisor _engineSupervisor;
     private readonly ConfigurationEditor _configurationEditor;
     private readonly StrategyDashboard _strategyDashboard;
@@ -19,7 +18,8 @@ public partial class MainWindow : Window
     private readonly JournalDashboard _journalDashboard;
     private readonly BacktestDashboard _backtestDashboard;
     private readonly OptimizerDashboard _optimizerDashboard;
-    private readonly List<double> _priceHistory = new();
+    private readonly ToolsDashboard _toolsDashboard;
+    private readonly SettingsDashboard _settingsDashboard;
     private readonly Queue<string> _quickLogs = new();
     private readonly DispatcherTimer _clockTimer;
 
@@ -64,17 +64,18 @@ public partial class MainWindow : Window
                 "NavLogs"),
             ["tools"] = (
                 "Công cụ",
-                "Diagnostics suite thuộc Task 014.",
+                "Chẩn đoán Bridge, dữ liệu, cấu hình và công cụ rủi ro.",
                 "NavTools"),
             ["settings"] = (
                 "Cài đặt",
-                "Startup/backup/fail-safe settings thuộc Task 015.",
+                "Kết nối, khởi động, sao lưu và phục hồi an toàn.",
                 "NavSettings")
         };
 
     public MainWindow()
     {
         InitializeComponent();
+        InitializeQuickConfiguration();
 
         _engineSupervisor = new EngineProcessSupervisor();
         _engineSupervisor.StateChanged += EngineSupervisor_OnStateChanged;
@@ -84,6 +85,7 @@ public partial class MainWindow : Window
         _configurationEditor.AttachSupervisor(_engineSupervisor);
         _strategyDashboard = this.FindControl<StrategyDashboard>("StrategyDashboard")
             ?? throw new InvalidOperationException("StrategyDashboard missing.");
+        _strategyDashboard.AttachSupervisor(_engineSupervisor);
         _monitoringDashboard = this.FindControl<MonitoringDashboard>("MonitoringDashboard")
             ?? throw new InvalidOperationException("MonitoringDashboard missing.");
         _ordersPositionsDashboard = this.FindControl<OrdersPositionsDashboard>("OrdersPositionsDashboard")
@@ -98,6 +100,10 @@ public partial class MainWindow : Window
         _optimizerDashboard = this.FindControl<OptimizerDashboard>("OptimizerDashboard")
             ?? throw new InvalidOperationException("OptimizerDashboard missing.");
         _optimizerDashboard.AttachSupervisor(_engineSupervisor);
+        _toolsDashboard = this.FindControl<ToolsDashboard>("ToolsView")!;
+        _toolsDashboard.AttachSupervisor(_engineSupervisor);
+        _settingsDashboard = this.FindControl<SettingsDashboard>("SettingsView")!;
+        _settingsDashboard.AttachSupervisor(_engineSupervisor);
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clockTimer.Tick += (_, _) => UpdateClock();
@@ -112,8 +118,33 @@ public partial class MainWindow : Window
 
         Opened += async (_, _) =>
         {
+            if (!EngineProcessSupervisor.ShouldAutoStartEngine)
+            {
+                AppendQuickLog("Tự khởi động Engine đã tắt trong Cài đặt.");
+                return;
+            }
             AppendQuickLog("Yêu cầu khởi động Python Engine.");
             await _engineSupervisor.StartAsync();
+        };
+
+        Opened += async (_, _) =>
+        {
+            var args = Environment.GetCommandLineArgs();
+            int capture = Array.IndexOf(args, "--capture-ui");
+            if (capture < 0 || capture + 1 >= args.Length) return;
+            string directory = System.IO.Path.GetFullPath(args[capture + 1]);
+            System.IO.Directory.CreateDirectory(directory);
+            await Task.Delay(8000);
+            foreach (var page in Pages)
+            {
+                NavButton_OnClick(this.FindControl<Button>(page.Value.NavName), new RoutedEventArgs());
+                await Task.Delay(1300);
+                using var bitmap = new RenderTargetBitmap(
+                    new Avalonia.PixelSize((int)Bounds.Width, (int)Bounds.Height), new Avalonia.Vector(96, 96));
+                bitmap.Render(this);
+                bitmap.Save(System.IO.Path.Combine(directory, page.Key + ".png"), PngBitmapEncoderOptions.Default);
+            }
+            NavButton_OnClick(this.FindControl<Button>("NavOverview"), new RoutedEventArgs());
         };
 
         Closed += (_, _) =>
@@ -140,7 +171,9 @@ public partial class MainWindow : Window
         bool backtest = string.Equals(key, "backtest", StringComparison.Ordinal);
         bool optimization = string.Equals(key, "optimization", StringComparison.Ordinal);
         bool logs = string.Equals(key, "logs", StringComparison.Ordinal);
-        bool liveSidebar = overview || strategy || monitoring || backtest || optimization;
+        bool tools = string.Equals(key, "tools", StringComparison.Ordinal);
+        bool settings = string.Equals(key, "settings", StringComparison.Ordinal);
+        bool liveSidebar = overview || strategy || monitoring || backtest || optimization || settings;
 
         this.FindControl<ScrollViewer>("OverviewScroll")!.IsVisible = overview;
         this.FindControl<StackPanel>("OverviewContent")!.IsVisible = overview;
@@ -152,8 +185,9 @@ public partial class MainWindow : Window
         _backtestDashboard.IsVisible = backtest;
         _optimizerDashboard.IsVisible = optimization;
         _journalDashboard.IsVisible = logs;
-        this.FindControl<Border>("PlaceholderContent")!.IsVisible =
-            !overview && !configuration && !strategy && !monitoring && !orders && !backtest && !optimization && !logs;
+        _toolsDashboard.IsVisible = tools;
+        _settingsDashboard.IsVisible = settings;
+        this.FindControl<Border>("PlaceholderContent")!.IsVisible = false;
 
         if (configuration)
         {
@@ -171,12 +205,8 @@ public partial class MainWindow : Window
         {
             _ = _journalDashboard.EnsureLoadedAsync(force: true);
         }
-        else if (!overview && !strategy && !monitoring && !orders && !backtest && !optimization && !logs)
-        {
-            FindText("PlaceholderTitle").Text = $"{page.Title} — chưa triển khai";
-            FindText("PlaceholderDetail").Text =
-                $"Task 012 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát + Lệnh & Vị thế + Backtest + Tối ưu + Nhật ký. {page.Subtitle}";
-        }
+        else if (tools) _ = _toolsDashboard.EnsureLoadedAsync(force: true);
+        else if (settings) _ = _settingsDashboard.EnsureLoadedAsync(force: true);
     }
 
     private void SetNavActive(string activeKey)
@@ -239,13 +269,20 @@ public partial class MainWindow : Window
         FindText("FooterEngineStateText").Text = engineText;
         FindText("FooterEngineStateText").Foreground = engineColor;
         FindText("EngineDetailText").Text = e.Detail;
+        SetStatusDot("EngineConnectionDot", e.State == EngineConnectionState.Ready);
+        FindText("EaRunStateText").Text = e.State == EngineConnectionState.Ready && e.Overview.Available
+            ? "ĐANG CHẠY" : e.Mt5Bridge.Connected ? "CHỜ DỮ LIỆU" : "CHỜ KẾT NỐI";
+        FindText("EaRunStateText").Foreground = e.State == EngineConnectionState.Ready && e.Overview.Available
+            ? Brushes.SpringGreen : Brushes.Gold;
         FindText("LastHeartbeatText").Text = e.LastHeartbeatUtc.HasValue
             ? e.LastHeartbeatUtc.Value.ToLocalTime().ToString("HH:mm:ss")
             : "—";
 
         if (_lastEngineState != e.State)
         {
-            AppendQuickLog($"Engine → {engineText}: {e.Detail}");
+            if (_engineSupervisor.ShowConnectionChanges ||
+                (e.State is EngineConnectionState.Faulted or EngineConnectionState.MissingEngine && _engineSupervisor.ShowSystemErrors))
+                AppendQuickLog($"Engine → {engineText}: {e.Detail}");
             _lastEngineState = e.State;
         }
 
@@ -285,30 +322,29 @@ public partial class MainWindow : Window
             ? $"{symbol} • {mode} • terminal={(bridge.TerminalConnected ? "online" : "offline")} • snapshots={bridge.SnapshotsTotal}"
             : "Chưa nhận snapshot hợp lệ hoặc Bridge đã stale.";
 
-        FindText("GuardianReasonValue").Text = bridge.Connected ? "OK" : bridge.GuardianReason;
+        FindText("GuardianReasonValue").Text = bridge.ExecutionLocked ? "EXECUTION LOCKED" : bridge.GuardianReason;
+        SetStatusDot("TerminalConnectionDot", bridge.Connected && bridge.TerminalConnected);
+        SetStatusDot("BridgeConnectionDot", bridge.Connected);
 
         if (_lastBridgeConnected != bridge.Connected)
         {
-            AppendQuickLog(
+            if (_engineSupervisor.ShowConnectionChanges) AppendQuickLog(
                 bridge.Connected
                     ? $"MT5 Bridge → CONNECTED ({symbol}, {mode})."
                     : "MT5 Bridge → WAITING/OFFLINE.");
             _lastBridgeConnected = bridge.Connected;
 
-            if (!bridge.Connected)
-            {
-                _priceHistory.Clear();
-                UpdateChart();
-            }
         }
     }
 
     private void ApplyConfigurationSummary(ConfigurationSummary config)
     {
+        UpdateQuickConfiguration(config);
         FindText("ProfileValue").Text = $"Profile: {config.ProfileName}";
         FindText("DirectionTfValue").Text = config.DirectionTimeframe;
         FindText("PullbackTfValue").Text = config.PullbackTimeframe;
         FindText("TriggerTfValue").Text = config.TriggerTimeframe;
+        FindText("TradePermissionsText").Text = $"Cho phép BUY: {(config.AllowBuy ? "ON" : "OFF")}    SELL: {(config.AllowSell ? "ON" : "OFF")}";
         FindText("DirectionRuleValue").Text =
             $"Direction: {config.DirectionMaType}{config.DirectionMaPeriod} • BUY={(config.AllowBuy ? "ON" : "OFF")} • SELL={(config.AllowSell ? "ON" : "OFF")}";
         FindText("TpSlValue").Text =
@@ -341,6 +377,9 @@ public partial class MainWindow : Window
 
     private void ApplyOverviewSnapshot(OverviewSnapshot overview)
     {
+        this.FindControl<MarketChartControl>("OverviewMarketChart")!.SetSnapshot(overview, "M5");
+        SetStatusDot("MarketConnectionDot", overview.Available);
+        SetStatusDot("SymbolConnectionDot", overview.Available);
         if (!overview.Available)
         {
             if (_hadMarketData)
@@ -358,10 +397,28 @@ public partial class MainWindow : Window
 
         FindText("SymbolValue").Text = symbol;
         FindText("BidValue").Text = FormatPrice(overview.Bid);
+        FindText("SidebarBidText").Text = FormatPrice(overview.Bid);
         FindText("AskValue").Text = FormatPrice(overview.Ask);
         FindText("SpreadValue").Text = overview.SpreadPoints.HasValue
             ? $"Spread {overview.SpreadPoints.Value:0.##} pt"
             : "Spread —";
+        var quoteFreshness = FindText("QuoteFreshnessText");
+        if (overview.TickTimeMsc is > 0)
+        {
+            var lastTick = DateTimeOffset.FromUnixTimeMilliseconds(overview.TickTimeMsc.Value);
+            var recent = DateTimeOffset.UtcNow - lastTick < TimeSpan.FromMinutes(2);
+            quoteFreshness.Text = recent ? "Giá mới" : "Giá gần nhất";
+            quoteFreshness.Foreground = recent ? Brushes.SpringGreen : Brushes.Gold;
+            ToolTip.SetTip(quoteFreshness, $"Tick cuối: {lastTick.ToLocalTime():dd/MM/yyyy HH:mm:ss zzz}. Kết nối được kiểm tra riêng với thời điểm giá.");
+            SetStatusDot("MarketConnectionDot", recent);
+            SetStatusDot("SymbolConnectionDot", recent);
+        }
+        else
+        {
+            quoteFreshness.Text = "Chưa rõ giờ giá";
+            quoteFreshness.Foreground = Brushes.Gold;
+            ToolTip.SetTip(quoteFreshness, "Bridge chưa cung cấp thời điểm tick cuối.");
+        }
 
         FindText("BalanceValue").Text = FormatMoney(overview.Balance, currency);
         FindText("EquityValue").Text = FormatMoney(overview.Equity, currency);
@@ -385,14 +442,6 @@ public partial class MainWindow : Window
                 ? "Không có position/pending order thuộc bridge snapshot hiện tại. Broker execution vẫn khóa."
                 : $"Bridge báo {overview.PositionsCount} position và {overview.OrdersCount} order. Mở tab Lệnh & Vị thế để xem ticket thật.";
 
-        if (overview.Bid.HasValue)
-        {
-            _priceHistory.Add(overview.Bid.Value);
-            while (_priceHistory.Count > ChartPointCount)
-                _priceHistory.RemoveAt(0);
-            UpdateChart();
-        }
-
         if (!_hadMarketData)
         {
             AppendQuickLog($"Overview nhận dữ liệu thật: {symbol} BID {FormatPrice(overview.Bid)}.");
@@ -403,8 +452,11 @@ public partial class MainWindow : Window
     private void ResetOverviewValues()
     {
         FindText("BidValue").Text = "—";
+        FindText("SidebarBidText").Text = "—";
         FindText("AskValue").Text = "—";
         FindText("SpreadValue").Text = "Spread —";
+        FindText("QuoteFreshnessText").Text = "Chờ giá";
+        ToolTip.SetTip(FindText("QuoteFreshnessText"), null);
         FindText("BalanceValue").Text = "—";
         FindText("EquityValue").Text = "—";
         FindText("MarginFreeValue").Text = "—";
@@ -428,44 +480,10 @@ public partial class MainWindow : Window
             : "—";
     }
 
-    private void UpdateChart()
+    private void SetStatusDot(string name, bool connected)
     {
-        double min = _priceHistory.Count > 0 ? _priceHistory.Min() : 0;
-        double max = _priceHistory.Count > 0 ? _priceHistory.Max() : 0;
-        double range = Math.Max(max - min, 0.000001);
-
-        for (int i = 0; i < ChartPointCount; i++)
-        {
-            var bar = this.FindControl<Border>($"ChartBar{i}")!;
-            int sourceIndex = _priceHistory.Count - ChartPointCount + i;
-
-            if (sourceIndex < 0 || sourceIndex >= _priceHistory.Count)
-            {
-                bar.Height = 18;
-                bar.Opacity = 0.22;
-                continue;
-            }
-
-            double value = _priceHistory[sourceIndex];
-            double normalized = (value - min) / range;
-            bar.Height = 28 + (normalized * 145);
-            bar.Opacity = 0.50 + (0.045 * i);
-        }
-
-        if (_priceHistory.Count == 0)
-        {
-            FindText("ChartLastValue").Text = "Last: —";
-            FindText("ChartRangeValue").Text = "Range: —";
-            FindText("ChartMinValue").Text = "Min —";
-            FindText("ChartMaxValue").Text = "Max —";
-            return;
-        }
-
-        double last = _priceHistory[^1];
-        FindText("ChartLastValue").Text = $"Last: {last:0.00}";
-        FindText("ChartRangeValue").Text = $"Range: {(max - min):0.00}";
-        FindText("ChartMinValue").Text = $"Min {min:0.00}";
-        FindText("ChartMaxValue").Text = $"Max {max:0.00}";
+        if (this.FindControl<TextBlock>(name) is { } dot)
+            dot.Foreground = connected ? Brushes.SpringGreen : Brushes.Gold;
     }
 
     private void UpdateClock()

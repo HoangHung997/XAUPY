@@ -693,7 +693,7 @@ public partial class OptimizerDashboard : UserControl
         {
             var grid = new Grid
             {
-                ColumnDefinitions = new ColumnDefinitions("34,62,92,68,70,72,*,62"),
+                ColumnDefinitions = new ColumnDefinitions("0.34*,0.62*,0.92*,0.68*,0.7*,0.72*,1.4*,0.62*"),
                 MinHeight = 32
             };
 
@@ -1657,7 +1657,7 @@ public partial class OptimizerDashboard : UserControl
         {
             Text = value,
             Foreground = brush ?? new SolidColorBrush(Color.Parse("#D9E5F2")),
-            FontSize = 10.5,
+            FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(6, 5),
             TextTrimming = TextTrimming.CharacterEllipsis

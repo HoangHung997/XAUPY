@@ -5,7 +5,7 @@ Use a demo MT5 account only.
 1. Extract the full Task 003 ZIP.
 2. Run XAUPY.Desktop.exe and wait for Python Engine READY.
 3. In MT5, open Tools → Options → Expert Advisors.
-4. Enable the allowed URL list and add http://127.0.0.1:39421.
+4. Enable the allowed URL list and add http://127.0.0.1 (without the port). The socket uses port 39421 separately.
 5. Open File → Open Data Folder.
 6. Copy mt5/XAUPY_Bridge_EA.ex5 into MQL5/Experts.
 7. Refresh Navigator or restart MT5.

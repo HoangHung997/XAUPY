@@ -308,9 +308,9 @@ class Task011BacktestProtocolTests(unittest.IsolatedAsyncioTestCase):
         writer.close()
         await writer.wait_closed()
 
-    async def test_unsupported_profile_is_rejected_without_execution(self):
+    async def test_profile_requiring_missing_historical_news_is_rejected_without_execution(self):
         profile = profile_for_backtest()
-        profile["take_profit"]["mode"] = "ZRSI_DYNAMIC"
+        profile["news"]["enabled"] = True
         self.server.active_profile = deepcopy(profile)
         self.server.strategy.set_profile(profile)
 
@@ -330,7 +330,7 @@ class Task011BacktestProtocolTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(response.payload["ok"])
         self.assertTrue(
             any(
-                "take_profit.mode" in error
+                "news.enabled" in error
                 for error in response.payload["errors"]
             )
         )

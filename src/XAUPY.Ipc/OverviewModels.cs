@@ -27,6 +27,10 @@ public sealed record OverviewSnapshot(
     int OrdersCount,
     IReadOnlyDictionary<string, MarketBar> Bars)
 {
+    public IReadOnlyDictionary<string, IReadOnlyList<MarketBar>> BarHistory { get; init; }
+        = new Dictionary<string, IReadOnlyList<MarketBar>>(StringComparer.OrdinalIgnoreCase);
+    public long? TickTimeMsc { get; init; }
+
     public static OverviewSnapshot Empty { get; } = new(
         false,
         null,
@@ -70,6 +74,35 @@ public sealed record OverviewSnapshot(
             }
         }
 
+        var history = new Dictionary<string, IReadOnlyList<MarketBar>>(StringComparer.OrdinalIgnoreCase);
+        string[] supportedTimeframes = ["M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4"];
+        if (overview.TryGetProperty("bar_history", out var historyElement) &&
+            historyElement.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var item in historyElement.EnumerateObject())
+            {
+                if (!supportedTimeframes.Contains(item.Name) || item.Value.ValueKind != JsonValueKind.Array ||
+                    item.Value.GetArrayLength() > 256)
+                    continue;
+                var series = new List<MarketBar>();
+                long previousTime = 0;
+                bool valid = true;
+                foreach (var rawBar in item.Value.EnumerateArray())
+                {
+                    if (rawBar.ValueKind != JsonValueKind.Object || !TryReadBar(rawBar, out var bar) ||
+                        bar.Time <= previousTime || (bars.TryGetValue(item.Name, out var latest) && bar.Time > latest.Time))
+                    {
+                        valid = false;
+                        break;
+                    }
+                    previousTime = bar.Time;
+                    series.Add(bar);
+                }
+                if (valid)
+                    history[item.Name] = series.AsReadOnly();
+            }
+        }
+
         return new OverviewSnapshot(
             available,
             ReadString(overview, "snapshot_received_utc"),
@@ -85,7 +118,12 @@ public sealed record OverviewSnapshot(
             ReadString(overview, "account_currency"),
             ReadInt(overview, "positions_count") ?? 0,
             ReadInt(overview, "orders_count") ?? 0,
-            bars);
+            bars)
+        {
+            BarHistory = history,
+            TickTimeMsc = ReadLong(overview, "tick_time_msc") is > 0
+                ? ReadLong(overview, "tick_time_msc") : null
+        };
     }
 
     private static bool TryReadBar(JsonElement value, out MarketBar bar)
@@ -98,7 +136,11 @@ public sealed record OverviewSnapshot(
         var tickVolume = ReadLong(value, "tick_volume");
 
         if (time is null || open is null || high is null ||
-            low is null || close is null || tickVolume is null)
+            low is null || close is null || tickVolume is null ||
+            time <= 0 || tickVolume < 0 || high < low ||
+            high < Math.Max(open.Value, close.Value) || low > Math.Min(open.Value, close.Value) ||
+            !double.IsFinite(open.Value) || !double.IsFinite(high.Value) ||
+            !double.IsFinite(low.Value) || !double.IsFinite(close.Value))
         {
             bar = default!;
             return false;
@@ -116,7 +158,7 @@ public sealed record OverviewSnapshot(
 
     internal static string? ReadString(JsonElement parent, string name)
     {
-        return parent.TryGetProperty(name, out var value) &&
+        return parent.ValueKind == JsonValueKind.Object && parent.TryGetProperty(name, out var value) &&
                value.ValueKind == JsonValueKind.String
             ? value.GetString()
             : null;
@@ -124,15 +166,15 @@ public sealed record OverviewSnapshot(
 
     internal static bool ReadBool(JsonElement parent, string name)
     {
-        return parent.TryGetProperty(name, out var value) &&
+        return parent.ValueKind == JsonValueKind.Object && parent.TryGetProperty(name, out var value) &&
                value.ValueKind == JsonValueKind.True;
     }
 
     internal static double? ReadDouble(JsonElement parent, string name)
     {
-        if (!parent.TryGetProperty(name, out var value) ||
+        if (parent.ValueKind != JsonValueKind.Object || !parent.TryGetProperty(name, out var value) ||
             value.ValueKind != JsonValueKind.Number ||
-            !value.TryGetDouble(out var number))
+            !value.TryGetDouble(out var number) || !double.IsFinite(number))
         {
             return null;
         }
@@ -142,7 +184,7 @@ public sealed record OverviewSnapshot(
 
     internal static int? ReadInt(JsonElement parent, string name)
     {
-        if (!parent.TryGetProperty(name, out var value) ||
+        if (parent.ValueKind != JsonValueKind.Object || !parent.TryGetProperty(name, out var value) ||
             value.ValueKind != JsonValueKind.Number ||
             !value.TryGetInt32(out var number))
         {
@@ -154,7 +196,7 @@ public sealed record OverviewSnapshot(
 
     internal static long? ReadLong(JsonElement parent, string name)
     {
-        if (!parent.TryGetProperty(name, out var value) ||
+        if (parent.ValueKind != JsonValueKind.Object || !parent.TryGetProperty(name, out var value) ||
             value.ValueKind != JsonValueKind.Number ||
             !value.TryGetInt64(out var number))
         {

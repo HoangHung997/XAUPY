@@ -3,6 +3,7 @@ from copy import deepcopy
 import pathlib
 import sys
 import time
+import tempfile
 import unittest
 from uuid import uuid4
 
@@ -341,7 +342,9 @@ async def exchange(reader, writer, message_type, payload=None):
 
 class Task009ProtocolTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        self.server = EngineServer(port=0)
+        state_temp = tempfile.TemporaryDirectory()
+        self.addCleanup(state_temp.cleanup)
+        self.server = EngineServer(port=0, state_dir=state_temp.name)
         self.server.active_profile = profile_for_simulation()
         self.server.strategy.set_profile(self.server.active_profile)
         await self.server.start()

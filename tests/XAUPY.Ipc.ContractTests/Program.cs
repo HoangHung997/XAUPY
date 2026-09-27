@@ -86,6 +86,31 @@ Check(overview.Bid == 4281.10, "overview bid");
 Check(overview.Bars.ContainsKey("M1"), "overview M1 bar");
 Check(overview.PositionsCount == 1, "overview position count");
 
+var historyRows = Enumerable.Range(0, 256).Select(index => new
+{
+    time = 1704067200L + index * 60,
+    open = 2000.0, high = 2002.0, low = 1999.0, close = 2001.0, tick_volume = 100L
+}).ToArray();
+var historyOverview = OverviewSnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new
+{
+    overview = new { available = true, tick_time_msc = 1704067200123L, bars = new { M1 = historyRows[^1] }, bar_history = new { M1 = historyRows } }
+}));
+Check(historyOverview.BarHistory["M1"].Count == 256, "genuine closed bar history parsed for chart");
+Check(historyOverview.BarHistory["M1"][0].Time == 1704067200L, "bar history preserves original timestamps");
+Check(overview.BarHistory.Count == 0, "older overview clients need no history field");
+Check(historyOverview.TickTimeMsc == 1704067200123L, "broker tick timestamp preserved independently of snapshot arrival");
+Check(overview.TickTimeMsc is null, "legacy missing tick timestamp remains unknown");
+var invalidHistoryOverview = OverviewSnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new
+{
+    overview = new { available = true, bar_history = new { M1 = historyRows.Reverse().ToArray() } }
+}));
+Check(invalidHistoryOverview.BarHistory.Count == 0, "out-of-order chart history rejected");
+var warmingStrategy = StrategySnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new
+{
+    strategy = new { available = true, ready = false, state = "WARMUP", indicators = new { } }
+}));
+Check(!warmingStrategy.Ready, "warmup missing indicator objects do not break heartbeat parsing");
+
 var strategyPayload = JsonSerializer.SerializeToElement(new
 {
     strategy = new
@@ -888,5 +913,18 @@ var walkForward = OptimizerApiParser.ParseResult(walkForwardPayload);
 Check(walkForward.Mode == "WALK_FORWARD" && walkForward.LeakageGuardPassed, "walk-forward result parser");
 Check(walkForward.Folds.Count == 1 && walkForward.Folds[0].SelectionSource == "TRAIN_ONLY", "walk-forward train-only fold parser");
 Check(walkForward.Aggregate is { Stability: 0.91, PositiveFoldRatio: 1.0 }, "walk-forward aggregate parser");
+
+EngineInstanceGuard.Validate(JsonSerializer.SerializeToElement(new { engine_instance_id = "desktop-owned" }), "desktop-owned");
+Check(true, "IPC owned process identity accepted");
+foreach (var foreign in new[] {
+    JsonSerializer.SerializeToElement(new { engine_instance_id = "older-desktop" }),
+    JsonSerializer.SerializeToElement(new { pid = 123 }),
+    JsonSerializer.SerializeToElement(new { engine_instance_id = (string?)null }) })
+{
+    bool rejected = false;
+    try { EngineInstanceGuard.Validate(foreign, "desktop-owned"); }
+    catch (InvalidDataException) { rejected = true; }
+    Check(rejected, "IPC foreign or legacy process identity rejected");
+}
 
 Console.WriteLine($"XAUPY IPC contract self-test complete: {passed} checks passed.");

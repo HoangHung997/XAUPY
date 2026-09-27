@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from _smoke_runtime import isolated_environment
+
 import argparse
 import copy
 import json
@@ -86,6 +88,7 @@ def main() -> int:
         [args.engine_exe, "--host", "127.0.0.1", "--port", str(port)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        env=isolated_environment(),
     )
 
     sock = None
@@ -122,6 +125,7 @@ def main() -> int:
             "0.10.0-task010",
             "0.11.0-task011",
             "0.12.0-task012",
+                "0.16.0-rc1",
         }
         assert heartbeat["payload"]["strategy"]["state"] == "STALE"
         assert heartbeat["payload"]["strategy"]["execution_enabled"] is False

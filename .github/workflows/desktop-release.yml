@@ -1,0 +1,82 @@
+name: Desktop completion release
+on:
+  push:
+    branches: [main, work/desktop-completion-20260928]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: python -m unittest discover -s python/tests -q
+      - run: dotnet build src/XAUPY.Desktop/XAUPY.Desktop.csproj -c Release
+      - run: dotnet run --project tests/XAUPY.Ipc.ContractTests/XAUPY.Ipc.ContractTests.csproj -c Release
+  package:
+    needs: validate
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: python -m pip install 'pyinstaller>=6.14,<7'
+      - name: Prepare MetaEditor
+        shell: pwsh
+        run: |
+          Invoke-WebRequest 'https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe' -OutFile "$env:RUNNER_TEMP/mt5setup.exe"
+          Start-Process "$env:RUNNER_TEMP/mt5setup.exe" -ArgumentList '/auto' -WindowStyle Hidden
+          $deadline = (Get-Date).AddMinutes(7)
+          while (-not (Test-Path 'C:/Program Files/MetaTrader 5/MetaEditor64.exe')) {
+            if ((Get-Date) -gt $deadline) { throw 'MetaEditor installation timed out' }
+            Start-Sleep -Seconds 5
+          }
+      - name: Build and verify portable and installer
+        shell: pwsh
+        run: |
+          $compiler = 'C:/Program Files (x86)/Inno Setup 6/ISCC.exe'
+          if (-not (Test-Path $compiler)) { throw 'Inno Setup compiler missing from runner image' }
+          ./scripts/build_windows.ps1 -Iscc $compiler
+      - name: Verify installer round trip
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $setup = (Resolve-Path 'dist/XAUPY-0.16.0-rc1-Setup.exe').Path
+          $installRoot = Join-Path $env:RUNNER_TEMP 'XAUPY-installer-acceptance'
+          $process = Start-Process -FilePath $setup -WindowStyle Hidden -Wait -PassThru -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', ('/DIR="' + $installRoot + '"'))
+          if ($process.ExitCode -ne 0) { throw "Installer exited with $($process.ExitCode)" }
+          $manifest = Get-Content -LiteralPath (Join-Path $installRoot 'build-manifest.json') -Raw | ConvertFrom-Json
+          foreach ($file in $manifest.files) {
+            $installedFile = Join-Path $installRoot $file.path
+            if (-not (Test-Path -LiteralPath $installedFile -PathType Leaf)) { throw "Installer omitted $($file.path)" }
+            if ((Get-FileHash -LiteralPath $installedFile -Algorithm SHA256).Hash.ToLowerInvariant() -ne $file.sha256) { throw "Installed hash mismatch: $($file.path)" }
+          }
+          $uninstaller = Join-Path $installRoot 'unins000.exe'
+          $process = Start-Process -FilePath $uninstaller -WindowStyle Hidden -Wait -PassThru -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
+          if ($process.ExitCode -ne 0 -or (Test-Path -LiteralPath (Join-Path $installRoot 'XAUPY.Desktop.exe'))) { throw 'Installer uninstall check failed' }
+      - name: Upload verified build
+        uses: actions/upload-artifact@v4
+        with:
+          name: XAUPY-0.16.0-rc1-win-x64
+          path: |
+            dist/XAUPY-0.16.0-rc1-win-x64.zip
+            dist/XAUPY-0.16.0-rc1-Setup.exe
+            dist/SHA256SUMS.txt
+            dist/XAUPY-win-x64/build-manifest.json
+          if-no-files-found: error
+          retention-days: 14

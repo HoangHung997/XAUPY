@@ -64,7 +64,7 @@ public sealed class EngineStateChangedEventArgs(
     public StrategySnapshot Strategy { get; } = strategy;
 }
 
-public sealed class EngineProcessSupervisor : IDisposable
+public sealed partial class EngineProcessSupervisor : IDisposable
 {
     public const int DefaultPort = 39421;
     private const int MaxRestartAttempts = 5;
@@ -80,6 +80,9 @@ public sealed class EngineProcessSupervisor : IDisposable
     private bool _stopRequested;
     private bool _disposed;
     private int _restartAttempts;
+    private string _ownedInstanceId = string.Empty;
+    private bool _connectedToOwnedInstance;
+    private string? _lastFaultDetail;
 
     public EngineProcessSupervisor(string? enginePath = null, int? port = null)
     {
@@ -118,6 +121,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
             _stopRequested = false;
             _restartAttempts = 0;
+            _lastFaultDetail = null;
             Mt5Bridge = Mt5BridgeStatus.Offline;
             Overview = OverviewSnapshot.Empty;
             OrdersPositions = OrdersPositionsSnapshot.Empty;
@@ -157,7 +161,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         try
         {
-            if (State is EngineConnectionState.Ready or EngineConnectionState.Reconnecting)
+            if (_connectedToOwnedInstance && State is (EngineConnectionState.Ready or EngineConnectionState.Reconnecting))
             {
                 var request = ProtocolEnvelope.Create("shutdown", new { reason = "desktop_stop" });
                 var response = await SendReceiveAsync(request, TimeSpan.FromSeconds(2), CancellationToken.None);
@@ -199,11 +203,16 @@ public sealed class EngineProcessSupervisor : IDisposable
         {
             if (_process is null || _process.HasExited)
             {
+                if (!AutoRestartEngine)
+                {
+                    SetState(EngineConnectionState.Faulted, "Engine đã dừng. Tự khởi động lại đã tắt trong Cài đặt.");
+                    return;
+                }
                 if (_restartAttempts >= MaxRestartAttempts)
                 {
                     SetState(
                         EngineConnectionState.Faulted,
-                        $"Engine dừng bất thường quá {MaxRestartAttempts} lần; không tự khởi động thêm.");
+                        $"Engine dừng bất thường quá {MaxRestartAttempts} lần; không tự khởi động thêm. {_lastFaultDetail}");
                     return;
                 }
 
@@ -240,6 +249,8 @@ public sealed class EngineProcessSupervisor : IDisposable
                     $"Đang kết nối IPC 127.0.0.1:{Port}...");
 
                 await ConnectAndHandshakeAsync(cancellationToken);
+                if (_process is null || _process.HasExited)
+                    throw new IOException("Engine vừa khởi động đã thoát; kiểm tra cổng IPC hoặc nhật ký khởi động.");
                 _restartAttempts = 0;
                 SetState(EngineConnectionState.Ready, $"IPC v1 sẵn sàng tại 127.0.0.1:{Port}.");
 
@@ -251,7 +262,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
                     var heartbeat = ProtocolEnvelope.Create(
                         "heartbeat",
-                        new { component = "desktop", desktop_version = "0.12.0-task012" });
+                        new { component = "desktop", desktop_version = "0.16.0-rc1" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
@@ -287,6 +298,7 @@ public sealed class EngineProcessSupervisor : IDisposable
             }
             catch (Exception ex)
             {
+                _lastFaultDetail = ex.Message;
                 CloseConnection();
                 Mt5Bridge = Mt5BridgeStatus.Offline;
                 Overview = OverviewSnapshot.Empty;
@@ -327,7 +339,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "0.12.0-task012" });
+            new { component = "desktop", desktop_version = "0.16.0-rc1" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -338,10 +350,14 @@ public sealed class EngineProcessSupervisor : IDisposable
             throw new InvalidDataException("hello_ack request_id does not match.");
 
         RejectUnexpectedExecutionEnable(response);
+        EngineInstanceGuard.Validate(response.Payload, _ownedInstanceId);
+        if (_process is null || _process.HasExited)
+            throw new IOException("Engine khởi động đã thoát trước khi hoàn tất kết nối.");
+        _connectedToOwnedInstance = true;
 
         var configRequest = ProtocolEnvelope.Create(
             "config_active_get",
-            new { component = "desktop", desktop_version = "0.12.0-task012" });
+            new { component = "desktop", desktop_version = "0.16.0-rc1" });
 
         var configResponse = await SendReceiveAsync(
             configRequest,
@@ -1024,6 +1040,8 @@ public sealed class EngineProcessSupervisor : IDisposable
         {
             if (_writer is null || _reader is null)
                 throw new IOException("IPC connection is not available.");
+            if (request.Type != "hello" && !_connectedToOwnedInstance)
+                throw new IOException("IPC chưa xác minh đúng tiến trình Engine của ứng dụng.");
 
             await _writer.WriteLineAsync(request.ToJson());
             await _writer.FlushAsync(cancellationToken);
@@ -1039,6 +1057,8 @@ public sealed class EngineProcessSupervisor : IDisposable
 
             if (!string.Equals(response.RequestId, request.RequestId, StringComparison.Ordinal))
                 throw new InvalidDataException("IPC response request_id does not match its request.");
+            if (request.Type != "hello")
+                EngineInstanceGuard.Validate(response.Payload, _ownedInstanceId);
 
             return response;
         }
@@ -1050,6 +1070,8 @@ public sealed class EngineProcessSupervisor : IDisposable
 
     private Process StartOwnedProcess()
     {
+        _ownedInstanceId = Guid.NewGuid().ToString("N");
+        _connectedToOwnedInstance = false;
         var startInfo = new ProcessStartInfo
         {
             FileName = EnginePath,
@@ -1059,6 +1081,7 @@ public sealed class EngineProcessSupervisor : IDisposable
             RedirectStandardError = true,
             WorkingDirectory = AppContext.BaseDirectory
         };
+        startInfo.Environment["XAUPY_INSTANCE_ID"] = _ownedInstanceId;
 
         startInfo.ArgumentList.Add("--host");
         startInfo.ArgumentList.Add("127.0.0.1");
@@ -1077,6 +1100,7 @@ public sealed class EngineProcessSupervisor : IDisposable
 
     private void CloseConnection()
     {
+        _connectedToOwnedInstance = false;
         try { _writer?.Dispose(); } catch { }
         try { _reader?.Dispose(); } catch { }
         try { _client?.Dispose(); } catch { }

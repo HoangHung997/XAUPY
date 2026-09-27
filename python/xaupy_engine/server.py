@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 import asyncio
 import os
+from pathlib import Path
 import time
 from typing import Any, Final
 
@@ -31,6 +32,8 @@ from .optimizer import (
     heatmap_from_result,
 )
 from .strategy_engine import StrategyEngine
+from .settings import SettingsStore, default_settings
+from .diagnostics import collect_diagnostics
 
 DEFAULT_HOST: Final = "127.0.0.1"
 DEFAULT_PORT: Final = 39421
@@ -46,6 +49,7 @@ class EngineServer:
         journal_dir: str | os.PathLike[str] | None = None,
         backtest_dir: str | os.PathLike[str] | None = None,
         optimizer_dir: str | os.PathLike[str] | None = None,
+        state_dir: str | os.PathLike[str] | None = None,
     ) -> None:
         if host not in {"127.0.0.1", "localhost"}:
             raise ValueError("XAUPY Engine may bind to loopback only")
@@ -60,8 +64,11 @@ class EngineServer:
         self._shutdown_event = asyncio.Event()
         self._started_monotonic = time.monotonic()
         self._connections_total = 0
+        self.instance_id = os.environ.get("XAUPY_INSTANCE_ID", "")
         self.bridge = BridgeRegistry(stale_seconds=bridge_stale_seconds)
-        self.active_profile = default_profile()
+        self.settings_store = SettingsStore(state_dir if state_dir is not None else
+                                            Path(journal_dir) / "state" if journal_dir is not None else None)
+        self.active_profile = deepcopy(self.settings_store.profile)
         self.strategy = StrategyEngine(self.active_profile)
         self.manual_actions = ManualActionSimulator(self.bridge)
         self.journal = StructuredJournal(journal_dir)
@@ -278,10 +285,15 @@ class EngineServer:
             "trading_enabled": False,
             "execution_enabled": False,
             "pid": os.getpid(),
+            "engine_instance_id": self.instance_id,
         }
 
     def _dispatch(self, request: Envelope) -> tuple[Envelope, bool]:
         common = self._common()
+
+        if request.type in {"diagnostics_get", "settings_get", "settings_defaults_get", "settings_set",
+                            "backup_create", "backup_restore"}:
+            return self._maintenance_response(request, common), False
 
         if request.type == "hello":
             self._log(
@@ -405,6 +417,11 @@ class EngineServer:
                     False,
                 )
 
+            try:
+                self.settings_store.save(profile=profile)
+            except (OSError, ValueError, TypeError) as exc:
+                return Envelope.response("config_active_set_ack", request.request_id,
+                                         {**common, "applied": False, "errors": [str(exc)]}), False
             self.active_profile = normalized_profile(profile)
             self.strategy.set_profile(self.active_profile)
             symbol = self.active_profile.get("strategy", {}).get("symbol")
@@ -1652,6 +1669,35 @@ class EngineServer:
                 "execution_enabled": False,
             },
         )
+
+    def _maintenance_response(self, request: Envelope, common: dict[str, Any]) -> Envelope:
+        try:
+            extra: dict[str, Any] = {}
+            if request.type == "diagnostics_get":
+                extra["diagnostics"] = collect_diagnostics(self)
+            elif request.type == "settings_defaults_get":
+                extra["settings"] = default_settings()
+            else:
+                if request.type == "settings_set":
+                    settings = request.payload.get("settings")
+                    if not isinstance(settings, dict):
+                        raise ValueError("settings must be an object")
+                    self.settings_store.save(settings=settings)
+                    self._log("INFO", "Python Engine", "SETTINGS", "System settings persisted")
+                elif request.type == "backup_create":
+                    extra["backup"] = self.settings_store.create_backup()
+                    self._log("INFO", "Python Engine", "BACKUP", "Local settings/profile backup created", details=extra["backup"])
+                elif request.type == "backup_restore":
+                    self.settings_store.restore_backup(request.payload.get("backup_id"))
+                    self.active_profile = deepcopy(self.settings_store.profile)
+                    self.strategy.set_profile(self.active_profile)
+                    self.strategy.reset_setup("BACKUP_RESTORED")
+                    self._log("WARN", "Python Engine", "RECOVERY", "Backup restored; strategy reset; execution locked")
+                extra.update(self.settings_store.payload())
+            return Envelope.response(request.type + "_ack", request.request_id, {**common, "ok": True, **extra})
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            return Envelope.response(request.type + "_ack", request.request_id,
+                                     {**common, "ok": False, "errors": [str(exc)]})
 
     @staticmethod
     async def _write(

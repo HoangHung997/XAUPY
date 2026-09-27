@@ -1,6 +1,7 @@
 import asyncio
 import pathlib
 import sys
+import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -23,7 +24,9 @@ async def exchange(reader, writer, message_type, payload=None):
 
 class ConfigProtocolTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        self.server = EngineServer(port=0)
+        state_temp = tempfile.TemporaryDirectory()
+        self.addCleanup(state_temp.cleanup)
+        self.server = EngineServer(port=0, state_dir=state_temp.name)
         await self.server.start()
 
     async def asyncTearDown(self):

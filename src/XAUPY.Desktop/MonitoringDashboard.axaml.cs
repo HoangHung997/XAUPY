@@ -24,11 +24,15 @@ public partial class MonitoringDashboard : UserControl
         Mt5BridgeStatus bridge,
         ConfigurationSummary config)
     {
+        this.FindControl<MarketChartControl>("MonitoringMarketChart")!.SetSnapshot(overview, config.PullbackTimeframe);
         Text("MonitorBidText").Text = Price(overview.Bid);
         Text("MonitorAskText").Text = Price(overview.Ask);
+        Text("MonitorTerminalDot").Foreground = bridge.TerminalConnected ? Brushes.MediumSpringGreen : Brushes.Gold;
+        Text("MonitorBridgeDot").Foreground = bridge.Connected ? Brushes.MediumSpringGreen : Brushes.Gold;
+        Text("MonitorDataDot").Foreground = overview.Available ? Brushes.MediumSpringGreen : Brushes.Gold;
         Text("MonitorBridgeText").Text = bridge.Connected ? "CONNECTED" : "WAITING";
         Text("MonitorBridgeText").Foreground = bridge.Connected ? Brushes.LightGreen : Brushes.Gold;
-        Text("MonitorAgeText").Text = bridge.AgeMs.HasValue ? $"Age: {bridge.AgeMs.Value} ms" : "Age: —";
+        Text("MonitorAgeText").Text = bridge.AgeMs.HasValue ? $"{bridge.AgeMs.Value}" : "—";
 
         Text("MonitorStrategyText").Text = strategy.State;
         Text("MonitorStrategyText").Foreground = StrategyBrush(strategy.State);
@@ -76,10 +80,10 @@ public partial class MonitoringDashboard : UserControl
             : strategy.ArmedSide is not null ? "WAIT REVERSAL" : "WAIT";
 
         Text("MonitorTerminalText").Text =
-            $"Terminal: {(bridge.TerminalConnected ? "online" : "offline")} • account {bridge.AccountTradeMode ?? "—"}";
+            bridge.TerminalConnected ? "Đã kết nối" : "Chưa kết nối";
         Text("MonitorSnapshotCountText").Text = $"Snapshots: {bridge.SnapshotsTotal}";
         Text("MonitorProfileText").Text =
-            $"Profile: {strategy.ProfileName} • {config.DirectionTimeframe}→{config.PullbackTimeframe}→{config.TriggerTimeframe}";
+            strategy.ProfileName;
 
         Text("MonitorAlertText").Text = AlertText(strategy, bridge);
         Text("MonitorAlertText").Foreground = strategy.Available && bridge.Connected

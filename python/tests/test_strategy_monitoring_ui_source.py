@@ -132,7 +132,7 @@ class StrategyMonitoringUiSourceTests(unittest.TestCase):
             "Trạng thái thực thi",
             "Tài nguyên hệ thống",
             "Cảnh báo &amp; Thông báo",
-            "REAL HEARTBEAT QUOTES",
+            'x:Name="MonitoringMarketChart"',
         ):
             with self.subTest(value=value):
                 self.assertIn(value, self.monitor_xaml)
@@ -141,16 +141,16 @@ class StrategyMonitoringUiSourceTests(unittest.TestCase):
         self.assertNotIn("mock", self.monitor_code.lower())
 
     def test_unimplemented_monitoring_backends_are_explicit_not_faked(self):
-        self.assertIn("Chưa có realtime session/news backend", self.monitor_xaml)
-        self.assertIn("CPU/RAM diagnostics thuộc Task 014", self.monitor_xaml)
-        self.assertIn("Không có manual/auto broker action", self.monitor_xaml)
+        self.assertIn("Chưa có lịch tin tức được tải.", self.monitor_xaml)
+        self.assertIn("Chưa có dữ liệu tài nguyên hệ thống.", self.monitor_xaml)
+        self.assertIn("Giao dịch đang khóa an toàn.", self.monitor_xaml)
 
     def test_strategy_projection_is_parsed_and_guarded_by_supervisor(self):
         self.assertIn("StrategySnapshot.FromHeartbeatPayload", self.supervisor)
         self.assertIn("RejectUnexpectedStrategyExecutionEnable", self.supervisor)
         self.assertIn("TradingEnabled", self.model)
         self.assertIn("ExecutionEnabled", self.model)
-        self.assertIn('desktop_version = "0.12.0-task012"', self.supervisor)
+        self.assertIn('desktop_version = "0.16.0-rc1"', self.supervisor)
 
     def test_main_overview_now_uses_real_strategy_state(self):
         self.assertIn('x:Name="StrategyStateValue"', self.main_xaml)
@@ -158,10 +158,11 @@ class StrategyMonitoringUiSourceTests(unittest.TestCase):
         self.assertIn("strategy.State", self.main_code)
         self.assertIn("broker execution hiện đang khóa", self.main_code)
 
-    def test_future_tabs_keep_explicit_placeholder(self):
-        self.assertIn('x:Name="PlaceholderContent"', self.main_xaml)
-        self.assertIn("Task 012 đã triển khai Tổng quan + Cấu hình + Chiến lược + Giám sát + Lệnh & Vị thế + Backtest + Tối ưu + Nhật ký", self.main_code)
-        self.assertIn("không hiển thị dữ liệu giao dịch giả", self.main_xaml)
+    def test_tools_and_settings_are_hosted_and_load_real_data(self):
+        self.assertIn('x:Name="ToolsView"', self.main_xaml)
+        self.assertIn('x:Name="SettingsView"', self.main_xaml)
+        self.assertIn("_toolsDashboard.EnsureLoadedAsync", self.main_code)
+        self.assertIn("_settingsDashboard.EnsureLoadedAsync", self.main_code)
 
 
 if __name__ == "__main__":

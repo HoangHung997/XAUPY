@@ -87,7 +87,7 @@ class Task012OptimizerUiSourceTests(unittest.TestCase):
             self.assertNotIn(mock_value, self.xaml)
 
     def test_system_resource_metrics_are_not_fabricated(self):
-        self.assertIn("Task 014 diagnostics", self.xaml)
+        self.assertIn("Chưa có dữ liệu", self.xaml)
         self.assertIn("Worker slots", self.xaml)
         self.assertIn("Throughput", self.xaml)
         self.assertNotIn("CPU 68%", self.xaml)
@@ -140,7 +140,7 @@ class Task012OptimizerUiSourceTests(unittest.TestCase):
             self.assertIn(f'"{name}"', self.code)
 
     def test_task012_version_and_safety_guards_remain(self):
-        self.assertIn('desktop_version = "0.12.0-task012"', self.supervisor)
+        self.assertIn('desktop_version = "0.16.0-rc1"', self.supervisor)
         self.assertIn("RejectUnexpectedExecutionEnable", self.supervisor)
         self.assertIn("RejectUnexpectedOrdersExecutionEnable", self.supervisor)
         self.assertIn(

@@ -51,6 +51,55 @@ class Bar:
         return cls(timestamp, open_price, high, low, close, tick_volume)
 
 
+HISTORY_LIMIT = 256
+HISTORY_TIMEFRAME_SECONDS = {
+    "M1": 60, "M3": 180, "M5": 300, "M15": 900,
+    "M30": 1800, "H1": 3600, "H2": 7200, "H4": 14400,
+}
+
+
+def validated_bar_history(payload: dict[str, Any]) -> dict[str, list[Bar]]:
+    """Validate optional MT5 closed history atomically, never infer a tick path."""
+    if "bar_history" not in payload:
+        return {}
+    raw_history = payload["bar_history"]
+    if not isinstance(raw_history, dict) or set(raw_history).difference(TIMEFRAME_OPTIONS):
+        raise StrategyDataError("bar_history must contain only supported timeframes")
+    server_time = payload.get("server_time")
+    if isinstance(server_time, bool) or not isinstance(server_time, int) or server_time <= 0:
+        raise StrategyDataError("bar_history requires positive integer MT5 server_time")
+    latest = payload.get("bars")
+    if not isinstance(latest, dict):
+        raise StrategyDataError("bar_history requires latest closed bars")
+    result: dict[str, list[Bar]] = {}
+    for timeframe, rows in raw_history.items():
+        if not isinstance(rows, list) or len(rows) > HISTORY_LIMIT:
+            raise StrategyDataError(f"bar_history.{timeframe} must contain at most {HISTORY_LIMIT} bars")
+        validated: list[Bar] = []
+        for raw in rows:
+            if not isinstance(raw, dict) or isinstance(raw.get("time"), bool) or not isinstance(raw.get("time"), int):
+                raise StrategyDataError(f"bar_history.{timeframe} requires integer bar timestamps")
+            bar = Bar.from_payload(raw)
+            if validated and bar.time <= validated[-1].time:
+                raise StrategyDataError(f"bar_history.{timeframe} timestamps must strictly increase")
+            if bar.time + HISTORY_TIMEFRAME_SECONDS[timeframe] > server_time:
+                raise StrategyDataError(f"bar_history.{timeframe} includes an unclosed/future bar")
+            validated.append(bar)
+        if validated:
+            raw_latest = latest.get(timeframe)
+            if not isinstance(raw_latest, dict):
+                raise StrategyDataError(f"bar_history.{timeframe} has no latest closed bar")
+            latest_bar = Bar.from_payload(raw_latest)
+            if latest_bar.time + HISTORY_TIMEFRAME_SECONDS[timeframe] > server_time:
+                raise StrategyDataError(f"bar_history.{timeframe} latest bar is not closed")
+            if validated[-1].time > latest_bar.time:
+                raise StrategyDataError(f"bar_history.{timeframe} is newer than latest closed bar")
+            if validated[-1].time == latest_bar.time and validated[-1] != latest_bar:
+                raise StrategyDataError(f"bar_history.{timeframe} disagrees with latest closed bar")
+        result[timeframe] = validated
+    return result
+
+
 def _price(bar: Bar, source: str) -> float:
     source = source.upper()
     if source == "CLOSE":
@@ -253,6 +302,7 @@ class StrategyEngine:
         self._trigger_rsi_extreme: float | None = None
         self._trigger_z_extreme: float | None = None
         self.signal_sequence = 0
+        self.history_bootstrap_total = 0
         self.last_signal: dict[str, Any] | None = None
         self.last_metrics: dict[str, Any] = {}
         self.last_conditions: dict[str, Any] = {}
@@ -266,6 +316,8 @@ class StrategyEngine:
 
     def set_profile(self, profile: dict[str, Any], *, retain_history: bool = True) -> None:
         normalized = normalized_profile(profile)
+        if self.profile and self.profile["strategy"]["symbol"] != normalized["strategy"]["symbol"]:
+            retain_history = False
         encoded = json.dumps(normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
         profile_hash = hashlib.sha256(encoded).hexdigest()
 
@@ -310,6 +362,27 @@ class StrategyEngine:
 
         new_timeframes: set[str] = set()
         errors: list[str] = []
+
+        # History is warm-up evidence, never replayed as historical trade signals.
+        # Only initial/backfilled/gapped history resets setup. Repeated full
+        # snapshots must not reset a current live setup every refresh.
+        for timeframe, incoming in validated_bar_history(payload).items():
+            if not incoming:
+                continue
+            current = self.history[timeframe]
+            needs_bootstrap = (
+                not current
+                or incoming[0].time < current[0].time
+                or incoming[-1].time > current[-1].time + HISTORY_TIMEFRAME_SECONDS[timeframe]
+            )
+            if needs_bootstrap:
+                combined = {bar.time: bar for bar in current}
+                combined.update({bar.time: bar for bar in incoming})
+                self.history[timeframe] = [combined[t] for t in sorted(combined)][-self.max_history:]
+                new_timeframes.add(timeframe)
+        if new_timeframes:
+            self.reset_setup("HISTORY_BOOTSTRAP")
+            self.history_bootstrap_total += 1
 
         for timeframe in TIMEFRAME_OPTIONS:
             raw = bars_payload.get(timeframe)
@@ -810,6 +883,7 @@ class StrategyEngine:
             "direction": self.direction,
             "armed_side": self.armed_side,
             "signal_sequence": self.signal_sequence,
+            "history_bootstrap_total": self.history_bootstrap_total,
             "last_signal": deepcopy(self.last_signal),
             "warmup_reasons": list(self.warmup_reasons),
             "bars_seen": {

@@ -2,6 +2,7 @@ import asyncio
 import copy
 import pathlib
 import sys
+import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -24,7 +25,9 @@ async def exchange(reader, writer, message_type, payload=None):
 
 class ActiveConfigProtocolTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        self.server = EngineServer(port=0)
+        state_temp = tempfile.TemporaryDirectory()
+        self.addCleanup(state_temp.cleanup)
+        self.server = EngineServer(port=0, state_dir=state_temp.name)
         await self.server.start()
         self.reader, self.writer = await asyncio.open_connection(
             "127.0.0.1", self.server.bound_port

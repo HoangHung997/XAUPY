@@ -37,6 +37,8 @@ public partial class OrdersPositionsDashboard : UserControl
         Mt5BridgeStatus bridge,
         ConfigurationSummary config)
     {
+        this.FindControl<MarketChartControl>("OrdersMarketChart")!.SetSnapshot(overview, config.PullbackTimeframe);
+        Text("OrdersConnectionDot").Foreground = book.Available && book.TerminalConnected ? Brushes.MediumSpringGreen : Brushes.Gold;
         _book = book;
         _config = config;
 
@@ -551,7 +553,7 @@ public partial class OrdersPositionsDashboard : UserControl
 
     private static Grid CreateRowGrid(params double?[] widths)
     {
-        var grid = new Grid { MinHeight = 31 };
+        var grid = new Grid { MinHeight = 29 };
         foreach (double? width in widths)
         {
             grid.ColumnDefinitions.Add(
@@ -572,7 +574,7 @@ public partial class OrdersPositionsDashboard : UserControl
         var cell = new TextBlock
         {
             Text = value,
-            FontSize = 11,
+            FontSize = 13,
             Foreground = foreground ?? new SolidColorBrush(Color.Parse("#D7E4F2")),
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis

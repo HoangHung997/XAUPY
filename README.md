@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái hiện tại: TASK XAUPY-012 DONE. XAUPY-013 vẫn PLANNED và chưa bắt đầu.
+Trạng thái tiếp quản 28/09/2026: Task 013–016 có triển khai đang kiểm chứng trong bản Windows 0.16.0-rc1. Xem [nghiệm thu](docs/TASK016_RELEASE_ACCEPTANCE.md).
 
 ## Tài liệu bắt buộc
 
@@ -262,4 +262,17 @@ Final Task 012 evidence:
 - branch direct ZIP SHA-256:
   d821d039b1c2a74deb7ec87fb1cbd8c401e35e2a717e2cc0e9e50f1ebc0a9b91.
 
-XAUPY-013 chưa bắt đầu.
+## Bản Windows 0.16.0-rc1 đang kiểm chứng
+
+- [Dynamic management và STOP_CONFIRM](docs/TASK013_DYNAMIC_MANAGEMENT_SPEC.md)
+- [Công cụ và chẩn đoán](docs/TASK014_TOOLS_DIAGNOSTICS_SPEC.md)
+- [Cài đặt và sao lưu/khôi phục](docs/TASK015_SETTINGS_RECOVERY_SPEC.md)
+- [Build, installer và nghiệm thu](docs/TASK016_RELEASE_ACCEPTANCE.md)
+- [Lịch sử nến thật EA → Python → Avalonia](docs/LIVE_HISTORY_SYNC.md)
+
+Build trên Windows bằng `./scripts/build_windows.ps1`, với .NET 10,
+Python/PyInstaller và MetaEditor. Bản portable nằm trong `dist/XAUPY-win-x64`.
+Broker execution vẫn khóa; Task013 sử dụng mô phỏng deterministic.
+
+MT5 cần cho phép địa chỉ `http://127.0.0.1` trong Tools → Options → Expert Advisors.
+Socket sử dụng cổng 39421 riêng.

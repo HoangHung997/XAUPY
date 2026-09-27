@@ -604,7 +604,7 @@ public partial class BacktestDashboard : UserControl
         for (int index = 0; index < _history.Count; index++)
         {
             var item = _history[index];
-            var grid = CreateGrid("34,138,72,52,88,88,100,82,60,74,70,*");
+            var grid = CreateGrid("0.34*,1.38*,0.72*,0.52*,0.88*,0.88*,1*,0.82*,0.6*,0.74*,0.7*,0.8*");
             AddCell(grid, 0, (index + 1).ToString());
             AddCell(grid, 1, LocalTime(item.CreatedAtUtc));
             AddCell(grid, 2, item.Symbol);
@@ -656,7 +656,7 @@ public partial class BacktestDashboard : UserControl
 
         foreach (var trade in _current.Trades)
         {
-            var grid = CreateGrid("34,135,58,52,88,88,82,86,*");
+            var grid = CreateGrid("0.34*,1.35*,0.58*,0.52*,0.88*,0.88*,0.82*,0.86*,0.6*");
             AddCell(grid, 0, trade.TradeId.ToString());
             AddCell(grid, 1, Epoch(trade.EntryTime));
             AddCell(grid, 2, trade.Side, SideBrush(trade.Side));
@@ -752,7 +752,7 @@ public partial class BacktestDashboard : UserControl
     private static Grid CreateGrid(string columns) => new()
     {
         ColumnDefinitions = new ColumnDefinitions(columns),
-        MinHeight = 31
+        MinHeight = 29
     };
 
     private static void AddCell(
@@ -765,7 +765,7 @@ public partial class BacktestDashboard : UserControl
         {
             Text = value,
             Foreground = brush ?? new SolidColorBrush(Color.Parse("#D8E5F2")),
-            FontSize = 10.5,
+            FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(7, 5),
             TextTrimming = TextTrimming.CharacterEllipsis

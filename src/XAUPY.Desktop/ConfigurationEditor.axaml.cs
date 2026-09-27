@@ -40,23 +40,23 @@ public partial class ConfigurationEditor : UserControl
     private static readonly IReadOnlyDictionary<string, (int Order, string Title)> GroupTitles =
         new Dictionary<string, (int, string)>(StringComparer.Ordinal)
         {
-            ["profile"] = (1, "01. Profile"),
-            ["strategy"] = (2, "02. Strategy"),
-            ["timeframes"] = (3, "03. Timeframe & Logic"),
-            ["direction"] = (4, "04. Direction"),
-            ["pullback"] = (5, "05. Pullback"),
-            ["trigger"] = (6, "06. Trigger"),
-            ["filters.adx"] = (7, "07. ADX"),
-            ["filters.atr"] = (8, "08. ATR"),
-            ["filters.open"] = (9, "09. Open Filter"),
-            ["entry"] = (10, "10. Entry"),
-            ["risk"] = (11, "11. Risk"),
-            ["stop_loss"] = (12, "12. Stop Loss"),
-            ["take_profit"] = (13, "13. Take Profit"),
+            ["profile"] = (11, "11. Hồ sơ cấu hình"),
+            ["strategy"] = (12, "12. Quyền giao dịch"),
+            ["timeframes"] = (5, "5. Khung thời gian (Timeframe)"),
+            ["direction"] = (2, "2. Hướng giao dịch"),
+            ["pullback"] = (3, "3. Nhận diện nhịp hồi (Pullback)"),
+            ["trigger"] = (4, "4. Xác nhận vào lệnh (Trigger)"),
+            ["filters.adx"] = (15, "07. ADX"),
+            ["filters.atr"] = (16, "08. ATR"),
+            ["filters.open"] = (17, "09. Open Filter"),
+            ["entry"] = (18, "10. Entry"),
+            ["risk"] = (1, "1. Khởi tạo & an toàn"),
+            ["stop_loss"] = (6, "6. Stop loss (SL)"),
+            ["take_profit"] = (7, "7. Take profit (TP)"),
             ["take_profit.dynamic"] = (14, "14. Dynamic TP"),
-            ["management"] = (15, "15. Trade Management"),
-            ["sessions"] = (16, "16. Sessions & Days"),
-            ["news"] = (17, "17. News"),
+            ["management"] = (8, "8. Quản lý sau vào"),
+            ["sessions"] = (9, "9. Phiên giao dịch"),
+            ["news"] = (10, "10. Lọc tin tức"),
             ["costs"] = (18, "18. Cost Filters"),
             ["execution"] = (19, "19. Execution Identity"),
             ["safety"] = (20, "20. Hard Safety"),
@@ -82,6 +82,8 @@ public partial class ConfigurationEditor : UserControl
     private bool _loading;
     private bool _suppressChanges;
     private bool _dirty;
+    private Task? _loadTask;
+    public bool HasUnsavedChanges => _dirty;
     private EngineConnectionState _lastEngineState = EngineConnectionState.Stopped;
     private string? _lastSetTemplatePath;
 
@@ -93,6 +95,23 @@ public partial class ConfigurationEditor : UserControl
     public void AttachSupervisor(EngineProcessSupervisor supervisor)
     {
         _supervisor = supervisor;
+    }
+
+    public async Task OpenShortcutAsync(string action)
+    {
+        await EnsureLoadedAsync();
+        if (!_schemaLoaded) return;
+        switch (action)
+        {
+            case "save": SaveJson_OnClick(this, new RoutedEventArgs()); break;
+            case "load": LoadJson_OnClick(this, new RoutedEventArgs()); break;
+            case "import-set": ImportSet_OnClick(this, new RoutedEventArgs()); break;
+            case "export-set": ExportSet_OnClick(this, new RoutedEventArgs()); break;
+            default:
+                this.FindControl<TextBox>("SearchBox")!.Text = string.Empty;
+                if (_groups.TryGetValue(action, out var group)) group.Card.BringIntoView();
+                break;
+        }
     }
 
     public async Task NotifyEngineStateAsync(EngineConnectionState state)
@@ -114,7 +133,13 @@ public partial class ConfigurationEditor : UserControl
         }
     }
 
-    public async Task EnsureLoadedAsync(bool force = false)
+    public Task EnsureLoadedAsync(bool force = false)
+    {
+        if (_loadTask is { IsCompleted: false }) return _loadTask;
+        return _loadTask = LoadAsync(force);
+    }
+
+    private async Task LoadAsync(bool force)
     {
         if (_loading || _supervisor is null)
             return;
@@ -206,59 +231,68 @@ public partial class ConfigurationEditor : UserControl
         _fields.Clear();
         _groups.Clear();
 
-        var host = this.FindControl<StackPanel>("FieldsHost")
+        var host = this.FindControl<Grid>("FieldsHost")
             ?? throw new InvalidOperationException("FieldsHost missing.");
         host.Children.Clear();
-
+        host.RowDefinitions.Clear();
+        int cardIndex = 0;
         foreach (var grouping in descriptors
                      .GroupBy(d => GroupKey(d.Path))
                      .OrderBy(group => GroupTitle(group.Key).Order)
                      .ThenBy(group => group.Key, StringComparer.Ordinal))
         {
             var groupFields = new List<FieldBinding>();
-            var content = new StackPanel { Spacing = 7 };
-
-            var title = GroupTitle(grouping.Key);
-            content.Children.Add(new TextBlock
+            var content = new Grid { RowDefinitions = new RowDefinitions("34,*") };
+            var title = new TextBlock
             {
-                Text = title.Title,
-                FontSize = 17,
+                Text = GroupTitle(grouping.Key).Title,
+                FontSize = 15,
                 FontWeight = FontWeight.SemiBold,
-                Foreground = Brushes.White
-            });
-
-            content.Children.Add(new TextBlock
+                Foreground = new SolidColorBrush(Color.Parse("#BDD9F8")),
+                Margin = new Avalonia.Thickness(11, 7)
+            };
+            content.Children.Add(new Border
             {
-                Text = $"{grouping.Count()} tham số",
-                FontSize = 11,
-                Foreground = new SolidColorBrush(Color.Parse("#8097AE")),
-                Margin = new Avalonia.Thickness(0, 0, 0, 5)
+                Background = new SolidColorBrush(Color.Parse("#082038")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#14517A")),
+                BorderThickness = new Avalonia.Thickness(0, 0, 0, 1),
+                Child = title
             });
-
-            foreach (var descriptor in grouping)
+            var fieldsGrid = new Grid
             {
-                var binding = CreateFieldRow(descriptor, grouping.Key);
+                ColumnDefinitions = new ColumnDefinitions("*,*"),
+                ColumnSpacing = 14,
+                RowSpacing = 2,
+                Margin = new Avalonia.Thickness(10, 5)
+            };
+            Grid.SetRow(fieldsGrid, 1);
+            var values = grouping.ToArray();
+            int rows = (values.Length + 1) / 2;
+            for (int i = 0; i < rows; i++) fieldsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            for (int i = 0; i < values.Length; i++)
+            {
+                var binding = CreateFieldRow(values[i], grouping.Key);
                 groupFields.Add(binding);
                 _fields.Add(binding);
-                content.Children.Add(binding.Row);
+                Grid.SetColumn(binding.Row, i / rows);
+                Grid.SetRow(binding.Row, i % rows);
+                fieldsGrid.Children.Add(binding.Row);
             }
-
+            content.Children.Add(fieldsGrid);
             var card = new Border
             {
-                Background = new SolidColorBrush(Color.Parse("#0C1929")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#193956")),
+                Background = new SolidColorBrush(Color.Parse("#041B2E")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#14517A")),
                 BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(10),
-                Padding = new Avalonia.Thickness(15),
+                CornerRadius = new Avalonia.CornerRadius(5),
                 Child = content
             };
-
+            if (cardIndex % 2 == 0) host.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            Grid.SetColumn(card, cardIndex % 2);
+            Grid.SetRow(card, cardIndex / 2);
             host.Children.Add(card);
-            _groups[grouping.Key] = new GroupBinding
-            {
-                Card = card,
-                Fields = groupFields
-            };
+            cardIndex++;
+            _groups[grouping.Key] = new GroupBinding { Card = card, Fields = groupFields };
         }
 
         var declaredCount = schema.TryGetProperty("field_count", out var countElement) &&
@@ -275,92 +309,37 @@ public partial class ConfigurationEditor : UserControl
 
     private FieldBinding CreateFieldRow(FieldDescriptor descriptor, string groupKey)
     {
-        var rowContent = new StackPanel
+        var rowContent = new Grid
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 12
+            ColumnDefinitions = new ColumnDefinitions("1.4*,1*"),
+            ColumnSpacing = 6,
+            MinHeight = 29
         };
-
-        var labelStack = new StackPanel
+        var label = new TextBlock
         {
-            Width = 420,
-            Spacing = 2,
+            Text = FieldLabel(descriptor),
+            FontSize = 13,
+            Foreground = new SolidColorBrush(Color.Parse("#C0D5EB")),
+            TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center
         };
-
-        labelStack.Children.Add(new TextBlock
-        {
-            Text = descriptor.Path,
-            FontWeight = FontWeight.SemiBold,
-            Foreground = new SolidColorBrush(Color.Parse("#DCE8F4")),
-            TextWrapping = TextWrapping.Wrap
-        });
-
-        if (!string.IsNullOrWhiteSpace(descriptor.Description))
-        {
-            labelStack.Children.Add(new TextBlock
-            {
-                Text = descriptor.Description,
-                FontSize = 11,
-                Foreground = new SolidColorBrush(Color.Parse("#8097AE")),
-                TextWrapping = TextWrapping.Wrap
-            });
-        }
-
-        rowContent.Children.Add(labelStack);
-
+        ToolTip.SetTip(label, $"{descriptor.Path}\n{descriptor.Description}\n{descriptor.SetKey}\n{BoundsText(descriptor)}");
+        rowContent.Children.Add(label);
         Control editor = CreateEditor(descriptor);
-        editor.Width = 300;
+        editor.MinHeight = 27;
         editor.VerticalAlignment = VerticalAlignment.Center;
+        editor.HorizontalAlignment = HorizontalAlignment.Stretch;
+        Grid.SetColumn(editor, 1);
         rowContent.Children.Add(editor);
-
-        var metaStack = new StackPanel
-        {
-            Width = 270,
-            Spacing = 2,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-
-        metaStack.Children.Add(new TextBlock
-        {
-            Text = descriptor.SetKey,
-            FontSize = 11,
-            Foreground = new SolidColorBrush(Color.Parse("#6FA8D8")),
-            TextWrapping = TextWrapping.Wrap
-        });
-
-        string bounds = BoundsText(descriptor);
-        if (!string.IsNullOrWhiteSpace(bounds))
-        {
-            metaStack.Children.Add(new TextBlock
-            {
-                Text = bounds,
-                FontSize = 11,
-                Foreground = new SolidColorBrush(Color.Parse("#8097AE"))
-            });
-        }
-
         if (descriptor.LockedValue is not null)
         {
-            metaStack.Children.Add(new TextBlock
-            {
-                Text = $"LOCKED = {descriptor.LockedValue}",
-                FontSize = 11,
-                FontWeight = FontWeight.Bold,
-                Foreground = Brushes.Gold
-            });
             editor.IsEnabled = false;
+            ToolTip.SetTip(editor, $"Khóa an toàn: {descriptor.LockedValue}");
         }
-
-        rowContent.Children.Add(metaStack);
-
         var row = new Border
         {
-            Background = new SolidColorBrush(Color.Parse("#091625")),
-            BorderBrush = new SolidColorBrush(Color.Parse("#15314B")),
-            BorderThickness = new Avalonia.Thickness(1),
-            CornerRadius = new Avalonia.CornerRadius(7),
-            Padding = new Avalonia.Thickness(12, 9),
+            BorderBrush = new SolidColorBrush(Color.Parse("#123047")),
+            BorderThickness = new Avalonia.Thickness(0, 0, 0, .5),
             Child = rowContent
         };
 
@@ -373,13 +352,53 @@ public partial class ConfigurationEditor : UserControl
         };
     }
 
+    private void Category_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string key } || !_groups.TryGetValue(key, out var group)) return;
+        this.FindControl<TextBox>("SearchBox")!.Text = string.Empty;
+        group.Card.BringIntoView();
+    }
+
+    private static string FieldLabel(FieldDescriptor field)
+    {
+        if (FieldLabels.TryGetValue(field.Path, out var translated)) return translated;
+        if (!string.IsNullOrWhiteSpace(field.Description)) return field.Description;
+        return field.Path.Split('.').Last().Replace('_', ' ');
+    }
+
+    private static readonly IReadOnlyDictionary<string, string> FieldLabels = new Dictionary<string, string>
+    {
+        ["risk.sizing_mode"] = "Cách tính khối lượng", ["risk.risk_percent"] = "Risk mỗi lệnh (%)",
+        ["risk.fixed_lot"] = "Lot cố định", ["risk.max_lot"] = "Max lot", ["risk.max_daily_loss_pct"] = "Lỗ tối đa ngày (%)",
+        ["risk.max_trades_per_day"] = "Số lệnh / ngày", ["risk.max_open_positions"] = "Số vị thế tối đa",
+        ["risk.cooldown_minutes"] = "Chờ giữa lệnh (phút)", ["risk.max_consecutive_losses"] = "Số lệnh thua liên tiếp",
+        ["risk.stop_after_daily_target"] = "Dừng khi đạt mục tiêu", ["risk.daily_target_pct"] = "Mục tiêu ngày (%)",
+        ["direction.ma_enabled"] = "Lọc theo MA xu hướng", ["direction.ma_type"] = "Loại MA", ["direction.ma_period"] = "Chu kỳ MA",
+        ["direction.price_source"] = "Giá tham chiếu", ["direction.require_close_side"] = "Nến đóng cùng hướng",
+        ["direction.open_filter_enabled"] = "Bật lọc giá mở cửa", ["direction.open_reference_mode"] = "Giá mở tham chiếu",
+        ["pullback.logic"] = "Logic kết hợp", ["pullback.rsi_enabled"] = "Bật bộ lọc RSI", ["pullback.rsi_period"] = "Chu kỳ RSI",
+        ["pullback.rsi_buy_level"] = "RSI mua (≤)", ["pullback.rsi_sell_level"] = "RSI bán (≥)",
+        ["pullback.z_enabled"] = "Bật Z-Score", ["pullback.z_period"] = "Chu kỳ Z-Score", ["pullback.z_buy_level"] = "Z-Score mua (≤)", ["pullback.z_sell_level"] = "Z-Score bán (≥)",
+        ["trigger.logic"] = "Logic xác nhận", ["trigger.rsi_enabled"] = "Xác nhận RSI", ["trigger.rsi_period"] = "Chu kỳ RSI",
+        ["trigger.rsi_reversal_delta"] = "RSI đảo chiều (Δ)", ["trigger.z_enabled"] = "Xác nhận Z-Score", ["trigger.z_period"] = "Chu kỳ Z-Score",
+        ["trigger.z_reversal_delta"] = "Z đảo chiều (Δ)", ["trigger.confirm_closed_bar"] = "Xác nhận nến đóng",
+        ["timeframes.direction"] = "Direction TF", ["timeframes.pullback"] = "Pullback TF", ["timeframes.trigger"] = "Trigger TF",
+        ["stop_loss.mode"] = "Kiểu SL", ["stop_loss.fixed_price_units"] = "SL cố định (giá)", ["stop_loss.atr_timeframe"] = "Khung ATR",
+        ["stop_loss.atr_period"] = "ATR Period", ["stop_loss.atr_multiplier"] = "Hệ số ATR", ["stop_loss.structure_timeframe"] = "Khung cấu trúc",
+        ["stop_loss.structure_lookback"] = "Số nến cấu trúc", ["stop_loss.structure_buffer_price_units"] = "Đệm cấu trúc (giá)",
+        ["stop_loss.min_price_units"] = "SL tối thiểu (giá)", ["stop_loss.max_price_units"] = "SL tối đa (giá)",
+        ["take_profit.mode"] = "Kiểu TP", ["take_profit.fixed_price_units"] = "TP cố định (giá)", ["take_profit.rr_ratio"] = "Tỷ lệ R:R",
+        ["news.enabled"] = "Bật lọc tin tức", ["news.minutes_before"] = "Tránh trước tin (phút)", ["news.minutes_after"] = "Tránh sau tin (phút)", ["news.high_impact_only"] = "Chỉ tin tác động cao",
+        ["strategy.symbol"] = "Symbol", ["strategy.allow_buy"] = "Cho phép BUY", ["strategy.allow_sell"] = "Cho phép SELL"
+    };
+
     private Control CreateEditor(FieldDescriptor descriptor)
     {
         if (string.Equals(descriptor.Kind, "bool", StringComparison.OrdinalIgnoreCase))
         {
             var check = new CheckBox
             {
-                Content = "Bật / Tắt",
+                Content = "Bật",
                 Foreground = new SolidColorBrush(Color.Parse("#DCE8F4"))
             };
             check.Click += (_, _) => EditorValueChanged(descriptor, check);
@@ -391,7 +410,7 @@ public partial class ConfigurationEditor : UserControl
             var combo = new ComboBox
             {
                 ItemsSource = descriptor.EnumValues,
-                MinHeight = 34
+                MinHeight = 27
             };
             combo.SelectionChanged += (_, _) => EditorValueChanged(descriptor, combo);
             return combo;
@@ -399,7 +418,7 @@ public partial class ConfigurationEditor : UserControl
 
         var text = new TextBox
         {
-            MinHeight = 34,
+            MinHeight = 27,
             PlaceholderText = descriptor.Kind switch
             {
                 "int" => "Số nguyên",
@@ -425,6 +444,10 @@ public partial class ConfigurationEditor : UserControl
             _ => null
         };
 
+        // Avalonia may deliver TextChanged after a profile-load suppression
+        // scope. An unchanged displayed value is not a user edit.
+        if (string.Equals(GetDraftValue(descriptor.Path)?.ToString(), value?.ToString(), StringComparison.Ordinal))
+            return;
         SetDraftValue(descriptor.Path, value);
         _dirty = true;
         UpdateDirtyStatus();
@@ -489,8 +512,9 @@ public partial class ConfigurationEditor : UserControl
         if (_draft is null)
             return;
 
-        this.FindControl<TextBlock>("ProfileNameText")!.Text =
-            $"Profile: {GetDraftValue("profile.name")?.ToString() ?? "—"}";
+        string profileName = GetDraftValue("profile.name")?.ToString() ?? "—";
+        this.FindControl<TextBlock>("ProfileNameText")!.Text = profileName;
+        this.FindControl<TextBlock>("ProfileHeaderText")!.Text = profileName;
         this.FindControl<TextBlock>("DirectionQuickValue")!.Text =
             GetDraftValue("timeframes.direction")?.ToString() ?? "—";
         this.FindControl<TextBlock>("PullbackQuickValue")!.Text =

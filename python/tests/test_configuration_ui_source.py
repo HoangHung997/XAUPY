@@ -91,7 +91,7 @@ class ConfigurationUiSourceTests(unittest.TestCase):
             self.assertIn(f'"{name}"', self.code)
 
     def test_hard_safety_is_visible_and_locked(self):
-        self.assertIn("REAL ACCOUNT LOCKED", self.xaml)
+        self.assertIn("TÀI KHOẢN THẬT ĐANG KHÓA", self.xaml)
         self.assertIn("descriptor.LockedValue", self.code)
         self.assertIn("editor.IsEnabled = false", self.code)
 

@@ -1,0 +1,83 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="XAUPY.Desktop.SettingsDashboard">
+  <Grid RowDefinitions="65,*,38" RowSpacing="8">
+    <Grid ColumnDefinitions="*,Auto" Margin="8,2">
+      <StackPanel Spacing="5"><TextBlock Text="⚙  Cài đặt hệ thống" FontSize="23" FontWeight="SemiBold"/><TextBlock Text="Quản lý cấu hình, kết nối, bảo mật và tùy chọn hoạt động của N30 Control Center" FontSize="12" Foreground="#91BDD9"/></StackPanel>
+      <Button Grid.Column="1" Classes="secondary" Content="↶  Khôi phục mặc định" Click="Defaults_OnClick" VerticalAlignment="Center"/>
+    </Grid>
+    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+      <Grid ColumnDefinitions="1.1*,1*,1.1*,1.1*" RowDefinitions="280,190,175" ColumnSpacing="8" RowSpacing="8">
+        <Border Classes="panel" Padding="12"><StackPanel Spacing="9">
+          <TextBlock Text="▣  Kết nối MT5" Classes="panelTitle" Foreground="#8FCCFF"/>
+          <TextBlock Text="Đường dẫn MT5" FontSize="12"/><Grid ColumnDefinitions="*,35" ColumnSpacing="5"><TextBox x:Name="Mt5Path" FontSize="11"/><Button Grid.Column="1" Content="…" Click="BrowseMt5_OnClick" Classes="secondary" Padding="5"/></Grid>
+          <Grid ColumnDefinitions="*,*"><TextBlock Text="Tài khoản (Mode)"/><TextBlock Grid.Column="1" x:Name="AccountMode" Text="—" HorizontalAlignment="Right"/></Grid>
+          <TextBlock Text="Phiên MT5 đang mở cung cấp tài khoản qua EA Bridge. Không lưu mật khẩu." TextWrapping="Wrap" FontSize="12" Foreground="#92B2CE"/>
+          <TextBlock x:Name="Mt5Status" Text="●  Đang chờ MT5" Foreground="#FFD34D"/>
+          <Button Classes="secondary" Content="↗  Kiểm tra kết nối" Click="Probe_OnClick" HorizontalAlignment="Right"/>
+        </StackPanel></Border>
+        <Border Grid.Column="1" Classes="panel" Padding="12"><StackPanel Spacing="9">
+          <TextBlock Text="↗  Chế độ Bridge" Classes="panelTitle" Foreground="#8FCCFF"/>
+          <TextBlock Text="Chế độ hoạt động"/><TextBox Text="Python Bridge (Khuyến nghị)" IsReadOnly="True" FontSize="12"/>
+          <Grid ColumnDefinitions="*,90"><TextBlock Text="Cổng giao tiếp (Port)" VerticalAlignment="Center" FontSize="12"/><TextBox Grid.Column="1" Text="39421" IsReadOnly="True"/></Grid>
+          <CheckBox x:Name="AutoEngine" Content="Tự động khởi động Engine" FontSize="12"/>
+          <CheckBox x:Name="AutoRestart" Content="Tự khởi động lại khi lỗi" FontSize="12"/>
+          <TextBlock Text="Loopback 127.0.0.1 • Heartbeat liên tục" Foreground="#83A8C5" FontSize="11" TextWrapping="Wrap"/>
+        </StackPanel></Border>
+        <Border Grid.Column="2" Classes="panel" Padding="12"><StackPanel Spacing="7">
+          <TextBlock Text="▰  Đường dẫn &amp; Dữ liệu" Classes="panelTitle" Foreground="#8FCCFF"/>
+          <TextBlock Text="Thư mục dữ liệu" FontSize="12"/><TextBox x:Name="StatePath" IsReadOnly="True" FontSize="10"/>
+          <TextBlock Text="Thư mục log" FontSize="12"/><TextBox x:Name="LogPath" IsReadOnly="True" FontSize="10"/>
+          <TextBlock Text="Thư mục backtest" FontSize="12"/><TextBox x:Name="BacktestPath" IsReadOnly="True" FontSize="10"/>
+          <Button Classes="secondary" Content="Mở thư mục dữ liệu" Click="OpenData_OnClick" FontSize="12" HorizontalAlignment="Right"/>
+        </StackPanel></Border>
+        <Border Grid.Column="3" Classes="panel" Padding="12"><StackPanel Spacing="11">
+          <TextBlock Text="◉  Giao diện &amp; Ngôn ngữ" Classes="panelTitle" Foreground="#8FCCFF"/>
+          <TextBlock Text="Chủ đề (Theme)"/><TextBox Text="N30 Dark (Mặc định)" IsReadOnly="True" FontSize="12"/>
+          <TextBlock Text="Ngôn ngữ"/><TextBox Text="Tiếng Việt" IsReadOnly="True" FontSize="12"/>
+          <Grid ColumnDefinitions="*,140"><TextBlock Text="Cỡ chữ" VerticalAlignment="Center"/><TextBox Grid.Column="1" Text="100% (Mặc định)" IsReadOnly="True" FontSize="12"/></Grid>
+        </StackPanel></Border>
+        <Border Grid.Row="1" Classes="panel" Padding="12"><StackPanel Spacing="9">
+          <TextBlock Text="♧  Thông báo" Classes="panelTitle" Foreground="#8FCCFF"/>
+          <CheckBox x:Name="ErrorNotifications" Content="Hiện cảnh báo lỗi hệ thống" FontSize="12"/>
+          <CheckBox x:Name="ConnectionNotifications" Content="Hiện thay đổi kết nối" FontSize="12"/>
+          <TextBlock Text="Cảnh báo hiển thị trong ứng dụng. Sự kiện luôn được lưu trong Nhật ký." FontSize="12" TextWrapping="Wrap" Foreground="#8DB0CC"/>
+        </StackPanel></Border>
+        <Border Grid.Column="1" Grid.Row="1" Classes="panel" Padding="12"><StackPanel Spacing="8">
+          <TextBlock Text="⬡  Giới hạn an toàn" Classes="panelTitle" Foreground="#8FCCFF"/>
+          <TextBlock x:Name="RiskLimits" Text="Đang tải giới hạn profile…" TextWrapping="Wrap" LineHeight="23" FontSize="12"/>
+          <TextBlock Text="Điều chỉnh giới hạn trong tab Cấu hình." FontSize="11" Foreground="#8DB0CC" TextWrapping="Wrap"/>
+        </StackPanel></Border>
+        <Border Grid.Column="2" Grid.Row="1" Classes="panel" Padding="12"><StackPanel Spacing="9">
+          <TextBlock Text="▰  Lưu trữ dữ liệu" Classes="panelTitle" Foreground="#8FCCFF"/>
+          <TextBlock x:Name="StorageInfo" Text="Đang tải thông tin lưu trữ…" TextWrapping="Wrap" LineHeight="23" FontSize="12"/>
+          <TextBlock Text="Không tự xóa nhật ký giao dịch. Bản sao lưu cũ được luân phiên theo số bản giữ tối đa." FontSize="11" Foreground="#8DB0CC" TextWrapping="Wrap"/>
+        </StackPanel></Border>
+        <Border Grid.Column="3" Grid.Row="1" Classes="panel" Padding="12"><StackPanel Spacing="7">
+          <TextBlock Text="⏻  Khởi động ứng dụng" Classes="panelTitle" Foreground="#8FCCFF"/>
+          <CheckBox x:Name="WindowsStartup" Content="Tự động khởi động cùng Windows" FontSize="11"/>
+          <CheckBox Content="Bắt buộc đồng bộ Bridge khi khởi động" IsChecked="True" IsEnabled="False" FontSize="11"/>
+          <CheckBox Content="Tự động chạy giao dịch" IsChecked="False" IsEnabled="False" FontSize="11"/>
+          <TextBlock Text="Tải profile đã lưu; chờ dữ liệu mới trước khi đánh giá chiến lược." TextWrapping="Wrap" Foreground="#8DB0CC" FontSize="11"/>
+        </StackPanel></Border>
+        <Border Grid.Row="2" Classes="panel" Padding="12"><StackPanel Spacing="7">
+          <TextBlock Text="♙  Quyền &amp; Bảo mật tài khoản" Classes="panelTitle" Foreground="#8FCCFF"/>
+          <CheckBox Content="Chặn lệnh mới khi mất kết nối" IsChecked="True" IsEnabled="False" FontSize="11"/>
+          <CheckBox Content="Giữ nguyên SL phía broker" IsChecked="True" IsEnabled="False" FontSize="11"/>
+          <CheckBox Content="Cho phép tài khoản thật" IsChecked="False" IsEnabled="False" FontSize="11"/>
+          <TextBlock Text="●  EXECUTION LOCKED" Foreground="#FFD34D" FontSize="12"/>
+        </StackPanel></Border>
+        <Border Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="2" Classes="panel" Padding="12">
+          <Grid ColumnDefinitions="*,135" RowDefinitions="Auto,*" ColumnSpacing="10"><TextBlock Text="☁  Sao lưu &amp; Khôi phục" Classes="panelTitle" Foreground="#8FCCFF"/>
+            <StackPanel Grid.Row="1" Spacing="5" Margin="0,7,0,0"><TextBox x:Name="BackupPath" IsReadOnly="True" FontSize="10"/><Grid ColumnDefinitions="*,100"><CheckBox x:Name="AutoBackup" Content="Sao lưu trước thay đổi" FontSize="12"/><NumericUpDown Grid.Column="1" x:Name="BackupCount" Minimum="1" Maximum="100" Value="30" FormatString="0"/></Grid><ComboBox x:Name="BackupList" HorizontalAlignment="Stretch" PlaceholderText="Chọn bản sao lưu" FontSize="10"/></StackPanel>
+            <StackPanel Grid.Column="1" Grid.RowSpan="2" Spacing="10" VerticalAlignment="Center"><Button Classes="secondary" Content="↥  Sao lưu ngay" Click="Backup_OnClick" HorizontalAlignment="Stretch" FontSize="12"/><Button Classes="secondary" Content="↧  Khôi phục" Click="Restore_OnClick" HorizontalAlignment="Stretch" FontSize="12"/></StackPanel>
+          </Grid>
+        </Border>
+        <Border Grid.Column="3" Grid.Row="2" Classes="panel" Padding="12"><StackPanel Spacing="6"><TextBlock Text="ⓘ  Thông tin hệ thống" Classes="panelTitle" Foreground="#8FCCFF"/><TextBlock x:Name="SystemInfo" Text="Đang tải…" FontSize="11" LineHeight="20" TextWrapping="Wrap"/><TextBlock x:Name="RecoveryInfo" FontSize="10" Foreground="#8DB0CC" TextWrapping="Wrap"/></StackPanel></Border>
+      </Grid>
+    </ScrollViewer>
+    <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+      <TextBlock x:Name="SettingsStatus" Text="Chờ Python Engine sẵn sàng." VerticalAlignment="Center" TextWrapping="Wrap" Foreground="#9ECFFF" FontSize="12"/>
+      <Button Grid.Column="1" Classes="secondary" Content="Hủy thay đổi" Click="Cancel_OnClick"/>
+      <Button Grid.Column="2" Classes="primary" Content="▣  Lưu cài đặt" Click="Save_OnClick"/>
+    </Grid>
+  </Grid>
+</UserControl>

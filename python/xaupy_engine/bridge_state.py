@@ -6,6 +6,8 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
+from .strategy_engine import Bar, HISTORY_LIMIT, StrategyDataError, validated_bar_history
+
 
 class BridgeSnapshotError(ValueError):
     """Raised when an MT5 Bridge snapshot violates XAUPY bridge rules."""
@@ -49,6 +51,7 @@ class BridgeRegistry:
         self._latest_snapshot_received_utc: str | None = None
         self._latest_hello: dict[str, Any] | None = None
         self._snapshots_total = 0
+        self._bar_history: dict[str, list[dict[str, Any]]] = {}
 
     def record_hello(self, payload: dict[str, Any]) -> None:
         if not isinstance(payload, dict):
@@ -89,6 +92,9 @@ class BridgeRegistry:
 
         if not isinstance(payload["terminal_connected"], bool):
             raise BridgeSnapshotError("terminal_connected must be boolean")
+        tick_time = payload.get("tick_time_msc")
+        if tick_time is not None and (isinstance(tick_time, bool) or not isinstance(tick_time, int) or tick_time < 0):
+            raise BridgeSnapshotError("tick_time_msc must be a nonnegative integer")
 
         guardian = payload["guardian"]
         if not isinstance(guardian, dict):
@@ -110,6 +116,10 @@ class BridgeRegistry:
             raise BridgeSnapshotError(
                 f"bridge snapshot missing timeframe bars: {missing_timeframes}"
             )
+        try:
+            validated_history = validated_bar_history(payload)
+        except StrategyDataError as exc:
+            raise BridgeSnapshotError(str(exc)) from exc
 
         for collection_name in ("positions", "orders", "deals"):
             collection = payload.get(collection_name, [])
@@ -148,6 +158,20 @@ class BridgeRegistry:
         ):
             raise BridgeSnapshotError("orders_count does not match orders array")
 
+        if self._latest_snapshot and self._latest_snapshot.get("symbol") != symbol:
+            self._bar_history.clear()
+        for timeframe in required_timeframes:
+            combined = {item["time"]: item for item in self._bar_history.get(timeframe, [])}
+            for bar in validated_history.get(timeframe, []):
+                combined[bar.time] = vars(bar).copy()
+            raw_latest = bars.get(timeframe)
+            if isinstance(raw_latest, dict):
+                try:
+                    bar = Bar.from_payload(raw_latest)
+                    combined[bar.time] = vars(bar).copy()
+                except StrategyDataError:
+                    pass  # Legacy latest-bar errors remain visible to StrategyEngine.
+            self._bar_history[timeframe] = [combined[t] for t in sorted(combined)[-HISTORY_LIMIT:]]
         self._latest_snapshot = deepcopy(payload)
         self._latest_snapshot_received_utc = datetime.now(timezone.utc).isoformat()
         now = time.monotonic()
@@ -168,6 +192,7 @@ class BridgeRegistry:
                 "terminal_connected": status.terminal_connected,
                 "bid": None,
                 "ask": None,
+                "tick_time_msc": None,
                 "spread_points": None,
                 "point": None,
                 "balance": None,
@@ -177,6 +202,7 @@ class BridgeRegistry:
                 "positions_count": 0,
                 "orders_count": 0,
                 "bars": {},
+                "bar_history": {},
             }
 
         bars = snapshot.get("bars")
@@ -191,6 +217,7 @@ class BridgeRegistry:
             "terminal_connected": bool(snapshot.get("terminal_connected", False)),
             "bid": snapshot.get("bid"),
             "ask": snapshot.get("ask"),
+            "tick_time_msc": snapshot.get("tick_time_msc") or None,
             "spread_points": snapshot.get("spread_points"),
             "point": snapshot.get("point"),
             "balance": snapshot.get("balance"),
@@ -200,6 +227,7 @@ class BridgeRegistry:
             "positions_count": snapshot.get("positions_count", len(snapshot.get("positions", []))),
             "orders_count": snapshot.get("orders_count", len(snapshot.get("orders", []))),
             "bars": deepcopy(bars),
+            "bar_history": deepcopy(self._bar_history),
         }
 
     def orders_positions_payload(self) -> dict[str, Any]:

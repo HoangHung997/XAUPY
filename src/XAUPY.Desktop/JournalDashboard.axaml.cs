@@ -398,8 +398,8 @@ public partial class JournalDashboard : UserControl
     {
         var grid = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("64,160,110,150,*,135"),
-            MinHeight = 34
+            ColumnDefinitions = new ColumnDefinitions("0.64*,1.6*,1.1*,1.5*,6*,1.35*"),
+            MinHeight = 27
         };
 
         AddCell(grid, 0, item.Sequence.ToString(), Brushes.LightGray);
@@ -474,7 +474,7 @@ public partial class JournalDashboard : UserControl
                 {
                     Text = emptyMessage,
                     Foreground = new SolidColorBrush(Color.Parse("#8099B2")),
-                    FontSize = 11,
+                    FontSize = 13,
                     Margin = new Thickness(4, 8)
                 });
             return;
@@ -617,7 +617,7 @@ public partial class JournalDashboard : UserControl
         {
             Text = value,
             Foreground = brush,
-            FontSize = 11,
+            FontSize = 13,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(10, 5),
             TextTrimming = TextTrimming.CharacterEllipsis

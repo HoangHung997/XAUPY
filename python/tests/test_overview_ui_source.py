@@ -63,10 +63,11 @@ class OverviewUiSourceTests(unittest.TestCase):
         self.assertIn('x:Name="LiveSidebar"', self.xaml)
         self.assertNotIn('ColumnDefinitions="220,*"', self.xaml)
 
-    def test_unimplemented_tabs_have_explicit_placeholder_instead_of_fake_data(self):
-        self.assertIn('x:Name="PlaceholderContent"', self.xaml)
-        self.assertIn("không hiển thị dữ liệu giao dịch giả", self.xaml)
-        self.assertIn("đã triển khai Tổng quan + Cấu hình", self.code)
+    def test_tools_and_settings_have_real_dashboards(self):
+        self.assertIn('x:Name="ToolsView"', self.xaml)
+        self.assertIn('x:Name="SettingsView"', self.xaml)
+        self.assertIn('_toolsDashboard.EnsureLoadedAsync', self.code)
+        self.assertIn('_settingsDashboard.EnsureLoadedAsync', self.code)
 
     def test_execution_lock_remains_visible(self):
         # The approved screenshot does not require a giant global lock badge,

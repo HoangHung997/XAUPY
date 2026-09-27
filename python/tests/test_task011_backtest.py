@@ -391,25 +391,36 @@ class BacktestParityTests(unittest.TestCase):
             clean["metrics"]["net_profit"],
         )
 
-    def test_unsupported_future_execution_modes_are_rejected(self):
-        for mutate in (
+    def test_task013_execution_modes_are_accepted_by_shared_backtest(self):
+        supported_mutations = (
             lambda p: p["entry"].__setitem__("mode", "STOP_CONFIRM"),
             lambda p: p["stop_loss"].__setitem__("mode", "ATR"),
             lambda p: p["take_profit"].__setitem__("mode", "ZRSI_DYNAMIC"),
             lambda p: p["management"].__setitem__("partial_close_enabled", True),
             lambda p: p["management"].__setitem__("trailing_enabled", True),
-            lambda p: p["news"].__setitem__("enabled", True),
-        ):
+            lambda p: p["management"].__setitem__("sl_tighten_mode", "STRUCTURE"),
+        )
+        for mutate in supported_mutations:
             profile = test_profile()
             mutate(profile)
             with self.subTest(profile=profile):
-                with self.assertRaises(BacktestError):
-                    BacktestEngine(
-                        profile,
-                        initial_balance=10_000,
-                        spread_pips=20,
-                        commission_per_lot=7,
-                    )
+                BacktestEngine(
+                    profile,
+                    initial_balance=10_000,
+                    spread_pips=20,
+                    commission_per_lot=7,
+                )
+
+    def test_historical_news_without_dataset_remains_rejected(self):
+        profile = test_profile()
+        profile["news"]["enabled"] = True
+        with self.assertRaises(BacktestError):
+            BacktestEngine(
+                profile,
+                initial_balance=10_000,
+                spread_pips=20,
+                commission_per_lot=7,
+            )
 
 
 class RiskAndStructureTests(unittest.TestCase):

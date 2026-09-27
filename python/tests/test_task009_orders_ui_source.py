@@ -76,11 +76,12 @@ class Task009OrdersUiSourceTests(unittest.TestCase):
         self.assertIn("book.SnapshotReceivedUtc", self.code)
         self.assertIn("book.Bid.HasValue", self.code)
         self.assertIn("_quotes.Clear()", self.code)
-        self.assertIn("REAL SESSION QUOTES", self.xaml)
+        self.assertIn('x:Name="OrdersMarketChart"', self.xaml)
+        self.assertIn('.SetSnapshot(overview, config.PullbackTimeframe)', self.code)
 
     def test_manual_controls_are_simulation_only_and_confirmed(self):
-        self.assertIn("SIMULATION ONLY", self.xaml)
-        self.assertIn("BROKER EXECUTION LOCKED", self.xaml)
+        self.assertIn("CHẾ ĐỘ MÔ PHỎNG", self.xaml)
+        self.assertIn("GIAO DỊCH ĐANG KHÓA", self.xaml)
         self.assertIn('x:Name="ConfirmCloseCheck"', self.xaml)
         self.assertIn('x:Name="ManualConfirmCheck"', self.xaml)
         self.assertIn("SimulateManualActionAsync", self.code)
@@ -92,7 +93,7 @@ class Task009OrdersUiSourceTests(unittest.TestCase):
         self.assertIn("RejectUnexpectedOrdersExecutionEnable", self.supervisor)
         self.assertIn("BrokerExecutionLocked", self.model)
         self.assertIn("SimulationOnly", self.model)
-        self.assertIn('desktop_version = "0.12.0-task012"', self.supervisor)
+        self.assertIn('desktop_version = "0.16.0-rc1"', self.supervisor)
 
     def test_no_old_task009_placeholder_wording_remains(self):
         self.assertNotIn("Execution và màn hình quản lý lệnh thuộc Task 009", self.main_code)

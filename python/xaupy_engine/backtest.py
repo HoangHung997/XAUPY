@@ -14,7 +14,7 @@ from uuid import UUID, uuid4
 
 from .config_schema import normalized_profile
 from .journal import default_journal_directory
-from .strategy_engine import Bar, StrategyDataError, StrategyEngine
+from .strategy_engine import Bar, StrategyDataError, StrategyEngine, _atr, _rsi, _zscore
 
 
 TIMEFRAME_SECONDS: dict[str, int] = {
@@ -121,6 +121,8 @@ class DatasetMetadata:
     volume_max: float
     volume_step: float
     timezone_offset_minutes: int
+    stops_level_points: float = 0.0
+    freeze_level_points: float = 0.0
 
     def public(self) -> dict[str, Any]:
         return {
@@ -132,6 +134,8 @@ class DatasetMetadata:
             "volume_max": self.volume_max,
             "volume_step": self.volume_step,
             "timezone_offset_minutes": self.timezone_offset_minutes,
+            "stops_level_points": self.stops_level_points,
+            "freeze_level_points": self.freeze_level_points,
         }
 
 
@@ -317,6 +321,11 @@ def _metadata_from_mapping(mapping: dict[str, Any]) -> DatasetMetadata:
     if volume_step > volume_max:
         raise BacktestError("volume_step must be <= volume_max")
 
+    stops_level = _finite_number(mapping.get("stops_level_points", 0), "stops_level_points")
+    freeze_level = _finite_number(mapping.get("freeze_level_points", 0), "freeze_level_points")
+    if stops_level < 0 or freeze_level < 0:
+        raise BacktestError("stop/freeze levels must be >= 0")
+
     return DatasetMetadata(
         symbol=symbol,
         point_size=point_size,
@@ -326,6 +335,8 @@ def _metadata_from_mapping(mapping: dict[str, Any]) -> DatasetMetadata:
         volume_max=volume_max,
         volume_step=volume_step,
         timezone_offset_minutes=offset,
+        stops_level_points=stops_level,
+        freeze_level_points=freeze_level,
     )
 
 
@@ -407,6 +418,22 @@ def build_close_schedule(
 
 
 @dataclass
+class PendingStopEntry:
+    signal_sequence: int
+    signal_time: int
+    detected_close_time: int
+    side: str
+    trigger_price: float
+    created_time: int
+    expires_at: int
+    signal_stale_at: int
+    profile_hash: str
+    dataset_fingerprint: str
+    signal_trigger_rsi: float | None = None
+    signal_trigger_z: float | None = None
+
+
+@dataclass
 class OpenPosition:
     trade_id: int
     signal_sequence: int
@@ -421,9 +448,33 @@ class OpenPosition:
     original_risk: float
     profile_hash: str
     dataset_fingerprint: str
+    initial_volume: float = 0.0
+    original_tp: float = 0.0
+    hard_tp: float = 0.0
+    entry_mode: str = "MARKET"
+    pending_trigger_price: float | None = None
+    signal_trigger_rsi: float | None = None
+    signal_trigger_z: float | None = None
     mfe_price_units: float = 0.0
     mae_price_units: float = 0.0
     breakeven_applied: bool = False
+    partial_close_applied: bool = False
+    partial_close_event: dict[str, Any] | None = None
+    realized_gross: float = 0.0
+    realized_commission: float = 0.0
+    realized_net: float = 0.0
+    trailing_updates: int = 0
+    sl_tighten_updates: int = 0
+    dynamic_extended: bool = False
+    dynamic_extension_time: int | None = None
+    dynamic_peak_rsi: float | None = None
+    dynamic_peak_z: float | None = None
+    dynamic_exit_pending: bool = False
+    dynamic_exit_reason: str | None = None
+    dynamic_lock_applied: bool = False
+    entry_filled_intrabar: bool = False
+    partial_close_pending: bool = False
+    management_events: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -432,6 +483,8 @@ class BacktestState:
     positions: list[OpenPosition] = field(default_factory=list)
     trades: list[dict[str, Any]] = field(default_factory=list)
     pending_signals: list[dict[str, Any]] = field(default_factory=list)
+    pending_entries: list[PendingStopEntry] = field(default_factory=list)
+    pending_entry_events: list[dict[str, Any]] = field(default_factory=list)
     equity_curve: list[dict[str, Any]] = field(default_factory=list)
     drawdown_curve: list[dict[str, Any]] = field(default_factory=list)
     skipped_signals: dict[str, int] = field(default_factory=dict)
@@ -442,6 +495,8 @@ class BacktestState:
     last_exit_time: int | None = None
     next_trade_id: int = 1
     peak_equity: float = 0.0
+
+
 
 
 class BacktestEngine:
@@ -473,23 +528,22 @@ class BacktestEngine:
 
     def _validate_profile_support(self) -> None:
         unsupported: list[str] = []
-        if self.profile["entry"]["mode"] != "MARKET":
-            unsupported.append("entry.mode must be MARKET in Task 011")
-        if self.profile["stop_loss"]["mode"] not in {"FIXED", "STRUCTURE"}:
-            unsupported.append("stop_loss.mode supports FIXED/STRUCTURE only in Task 011")
-        if self.profile["take_profit"]["mode"] not in {"FIXED", "RR"}:
-            unsupported.append("take_profit.mode supports FIXED/RR only in Task 011")
-        if self.profile["management"]["partial_close_enabled"]:
-            unsupported.append("partial_close is reserved for later execution parity")
-        if self.profile["management"]["trailing_enabled"]:
-            unsupported.append("trailing is reserved for later execution parity")
-        if self.profile["management"]["sl_tighten_mode"] != "OFF":
-            unsupported.append("sl_tighten_mode must be OFF in Task 011")
+        if self.profile["entry"]["mode"] not in {"MARKET", "STOP_CONFIRM"}:
+            unsupported.append("entry.mode must be MARKET or STOP_CONFIRM")
+        if self.profile["stop_loss"]["mode"] not in {"FIXED", "STRUCTURE", "ATR"}:
+            unsupported.append("stop_loss.mode must be FIXED, STRUCTURE or ATR")
+        if self.profile["take_profit"]["mode"] not in {"FIXED", "RR", "ZRSI_DYNAMIC"}:
+            unsupported.append("take_profit.mode must be FIXED, RR or ZRSI_DYNAMIC")
+        if (
+            self.profile["management"]["sl_tighten_mode"] == "ZRSI_ASSIST"
+            and self.profile["take_profit"]["mode"] != "ZRSI_DYNAMIC"
+        ):
+            unsupported.append("ZRSI_ASSIST requires take_profit.mode=ZRSI_DYNAMIC")
         if self.profile["news"]["enabled"]:
-            unsupported.append("news.enabled requires historical news data unavailable in Task 011")
+            unsupported.append("news.enabled requires historical news data unavailable in Task 013")
         timezone_mode = str(self.profile["sessions"]["timezone"]).upper()
         if timezone_mode not in {"BROKER", "UTC"}:
-            unsupported.append("sessions.timezone must be BROKER or UTC in Task 011")
+            unsupported.append("sessions.timezone must be BROKER or UTC in Task 013")
         if unsupported:
             raise BacktestError("; ".join(unsupported))
 
@@ -576,6 +630,15 @@ class BacktestEngine:
                         spread_price,
                     )
 
+            if allow_entries and state.pending_entries:
+                self._process_pending_entries(
+                    state,
+                    strategy,
+                    dataset,
+                    bar,
+                    spread_price,
+                )
+
             self._process_positions(
                 state,
                 dataset,
@@ -603,6 +666,14 @@ class BacktestEngine:
                     }
                 )
 
+                self._observe_position_management(
+                    state,
+                    strategy,
+                    dataset,
+                    bar,
+                    spread_price,
+                )
+
                 current_sequence = int(status.get("signal_sequence", 0))
                 if current_sequence > last_signal_sequence:
                     signal = deepcopy(status.get("last_signal"))
@@ -621,6 +692,18 @@ class BacktestEngine:
                 )
 
         _raise_if_cancelled(cancel_check)
+        if state.pending_entries:
+            final_time = in_range[-1].time + 60
+            for pending in list(state.pending_entries):
+                self._record_pending_event(
+                    state,
+                    pending,
+                    "END_OF_DATA",
+                    final_time,
+                )
+                self._skip(state, "PENDING_END_OF_DATA")
+            state.pending_entries.clear()
+
         if state.positions:
             final_bar = in_range[-1]
             for position in list(state.positions):
@@ -671,26 +754,273 @@ class BacktestEngine:
     ) -> None:
         side = str(signal.get("side", "")).upper()
         detected_close_time = int(signal.get("detected_close_time", 0) or 0)
-        max_age_seconds = int(self.profile["entry"]["max_signal_age_bars"]) * 60
+        max_age_seconds = (
+            int(self.profile["entry"]["max_signal_age_bars"])
+            * TIMEFRAME_SECONDS[self.profile["timeframes"]["trigger"]]
+        )
         if (
             detected_close_time > 0
-            and bar.time - detected_close_time > max_age_seconds
+            and bar.time - detected_close_time >= max_age_seconds
         ):
             self._skip(state, "SIGNAL_EXPIRED")
             return
         if side not in {"BUY", "SELL"}:
             self._skip(state, "INVALID_SIDE")
             return
+
+        entry_mode = str(self.profile["entry"]["mode"]).upper()
+        signal_rsi, signal_z = self._signal_trigger_metrics(signal, strategy)
+
+        if entry_mode == "STOP_CONFIRM":
+            if self.profile["entry"]["cancel_on_opposite_setup"]:
+                opposite = "SELL" if side == "BUY" else "BUY"
+                removed = [
+                    item
+                    for item in state.pending_entries
+                    if item.side == opposite
+                ]
+                if removed:
+                    state.pending_entries = [
+                        item
+                        for item in state.pending_entries
+                        if item.side != opposite
+                    ]
+                    for item in removed:
+                        self._record_pending_event(
+                            state,
+                            item,
+                            "CANCEL_OPPOSITE_SETUP",
+                            bar.time,
+                        )
+                        self._skip(state, "PENDING_CANCEL_OPPOSITE_SETUP")
+
+            trigger_tf = str(self.profile["timeframes"]["trigger"])
+            history = strategy.history[trigger_tf]
+            if not history:
+                self._skip(state, "STOP_CONFIRM_TRIGGER_WARMUP")
+                return
+            trigger_bar = history[-1]
+            signal_time = int(signal.get("bar_time", 0) or 0)
+            if signal_time and trigger_bar.time != signal_time:
+                matching = [item for item in history if item.time == signal_time]
+                if not matching:
+                    self._skip(state, "STOP_CONFIRM_SIGNAL_BAR_MISSING")
+                    return
+                trigger_bar = matching[-1]
+
+            buffer_value = float(self.profile["entry"]["pending_buffer_price_units"])
+            trigger_price = (
+                trigger_bar.high + spread_price + buffer_value
+                if side == "BUY"
+                else trigger_bar.low - buffer_value
+            )
+            trigger_price = self._tick_price(
+                trigger_price, dataset.metadata.tick_size, upward=side == "BUY"
+            )
+            placement_distance = (
+                trigger_price - trigger_bar.close - spread_price
+                if side == "BUY" else trigger_bar.close - trigger_price
+            )
+            if placement_distance <= 0 or placement_distance + 1e-12 < dataset.metadata.stops_level_points * dataset.metadata.point_size:
+                self._skip(state, "BROKER_INVALID_PENDING_DISTANCE")
+                return
+            expiration_seconds = (
+                int(self.profile["entry"]["pending_expiration_minutes"]) * 60
+            )
+            expires_at = detected_close_time + expiration_seconds
+            stale_at = detected_close_time + max_age_seconds
+            if detected_close_time <= 0:
+                detected_close_time = bar.time
+                expires_at = bar.time + expiration_seconds
+                stale_at = bar.time + max_age_seconds
+            if bar.time >= min(expires_at, stale_at):
+                self._skip(state, "PENDING_EXPIRED")
+                return
+
+            for existing in state.pending_entries:
+                if existing.side == side:
+                    self._record_pending_event(state, existing, "REPLACED", bar.time)
+            state.pending_entries = [
+                item for item in state.pending_entries if item.side != side
+            ]
+            pending_entry = PendingStopEntry(
+                signal_sequence=int(signal.get("sequence", 0)),
+                signal_time=signal_time,
+                detected_close_time=detected_close_time,
+                side=side,
+                trigger_price=trigger_price,
+                created_time=bar.time,
+                expires_at=expires_at,
+                signal_stale_at=stale_at,
+                profile_hash=str(
+                    signal.get("profile_hash") or strategy.profile_hash
+                ),
+                dataset_fingerprint=dataset.fingerprint,
+                signal_trigger_rsi=signal_rsi,
+                signal_trigger_z=signal_z,
+            )
+            state.pending_entries.append(pending_entry)
+            self._record_pending_event(
+                state,
+                pending_entry,
+                "CREATED",
+                bar.time,
+            )
+            return
+
         if len(state.positions) >= int(self.profile["risk"]["max_open_positions"]):
             self._skip(state, "MAX_OPEN_POSITIONS")
             return
 
-        allowed, reason = self._entry_allowed(state, dataset, bar.time)
-        if not allowed:
-            self._skip(state, reason)
-            return
-
         entry_price = bar.open + spread_price if side == "BUY" else bar.open
+        self._open_position(
+            state,
+            strategy,
+            dataset,
+            bar,
+            spread_price,
+            side=side,
+            entry_price=entry_price,
+            signal_sequence=int(signal.get("sequence", 0)),
+            signal_time=int(signal.get("bar_time", 0)),
+            profile_hash=str(signal.get("profile_hash") or strategy.profile_hash),
+            entry_mode="MARKET",
+            pending_trigger_price=None,
+            signal_trigger_rsi=signal_rsi,
+            signal_trigger_z=signal_z,
+        )
+
+    def _process_pending_entries(
+        self,
+        state: BacktestState,
+        strategy: StrategyEngine,
+        dataset: HistoricalDataset,
+        bar: Bar,
+        spread_price: float,
+    ) -> None:
+        for pending in list(state.pending_entries):
+            if bar.time >= pending.signal_stale_at:
+                state.pending_entries.remove(pending)
+                self._record_pending_event(
+                    state,
+                    pending,
+                    "SIGNAL_EXPIRED",
+                    bar.time,
+                )
+                self._skip(state, "PENDING_SIGNAL_EXPIRED")
+                continue
+            if bar.time >= pending.expires_at:
+                state.pending_entries.remove(pending)
+                self._record_pending_event(
+                    state,
+                    pending,
+                    "EXPIRED",
+                    bar.time,
+                )
+                self._skip(state, "PENDING_EXPIRED")
+                continue
+
+            if self.profile["entry"]["cancel_on_direction_change"]:
+                direction = str(strategy.direction).upper()
+                side_allowed = (
+                    direction == pending.side
+                    or direction == "BOTH"
+                )
+                if not side_allowed:
+                    state.pending_entries.remove(pending)
+                    self._record_pending_event(
+                        state,
+                        pending,
+                        "CANCEL_DIRECTION_CHANGE",
+                        bar.time,
+                    )
+                    self._skip(state, "PENDING_CANCEL_DIRECTION_CHANGE")
+                    continue
+
+            if pending.side == "BUY":
+                executable_open = bar.open + spread_price
+                executable_extreme = bar.high + spread_price
+                triggered = executable_extreme >= pending.trigger_price
+                fill_price = (
+                    executable_open
+                    if executable_open >= pending.trigger_price
+                    else pending.trigger_price
+                )
+            else:
+                executable_open = bar.open
+                executable_extreme = bar.low
+                triggered = executable_extreme <= pending.trigger_price
+                fill_price = (
+                    executable_open
+                    if executable_open <= pending.trigger_price
+                    else pending.trigger_price
+                )
+
+            if not triggered:
+                continue
+
+            state.pending_entries.remove(pending)
+            self._record_pending_event(
+                state,
+                pending,
+                "TRIGGERED",
+                bar.time,
+                fill_price=fill_price,
+            )
+            if len(state.positions) >= int(self.profile["risk"]["max_open_positions"]):
+                self._skip(state, "PENDING_FILL_MAX_OPEN_POSITIONS")
+                continue
+
+            allowed, reason = self._entry_allowed(state, dataset, bar.time)
+            if not allowed:
+                self._skip(state, f"PENDING_FILL_{reason}")
+                continue
+
+            self._open_position(
+                state,
+                strategy,
+                dataset,
+                bar,
+                spread_price,
+                side=pending.side,
+                entry_price=fill_price,
+                signal_sequence=pending.signal_sequence,
+                signal_time=pending.signal_time,
+                profile_hash=pending.profile_hash,
+                entry_mode="STOP_CONFIRM",
+                pending_trigger_price=pending.trigger_price,
+                signal_trigger_rsi=pending.signal_trigger_rsi,
+                signal_trigger_z=pending.signal_trigger_z,
+                entry_guard_already_checked=True,
+                entry_filled_intrabar=fill_price != executable_open,
+            )
+
+    def _open_position(
+        self,
+        state: BacktestState,
+        strategy: StrategyEngine,
+        dataset: HistoricalDataset,
+        bar: Bar,
+        spread_price: float,
+        *,
+        side: str,
+        entry_price: float,
+        signal_sequence: int,
+        signal_time: int,
+        profile_hash: str,
+        entry_mode: str,
+        pending_trigger_price: float | None,
+        signal_trigger_rsi: float | None,
+        signal_trigger_z: float | None,
+        entry_guard_already_checked: bool = False,
+        entry_filled_intrabar: bool = False,
+    ) -> None:
+        if not entry_guard_already_checked:
+            allowed, reason = self._entry_allowed(state, dataset, bar.time)
+            if not allowed:
+                self._skip(state, reason)
+                return
+
         try:
             sl, risk_distance = self._initial_stop(
                 strategy,
@@ -701,10 +1031,31 @@ class BacktestEngine:
             )
         except BacktestError as exc:
             if str(exc).startswith("not enough "):
-                self._skip(state, "STRUCTURE_WARMUP")
+                self._skip(state, "STOP_WARMUP")
                 return
             raise
-        tp = self._initial_target(side, entry_price, risk_distance)
+
+        # Broker-price normalization must happen before sizing. Rounding must
+        # never silently consume more risk than the configured maximum stop.
+        sl = self._tick_price(sl, dataset.metadata.tick_size, upward=side == "SELL")
+        risk_distance = abs(entry_price - sl)
+        executable_entry = entry_price - spread_price if side == "BUY" else entry_price + spread_price
+        minimum_stop = dataset.metadata.stops_level_points * dataset.metadata.point_size
+        stop_distance = executable_entry - sl if side == "BUY" else sl - executable_entry
+        if (
+            stop_distance <= 0
+            or stop_distance + 1e-12 < minimum_stop
+            or risk_distance > float(self.profile["stop_loss"]["max_price_units"]) + 1e-12
+        ):
+            self._skip(state, "BROKER_INVALID_INITIAL_SL")
+            return
+        original_tp, hard_tp = self._initial_targets(side, entry_price, risk_distance)
+        original_tp = self._tick_price(original_tp, dataset.metadata.tick_size, upward=side == "SELL")
+        hard_tp = self._tick_price(hard_tp, dataset.metadata.tick_size, upward=side == "SELL")
+        target_distance = original_tp - executable_entry if side == "BUY" else executable_entry - original_tp
+        if target_distance <= 0 or target_distance + 1e-12 < minimum_stop:
+            self._skip(state, "BROKER_INVALID_INITIAL_TP")
+            return
         volume = self._position_volume(
             state.balance,
             dataset.metadata,
@@ -716,24 +1067,74 @@ class BacktestEngine:
 
         position = OpenPosition(
             trade_id=state.next_trade_id,
-            signal_sequence=int(signal.get("sequence", 0)),
-            signal_time=int(signal.get("bar_time", 0)),
+            signal_sequence=signal_sequence,
+            signal_time=signal_time,
             side=side,
             entry_time=bar.time,
             entry_price=entry_price,
             volume=volume,
             sl=sl,
-            tp=tp,
+            tp=hard_tp,
             original_sl=sl,
             original_risk=risk_distance,
-            profile_hash=str(signal.get("profile_hash") or strategy.profile_hash),
+            profile_hash=profile_hash,
             dataset_fingerprint=dataset.fingerprint,
+            initial_volume=volume,
+            original_tp=original_tp,
+            hard_tp=hard_tp,
+            entry_mode=entry_mode,
+            pending_trigger_price=pending_trigger_price,
+            signal_trigger_rsi=signal_trigger_rsi,
+            signal_trigger_z=signal_trigger_z,
+            entry_filled_intrabar=entry_filled_intrabar,
         )
         state.next_trade_id += 1
         state.positions.append(position)
 
         day_key = self._day_key(dataset, bar.time)
         state.trades_by_day[day_key] = state.trades_by_day.get(day_key, 0) + 1
+
+    def _signal_trigger_metrics(
+        self,
+        signal: dict[str, Any],
+        strategy: StrategyEngine,
+    ) -> tuple[float | None, float | None]:
+        indicators = signal.get("indicators")
+        trigger = (
+            indicators.get("trigger")
+            if isinstance(indicators, dict)
+            else None
+        )
+        rsi = self._optional_number(
+            trigger.get("rsi") if isinstance(trigger, dict) else None
+        )
+        z_value = self._optional_number(
+            trigger.get("z") if isinstance(trigger, dict) else None
+        )
+        current_rsi, current_z = self._management_metrics(strategy)
+        return (
+            rsi if rsi is not None else current_rsi,
+            z_value if z_value is not None else current_z,
+        )
+
+    def _management_metrics(
+        self,
+        strategy: StrategyEngine,
+    ) -> tuple[float | None, float | None]:
+        trigger_tf = str(self.profile["timeframes"]["trigger"])
+        history = strategy.history[trigger_tf]
+        closes = [item.close for item in history]
+        rsi = _rsi(closes, int(self.profile["trigger"]["rsi_period"]))
+        z_value = _zscore(closes, int(self.profile["trigger"]["z_period"]))
+        return rsi, z_value
+
+    @staticmethod
+    def _optional_number(value: Any) -> float | None:
+        try:
+            result = float(value)
+        except (TypeError, ValueError):
+            return None
+        return result if math.isfinite(result) else None
 
     def _entry_allowed(
         self,
@@ -867,6 +1268,15 @@ class BacktestEngine:
             else:
                 raw_sl = max(item.high for item in window) + buffer_value + spread_price
                 distance = raw_sl - entry_price
+        elif mode == "ATR":
+            timeframe = str(cfg["atr_timeframe"])
+            period = int(cfg["atr_period"])
+            value = _atr(strategy.history[timeframe], period)
+            if value is None:
+                raise BacktestError(
+                    f"not enough {timeframe} bars for ATR stop period {period}"
+                )
+            distance = value * float(cfg["atr_multiplier"])
         else:
             raise BacktestError(f"unsupported stop mode: {mode}")
 
@@ -879,20 +1289,60 @@ class BacktestEngine:
         sl = entry_price - distance if side == "BUY" else entry_price + distance
         return sl, distance
 
+    def _initial_targets(
+        self,
+        side: str,
+        entry_price: float,
+        risk_distance: float,
+    ) -> tuple[float, float]:
+        cfg = self.profile["take_profit"]
+        mode = str(cfg["mode"])
+        if mode == "FIXED":
+            original_distance = float(cfg["fixed_price_units"])
+            hard_distance = original_distance
+        elif mode == "RR":
+            original_distance = risk_distance * float(cfg["rr_ratio"])
+            hard_distance = original_distance
+        elif mode == "ZRSI_DYNAMIC":
+            original_distance = float(cfg["fixed_price_units"])
+            dynamic = cfg["dynamic"]
+            hard_distance = (
+                original_distance
+                + float(dynamic["max_extension_price_units"])
+            )
+            if dynamic["emergency_server_tp_enabled"]:
+                emergency_distance = float(
+                    dynamic["emergency_server_tp_price_units"]
+                )
+                hard_distance = min(hard_distance, emergency_distance)
+            hard_distance = max(original_distance, hard_distance)
+        else:
+            raise BacktestError(f"unsupported TP mode: {mode}")
+
+        original_tp = (
+            entry_price + original_distance
+            if side == "BUY"
+            else entry_price - original_distance
+        )
+        hard_tp = (
+            entry_price + hard_distance
+            if side == "BUY"
+            else entry_price - hard_distance
+        )
+        return original_tp, hard_tp
+
     def _initial_target(
         self,
         side: str,
         entry_price: float,
         risk_distance: float,
     ) -> float:
-        cfg = self.profile["take_profit"]
-        if cfg["mode"] == "FIXED":
-            distance = float(cfg["fixed_price_units"])
-        elif cfg["mode"] == "RR":
-            distance = risk_distance * float(cfg["rr_ratio"])
-        else:
-            raise BacktestError(f"unsupported TP mode: {cfg['mode']}")
-        return entry_price + distance if side == "BUY" else entry_price - distance
+        original_tp, _ = self._initial_targets(
+            side,
+            entry_price,
+            risk_distance,
+        )
+        return original_tp
 
     def _position_volume(
         self,
@@ -927,7 +1377,13 @@ class BacktestEngine:
         bar: Bar,
         spread_price: float,
     ) -> None:
+        dynamic_mode = self.profile["take_profit"]["mode"] == "ZRSI_DYNAMIC"
+        max_extension_seconds = (
+            int(self.profile["take_profit"]["dynamic"]["max_extension_minutes"]) * 60
+        )
+
         for position in list(state.positions):
+            intrabar_entry = position.entry_filled_intrabar and position.entry_time == bar.time
             if position.side == "BUY":
                 executable_open = bar.open
                 executable_high = bar.high
@@ -935,9 +1391,7 @@ class BacktestEngine:
                 favorable = max(0.0, executable_high - position.entry_price)
                 adverse = max(0.0, position.entry_price - executable_low)
                 gap_sl = executable_open <= position.sl
-                gap_tp = executable_open >= position.tp
                 touch_sl = executable_low <= position.sl
-                touch_tp = executable_high >= position.tp
             else:
                 executable_open = bar.open + spread_price
                 executable_high = bar.high + spread_price
@@ -945,12 +1399,25 @@ class BacktestEngine:
                 favorable = max(0.0, position.entry_price - executable_low)
                 adverse = max(0.0, executable_high - position.entry_price)
                 gap_sl = executable_open >= position.sl
-                gap_tp = executable_open <= position.tp
                 touch_sl = executable_high >= position.sl
-                touch_tp = executable_low <= position.tp
+            if intrabar_entry:
+                # The open predates this stop fill. Treat unknown later SL/TP
+                # touches conservatively, but never close before entry exists.
+                gap_sl = False
 
-            position.mfe_price_units = max(position.mfe_price_units, favorable)
-            position.mae_price_units = max(position.mae_price_units, adverse)
+            target = (
+                position.hard_tp
+                if dynamic_mode and position.dynamic_extended
+                else position.original_tp
+            )
+            if position.side == "BUY":
+                gap_tp = executable_open >= target
+                touch_tp = executable_high >= target
+            else:
+                gap_tp = executable_open <= target
+                touch_tp = executable_low <= target
+            if intrabar_entry:
+                gap_tp = False
 
             exit_price: float | None = None
             reason: str | None = None
@@ -958,25 +1425,64 @@ class BacktestEngine:
             if gap_sl:
                 exit_price = executable_open
                 reason = "SL_GAP"
+            elif (
+                dynamic_mode
+                and position.dynamic_extended
+                and position.dynamic_exit_pending
+            ):
+                exit_price = executable_open
+                reason = position.dynamic_exit_reason or "ZRSI_REVERSAL"
+            elif (
+                dynamic_mode
+                and position.dynamic_extended
+                and position.dynamic_extension_time is not None
+                and bar.time - position.dynamic_extension_time
+                >= max_extension_seconds
+            ):
+                exit_price = executable_open
+                reason = "DYNAMIC_MAX_TIME"
             elif gap_tp:
                 exit_price = executable_open
-                reason = "TP_GAP"
-            elif touch_sl and touch_tp:
-                exit_price = position.sl
-                reason = "SL_AMBIGUOUS"
-            elif touch_sl:
-                exit_price = position.sl
-                reason = "SL"
-            elif touch_tp:
-                exit_price = position.tp
-                reason = "TP"
+                reason = (
+                    "DYNAMIC_HARD_TP_GAP"
+                    if dynamic_mode and position.dynamic_extended
+                    else "TP_GAP"
+                )
+
+            exit_at_open = exit_price is not None
+            if exit_at_open:
+                # Future extrema are unavailable after an opening gap/exit.
+                move = executable_open - position.entry_price
+                if position.side == "SELL":
+                    move = -move
+                favorable, adverse = max(0.0, move), max(0.0, -move)
+            else:
+                if position.partial_close_pending:
+                    self._apply_partial_close(state, dataset, position, bar, spread_price)
+                    position.partial_close_pending = False
+                if touch_sl and touch_tp:
+                    exit_price = position.sl
+                    reason = "SL_AMBIGUOUS"
+                elif touch_sl:
+                    exit_price = position.sl
+                    reason = "SL"
+                elif touch_tp:
+                    exit_price = target
+                    reason = (
+                        "DYNAMIC_HARD_TP"
+                        if dynamic_mode and position.dynamic_extended
+                        else "TP"
+                    )
+
+            position.mfe_price_units = max(position.mfe_price_units, favorable)
+            position.mae_price_units = max(position.mae_price_units, adverse)
 
             if exit_price is not None and reason is not None:
                 self._close_position(
                     state,
                     dataset,
                     position,
-                    exit_time=bar.time + 60,
+                    exit_time=bar.time if exit_at_open else bar.time + 60,
                     exit_price=exit_price,
                     reason=reason,
                 )
@@ -995,14 +1501,493 @@ class BacktestEngine:
                     if position.side == "BUY"
                     else position.entry_price - offset
                 )
-                improves = (
-                    new_sl > position.sl
-                    if position.side == "BUY"
-                    else new_sl < position.sl
-                )
-                if improves:
-                    position.sl = new_sl
+                current_exit = bar.close if position.side == "BUY" else bar.close + spread_price
+                if self._apply_stop_candidate(
+                    position, new_sl, minimum_step=0.0,
+                    metadata=dataset.metadata, current_exit=current_exit,
+                    observed_at=bar.time + 60, reason="BREAKEVEN",
+                ):
                     position.breakeven_applied = True
+
+    def _observe_position_management(
+        self,
+        state: BacktestState,
+        strategy: StrategyEngine,
+        dataset: HistoricalDataset,
+        bar: Bar,
+        spread_price: float,
+    ) -> None:
+        if not state.positions:
+            return
+
+        management = self.profile["management"]
+        tp_cfg = self.profile["take_profit"]
+        dynamic_cfg = tp_cfg["dynamic"]
+        current_rsi, current_z = self._management_metrics(strategy)
+
+        for position in list(state.positions):
+            if position not in state.positions:
+                continue
+
+            if tp_cfg["mode"] == "ZRSI_DYNAMIC":
+                current_exit = bar.close if position.side == "BUY" else bar.close + spread_price
+                current_profit = (
+                    current_exit - position.entry_price
+                    if position.side == "BUY"
+                    else position.entry_price - current_exit
+                )
+                original_distance = abs(position.original_tp - position.entry_price)
+                near_distance = max(
+                    0.0,
+                    original_distance - float(dynamic_cfg["near_tp_distance"]),
+                )
+                if (
+                    not position.dynamic_extended
+                    and current_profit >= near_distance
+                    and self._continuation_strong(
+                        position,
+                        current_rsi,
+                        current_z,
+                    )
+                ):
+                    position.dynamic_extended = True
+                    position.dynamic_extension_time = bar.time + 60
+                    position.dynamic_peak_rsi = current_rsi
+                    position.dynamic_peak_z = current_z
+                    position.management_events.append({"event": "DYNAMIC_EXTEND", "time": bar.time + 60})
+
+                if position.dynamic_extended:
+                    if self._dynamic_reversal(
+                        position,
+                        current_rsi,
+                        current_z,
+                    ):
+                        position.dynamic_exit_pending = True
+                        position.dynamic_exit_reason = "ZRSI_REVERSAL"
+
+                    if (
+                        dynamic_cfg["lock_sl_at_original_tp"]
+                        and not position.dynamic_lock_applied
+                        and position.mfe_price_units
+                        >= original_distance
+                        + float(dynamic_cfg["lock_profit_buffer"])
+                    ):
+                        buffer_value = float(dynamic_cfg["lock_profit_buffer"])
+                        candidate = (
+                            position.original_tp + buffer_value
+                            if position.side == "BUY"
+                            else position.original_tp - buffer_value
+                        )
+                        current_exit = (
+                            bar.close
+                            if position.side == "BUY"
+                            else bar.close + spread_price
+                        )
+                        if self._candidate_inside_market(
+                            position.side,
+                            candidate,
+                            current_exit,
+                        ) and self._apply_stop_candidate(
+                            position,
+                            candidate,
+                            minimum_step=0.0,
+                            metadata=dataset.metadata,
+                            current_exit=current_exit,
+                            observed_at=bar.time + 60,
+                            reason="ORIGINAL_TP_LOCK",
+                        ):
+                            position.dynamic_lock_applied = True
+
+            if (
+                management["partial_close_enabled"]
+                and not position.partial_close_applied
+                and not position.partial_close_pending
+                and position.mfe_price_units
+                >= position.original_risk
+                * float(management["partial_close_at_rr"])
+            ):
+                position.partial_close_pending = True
+
+            if position not in state.positions:
+                continue
+
+            current_exit = (
+                bar.close
+                if position.side == "BUY"
+                else bar.close + spread_price
+            )
+
+            if management["trailing_enabled"]:
+                candidate = self._trailing_candidate(
+                    strategy,
+                    position,
+                    current_exit,
+                    spread_price,
+                )
+                if (
+                    candidate is not None
+                    and self._candidate_inside_market(
+                        position.side,
+                        candidate,
+                        current_exit,
+                    )
+                    and self._apply_stop_candidate(
+                        position,
+                        candidate,
+                        minimum_step=float(
+                            management["trailing_step_price_units"]
+                        ),
+                        metadata=dataset.metadata,
+                        current_exit=current_exit,
+                        observed_at=bar.time + 60,
+                        reason="TRAILING",
+                    )
+                ):
+                    position.trailing_updates += 1
+
+            tighten_mode = str(management["sl_tighten_mode"])
+            candidate = self._tighten_candidate(
+                strategy,
+                position,
+                current_exit,
+                spread_price,
+                tighten_mode,
+            )
+            if (
+                candidate is not None
+                and self._candidate_inside_market(
+                    position.side,
+                    candidate,
+                    current_exit,
+                )
+                and self._apply_stop_candidate(
+                    position,
+                    candidate,
+                    minimum_step=0.0,
+                    metadata=dataset.metadata,
+                    current_exit=current_exit,
+                    observed_at=bar.time + 60,
+                    reason="SL_TIGHTEN",
+                )
+            ):
+                position.sl_tighten_updates += 1
+
+    def _continuation_strong(
+        self,
+        position: OpenPosition,
+        current_rsi: float | None,
+        current_z: float | None,
+    ) -> bool:
+        cfg = self.profile["take_profit"]["dynamic"]
+        conditions: list[bool] = []
+
+        if cfg["extend_use_z"]:
+            conditions.append(
+                current_z is not None and position.signal_trigger_z is not None
+                and (current_z > position.signal_trigger_z if position.side == "BUY"
+                     else current_z < position.signal_trigger_z)
+            )
+        if cfg["extend_use_rsi"]:
+            conditions.append(
+                current_rsi is not None and position.signal_trigger_rsi is not None
+                and (current_rsi > position.signal_trigger_rsi if position.side == "BUY"
+                     else current_rsi < position.signal_trigger_rsi)
+            )
+
+        if not conditions:
+            return False
+        return (
+            all(conditions)
+            if cfg["extend_logic"] == "BOTH"
+            else any(conditions)
+        )
+
+    def _dynamic_reversal(
+        self,
+        position: OpenPosition,
+        current_rsi: float | None,
+        current_z: float | None,
+    ) -> bool:
+        cfg = self.profile["take_profit"]["dynamic"]
+        conditions: list[bool] = []
+
+        if cfg["extend_use_z"] and current_z is None:
+            conditions.append(False)
+        if cfg["extend_use_z"] and current_z is not None:
+            if position.dynamic_peak_z is None:
+                position.dynamic_peak_z = current_z
+            if position.side == "BUY":
+                position.dynamic_peak_z = max(position.dynamic_peak_z, current_z)
+                conditions.append(
+                    position.dynamic_peak_z - current_z
+                    >= float(cfg["exit_z_reverse_delta"])
+                )
+            else:
+                position.dynamic_peak_z = min(position.dynamic_peak_z, current_z)
+                conditions.append(
+                    current_z - position.dynamic_peak_z
+                    >= float(cfg["exit_z_reverse_delta"])
+                )
+
+        if cfg["extend_use_rsi"] and current_rsi is None:
+            conditions.append(False)
+        if cfg["extend_use_rsi"] and current_rsi is not None:
+            if position.dynamic_peak_rsi is None:
+                position.dynamic_peak_rsi = current_rsi
+            if position.side == "BUY":
+                position.dynamic_peak_rsi = max(
+                    position.dynamic_peak_rsi,
+                    current_rsi,
+                )
+                conditions.append(
+                    position.dynamic_peak_rsi - current_rsi
+                    >= float(cfg["exit_rsi_reverse_delta"])
+                )
+            else:
+                position.dynamic_peak_rsi = min(
+                    position.dynamic_peak_rsi,
+                    current_rsi,
+                )
+                conditions.append(
+                    current_rsi - position.dynamic_peak_rsi
+                    >= float(cfg["exit_rsi_reverse_delta"])
+                )
+
+        if not conditions:
+            return False
+        return (
+            all(conditions)
+            if cfg["extend_logic"] == "BOTH"
+            else any(conditions)
+        )
+
+    def _trailing_candidate(
+        self,
+        strategy: StrategyEngine,
+        position: OpenPosition,
+        current_exit: float,
+        spread_price: float,
+    ) -> float | None:
+        management = self.profile["management"]
+        mode = str(management["trailing_mode"])
+        if mode == "STRUCTURE":
+            return self._structure_stop_candidate(
+                strategy,
+                position.side,
+                int(management["trailing_structure_lookback"]),
+                spread_price,
+            )
+        if mode == "ATR":
+            return self._atr_stop_candidate(
+                strategy,
+                position.side,
+                current_exit,
+                float(management["trailing_atr_multiplier"]),
+            )
+        return None
+
+    def _tighten_candidate(
+        self,
+        strategy: StrategyEngine,
+        position: OpenPosition,
+        current_exit: float,
+        spread_price: float,
+        mode: str,
+    ) -> float | None:
+        if mode == "OFF":
+            return None
+        if mode == "STRUCTURE":
+            return self._structure_stop_candidate(
+                strategy,
+                position.side,
+                int(self.profile["stop_loss"]["structure_lookback"]),
+                spread_price,
+            )
+        if mode == "ATR":
+            return self._atr_stop_candidate(
+                strategy,
+                position.side,
+                current_exit,
+                float(self.profile["stop_loss"]["atr_multiplier"]),
+            )
+        if mode == "ZRSI_ASSIST" and position.dynamic_extended:
+            buffer_value = float(
+                self.profile["take_profit"]["dynamic"]["lock_profit_buffer"]
+            )
+            return (
+                position.original_tp + buffer_value
+                if position.side == "BUY"
+                else position.original_tp - buffer_value
+            )
+        return None
+
+    def _structure_stop_candidate(
+        self,
+        strategy: StrategyEngine,
+        side: str,
+        lookback: int,
+        spread_price: float,
+    ) -> float | None:
+        timeframe = str(self.profile["stop_loss"]["structure_timeframe"])
+        history = strategy.history[timeframe]
+        if lookback <= 0 or len(history) < lookback:
+            return None
+        window = history[-lookback:]
+        buffer_value = float(
+            self.profile["stop_loss"]["structure_buffer_price_units"]
+        )
+        if side == "BUY":
+            return min(item.low for item in window) - buffer_value
+        return max(item.high for item in window) + buffer_value + spread_price
+
+    def _atr_stop_candidate(
+        self,
+        strategy: StrategyEngine,
+        side: str,
+        current_exit: float,
+        multiplier: float,
+    ) -> float | None:
+        cfg = self.profile["stop_loss"]
+        timeframe = str(cfg["atr_timeframe"])
+        value = _atr(strategy.history[timeframe], int(cfg["atr_period"]))
+        if value is None:
+            return None
+        distance = value * multiplier
+        return (
+            current_exit - distance
+            if side == "BUY"
+            else current_exit + distance
+        )
+
+    @staticmethod
+    def _candidate_inside_market(
+        side: str,
+        candidate: float,
+        current_exit: float,
+    ) -> bool:
+        if side == "BUY":
+            return candidate < current_exit - 1e-12
+        return candidate > current_exit + 1e-12
+
+    @staticmethod
+    def _improves_stop(
+        position: OpenPosition,
+        candidate: float,
+    ) -> bool:
+        if position.side == "BUY":
+            return candidate > position.sl + 1e-12
+        return candidate < position.sl - 1e-12
+
+    def _apply_stop_candidate(
+        self,
+        position: OpenPosition,
+        candidate: float,
+        *,
+        minimum_step: float,
+        metadata: DatasetMetadata | None = None,
+        current_exit: float | None = None,
+        observed_at: int | None = None,
+        reason: str = "SL_UPDATE",
+    ) -> bool:
+        if not math.isfinite(candidate):
+            return False
+        if metadata is not None:
+            candidate = self._tick_price(candidate, metadata.tick_size, upward=position.side == "SELL")
+            if current_exit is None or not math.isfinite(current_exit):
+                return False
+            required = max(metadata.stops_level_points, metadata.freeze_level_points) * metadata.point_size
+            distance = current_exit - candidate if position.side == "BUY" else candidate - current_exit
+            old_distance = current_exit - position.sl if position.side == "BUY" else position.sl - current_exit
+            if distance <= 0 or distance + 1e-12 < required:
+                return False
+            if metadata.freeze_level_points > 0 and distance <= metadata.freeze_level_points * metadata.point_size + 1e-12:
+                return False
+            if metadata.freeze_level_points > 0 and old_distance <= metadata.freeze_level_points * metadata.point_size + 1e-12:
+                return False
+        improvement = (
+            candidate - position.sl
+            if position.side == "BUY"
+            else position.sl - candidate
+        )
+        if improvement <= 1e-12:
+            return False
+        if improvement + 1e-12 < max(0.0, minimum_step):
+            return False
+        old_sl = position.sl
+        position.sl = candidate
+        position.management_events.append({
+            "event": reason, "time": observed_at,
+            "previous_sl": self._round(old_sl), "sl": self._round(candidate),
+        })
+        return True
+
+    @staticmethod
+    def _tick_price(value: float, tick_size: float, *, upward: bool) -> float:
+        units = value / tick_size
+        steps = math.ceil(units - 1e-10) if upward else math.floor(units + 1e-10)
+        return round(steps * tick_size, 10)
+
+    def _apply_partial_close(
+        self,
+        state: BacktestState,
+        dataset: HistoricalDataset,
+        position: OpenPosition,
+        bar: Bar,
+        spread_price: float,
+    ) -> None:
+        if position.partial_close_applied:
+            return
+        percent = float(self.profile["management"]["partial_close_percent"])
+        step = dataset.metadata.volume_step
+        minimum = dataset.metadata.volume_min
+        raw_close = position.volume * percent / 100.0
+        steps = math.floor((raw_close + 1e-12) / step)
+        close_volume = round(steps * step, 10)
+        remaining = round(position.volume - close_volume, 10)
+        if (
+            close_volume < minimum - 1e-12
+            or remaining < minimum - 1e-12
+        ):
+            return
+
+        exit_price = (
+            bar.open
+            if position.side == "BUY"
+            else bar.open + spread_price
+        )
+        move = (
+            exit_price - position.entry_price
+            if position.side == "BUY"
+            else position.entry_price - exit_price
+        )
+        gross = (
+            move
+            / dataset.metadata.tick_size
+            * dataset.metadata.tick_value
+            * close_volume
+        )
+        commission = self.commission_per_lot * close_volume
+        net = gross - commission
+
+        state.balance += net
+        day_key = self._day_key(dataset, bar.time)
+        state.pnl_by_day[day_key] = state.pnl_by_day.get(day_key, 0.0) + net
+
+        position.realized_gross += gross
+        position.realized_commission += commission
+        position.realized_net += net
+        position.volume = remaining
+        position.partial_close_applied = True
+        position.partial_close_event = {
+            "time": bar.time,
+            "price": self._round(exit_price),
+            "percent": self._round(percent),
+            "volume": self._round(close_volume),
+            "remaining_volume": self._round(remaining),
+            "gross_pl": self._round(gross),
+            "commission": self._round(commission),
+            "net_pl": self._round(net),
+        }
 
     def _close_position(
         self,
@@ -1014,24 +1999,28 @@ class BacktestEngine:
         exit_price: float,
         reason: str,
     ) -> None:
+        final_close_volume = position.volume
         price_move = (
             exit_price - position.entry_price
             if position.side == "BUY"
             else position.entry_price - exit_price
         )
-        gross = (
+        final_gross = (
             price_move
             / dataset.metadata.tick_size
             * dataset.metadata.tick_value
-            * position.volume
+            * final_close_volume
         )
-        commission = self.commission_per_lot * position.volume
-        net = gross - commission
-        state.balance += net
+        final_commission = self.commission_per_lot * final_close_volume
+        final_net = final_gross - final_commission
+        gross = position.realized_gross + final_gross
+        commission = position.realized_commission + final_commission
+        net = position.realized_net + final_net
+        state.balance += final_net
 
         duration_seconds = max(0, exit_time - position.entry_time)
-        day_key = self._day_key(dataset, exit_time - 1)
-        state.pnl_by_day[day_key] = state.pnl_by_day.get(day_key, 0.0) + net
+        day_key = self._day_key(dataset, exit_time)
+        state.pnl_by_day[day_key] = state.pnl_by_day.get(day_key, 0.0) + final_net
         if net < 0:
             state.consecutive_losses_by_day[day_key] = (
                 state.consecutive_losses_by_day.get(day_key, 0) + 1
@@ -1049,15 +2038,32 @@ class BacktestEngine:
                 "signal_sequence": position.signal_sequence,
                 "signal_time": position.signal_time,
                 "side": position.side,
+                "entry_mode": position.entry_mode,
+                "pending_trigger_price": (
+                    self._round(position.pending_trigger_price)
+                    if position.pending_trigger_price is not None
+                    else None
+                ),
                 "entry_time": position.entry_time,
                 "exit_time": exit_time,
                 "entry_price": self._round(position.entry_price),
                 "exit_price": self._round(exit_price),
-                "volume": self._round(position.volume),
+                "volume": self._round(position.initial_volume),
+                "final_close_volume": self._round(final_close_volume),
                 "original_sl": self._round(position.original_sl),
                 "final_sl": self._round(position.sl),
+                "original_tp": self._round(position.original_tp),
+                "hard_tp": self._round(position.hard_tp),
                 "tp": self._round(position.tp),
                 "breakeven_applied": position.breakeven_applied,
+                "partial_close_applied": position.partial_close_applied,
+                "partial_close": deepcopy(position.partial_close_event),
+                "trailing_updates": position.trailing_updates,
+                "sl_tighten_updates": position.sl_tighten_updates,
+                "dynamic_extended": position.dynamic_extended,
+                "dynamic_extension_time": position.dynamic_extension_time,
+                "dynamic_lock_applied": position.dynamic_lock_applied,
+                "management_events": deepcopy(position.management_events),
                 "gross_pl": self._round(gross),
                 "commission": self._round(commission),
                 "net_pl": self._round(net),
@@ -1069,13 +2075,13 @@ class BacktestEngine:
                     position.mae_price_units
                     / dataset.metadata.tick_size
                     * dataset.metadata.tick_value
-                    * position.volume
+                    * position.initial_volume
                 ),
                 "mfe_usd": self._round(
                     position.mfe_price_units
                     / dataset.metadata.tick_size
                     * dataset.metadata.tick_value
-                    * position.volume
+                    * position.initial_volume
                 ),
                 "profile_hash": position.profile_hash,
                 "dataset_fingerprint": position.dataset_fingerprint,
@@ -1197,6 +2203,7 @@ class BacktestEngine:
         deterministic = {
             "schema_version": BACKTEST_SCHEMA_VERSION,
             "model": BACKTEST_MODEL,
+            "execution_revision": "TASK013_CLOSED_BAR_V2",
             "engine_profile_hash": strategy.profile_hash,
             "dataset_fingerprint": dataset.fingerprint,
             "dataset_metadata": dataset.metadata.public(),
@@ -1208,6 +2215,7 @@ class BacktestEngine:
             "profile": deepcopy(self.profile),
             "metrics": metrics,
             "skipped_signals": dict(sorted(state.skipped_signals.items())),
+            "pending_entry_events": deepcopy(state.pending_entry_events),
             "equity_curve": self._downsample_curve(state.equity_curve),
             "drawdown_curve": self._downsample_curve(state.drawdown_curve),
             "trades": state.trades,
@@ -1225,6 +2233,33 @@ class BacktestEngine:
             "result_hash": result_hash,
             "dataset_file_name": dataset.path.name,
         }
+
+    def _record_pending_event(
+        self,
+        state: BacktestState,
+        pending: PendingStopEntry,
+        event: str,
+        timestamp: int,
+        *,
+        fill_price: float | None = None,
+    ) -> None:
+        state.pending_entry_events.append(
+            {
+                "event": event,
+                "time": int(timestamp),
+                "signal_sequence": pending.signal_sequence,
+                "signal_time": pending.signal_time,
+                "side": pending.side,
+                "trigger_price": self._round(pending.trigger_price),
+                "fill_price": (
+                    self._round(fill_price)
+                    if fill_price is not None
+                    else None
+                ),
+                "expires_at": pending.expires_at,
+                "signal_stale_at": pending.signal_stale_at,
+            }
+        )
 
     @staticmethod
     def _skip(state: BacktestState, reason: str) -> None:

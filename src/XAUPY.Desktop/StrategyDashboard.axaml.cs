@@ -1,15 +1,139 @@
+using System.Text;
+using System.Text.Json;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using XAUPY.Ipc;
 
 namespace XAUPY.Desktop;
 
 public partial class StrategyDashboard : UserControl
 {
+    private EngineProcessSupervisor? _supervisor;
+    private bool _actionBusy;
+    private static readonly FilePickerFileType StrategyJson = new("XAUPY strategy JSON") { Patterns = ["*.json"] };
+
+    public void AttachSupervisor(EngineProcessSupervisor supervisor) => _supervisor = supervisor;
+
     public StrategyDashboard()
     {
         InitializeComponent();
         Apply(StrategySnapshot.Empty, ConfigurationSummary.Default);
+    }
+
+    private async void SaveStrategy_OnClick(object? sender, RoutedEventArgs e)
+    {
+        await RunActionAsync(async supervisor =>
+        {
+            var profile = await supervisor.GetActiveConfigAsync();
+            var provider = TopLevel.GetTopLevel(this)?.StorageProvider
+                ?? throw new InvalidOperationException("Không mở được hộp thoại lưu file.");
+            var file = await provider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Lưu chiến lược XAUPY",
+                SuggestedFileName = "XAUPY_Strategy.json",
+                DefaultExtension = "json",
+                FileTypeChoices = [StrategyJson]
+            });
+            if (file is null) return;
+            await using var stream = await file.OpenWriteAsync();
+            stream.SetLength(0);
+            await using var writer = new StreamWriter(stream, new UTF8Encoding(false));
+            await writer.WriteAsync(JsonSerializer.Serialize(profile, new JsonSerializerOptions { WriteIndented = true }));
+            ShowAction($"Đã lưu cấu hình đang áp dụng: {file.Name}.", Brushes.LightGreen);
+        });
+    }
+
+    private async void LoadStrategy_OnClick(object? sender, RoutedEventArgs e)
+    {
+        await RunActionAsync(async supervisor =>
+        {
+            var provider = TopLevel.GetTopLevel(this)?.StorageProvider
+                ?? throw new InvalidOperationException("Không mở được hộp thoại chọn file.");
+            var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Tải chiến lược XAUPY", AllowMultiple = false, FileTypeFilter = [StrategyJson]
+            });
+            if (files.Count == 0) return;
+            await using var stream = await files[0].OpenReadAsync();
+            using var document = await JsonDocument.ParseAsync(stream);
+            var validation = await supervisor.ValidateConfigAsync(document.RootElement);
+            if (!validation.Valid || validation.Profile is null)
+                throw new InvalidDataException(string.Join(" • ", validation.Errors));
+            if (!await ConfirmApplyAsync(files[0].Name, validation.Profile.Value))
+            {
+                ShowAction("Đã hủy áp dụng. Cấu hình đang chạy được giữ nguyên.", Brushes.LightGray);
+                return;
+            }
+            var result = await supervisor.ApplyActiveConfigAsync(validation.Profile.Value);
+            if (!result.Applied)
+                throw new InvalidDataException(string.Join(" • ", result.Errors));
+            ShowAction($"Đã xác thực và áp dụng {files[0].Name}. Giao dịch vẫn khóa an toàn.", Brushes.LightGreen);
+        });
+    }
+
+    private async Task RunActionAsync(Func<EngineProcessSupervisor, Task> action)
+    {
+        if (_actionBusy) return;
+        _actionBusy = true;
+        foreach (var name in new[] { "SaveStrategyButton", "LoadStrategyButton", "ExportStrategyButton" })
+            this.FindControl<Button>(name)!.IsEnabled = false;
+        try
+        {
+            if (_supervisor is null || _supervisor.State != EngineConnectionState.Ready)
+                throw new InvalidOperationException("Python Engine chưa sẵn sàng. Hãy kết nối lại trước khi thao tác cấu hình.");
+            await action(_supervisor);
+        }
+        catch (Exception ex)
+        {
+            ShowAction(ex.Message, Brushes.Gold);
+        }
+        finally
+        {
+            _actionBusy = false;
+            foreach (var name in new[] { "SaveStrategyButton", "LoadStrategyButton", "ExportStrategyButton" })
+                this.FindControl<Button>(name)!.IsEnabled = true;
+        }
+    }
+
+    private void ShowAction(string message, IBrush foreground)
+    {
+        var status = Text("StrategyActionText");
+        status.Text = message;
+        status.Foreground = foreground;
+        status.IsVisible = true;
+    }
+
+    private async Task<bool> ConfirmApplyAsync(string fileName, JsonElement profile)
+    {
+        if (TopLevel.GetTopLevel(this) is not Window owner) return false;
+        static string Read(JsonElement root, string group, string key) =>
+            root.TryGetProperty(group, out var section) && section.TryGetProperty(key, out var value) ? value.ToString() : "—";
+        bool accepted = false;
+        var dialog = new Window
+        {
+            Title = "Áp dụng chiến lược", Width = 530, Height = 285, CanResize = false,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner, Background = new SolidColorBrush(Color.Parse("#031426"))
+        };
+        var cancel = new Button { Content = "Hủy", Classes = { "secondary" } };
+        var apply = new Button { Content = "Áp dụng cấu hình", Classes = { "primary" } };
+        cancel.Click += (_, _) => dialog.Close();
+        apply.Click += (_, _) => { accepted = true; dialog.Close(); };
+        dialog.Content = new StackPanel
+        {
+            Margin = new Avalonia.Thickness(20), Spacing = 12,
+            Children =
+            {
+                new TextBlock { Text = $"Áp dụng {fileName}?", FontSize = 19, FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap },
+                new TextBlock { Text = $"Hồ sơ: {Read(profile, "profile", "name")}\nKhung: {Read(profile, "timeframes", "direction")} → {Read(profile, "timeframes", "pullback")} → {Read(profile, "timeframes", "trigger")}\nRisk mỗi lệnh: {Read(profile, "risk", "risk_percent")}% · Max lot: {Read(profile, "risk", "max_lot")}", TextWrapping = TextWrapping.Wrap },
+                new TextBlock { Text = "Chiến lược sẽ tính lại trạng thái từ cấu hình mới. Khóa giao dịch vẫn được giữ.", Foreground = Brushes.Gold, TextWrapping = TextWrapping.Wrap },
+                new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8, Children = { cancel, apply } }
+            }
+        };
+        await dialog.ShowDialog(owner);
+        return accepted;
     }
 
     public void Apply(StrategySnapshot strategy, ConfigurationSummary config)
@@ -23,6 +147,18 @@ public partial class StrategyDashboard : UserControl
             : $"Hash: {strategy.ProfileHash[..Math.Min(12, strategy.ProfileHash.Length)]}";
         Text("DirectionText").Text = strategy.Direction;
         Text("DirectionText").Foreground = DirectionBrush(strategy.Direction);
+        Text("DirectionDot").Foreground = DirectionBrush(strategy.Direction);
+        Text("PullbackDot").Foreground = strategy.ArmedSide is not null ? Brushes.MediumSpringGreen : Brushes.SlateGray;
+        Text("TriggerDot").Foreground = strategy.TriggerPassed == true ? Brushes.MediumSpringGreen : Brushes.SlateGray;
+        Text("AdxConditionText").Text = Format(strategy.Filters.Adx);
+        Text("AtrConditionText").Text = Format(strategy.Filters.Atr);
+        Text("AllConditionText").Text = strategy.Ready && strategy.Available ? "SẴN SÀNG" : "ĐANG CHỜ";
+        Text("PullbackRsiMirror").Text = Format(strategy.PullbackIndicators.Rsi);
+        Text("TriggerRsiMirror").Text = Format(strategy.TriggerIndicators.Rsi);
+        Text("PullbackZFilterMirror").Text = Format(strategy.PullbackIndicators.Z);
+        Text("TriggerZFilterMirror").Text = Format(strategy.TriggerIndicators.Z);
+        Text("PullbackConditionMirror").Text = PullbackEvidence(strategy);
+        Text("TriggerConditionMirror").Text = Flag(strategy.TriggerPassed);
         Text("ArmedSideText").Text = $"Armed: {strategy.ArmedSide ?? "—"}";
 
         Text("DirectionTfText").Text = strategy.DirectionTimeframe;
@@ -52,7 +188,7 @@ public partial class StrategyDashboard : UserControl
                     .Select(item => $"{item.Key}:{item.Value}"));
         Text("BarsSeenText").Text = $"Bars: {bars}";
         Text("WarmupText").Text = strategy.WarmupReasons.Count == 0
-            ? "Warm-up: đủ dữ liệu cho các indicator đang bật."
+            ? strategy.Available && strategy.Ready ? "Warm-up: đủ dữ liệu cho các indicator đang bật." : "Warm-up: đang chờ dữ liệu chiến lược."
             : $"Warm-up: {string.Join(" • ", strategy.WarmupReasons)}";
         Text("DataErrorText").Text = string.IsNullOrWhiteSpace(strategy.LastDataError)
             ? "Data error: none"

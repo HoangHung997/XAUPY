@@ -1,6 +1,6 @@
 #property strict
-#property version   "1.009"
-#property description "XAUPY Task 009 MT5 data/order-book bridge. Broker execution is hard-locked."
+#property version   "1.014"
+#property description "XAUPY MT5 closed-history/data/order-book bridge. Broker execution is hard-locked."
 
 input string InpHost               = "127.0.0.1";
 input uint   InpPort               = 39421;
@@ -18,6 +18,22 @@ int  g_socket = INVALID_HANDLE;
 bool g_handshake_ok = false;
 long g_sequence = 0;
 ulong g_last_connect_attempt_ms = 0;
+ulong g_last_history_ms = 0;
+ulong g_last_network_error_log_ms = 0;
+ulong g_last_handshake_log_ms = 0;
+const int HISTORY_BAR_LIMIT = 256;
+
+void LogNetworkError(string operation, int error)
+{
+   ulong now_ms = GetTickCount64();
+   if(g_last_network_error_log_ms != 0 && now_ms - g_last_network_error_log_ms < 10000)
+      return;
+   g_last_network_error_log_ms = now_ms;
+   if(error == 4014)
+      Print("XAUPY_BRIDGE permission denied (4014): run as an Expert Advisor and allow 127.0.0.1 in MT5 Tools > Options > Expert Advisors. Operation=", operation);
+   else
+      Print("XAUPY_BRIDGE ", operation, " failed err=", error, "; reconnect is data-only, broker execution remains locked.");
+}
 
 string JsonEscape(string value)
 {
@@ -525,6 +541,48 @@ string JsonBars()
    return json;
 }
 
+string JsonHistoricalRate(const MqlRates &rate)
+{
+   string json = "{";
+   json += JsonKey("time") + StringFormat("%I64d", (long)rate.time) + ",";
+   json += JsonKey("open") + JsonNumber(rate.open, _Digits) + ",";
+   json += JsonKey("high") + JsonNumber(rate.high, _Digits) + ",";
+   json += JsonKey("low") + JsonNumber(rate.low, _Digits) + ",";
+   json += JsonKey("close") + JsonNumber(rate.close, _Digits) + ",";
+   json += JsonKey("tick_volume") + StringFormat("%I64d", (long)rate.tick_volume);
+   return json + "}";
+}
+
+// Latest bars and warm-up arrays are captured from the same CopyRates result.
+// Shift 1 excludes the forming candle. MT5's original broker timestamps remain
+// unchanged; neither ticks nor missing candles are invented.
+string JsonBarsWithHistory(string &history_json)
+{
+   ENUM_TIMEFRAMES frames[8] = {PERIOD_M1, PERIOD_M3, PERIOD_M5, PERIOD_M15,
+                                PERIOD_M30, PERIOD_H1, PERIOD_H2, PERIOD_H4};
+   string labels[8] = {"M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4"};
+   string latest_json = "{";
+   history_json = "{";
+   for(int index = 0; index < 8; index++)
+   {
+      if(index > 0) { latest_json += ","; history_json += ","; }
+      MqlRates rates[];
+      ArraySetAsSeries(rates, false);
+      int copied = CopyRates(_Symbol, frames[index], 1, HISTORY_BAR_LIMIT, rates);
+      latest_json += JsonKey(labels[index]);
+      latest_json += copied > 0 ? JsonHistoricalRate(rates[copied - 1]) : "null";
+      history_json += JsonKey(labels[index]) + "[";
+      for(int i = 0; i < copied; i++)
+      {
+         if(i > 0) history_json += ",";
+         history_json += JsonHistoricalRate(rates[i]);
+      }
+      history_json += "]";
+   }
+   history_json += "}";
+   return latest_json + "}";
+}
+
 string BuildHelloPayload()
 {
    string json = "{";
@@ -537,7 +595,7 @@ string BuildHelloPayload()
    return json;
 }
 
-string BuildSnapshotPayload()
+string BuildSnapshotPayload(bool include_history=false)
 {
    MqlTick tick;
    ZeroMemory(tick);
@@ -548,6 +606,8 @@ string BuildSnapshotPayload()
    if(point > 0.0)
       spread_points = (tick.ask - tick.bid) / point;
 
+   string history_json = "";
+   string latest_bars = include_history ? JsonBarsWithHistory(history_json) : JsonBars();
    string json = "{";
    json += JsonKey("bridge_version") + JsonString("0.3.0-task003") + ",";
    json += JsonKey("symbol") + JsonString(_Symbol) + ",";
@@ -562,6 +622,7 @@ string BuildSnapshotPayload()
    json += JsonKey("margin_free") + JsonNumber(AccountInfoDouble(ACCOUNT_MARGIN_FREE), 2) + ",";
    json += JsonKey("bid") + JsonNumber(tick.bid, _Digits) + ",";
    json += JsonKey("ask") + JsonNumber(tick.ask, _Digits) + ",";
+   json += JsonKey("tick_time_msc") + StringFormat("%I64d", tick.time_msc) + ",";
    json += JsonKey("spread_points") + JsonNumber(spread_points, 2) + ",";
    json += JsonKey("digits") + IntegerToString(_Digits) + ",";
    json += JsonKey("point") + JsonNumber(point, 10) + ",";
@@ -579,7 +640,10 @@ string BuildSnapshotPayload()
    json += JsonKey("orders") + JsonOrders() + ",";
    json += JsonKey("deals") + JsonDeals() + ",";
    json += JsonKey("guardian") + JsonGuardian() + ",";
-   json += JsonKey("bars") + JsonBars();
+   json += JsonKey("server_time") + StringFormat("%I64d", (long)TimeTradeServer()) + ",";
+   json += JsonKey("bars") + latest_bars;
+   if(include_history)
+      json += "," + JsonKey("bar_history") + history_json;
    json += "}";
    return json;
 }
@@ -605,6 +669,7 @@ void CloseSocket()
    }
 
    g_handshake_ok = false;
+   g_last_history_ms = 0;
 }
 
 bool EnsureConnected()
@@ -623,20 +688,84 @@ bool EnsureConnected()
    g_socket = SocketCreate(SOCKET_DEFAULT);
    if(g_socket == INVALID_HANDLE)
    {
-      Print("XAUPY_BRIDGE socket create failed: ", GetLastError());
+      LogNetworkError("socket create", GetLastError());
       return false;
    }
 
    ResetLastError();
    if(!SocketConnect(g_socket, InpHost, InpPort, InpConnectTimeoutMs))
    {
-      Print("XAUPY_BRIDGE connect failed ", InpHost, ":", InpPort, " err=", GetLastError());
+      LogNetworkError("connect", GetLastError());
       CloseSocket();
       return false;
    }
 
-   Print("XAUPY_BRIDGE connected ", InpHost, ":", InpPort);
    return true;
+}
+
+bool ReadResponseLine(string &response_text)
+{
+   response_text = "";
+   uchar response_bytes[];
+   int total = 0;
+   const int max_response_bytes = 1024 * 1024;
+   ulong started_ms = GetTickCount64();
+   while(!IsStopped() && GetTickCount64() - started_ms < InpSocketTimeoutMs)
+   {
+      if(!SocketIsConnected(g_socket))
+      {
+         LogNetworkError("read disconnected socket", 5273);
+         return false;
+      }
+      ResetLastError();
+      uint available = SocketIsReadable(g_socket);
+      int readable_error = GetLastError();
+      if(available == 0)
+      {
+         if(readable_error != 0)
+         {
+            LogNetworkError("socket readability", readable_error);
+            return false;
+         }
+         Sleep(5);
+         continue;
+      }
+      ulong elapsed_ms = GetTickCount64() - started_ms;
+      if(elapsed_ms >= InpSocketTimeoutMs)
+         break;
+      uint remaining_ms = (uint)(InpSocketTimeoutMs - elapsed_ms);
+      uint read_size = (uint)MathMin(available, 16384);
+      uchar chunk[];
+      int received = SocketRead(g_socket, chunk, read_size, remaining_ms);
+      if(received <= 0)
+      {
+         LogNetworkError("socket read", GetLastError());
+         return false;
+      }
+      int newline_at = -1;
+      for(int i = 0; i < received; i++)
+      {
+         if(chunk[i] == 10) { newline_at = i; break; }
+      }
+      int append_count = newline_at >= 0 ? newline_at : received;
+      if(total + append_count >= max_response_bytes)
+      {
+         LogNetworkError("oversize response frame", 5273);
+         return false;
+      }
+      ArrayResize(response_bytes, total + append_count);
+      if(append_count > 0)
+         ArrayCopy(response_bytes, chunk, total, 0, append_count);
+      total += append_count;
+      if(newline_at >= 0)
+      {
+         // Decode only the complete frame; UTF-8 characters may cross packets.
+         response_text = CharArrayToString(response_bytes, 0, total, CP_UTF8);
+         return total > 0;
+      }
+   }
+   LogNetworkError("response frame timeout", 5273);
+   return false;
 }
 
 bool SendRequest(string message_type,
@@ -658,30 +787,34 @@ bool SendRequest(string message_type,
       return false;
 
    int send_len = byte_count - 1;
-   int sent = SocketSend(g_socket, bytes, (uint)send_len);
-   if(sent != send_len)
+   if(send_len > 1024 * 1024)
    {
-      Print("XAUPY_BRIDGE socket send failed err=", GetLastError());
+      Print("XAUPY_BRIDGE snapshot exceeds bounded IPC packet size");
       CloseSocket();
       return false;
    }
-
-   uchar recv[];
-   ArrayResize(recv, 65536);
-
-   int received = SocketRead(g_socket, recv, 65535, InpSocketTimeoutMs);
-   if(received <= 0)
+   int offset = 0;
+   while(offset < send_len)
    {
-      Print("XAUPY_BRIDGE socket read failed err=", GetLastError());
+      int chunk_size = (int)MathMin(16384, send_len - offset);
+      uchar chunk[];
+      ArrayResize(chunk, chunk_size);
+      ArrayCopy(chunk, bytes, 0, offset, chunk_size);
+      int sent = SocketSend(g_socket, chunk, (uint)chunk_size);
+      if(sent <= 0)
+      {
+         LogNetworkError("socket send", GetLastError());
+         CloseSocket();
+         return false;
+      }
+      offset += sent;
+   }
+
+   if(!ReadResponseLine(response_text))
+   {
       CloseSocket();
       return false;
    }
-
-   response_text = CharArrayToString(recv, 0, received, CP_UTF8);
-
-   int newline = StringFind(response_text, "\n");
-   if(newline >= 0)
-      response_text = StringSubstr(response_text, 0, newline);
 
    string request_token = JsonKey("request_id") + JsonString(request_id);
    string type_token = JsonKey("type") + JsonString(expected_type);
@@ -689,7 +822,7 @@ bool SendRequest(string message_type,
    if(StringFind(response_text, request_token) < 0 ||
       StringFind(response_text, type_token) < 0)
    {
-      Print("XAUPY_BRIDGE invalid response: ", response_text);
+      LogNetworkError("invalid response correlation/type", 5273);
       CloseSocket();
       return false;
    }
@@ -715,7 +848,12 @@ bool EnsureHandshake()
       return false;
 
    g_handshake_ok = true;
-   Print("XAUPY_BRIDGE handshake ready; execution remains locked.");
+   ulong now_ms = GetTickCount64();
+   if(g_last_handshake_log_ms == 0 || now_ms - g_last_handshake_log_ms >= 10000)
+   {
+      Print("XAUPY_BRIDGE handshake ready; execution remains locked.");
+      g_last_handshake_log_ms = now_ms;
+   }
    return true;
 }
 
@@ -758,13 +896,16 @@ void OnTimer()
       return;
 
    string response;
+   bool include_history = g_last_history_ms == 0 || GetTickCount64() - g_last_history_ms >= 60000;
    if(!SendRequest("bridge_snapshot",
-                   BuildSnapshotPayload(),
+                   BuildSnapshotPayload(include_history),
                    "bridge_snapshot_ack",
                    response))
    {
       return;
    }
+   if(include_history)
+      g_last_history_ms = GetTickCount64();
 }
 
 void OnTick()

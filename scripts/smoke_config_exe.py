@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from _smoke_runtime import isolated_environment
+
 import argparse
 import json
 from pathlib import Path
@@ -13,6 +15,7 @@ def run(*args: str) -> subprocess.CompletedProcess:
         list(args),
         text=True,
         capture_output=True,
+        env=isolated_environment(),
         check=False,
     )
 

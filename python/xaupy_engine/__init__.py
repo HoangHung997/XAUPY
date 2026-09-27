@@ -1,8 +1,7 @@
 """XAUPY Python Engine.
 
-Task 012 adds deterministic parameter optimization and train-only walk-forward
-validation on top of the Task 011 BacktestEngine. Broker execution remains
-hard-locked.
+Desktop completion release: dynamic management research, diagnostics, persisted
+settings and recovery. Broker execution remains hard-locked.
 """
 
-__version__ = "0.12.0-task012"
+__version__ = "0.16.0-rc1"

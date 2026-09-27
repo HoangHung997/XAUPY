@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="XAUPY.Desktop.ConfigurationEditor">
-  <Grid ColumnDefinitions="270,*" ColumnSpacing="8">
+  <Grid ColumnDefinitions="274,*" ColumnSpacing="10">
     <!-- Approved configuration category rail -->
     <Border Grid.Column="0" Classes="panel">
       <Grid RowDefinitions="Auto,*,Auto">
@@ -11,38 +11,38 @@
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
           <StackPanel Margin="8" Spacing="3">
-            <Button Classes="navTab active" HorizontalContentAlignment="Left">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="🛡" FontSize="18"/><StackPanel><TextBlock Text="Khởi tạo &amp; an toàn" FontWeight="SemiBold"/><TextBlock Text="Tài khoản, lot, rủi ro, giới hạn" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            <Button Classes="navTab active" HorizontalContentAlignment="Left" Tag="risk" Click="Category_OnClick">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="🛡" FontSize="18"/><StackPanel><TextBlock Text="Khởi tạo &amp; an toàn" FontWeight="SemiBold"/><TextBlock Text="Tài khoản, lot, rủi ro, giới hạn" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
-            <Button Classes="navTab" HorizontalContentAlignment="Left">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="⇄" FontSize="18"/><StackPanel><TextBlock Text="Hướng giao dịch" FontWeight="SemiBold"/><TextBlock Text="Chỉ buy/sell hoặc 2 chiều" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="direction" Click="Category_OnClick">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="⇄" FontSize="18"/><StackPanel><TextBlock Text="Hướng giao dịch" FontWeight="SemiBold"/><TextBlock Text="Chỉ buy/sell hoặc 2 chiều" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
-            <Button Classes="navTab" HorizontalContentAlignment="Left">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="⌁" FontSize="18"/><StackPanel><TextBlock Text="Nhận diện nhịp hồi" FontWeight="SemiBold"/><TextBlock Text="Pullback &amp; điều kiện hồi" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="pullback" Click="Category_OnClick">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="⌁" FontSize="18"/><StackPanel><TextBlock Text="Nhận diện nhịp hồi" FontWeight="SemiBold"/><TextBlock Text="Pullback &amp; điều kiện hồi" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
-            <Button Classes="navTab" HorizontalContentAlignment="Left">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="✓" FontSize="18"/><StackPanel><TextBlock Text="Xác nhận vào lệnh" FontWeight="SemiBold"/><TextBlock Text="Chỉ báo &amp; tín hiệu trigger" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="trigger" Click="Category_OnClick">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="✓" FontSize="18"/><StackPanel><TextBlock Text="Xác nhận vào lệnh" FontWeight="SemiBold"/><TextBlock Text="Chỉ báo &amp; tín hiệu trigger" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
-            <Button Classes="navTab" HorizontalContentAlignment="Left">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="🛡" FontSize="18"/><StackPanel><TextBlock Text="Stop loss" FontWeight="SemiBold"/><TextBlock Text="SL structure / fixed / ATR" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="stop_loss" Click="Category_OnClick">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="🛡" FontSize="18"/><StackPanel><TextBlock Text="Stop loss" FontWeight="SemiBold"/><TextBlock Text="SL structure / fixed / ATR" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
-            <Button Classes="navTab" HorizontalContentAlignment="Left">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="◎" FontSize="18"/><StackPanel><TextBlock Text="Take profit" FontWeight="SemiBold"/><TextBlock Text="TP fixed / dynamic" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="take_profit" Click="Category_OnClick">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="◎" FontSize="18"/><StackPanel><TextBlock Text="Take profit" FontWeight="SemiBold"/><TextBlock Text="TP fixed / dynamic" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
-            <Button Classes="navTab" HorizontalContentAlignment="Left">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="⚙" FontSize="18"/><StackPanel><TextBlock Text="Quản lý sau vào" FontWeight="SemiBold"/><TextBlock Text="BE, trailing, scale out" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="management" Click="Category_OnClick">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="⚙" FontSize="18"/><StackPanel><TextBlock Text="Quản lý sau vào" FontWeight="SemiBold"/><TextBlock Text="BE, trailing, scale out" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
-            <Button Classes="navTab" HorizontalContentAlignment="Left">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="◷" FontSize="18"/><StackPanel><TextBlock Text="Phiên giao dịch" FontWeight="SemiBold"/><TextBlock Text="Khung giờ, bộ lọc phiên" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="sessions" Click="Category_OnClick">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="◷" FontSize="18"/><StackPanel><TextBlock Text="Phiên giao dịch" FontWeight="SemiBold"/><TextBlock Text="Khung giờ, bộ lọc phiên" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
-            <Button Classes="navTab" HorizontalContentAlignment="Left">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="▤" FontSize="18"/><StackPanel><TextBlock Text="Lọc tin" FontWeight="SemiBold"/><TextBlock Text="Tin tức, thời gian tránh giao dịch" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="news" Click="Category_OnClick">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="▤" FontSize="18"/><StackPanel><TextBlock Text="Lọc tin" FontWeight="SemiBold"/><TextBlock Text="Tin tức, thời gian tránh giao dịch" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
-            <Button Classes="navTab" HorizontalContentAlignment="Left">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="▱" FontSize="18"/><StackPanel><TextBlock Text="MTF Pullback" FontWeight="SemiBold"/><TextBlock Text="Đa khung thời gian - Pullback" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="pullback" Click="Category_OnClick">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="▱" FontSize="18"/><StackPanel><TextBlock Text="MTF Pullback" FontWeight="SemiBold"/><TextBlock Text="Đa khung thời gian - Pullback" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
-            <Button Classes="navTab" HorizontalContentAlignment="Left">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="▱" FontSize="18"/><StackPanel><TextBlock Text="MTF Trigger" FontWeight="SemiBold"/><TextBlock Text="Đa khung thời gian - Trigger" Classes="dim" FontSize="10"/></StackPanel></StackPanel>
+            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="trigger" Click="Category_OnClick">
+              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="▱" FontSize="18"/><StackPanel><TextBlock Text="MTF Trigger" FontWeight="SemiBold"/><TextBlock Text="Đa khung thời gian - Trigger" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
           </StackPanel>
         </ScrollViewer>
@@ -53,15 +53,15 @@
             <Grid ColumnDefinitions="Auto,*">
               <TextBlock Text="Profile:" Classes="dim"/><TextBlock x:Name="ProfileNameText" Grid.Column="1" Text="—" Foreground="#18E58B" Margin="8,0,0,0"/>
             </Grid>
-            <TextBlock x:Name="DirtyStateText" Text="UNCHANGED" Foreground="#18E58B" FontSize="11"/>
-            <TextBlock x:Name="ValidationStateText" Text="NOT VALIDATED" Foreground="#FFD34D" FontSize="11"/>
-            <TextBlock x:Name="FieldCountText" Text="0 tham số" Classes="dim" FontSize="11"/>
+            <TextBlock x:Name="DirtyStateText" Text="UNCHANGED" Foreground="#18E58B" FontSize="12"/>
+            <TextBlock x:Name="ValidationStateText" Text="NOT VALIDATED" Foreground="#FFD34D" FontSize="12"/>
+            <TextBlock x:Name="FieldCountText" Text="0 tham số" Classes="dim" FontSize="12"/>
           </StackPanel>
         </Border>
       </Grid>
     </Border>
 
-    <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*" RowSpacing="8">
+    <Grid Grid.Column="1" RowDefinitions="Auto,*,72" RowSpacing="8">
       <!-- Approved profile/header toolbar -->
       <Border Grid.Row="0" Classes="panel">
         <Grid ColumnDefinitions="1.6*,0.9*,Auto" Margin="12,8" ColumnSpacing="10">
@@ -71,13 +71,13 @@
           </StackPanel>
 
           <StackPanel Grid.Column="1">
-            <TextBlock Text="Chọn profile" Classes="dim" FontSize="10"/>
+            <TextBlock Text="Chọn profile" Classes="dim" FontSize="12"/>
             <Border Classes="panelSoft" Padding="10,7">
               <TextBlock x:Name="ProfileHeaderText" Text="Active profile từ Python Engine"/>
             </Border>
           </StackPanel>
 
-          <WrapPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
+          <WrapPanel Grid.Column="2" Width="414" HorizontalAlignment="Right" VerticalAlignment="Center">
             <Button Classes="primary" Content="💾  Lưu JSON" Click="SaveJson_OnClick" Margin="0,0,6,6"/>
             <Button Classes="secondary" Content="💾  Lưu thành..." Click="SaveJson_OnClick" Margin="0,0,6,6"/>
             <Button Classes="secondary" Content="🗑  Mặc định" Click="Defaults_OnClick" Margin="0,0,6,6"/>
@@ -89,20 +89,20 @@
       </Border>
 
       <!-- Quick controls / status -->
-      <Border Grid.Row="1" Classes="panel">
+      <Border Grid.Row="2" Classes="panel">
         <Grid ColumnDefinitions="1.4*,1*,1*,1*,Auto" Margin="10,8" ColumnSpacing="10">
           <StackPanel Grid.Column="0">
-            <TextBlock Text="Tìm tham số" Classes="dim" FontSize="10"/>
+            <TextBlock Text="Tìm tham số" Classes="dim" FontSize="12"/>
             <TextBox x:Name="SearchBox" PlaceholderText="Tên, path, mô tả, .set key..." TextChanged="SearchBox_OnTextChanged"/>
           </StackPanel>
           <Border Grid.Column="1" Classes="panelSoft" Padding="10">
-            <StackPanel><TextBlock Text="Direction TF" Classes="dim" FontSize="10"/><TextBlock x:Name="DirectionQuickValue" Text="M30" FontSize="18" FontWeight="SemiBold"/></StackPanel>
+            <StackPanel><TextBlock Text="Direction TF" Classes="dim" FontSize="12"/><TextBlock x:Name="DirectionQuickValue" Text="M30" FontSize="18" FontWeight="SemiBold"/></StackPanel>
           </Border>
           <Border Grid.Column="2" Classes="panelSoft" Padding="10">
-            <StackPanel><TextBlock Text="Pullback TF" Classes="dim" FontSize="10"/><TextBlock x:Name="PullbackQuickValue" Text="M5" FontSize="18" FontWeight="SemiBold"/></StackPanel>
+            <StackPanel><TextBlock Text="Pullback TF" Classes="dim" FontSize="12"/><TextBlock x:Name="PullbackQuickValue" Text="M5" FontSize="18" FontWeight="SemiBold"/></StackPanel>
           </Border>
           <Border Grid.Column="3" Classes="panelSoft" Padding="10">
-            <StackPanel><TextBlock Text="Trigger TF" Classes="dim" FontSize="10"/><TextBlock x:Name="TriggerQuickValue" Text="M1" FontSize="18" FontWeight="SemiBold"/></StackPanel>
+            <StackPanel><TextBlock Text="Trigger TF" Classes="dim" FontSize="12"/><TextBlock x:Name="TriggerQuickValue" Text="M1" FontSize="18" FontWeight="SemiBold"/></StackPanel>
           </Border>
           <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Spacing="6">
             <Button Classes="secondary" Content="Hoàn tác" Click="ReloadActive_OnClick"/>
@@ -112,25 +112,25 @@
         </Grid>
       </Border>
 
-      <Grid Grid.Row="2" RowDefinitions="Auto,*" RowSpacing="6">
-        <Border Grid.Row="0" Classes="panelSoft" Padding="10,6">
+      <Grid Grid.Row="1" RowDefinitions="*,30" RowSpacing="6">
+        <Border Grid.Row="1" Classes="panelSoft" Padding="10,4">
           <Grid ColumnDefinitions="*,Auto">
             <TextBlock x:Name="StatusText" Text="Đang chờ Python Engine..." Foreground="#C9DDEF" TextWrapping="Wrap"/>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-              <TextBlock Text="REAL ACCOUNT LOCKED" Foreground="#FFD34D" FontWeight="Bold"/>
+              <TextBlock Text="TÀI KHOẢN THẬT ĐANG KHÓA" Foreground="#FFD34D" FontWeight="Bold"/>
               <TextBlock x:Name="VisibleCountText" Text="0 / 0" Classes="dim"/>
             </StackPanel>
           </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-          <StackPanel x:Name="FieldsHost" Spacing="8" Margin="0,0,4,8">
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <Grid x:Name="FieldsHost" ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8" Margin="0,0,4,8">
             <Border Classes="panel" Padding="16">
               <TextBlock Text="Đang tải schema và active profile..."
                          Classes="dim"
                          HorizontalAlignment="Center"/>
             </Border>
-          </StackPanel>
+          </Grid>
         </ScrollViewer>
       </Grid>
     </Grid>

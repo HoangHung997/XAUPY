@@ -51,8 +51,9 @@ Task 011 is DONE only when all are green:
 10. Export JSON result and CSV trades; compare run_id/result_hash/trade values
     to the UI.
 11. Delete a stored result and confirm it disappears from history.
-12. Change the active profile to an unsupported Task011 mode such as
-    STOP_CONFIRM or ZRSI_DYNAMIC TP: Backtest must reject it explicitly.
+12. Historical Task 011 acceptance: STOP_CONFIRM/ZRSI_DYNAMIC were rejected at
+    that milestone. Current XAUPY-013 acceptance supersedes this runtime
+    limitation while preserving all Task 011 deterministic fill rules.
 
 ## Hard boundary
 

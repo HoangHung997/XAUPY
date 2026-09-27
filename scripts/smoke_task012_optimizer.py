@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from _smoke_runtime import isolated_environment
+
 import argparse
 import copy
 import json
@@ -52,7 +54,7 @@ def start_engine(
     optimizer_dir: Path,
 ):
     port = free_port()
-    env = dict(os.environ)
+    env = isolated_environment(journal_dir / ".smoke-runtime", journal_dir=journal_dir)
     env["XAUPY_LOG_DIR"] = str(journal_dir)
     env["XAUPY_BACKTEST_DIR"] = str(backtest_dir)
     env["XAUPY_OPTIMIZER_DIR"] = str(optimizer_dir)
@@ -287,7 +289,7 @@ def main() -> int:
         try:
             heartbeat = exchange(file1, "heartbeat")
             assert heartbeat["type"] == "heartbeat_ack"
-            assert heartbeat["payload"]["engine_version"] == "0.12.0-task012"
+            assert heartbeat["payload"]["engine_version"] == "0.16.0-rc1"
             assert heartbeat["payload"]["trading_enabled"] is False
             assert heartbeat["payload"]["execution_enabled"] is False
             assert heartbeat["payload"]["optimizer_status"]["status"] == "IDLE"

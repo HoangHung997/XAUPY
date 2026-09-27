@@ -1,6 +1,6 @@
 # XAUPY Task 013 — Dynamic TP/SL + Stop-Confirm Entry
 
-Status: IMPLEMENTED_CI_PENDING — local tests and packaged smoke passed; GitHub CI/artifact evidence pending.  
+Status: DONE — tests, packaged simulation smoke and verified CI artifact passed in run 36340716356.
 Task: XAUPY-013  
 Dependencies: XAUPY-003, XAUPY-007, XAUPY-011
 

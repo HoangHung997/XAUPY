@@ -1,7 +1,8 @@
 # XAUPY-014 — Tools and diagnostics
 
-Status: IMPLEMENTED_CI_PENDING — implemented and locally verified; GitHub
-CI/artifact evidence and final packaged UI acceptance remain pending.
+Status: DONE — diagnostics, contracts and packaged smoke passed in CI run
+36340716356; release artifact independently verified. Strict visual fidelity
+is tracked separately by Task 016.
 
 The Tools surface follows `docs/ui-reference/Tab Công Cụ.png`: ten-tool navigation,
 central configuration editor with file information and quick actions, validation
@@ -35,7 +36,7 @@ Capture the live Tools view after the matching Engine package is launched; older
 engines intentionally do not implement these maintenance messages.
 
 Local evidence on 2026-09-28: the shared Task 014/015 maintenance suite passes
-11 tests; the recorded combined suite passes 278 Python tests and 85 C# IPC
+11 tests; the final combined suite passes 283 Python tests and 90 C# IPC
 checks. Read-only live MT5 transport/history is verified separately in
 `docs/LIVE_HISTORY_SYNC.md`. Neither diagnostic success nor a fresh IPC snapshot
 claims that the market is currently open or that a trade was executed.

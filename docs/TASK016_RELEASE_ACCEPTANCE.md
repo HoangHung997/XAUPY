@@ -1,6 +1,7 @@
 # Windows release and local acceptance
 
-Version: 0.16.0-rc1. Status: implementation and verification in progress.
+Version: 0.16.0-rc1. Build, installer and live connection verified. Task 016 stays
+ACTIVE because strict 100% UI parity has not been met.
 
 ## Reproducible build
 
@@ -60,11 +61,42 @@ visible deviations must be recorded in the acceptance report rather than hidden.
 - Weekend prices stay labeled as the latest received price; their last tick time
   is available in the quote tooltip. Fresh heartbeats do not claim fresh ticks.
 - The first CI run passed Linux validation but exposed a Windows temporary-path
-  assertion issue. Its canonical-path comparison is corrected for the next run.
-  Installer verification and final CI evidence remain pending.
+  assertion issue. Its canonical-path comparison was corrected; the final run below passes.
 - The final polish passes 283 Python tests, 90 C# contract checks and 20 headless
   Avalonia interaction checks. The new quote-age checks use the broker clock;
   the reconnect checks preserve an unsaved configuration draft.
+
+## Final CI and downloaded build
+
+- [GitHub run 36340716356](https://github.com/HoangHung997/XAUPY/actions/runs/36340716356):
+  SUCCESS for Linux validation and Windows packaging on source
+  `a9137702661c810b301d388ce23230791dcd137c`.
+- 283 Python tests, 90 C# checks, 20 headless desktop interaction checks and all
+  eight packaged smoke categories pass. MetaEditor reports zero errors/warnings.
+- The per-user installer was installed, every installed file checked against
+  the manifest, and uninstalled successfully on the Windows CI runner.
+- Downloaded artifact 10939305308 was independently inspected: all 278 portable
+  files and all 277 manifest hashes match, with self-contained x64 Desktop,
+  Engine/config executables, EX5, profiles and ten UI references.
+- Portable ZIP SHA-256:
+  `f593f3ef32cc44932db5a1780fb2b6daac466b4807d8a87471e510b5ffee32d9`.
+- Installer SHA-256:
+  `572edb5ca3fb49977eab8dd1a87ee3d367828c446e95c6ad064c2d56dc8c5679`.
+- The downloaded CI Desktop was launched locally against the already open MT5.
+  `artifacts/live-ci-verified.json` passes 16/16 read-only checks in 11 samples.
+  Its ten real rendered pages are in `artifacts/ui-audit-ci/`.
+- Native Stop/Start was also exercised on the downloaded CI build. Quotes and
+  balance clear on STOPPED. The immediate transition capture
+  `artifacts/live-ci-after-restart.json` intentionally includes the initial waiting
+  sample, so it does not pass the continuous-connected criterion; the next sample
+  at 1.047 seconds already has the first real snapshot. After READY and Bridge
+  recovery, `artifacts/live-ci-stable-after-restart.json` passes all 16 checks
+  across another 11 samples. The application is left running and connected.
+- Local application: `dist/XAUPY-verified-win-x64/XAUPY.Desktop.exe`.
+  Delivery ZIP and installer are in `dist/`; independent verification is in
+  `artifacts/ci-release-36340716356/verification.json`.
+- Interactive local comparison: `artifacts/ui-comparison-report/index.html`.
+  Its embedded images stay local; no account screenshots were uploaded to GitHub.
 
 ## Boundaries
 

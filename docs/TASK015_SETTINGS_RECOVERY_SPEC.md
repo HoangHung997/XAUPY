@@ -1,7 +1,8 @@
 # XAUPY-015 — Settings, startup, backup and fail-safe recovery
 
-Status: IMPLEMENTED_CI_PENDING — implemented and locally verified; GitHub
-CI/artifact evidence and final packaged UI acceptance remain pending.
+Status: DONE — persistence/recovery smoke and 20 desktop interaction checks
+passed in CI run 36340716356; release artifact independently verified. Strict
+visual fidelity is tracked separately by Task 016.
 
 The Settings surface follows `docs/ui-reference/Tab Cài Đặt.png`: four-column
 connection, Bridge, paths and appearance cards; notifications, safety, storage and
@@ -81,7 +82,7 @@ GitHub CI and packaged/live evidence are recorded with XAUPY-016; local test
 success alone is not the project's DONE definition.
 
 Local evidence on 2026-09-28: 11 maintenance tests passed, with the recorded
-combined run passing 278 Python tests and 85 C# contract checks. Packaged
+final combined run passing 283 Python tests and 90 C# contract checks. Packaged
 Task 010/011/012 restart/replay smokes passed. All packaged smoke processes now
 use temporary state/log/backtest/optimizer directories, preserving their own
 restart paths without changing the user's persisted profile.

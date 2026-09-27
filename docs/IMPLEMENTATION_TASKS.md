@@ -33,10 +33,10 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-010 | DONE | Structured logging + Journal tab | 002,003 | schema/replay tests |
 | XAUPY-011 | DONE | Backtest engine parity | 007,010 | deterministic replay |
 | XAUPY-012 | DONE | Optimizer + walk-forward | 011 | reproducibility/leakage guards + verified Windows build |
-| XAUPY-013 | IMPLEMENTED_CI_PENDING | Dynamic TP/SL + stop-confirm entry | 003,007,011 | Local state/broker simulation and packaged smoke passed; GitHub evidence pending |
-| XAUPY-014 | IMPLEMENTED_CI_PENDING | Tools tab + diagnostics | 003,004,010 | Local diagnostics/contract checks passed; GitHub evidence pending |
-| XAUPY-015 | IMPLEMENTED_CI_PENDING | Settings, backup, startup, fail-safe UX | 002,003,004 | Local persistence/restart/recovery checks passed; GitHub evidence pending |
-| XAUPY-016 | ACTIVE | Installer, release workflow, demo acceptance | all prior | Release packaging, final CI and packaged UI/demo acceptance in progress |
+| XAUPY-013 | DONE | Dynamic TP/SL + stop-confirm entry | 003,007,011 | Simulation and packaged smoke passed; CI 36340716356 + verified release artifact |
+| XAUPY-014 | DONE | Tools tab + diagnostics | 003,004,010 | Diagnostics/contracts/packaged smoke passed; CI 36340716356 + verified release artifact |
+| XAUPY-015 | DONE | Settings, backup, startup, fail-safe UX | 002,003,004 | Persistence/recovery + 20 UI checks passed; CI 36340716356 + verified release artifact |
+| XAUPY-016 | ACTIVE | Installer, release workflow, demo acceptance | all prior | CI/installer/live connection passed; strict 100% UI parity remains unfulfilled |
 
 # XAUPY-001
 
@@ -854,32 +854,35 @@ before delivery.
 
 ## Completion work status — 2026-09-28
 
-XAUPY-013 is implemented and locally verified, with GitHub CI evidence pending.
+XAUPY-013 is implemented and verified locally and in GitHub CI.
 The recovered dynamic-management implementation supports stop-confirm entries,
 ATR stops, dynamic TP, partial close and stop tightening. Temporal and broker-rule
 regressions pass, including never-widen protection. The packaged Task 013 smoke
 passes. See `TASK013_DYNAMIC_MANAGEMENT_SPEC.md` and its acceptance document.
 
-XAUPY-014 is implemented and locally verified, with GitHub CI evidence pending.
+XAUPY-014 is implemented and verified locally and in GitHub CI.
 The Tools surface, canonical profile operations and read-only runtime diagnostics
 are implemented. See `TASK014_TOOLS_DIAGNOSTICS_SPEC.md`.
 
-XAUPY-015 is implemented and locally verified, with GitHub CI evidence pending.
+XAUPY-015 is implemented and verified locally and in GitHub CI.
 Validated settings/profile persistence, backup/recovery, startup preferences,
 owned-engine identity and explicit fail-safe states are implemented. The shared
 maintenance suite passes 11 tests. See `TASK015_SETTINGS_RECOVERY_SPEC.md`.
 
 Recorded local combined evidence: 283 Python tests and 90 C# IPC checks pass;
 packaged Task 007/009/010/011/012/013/014–015 and config-tool smokes pass in isolated
-temporary storage. These local results do not satisfy the GitHub evidence gate
-or change any execution rule above.
+temporary storage. GitHub run 36340716356 independently repeats those checks on
+source a9137702661c810b301d388ce23230791dcd137c and passes both validation/package
+jobs. Artifact 10939305308 was downloaded and independently verified: 278 ZIP
+files, all 277 manifest hashes, three x64 executable tools, EX5 and ten references.
 
 Twenty headless Avalonia checks also pass against an isolated packaged Engine,
 including preservation of an unsaved full-editor draft after reconnect. They
 are retained in `tests/XAUPY.Desktop.InteractionTests` and the Windows build.
 
-XAUPY-016 remains ACTIVE. Installer and release workflow exist; final clean
-packaging, GitHub CI/artifact evidence and packaged UI acceptance are in progress.
+XAUPY-016 remains ACTIVE because the user's strict 100% UI-parity requirement
+has not been met. Clean ZIP/installer packaging, GitHub CI, independent artifact
+inspection and installer install/uninstall verification are complete.
 The compiled read-only EA reports 0 errors / 0 warnings. Live MT5 demo evidence
 in `artifacts/live-framed-reader.json` passes 11 samples, with snapshot counters
 203→214, all eight timeframes containing 256 real closed bars, and execution
@@ -890,6 +893,6 @@ Native Avalonia Stop/Start clears stale quote/account values, automatically
 reconnects the EA, and restores real history. Visual fidelity is documented
 separately in `UI_REFERENCE_PARITY_AUDIT.md`.
 
-Tasks 013–016 are not marked DONE until their remaining required evidence is
-complete. Broker mutation, real-account permission and automatic trading remain
-disabled.
+Task 016 retains its remaining visual acceptance work in
+`UI_REFERENCE_PARITY_AUDIT.md`. Broker mutation, real-account permission and
+automatic trading remain disabled.

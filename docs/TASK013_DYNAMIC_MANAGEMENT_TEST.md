@@ -72,4 +72,6 @@ corrected closed-bar extension fixture: price must close inside the near-TP zone
 and partial close executes on the following open. All smoke processes isolate
 state/log/backtest/optimizer storage from the user's data. The combined local
 regression run recorded 278 Python tests and 85 C# contract checks passing.
-GitHub CI/artifact evidence remains pending; this status is not DONE.
+Final integrated CI run 36340716356 passes 283 Python tests, 90 C# checks,
+20 desktop interaction checks and all packaged smokes. Artifact 10939305308
+was downloaded and independently verified against its complete SHA-256 manifest.

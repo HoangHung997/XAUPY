@@ -114,7 +114,7 @@ FIELDS: tuple[ConfigField, ...] = (
     _f("trigger.z_enabled","bool",False,"XAUPY_TriggerZEnabled",aliases=("TriggerUseZ","InpTriggerUseZ")),
     _f("trigger.z_period","int",20,"XAUPY_TriggerZPeriod",aliases=("TriggerZPeriod","InpTriggerZPeriod"),minimum=2,maximum=500),
     _f("trigger.z_reversal_delta","float",0.5,"XAUPY_TriggerZDelta",aliases=("TriggerZDelta","InpTriggerZDelta"),minimum=0,maximum=10),
-    _f("trigger.confirm_closed_bar","bool",True,"XAUPY_TriggerClosedBar",aliases=("TriggerClosedBar","InpTriggerClosedBar")),
+    _f("trigger.confirm_closed_bar","bool",True,"XAUPY_TriggerClosedBar",aliases=("TriggerClosedBar","InpTriggerClosedBar"),description="True: nến đóng. False: ghi nhớ ngưỡng RSI/Z từ tick quan sát; xác nhận đảo chiều từ nến Trigger kế tiếp, cần luồng tick liên tục."),
 
     _f("filters.adx.enabled","bool",False,"XAUPY_ADXEnabled",aliases=("ADXEnabled","InpADXEnabled")),
     _f("filters.adx.timeframe","enum","M5","XAUPY_ADXTF",aliases=("ADXTF","InpADXTF"),enum=TIMEFRAME_OPTIONS),
@@ -137,7 +137,7 @@ FIELDS: tuple[ConfigField, ...] = (
     _f("entry.pending_expiration_minutes","int",5,"XAUPY_PendingExpirationMinutes",aliases=("PendingExpirationMinutes","InpPendingExpirationMinutes"),minimum=1,maximum=1440),
     _f("entry.cancel_on_opposite_setup","bool",True,"XAUPY_CancelOnOpposite",aliases=("CancelOnOpposite","InpCancelOnOpposite")),
     _f("entry.cancel_on_direction_change","bool",True,"XAUPY_CancelOnDirectionChange",aliases=("CancelOnDirectionChange","InpCancelOnDirectionChange")),
-    _f("entry.max_signal_age_bars","int",2,"XAUPY_MaxSignalAgeBars",aliases=("MaxSignalAgeBars","InpMaxSignalAgeBars"),minimum=1,maximum=100),
+    _f("entry.max_signal_age_bars","int",2,"XAUPY_MaxSignalAgeBars",aliases=("MaxSignalAgeBars","InpMaxSignalAgeBars"),minimum=1,maximum=100,description="Tuổi tối đa của tín hiệu; ở chế độ tick, cũng giới hạn số nến Trigger tiếp theo được xác nhận từ setup đã ghi nhớ."),
 
     _f("risk.sizing_mode","enum","RISK_PERCENT","XAUPY_SizingMode",aliases=("SizingMode","InpSizingMode"),enum=SIZING_MODES),
     _f("risk.risk_percent","float",0.50,"XAUPY_RiskPercent",aliases=("RiskPercent","InpRiskPercent"),minimum=0.01,maximum=10),

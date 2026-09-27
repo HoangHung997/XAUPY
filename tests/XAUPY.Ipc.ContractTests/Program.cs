@@ -115,6 +115,47 @@ var warmingStrategy = StrategySnapshot.FromHeartbeatPayload(JsonSerializer.Seria
     strategy = new { available = true, ready = false, state = "WARMUP", indicators = new { } }
 }));
 Check(!warmingStrategy.Ready, "warmup missing indicator objects do not break heartbeat parsing");
+Check(warmingStrategy.Intrabar == IntrabarObservationSnapshot.Empty, "legacy strategy without intrabar projection remains closed-bar compatible");
+var observedStrategy = StrategySnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new
+{
+    strategy = new
+    {
+        state = "ARMED_SELL", available = true,
+        intrabar = new
+        {
+            mode = "OBSERVED_TICKS_NEXT_BAR", observed_ticks = 4294967297L,
+            setup_extremes = new { rsi = 74.5, z = 2.5 },
+            reason = "THRESHOLD_LATCHED", last_tick_time_msc = 1790560996842L
+        },
+        trading_enabled = false, execution_enabled = false
+    }
+}));
+Check(observedStrategy.Intrabar.Mode == "OBSERVED_TICKS_NEXT_BAR", "observed tick mode projected separately from closed bars");
+Check(observedStrategy.Intrabar.ObservedTicks == 4294967297L, "tick observation counter preserves 64-bit values");
+Check(observedStrategy.Intrabar.RsiExtreme == 74.5 && observedStrategy.Intrabar.ZExtreme == 2.5,
+    "observed setup peak values survive strategy projection");
+Check(observedStrategy.Intrabar.LastTickTimeMsc == 1790560996842L && observedStrategy.Intrabar.Reason == "THRESHOLD_LATCHED",
+    "intrabar timestamp and latch reason remain available to UI");
+Check(!observedStrategy.TradingEnabled && !observedStrategy.ExecutionEnabled, "intrabar evidence does not enable execution");
+foreach (var malformedIntrabar in new object?[] { null, "unexpected", new[] { 1, 2 }, 10 })
+{
+    var safeProjection = StrategySnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new
+    {
+        strategy = new { intrabar = malformedIntrabar }
+    }));
+    Check(safeProjection.Intrabar == IntrabarObservationSnapshot.Empty, "non-object intrabar metadata safely projects empty");
+}
+using (var malformedNumbers = JsonDocument.Parse("""
+    {"strategy":{"intrabar":{"mode":null,"observed_ticks":1e40,
+    "last_tick_time_msc":"1790560996842","setup_extremes":{"rsi":1e400,"z":"2.5"}}}}
+    """))
+{
+    var safeNumbers = StrategySnapshot.FromHeartbeatPayload(malformedNumbers.RootElement).Intrabar;
+    Check(safeNumbers.Mode == "CLOSED_BAR" && safeNumbers.ObservedTicks == 0 && safeNumbers.LastTickTimeMsc is null,
+        "invalid intrabar counter and timestamp types retain safe defaults");
+    Check(safeNumbers.RsiExtreme is null && safeNumbers.ZExtreme is null,
+        "nonfinite and nonnumeric intrabar extrema are not displayed as real observations");
+}
 
 var strategyPayload = JsonSerializer.SerializeToElement(new
 {

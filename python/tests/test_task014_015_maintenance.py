@@ -38,6 +38,30 @@ class SettingsRecoveryTests(unittest.TestCase):
             server = EngineServer(port=0, journal_dir=Path(self.temp.name) / "logs", state_dir=self.temp.name)
         self.assertEqual("owned-process-123", server._common()["engine_instance_id"])
 
+    def test_explicit_state_scope_never_writes_production_journal_or_repositories(self):
+        root = Path(self.temp.name)
+        production = root / "production"
+        production.mkdir()
+        marker = production / "journal-v1.jsonl"
+        marker.write_text("production sentinel\n", encoding="utf-8")
+        with patch("xaupy_engine.journal.default_journal_directory", return_value=production) as journal_default, \
+             patch("xaupy_engine.backtest.default_backtest_directory", return_value=production) as backtest_default, \
+             patch("xaupy_engine.optimizer.default_optimizer_directory", return_value=production) as optimizer_default:
+            isolated = root / "test-runtime"
+            server = EngineServer(port=0, state_dir=isolated)
+            response, _ = server._dispatch(Envelope.create("place_order", {"symbol": "XAUUSD"}))
+            self.assertEqual("UNSUPPORTED_MESSAGE", response.payload["code"])
+            server.settings_store.save()
+            self.assertIn("place_order", server.journal.events_path.read_text(encoding="utf-8"))
+            self.assertTrue(server.journal.root_dir.is_relative_to(isolated))
+            self.assertTrue(server.backtests.root_dir.is_relative_to(isolated))
+            self.assertTrue(server.optimizers.root_dir.is_relative_to(isolated))
+            journal_default.assert_not_called()
+            backtest_default.assert_not_called()
+            optimizer_default.assert_not_called()
+        self.assertEqual("production sentinel\n", marker.read_text(encoding="utf-8"))
+        self.assertEqual([marker], list(production.iterdir()))
+
     def test_corrupt_state_falls_back_and_preserves_evidence(self):
         self.store.path.write_text("{incomplete", encoding="utf-8")
         restarted = SettingsStore(self.temp.name)

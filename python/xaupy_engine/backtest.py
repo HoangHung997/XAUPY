@@ -528,6 +528,8 @@ class BacktestEngine:
 
     def _validate_profile_support(self) -> None:
         unsupported: list[str] = []
+        if not self.profile["trigger"]["confirm_closed_bar"]:
+            unsupported.append("intrabar threshold latching requires observed real ticks; M1 OHLC replay cannot establish the tick path (set trigger.confirm_closed_bar=true for closed-bar replay)")
         if self.profile["entry"]["mode"] not in {"MARKET", "STOP_CONFIRM"}:
             unsupported.append("entry.mode must be MARKET or STOP_CONFIRM")
         if self.profile["stop_loss"]["mode"] not in {"FIXED", "STRUCTURE", "ATR"}:

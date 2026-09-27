@@ -23,7 +23,7 @@ public partial class ToolsDashboard : UserControl
     public ToolsDashboard()
     {
         InitializeComponent();
-        var icons = new[] { "▤", "⇄", "▥", "▦", "◎", "▤", "⌁", "↗", "♙", "⇅" };
+        var icons = new[] { "document", "compare", "bars", "calculator", "globe", "document", "pulse", "link", "user", "transfer" };
         var colors = new[] { "#119DF2", "#04E29C", "#23A1FF", "#FFA744", "#15BDF5", "#B690FB", "#00D9BD", "#6AF1D7", "#BE87ED", "#37ADFF" };
         var index = 0;
         foreach (var button in ToolMenu.Children.OfType<Button>())
@@ -33,10 +33,10 @@ public partial class ToolsDashboard : UserControl
             button.Height = 65;
             button.Padding = new Avalonia.Thickness(7, 5);
             var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("46,*,15"), ColumnSpacing = 10 };
-            var icon = new Border { Background = Brush.Parse("#092B49"), CornerRadius = new Avalonia.CornerRadius(6), Child = new TextBlock { Text = icons[index], FontSize = 31, Foreground = Brush.Parse(colors[index]), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } };
+            var icon = new Border { Background = Brush.Parse("#092B49"), CornerRadius = new Avalonia.CornerRadius(6), Child = new ReferenceIcon { Kind = icons[index], Width = 34, Height = 34, Tint = Brush.Parse(colors[index]), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } };
             var label = new StackPanel { Spacing = 5, VerticalAlignment = VerticalAlignment.Center };
-            label.Children.Add(new TextBlock { Text = lines[0].Length > 4 ? lines[0][4..] : lines[0], FontSize = 14, FontWeight = FontWeight.SemiBold });
-            label.Children.Add(new TextBlock { Text = lines.Length > 1 ? lines[1].Trim() : "", FontSize = 11, Foreground = Brush.Parse("#B3D3EF") });
+            label.Children.Add(new TextBlock { Text = lines[0].Length > 4 ? lines[0][4..] : lines[0], FontSize = 15, FontWeight = FontWeight.SemiBold });
+            label.Children.Add(new TextBlock { Text = lines.Length > 1 ? lines[1].Trim() : "", FontSize = 13, Foreground = Brush.Parse("#B3D3EF") });
             var arrow = new TextBlock { Text = "›", FontSize = 24, VerticalAlignment = VerticalAlignment.Center };
             Grid.SetColumn(label, 1); Grid.SetColumn(arrow, 2);
             grid.Children.Add(icon); grid.Children.Add(label); grid.Children.Add(arrow);
@@ -94,11 +94,28 @@ public partial class ToolsDashboard : UserControl
         ToolEditor.IsReadOnly = mode is not ("editor" or "profile" or "news");
         ApplyToolButton.IsEnabled = mode is "editor" or "profile";
         RiskInputs.IsVisible = mode == "risk";
+        HistoryInputs.IsVisible = mode == "export";
         ToolSubtitle.Text = mode is "editor" or "profile" ? "Chỉnh sửa cấu hình chuẩn; kiểm tra cú pháp và áp dụng nhanh." : "Kiểm tra dữ liệu thực, lưu báo cáo và đối chiếu trạng thái hệ thống.";
         await EnsureLoadedAsync(true);
     }
 
     private async void Reload_OnClick(object? sender, RoutedEventArgs e) => await EnsureLoadedAsync(true);
+    private async void HistoryStart_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
+    {
+        if (_supervisor is null) return;
+        var response = await _supervisor.StartHistoryDownloadAsync(HistoryTerminal.Text ?? "", HistorySymbol.Text ?? "");
+        EnsureOk(response);
+        ToolEditor.Text = JsonSerializer.Serialize(response.GetProperty("history_download"), Pretty);
+        Result("Đang tải lịch sử trên tiến trình riêng. Nhấn Tiến độ để xem số nến và thư mục CSV.", true);
+    });
+    private async void HistoryStatus_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
+    {
+        if (_supervisor is null) return;
+        var response = await _supervisor.GetHistoryDownloadAsync();
+        EnsureOk(response);
+        ToolEditor.Text = JsonSerializer.Serialize(response.GetProperty("history_download"), Pretty);
+        Result("Đã cập nhật số nến, độ phủ và giới hạn dữ liệu từ MT5.", true);
+    });
     private void Format_OnClick(object? sender, RoutedEventArgs e)
     {
         try { using var json = JsonDocument.Parse(ToolEditor.Text ?? ""); ToolEditor.Text = JsonSerializer.Serialize(json.RootElement, Pretty); Result("Đã định dạng JSON.", true); }

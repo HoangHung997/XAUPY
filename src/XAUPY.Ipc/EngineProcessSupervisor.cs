@@ -262,7 +262,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
                     var heartbeat = ProtocolEnvelope.Create(
                         "heartbeat",
-                        new { component = "desktop", desktop_version = "0.16.0-rc1" });
+                        new { component = "desktop", desktop_version = "0.16.0-rc2" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
@@ -339,7 +339,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "0.16.0-rc1" });
+            new { component = "desktop", desktop_version = "0.16.0-rc2" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -357,7 +357,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
         var configRequest = ProtocolEnvelope.Create(
             "config_active_get",
-            new { component = "desktop", desktop_version = "0.16.0-rc1" });
+            new { component = "desktop", desktop_version = "0.16.0-rc2" });
 
         var configResponse = await SendReceiveAsync(
             configRequest,

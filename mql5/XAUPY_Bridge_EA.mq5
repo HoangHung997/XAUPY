@@ -1,5 +1,5 @@
 #property strict
-#property version   "1.014"
+#property version   "1.016"
 #property description "XAUPY MT5 closed-history/data/order-book bridge. Broker execution is hard-locked."
 
 input string InpHost               = "127.0.0.1";
@@ -22,6 +22,11 @@ ulong g_last_history_ms = 0;
 ulong g_last_network_error_log_ms = 0;
 ulong g_last_handshake_log_ms = 0;
 const int HISTORY_BAR_LIMIT = 256;
+const int TICK_BATCH_LIMIT = 1000;
+string g_tick_stream_id = "";
+long g_tick_batch_sequence = 0;
+long g_tick_cursor_msc = 0;
+int g_tick_cursor_count = 0;
 
 void LogNetworkError(string operation, int error)
 {
@@ -670,6 +675,76 @@ void CloseSocket()
 
    g_handshake_ok = false;
    g_last_history_ms = 0;
+   g_tick_stream_id = "";
+   g_tick_cursor_msc = 0;
+   g_tick_cursor_count = 0;
+}
+
+string TickBatchPayload()
+{
+   MqlTick latest;
+   bool have_quote = SymbolInfoTick(_Symbol, latest);
+   string reason = "";
+   bool complete = true;
+   if(g_tick_stream_id == "" || !have_quote || g_tick_cursor_msc == 0 ||
+      latest.time_msc < g_tick_cursor_msc || latest.time_msc - g_tick_cursor_msc > 5000 ||
+      g_tick_cursor_count > TICK_BATCH_LIMIT)
+   {
+      reason = g_tick_stream_id == "" ? "STREAM_BASELINE" : "CURSOR_GAP";
+      g_tick_stream_id = NewRequestId();
+      g_tick_batch_sequence = 0;
+      g_tick_cursor_msc = have_quote ? latest.time_msc : 0;
+      g_tick_cursor_count = 0;
+      complete = false;
+   }
+   MqlTick ticks[];
+   int copied = 0;
+   int skip = g_tick_cursor_count;
+   ulong started = GetTickCount64();
+   ResetLastError();
+   if(have_quote && g_tick_cursor_msc > 0)
+      copied = CopyTicks(_Symbol, ticks, COPY_TICKS_ALL, (ulong)g_tick_cursor_msc,
+                         (uint)(TICK_BATCH_LIMIT + skip + 1));
+   int copy_error = GetLastError();
+   // CopyTicks may synchronize terminal history. Never pretend a delayed or
+   // partial request was continuous; bulk candle history runs in a separate process.
+   if(!have_quote || copied < skip || copied < 0 || copy_error != 0 ||
+      GetTickCount64() - started > 2000 ||
+      (skip > 0 && (ticks[0].time_msc != g_tick_cursor_msc || ticks[skip-1].time_msc != g_tick_cursor_msc)))
+   {
+      complete = false;
+      reason = "COPY_TICKS_GAP";
+      copied = 0;
+      skip = 0;
+      g_tick_cursor_msc = 0;
+      g_tick_cursor_count = 0;
+   }
+   int end = (int)MathMin(copied, skip + TICK_BATCH_LIMIT);
+   string items = "[";
+   for(int i=skip; i<end; i++)
+   {
+      if(i > skip) items += ",";
+      items += "{" + JsonKey("time_msc") + StringFormat("%I64d", ticks[i].time_msc) + ",";
+      items += JsonKey("bid") + JsonNumber(ticks[i].bid, _Digits) + ",";
+      items += JsonKey("ask") + JsonNumber(ticks[i].ask, _Digits) + ",";
+      items += JsonKey("last") + JsonNumber(ticks[i].last, _Digits) + ",";
+      items += JsonKey("flags") + IntegerToString((int)ticks[i].flags) + "}";
+      if(ticks[i].time_msc == g_tick_cursor_msc)
+         g_tick_cursor_count++;
+      else
+      {
+         g_tick_cursor_msc = ticks[i].time_msc;
+         g_tick_cursor_count = 1;
+      }
+   }
+   items += "]";
+   g_tick_batch_sequence++;
+   return "{" + JsonKey("symbol") + JsonString(_Symbol) + "," +
+      JsonKey("server_time") + StringFormat("%I64d", (long)TimeTradeServer()) + "," +
+      JsonKey("tick_batch") + "{" + JsonKey("stream_id") + JsonString(g_tick_stream_id) + "," +
+      JsonKey("sequence") + StringFormat("%I64d", g_tick_batch_sequence) + "," +
+      JsonKey("complete") + JsonBool(complete) + "," +
+      JsonKey("gap_reason") + JsonString(reason) + "," + JsonKey("ticks") + items + "}}";
 }
 
 bool EnsureConnected()
@@ -906,9 +981,11 @@ void OnTimer()
    }
    if(include_history)
       g_last_history_ms = GetTickCount64();
+   // Closed bars precede ticks so Python can replay each event without looking ahead.
+   SendRequest("bridge_ticks", TickBatchPayload(), "bridge_ticks_ack", response);
 }
 
 void OnTick()
 {
-   // Task 009 remains timer-based and read-only. No broker trading logic exists here.
+   // OnTick can coalesce ticks. The timer uses the ordered CopyTicks database instead.
 }

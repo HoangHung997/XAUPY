@@ -241,66 +241,72 @@ public partial class ConfigurationEditor : UserControl
 
         var host = this.FindControl<Grid>("FieldsHost")
             ?? throw new InvalidOperationException("FieldsHost missing.");
+        var validationCard = this.FindControl<Border>("ValidationCard")!;
         host.Children.Clear();
         host.RowDefinitions.Clear();
-        int cardIndex = 0;
-        foreach (var grouping in descriptors
-                     .GroupBy(d => GroupKey(d.Path))
-                     .OrderBy(group => GroupTitle(group.Key).Order)
-                     .ThenBy(group => group.Key, StringComparer.Ordinal))
+        foreach (var height in new[] { 156d, 188d, 144d, 176d })
+            host.RowDefinitions.Add(new RowDefinition(new GridLength(height)));
+        var remaining = descriptors.ToDictionary(d => d.Path, StringComparer.Ordinal);
+        void AddCard(string key, string titleText, string[] paths, int row, int column, int span, int columns = 2)
         {
+            var values = paths.Where(remaining.ContainsKey).Select(path => remaining[path]).ToArray();
+            foreach (var field in values) remaining.Remove(field.Path);
             var groupFields = new List<FieldBinding>();
-            var content = new Grid { RowDefinitions = new RowDefinitions("34,*") };
-            var title = new TextBlock
-            {
-                Text = GroupTitle(grouping.Key).Title,
-                FontSize = 15,
-                FontWeight = FontWeight.SemiBold,
-                Foreground = new SolidColorBrush(Color.Parse("#BDD9F8")),
-                Margin = new Avalonia.Thickness(11, 7)
-            };
-            content.Children.Add(new Border
-            {
-                Background = new SolidColorBrush(Color.Parse("#082038")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#14517A")),
-                BorderThickness = new Avalonia.Thickness(0, 0, 0, 1),
-                Child = title
-            });
-            var fieldsGrid = new Grid
-            {
-                ColumnDefinitions = new ColumnDefinitions("*,*"),
-                ColumnSpacing = 14,
-                RowSpacing = 2,
-                Margin = new Avalonia.Thickness(10, 5)
-            };
+            var content = new Grid { RowDefinitions = new RowDefinitions("31,*") };
+            var title = new TextBlock { Text = titleText, FontSize = span <= 2 ? 13 : 15, FontWeight = FontWeight.SemiBold,
+                Foreground = new SolidColorBrush(Color.Parse("#C5DEFA")), Margin = new Avalonia.Thickness(10, 5) };
+            content.Children.Add(new Border { Background = new SolidColorBrush(Color.Parse("#082038")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#14517A")), BorderThickness = new Avalonia.Thickness(0,0,0,1), Child = title });
+            var fieldsGrid = new Grid { ColumnDefinitions = new ColumnDefinitions(columns == 2 ? "*,*" : "*"),
+                ColumnSpacing = 18, RowSpacing = span <= 4 ? 1 : 3, Margin = new Avalonia.Thickness(10,4) };
             Grid.SetRow(fieldsGrid, 1);
-            var values = grouping.ToArray();
-            int rows = (values.Length + 1) / 2;
+            int rows = (values.Length + columns - 1) / columns;
             for (int i = 0; i < rows; i++) fieldsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
             for (int i = 0; i < values.Length; i++)
             {
-                var binding = CreateFieldRow(values[i], grouping.Key);
-                groupFields.Add(binding);
-                _fields.Add(binding);
-                Grid.SetColumn(binding.Row, i / rows);
-                Grid.SetRow(binding.Row, i % rows);
+                var binding = CreateFieldRow(values[i], key);
+                groupFields.Add(binding); _fields.Add(binding);
+                Grid.SetColumn(binding.Row, i / rows); Grid.SetRow(binding.Row, i % rows);
+                if (key == "timeframes" && binding.Row.Child is Grid fieldGrid && binding.Editor is ComboBox combo)
+                {
+                    fieldGrid.ColumnDefinitions = new ColumnDefinitions("190,125,*");
+                    var chips = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Margin = new Avalonia.Thickness(8,0,0,0) };
+                    foreach (var tf in values[i].EnumValues)
+                    {
+                        var chip = new Button { Content = tf, Padding = new Avalonia.Thickness(5,2), FontSize = 11,
+                            MinWidth = 34, Height = 25, Classes = { "secondary" }, Tag = tf };
+                        chip.Click += (_, _) => combo.SelectedItem = tf;
+                        combo.SelectionChanged += (_, _) => chip.Background = new SolidColorBrush(Color.Parse(combo.SelectedItem?.ToString() == tf ? "#0866F4" : "#0A2946"));
+                        chips.Children.Add(chip);
+                    }
+                    Grid.SetColumn(chips, 2); fieldGrid.Children.Add(chips);
+                }
                 fieldsGrid.Children.Add(binding.Row);
             }
             content.Children.Add(fieldsGrid);
-            var card = new Border
-            {
-                Background = new SolidColorBrush(Color.Parse("#041B2E")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#14517A")),
-                BorderThickness = new Avalonia.Thickness(1),
-                CornerRadius = new Avalonia.CornerRadius(5),
-                Child = content
-            };
-            if (cardIndex % 2 == 0) host.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-            Grid.SetColumn(card, cardIndex % 2);
-            Grid.SetRow(card, cardIndex / 2);
-            host.Children.Add(card);
-            cardIndex++;
-            _groups[grouping.Key] = new GroupBinding { Card = card, Fields = groupFields };
+            var card = new Border { Classes = { "panel" }, Child = content };
+            Grid.SetColumn(card,column); Grid.SetColumnSpan(card,span); Grid.SetRow(card,row); host.Children.Add(card);
+            _groups[key] = new GroupBinding { Card = card, Fields = groupFields };
+        }
+        AddCard("risk", "⬡  1. Khởi tạo & an toàn", ["risk.risk_percent","risk.fixed_lot","risk.max_lot","risk.max_daily_loss_pct","risk.max_open_positions","risk.max_trades_per_day","risk.cooldown_minutes","risk.max_consecutive_losses"], 0,0,6);
+        AddCard("direction", "⇄  2. Hướng giao dịch", ["strategy.allow_buy","strategy.allow_sell","direction.ma_type","direction.ma_period","direction.ma_enabled","direction.require_close_side","direction.open_filter_enabled","direction.price_source"], 0,6,6);
+        AddCard("pullback", "⌁  3. Nhận diện nhịp hồi (Pullback)", descriptors.Where(d => GroupKey(d.Path) == "pullback").Select(d => d.Path).ToArray(), 1,0,6);
+        AddCard("trigger", "◎  4. Xác nhận vào lệnh (Trigger)", descriptors.Where(d => GroupKey(d.Path) == "trigger").Select(d => d.Path).ToArray(), 1,6,6);
+        AddCard("timeframes", "▥  5. Khung thời gian (Timeframe)", ["timeframes.direction","timeframes.pullback","timeframes.trigger"], 2,0,8,1);
+        AddCard("sessions", "◷  9. Phiên giao dịch", ["sessions.session1_enabled","sessions.session1_start","sessions.session1_end","sessions.session2_enabled","sessions.session2_start","sessions.session2_end"], 2,8,4);
+        AddCard("stop_loss", "⬡  6. Stop loss (SL)", ["stop_loss.mode","stop_loss.atr_period","stop_loss.atr_multiplier","stop_loss.min_price_units","stop_loss.max_price_units"], 3,0,2,1);
+        AddCard("take_profit", "◎  7. Take profit (TP)", ["take_profit.mode","take_profit.rr_ratio","take_profit.fixed_price_units","take_profit.dynamic.near_tp_distance","take_profit.dynamic.max_extension_price_units"], 3,2,2,1);
+        AddCard("management", "⚙  8. Quản lý sau vào", ["management.breakeven_enabled","management.breakeven_trigger_rr","management.partial_close_enabled","management.partial_close_percent","management.trailing_enabled"], 3,4,2,1);
+        AddCard("news", "▤  10. Lọc tin tức", ["news.minutes_before","news.minutes_after","news.high_impact_only","news.enabled"], 3,6,2,1);
+        host.Children.Add(validationCard);
+        int advancedIndex = 0;
+        foreach (var grouping in remaining.Values.ToArray().GroupBy(d => GroupKey(d.Path)).OrderBy(g => GroupTitle(g.Key).Order))
+        {
+            int row = 4 + advancedIndex / 2;
+            if (advancedIndex % 2 == 0) host.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            var key = _groups.ContainsKey(grouping.Key) ? grouping.Key + ".more" : grouping.Key;
+            AddCard(key, "Tham số bổ sung • " + GroupTitle(grouping.Key).Title, grouping.Select(d => d.Path).ToArray(), row, (advancedIndex % 2) * 6, 6);
+            advancedIndex++;
         }
 
         var declaredCount = schema.TryGetProperty("field_count", out var countElement) &&
@@ -319,14 +325,14 @@ public partial class ConfigurationEditor : UserControl
     {
         var rowContent = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("1.4*,1*"),
+            ColumnDefinitions = new ColumnDefinitions(groupKey is "stop_loss" or "take_profit" or "management" or "news" ? "1.05*,1*" : "1.35*,1*"),
             ColumnSpacing = 6,
-            MinHeight = 29
+            MinHeight = 25
         };
         var label = new TextBlock
         {
             Text = FieldLabel(descriptor),
-            FontSize = 13,
+            FontSize = groupKey is "stop_loss" or "take_profit" or "management" or "news" ? 13 : 14,
             Foreground = new SolidColorBrush(Color.Parse("#C0D5EB")),
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center
@@ -334,7 +340,9 @@ public partial class ConfigurationEditor : UserControl
         ToolTip.SetTip(label, $"{descriptor.Path}\n{descriptor.Description}\n{descriptor.SetKey}\n{BoundsText(descriptor)}");
         rowContent.Children.Add(label);
         Control editor = CreateEditor(descriptor);
-        editor.MinHeight = 27;
+        editor.MinHeight = 25;
+        editor.Height = 25;
+        if (editor is Avalonia.Controls.Primitives.TemplatedControl input) { input.FontSize = groupKey is "stop_loss" or "take_profit" or "management" or "news" ? 12 : 13; input.Padding = new Avalonia.Thickness(6,2); }
         editor.VerticalAlignment = VerticalAlignment.Center;
         editor.HorizontalAlignment = HorizontalAlignment.Stretch;
         Grid.SetColumn(editor, 1);
@@ -396,7 +404,12 @@ public partial class ConfigurationEditor : UserControl
         ["stop_loss.structure_lookback"] = "Số nến cấu trúc", ["stop_loss.structure_buffer_price_units"] = "Đệm cấu trúc (giá)",
         ["stop_loss.min_price_units"] = "SL tối thiểu (giá)", ["stop_loss.max_price_units"] = "SL tối đa (giá)",
         ["take_profit.mode"] = "Kiểu TP", ["take_profit.fixed_price_units"] = "TP cố định (giá)", ["take_profit.rr_ratio"] = "Tỷ lệ R:R",
-        ["news.enabled"] = "Bật lọc tin tức", ["news.minutes_before"] = "Tránh trước tin (phút)", ["news.minutes_after"] = "Tránh sau tin (phút)", ["news.high_impact_only"] = "Chỉ tin tác động cao",
+        ["news.enabled"] = "Bật lọc tin tức", ["news.minutes_before"] = "Trước tin (phút)", ["news.minutes_after"] = "Sau tin (phút)", ["news.high_impact_only"] = "Chỉ tin mạnh",
+        ["sessions.session1_enabled"] = "Bật phiên 1", ["sessions.session1_start"] = "Bắt đầu", ["sessions.session1_end"] = "Kết thúc",
+        ["sessions.session2_enabled"] = "Bật phiên 2", ["sessions.session2_start"] = "Bắt đầu", ["sessions.session2_end"] = "Kết thúc",
+        ["management.breakeven_enabled"] = "Breakeven", ["management.breakeven_trigger_rr"] = "Kích hoạt BE (R)",
+        ["management.partial_close_enabled"] = "Chốt một phần", ["management.partial_close_percent"] = "Tỷ lệ chốt (%)", ["management.trailing_enabled"] = "Trailing Stop",
+        ["take_profit.dynamic.near_tp_distance"] = "Gần TP (giá)", ["take_profit.dynamic.max_extension_price_units"] = "Mở rộng (giá)",
         ["strategy.symbol"] = "Symbol", ["strategy.allow_buy"] = "Cho phép BUY", ["strategy.allow_sell"] = "Cho phép SELL"
     };
 
@@ -420,7 +433,15 @@ public partial class ConfigurationEditor : UserControl
                 ItemsSource = descriptor.EnumValues,
                 MinHeight = 27
             };
+            if (descriptor.Path is "stop_loss.mode" or "take_profit.mode")
+                combo.ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((value, _) => new TextBlock
+                {
+                    Text = value switch { "STRUCTURE" => "Cấu trúc", "FIXED" => "Cố định", "DYNAMIC" => "Động", "RR" => "R:R", _ => value },
+                    FontSize = 12,
+                    VerticalAlignment = VerticalAlignment.Center
+                });
             combo.SelectionChanged += (_, _) => EditorValueChanged(descriptor, combo);
+            combo.SelectionChanged += (_, _) => ToolTip.SetTip(combo, $"{descriptor.Path}: {combo.SelectedItem}");
             return combo;
         }
 

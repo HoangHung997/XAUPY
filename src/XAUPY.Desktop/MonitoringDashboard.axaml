@@ -212,7 +212,7 @@
         <Border Grid.Column="1" Classes="panel">
           <StackPanel>
             <Border Background="#082038" Padding="12,7"><TextBlock Text="Trạng thái thực thi" Classes="panelTitle"/></Border>
-            <Grid Margin="12,9" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+            <Grid Margin="12,6" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="2">
               <TextBlock Grid.Row="0" Text="Tổng lệnh hôm nay" Classes="label"/><TextBlock Grid.Row="0" Grid.Column="1" Text="—"/>
               <TextBlock Grid.Row="1" Text="Lệnh đã khớp" Classes="label"/><TextBlock Grid.Row="1" Grid.Column="1" Text="—" Foreground="#18E58B"/>
               <TextBlock Grid.Row="2" Text="Lệnh bị từ chối" Classes="label"/><TextBlock Grid.Row="2" Grid.Column="1" Text="—"/>
@@ -228,9 +228,9 @@
           <StackPanel>
             <Border Background="#082038" Padding="12,7"><TextBlock Text="Tài nguyên hệ thống" Classes="panelTitle"/></Border>
             <Grid ColumnDefinitions="*,*,*" Margin="10,10" ColumnSpacing="8">
-              <StackPanel Grid.Column="0" HorizontalAlignment="Center"><Border Width="55" Height="55" CornerRadius="28" BorderBrush="#1E5E82" BorderThickness="7"><TextBlock Text="—" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/></Border><TextBlock Text="CPU" Classes="dim" FontSize="12" HorizontalAlignment="Center"/></StackPanel>
-              <StackPanel Grid.Column="1" HorizontalAlignment="Center"><Border Width="55" Height="55" CornerRadius="28" BorderBrush="#1E5E82" BorderThickness="7"><TextBlock Text="—" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/></Border><TextBlock Text="RAM" Classes="dim" FontSize="12" HorizontalAlignment="Center"/></StackPanel>
-              <StackPanel Grid.Column="2" HorizontalAlignment="Center"><Border Width="55" Height="55" CornerRadius="28" BorderBrush="#1E5E82" BorderThickness="7"><TextBlock Text="—" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/></Border><TextBlock Text="Disk" Classes="dim" FontSize="12" HorizontalAlignment="Center"/></StackPanel>
+              <StackPanel Grid.Column="0" HorizontalAlignment="Center"><Border Width="55" Height="55" CornerRadius="28" BorderBrush="#00B873" BorderThickness="7"><TextBlock Text="—" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/></Border><TextBlock Text="CPU" Classes="dim" FontSize="12" HorizontalAlignment="Center"/></StackPanel>
+              <StackPanel Grid.Column="1" HorizontalAlignment="Center"><Border Width="55" Height="55" CornerRadius="28" BorderBrush="#258DEC" BorderThickness="7"><TextBlock Text="—" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/></Border><TextBlock Text="RAM" Classes="dim" FontSize="12" HorizontalAlignment="Center"/></StackPanel>
+              <StackPanel Grid.Column="2" HorizontalAlignment="Center"><Border Width="55" Height="55" CornerRadius="28" BorderBrush="#9746F4" BorderThickness="7"><TextBlock Text="—" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/></Border><TextBlock Text="Disk" Classes="dim" FontSize="12" HorizontalAlignment="Center"/></StackPanel>
             </Grid>
             <TextBlock Text="Chưa có dữ liệu tài nguyên hệ thống." Classes="dim" FontSize="12" TextWrapping="Wrap" Margin="10,0,10,8"/>
           </StackPanel>
@@ -264,20 +264,24 @@
         </Grid>
       </Border>
 
-      <!-- Alert table -->
-      <Border Classes="panel">
-        <StackPanel>
-          <Grid Background="#082038" ColumnDefinitions="Auto,Auto,*" Margin="12,7" ColumnSpacing="10">
+      <!-- A compact horizontal alert strip leaves the table visible at the reference canvas size. -->
+      <Border x:Name="MonitoringAlertStrip" Classes="panel" Height="91">
+        <Grid x:Name="MonitoringAlertColumns" ColumnDefinitions="315,*">
+          <StackPanel Margin="12,8" Spacing="8">
             <TextBlock Text="Cảnh báo &amp; Thông báo" Classes="panelTitle"/>
-            <Border Grid.Column="1" Background="#0866F4" CornerRadius="4" Padding="10,3"><TextBlock Text="Tất cả"/></Border>
-          </Grid>
-          <Grid Margin="12,7" ColumnDefinitions="100,90,120,*">
-            <TextBlock Text="Thời gian" Classes="dim"/><TextBlock Grid.Column="1" Text="Mức" Classes="dim"/><TextBlock Grid.Column="2" Text="Loại" Classes="dim"/><TextBlock Grid.Column="3" Text="Thông báo" Classes="dim"/>
-          </Grid>
-          <Grid Margin="12,2,12,8" ColumnDefinitions="100,90,120,*">
-            <TextBlock Text="Realtime" Classes="dim"/><TextBlock Grid.Column="1" Text="INFO" Foreground="#40BFFF"/><TextBlock Grid.Column="2" Text="Hệ thống" Classes="label"/><TextBlock x:Name="MonitorAlertText" Grid.Column="3" Text="Alert: đang chờ Bridge." Foreground="#FFD34D" TextWrapping="Wrap"/>
-          </Grid>
-        </StackPanel>
+            <Border Background="#0866F4" CornerRadius="4" Padding="10,3" HorizontalAlignment="Left"><TextBlock Text="Tất cả"/></Border>
+          </StackPanel>
+          <Border Grid.Column="1" BorderBrush="#14517A" BorderThickness="1,0,0,0">
+            <Grid RowDefinitions="25,*">
+              <Grid Background="#082038" ColumnDefinitions="95,75,100,*" Margin="10,3">
+                <TextBlock Text="Thời gian" Classes="dim" FontSize="12"/><TextBlock Grid.Column="1" Text="Mức" Classes="dim" FontSize="12"/><TextBlock Grid.Column="2" Text="Loại" Classes="dim" FontSize="12"/><TextBlock Grid.Column="3" Text="Thông báo" Classes="dim" FontSize="12"/>
+              </Grid>
+              <Grid Grid.Row="1" ColumnDefinitions="95,75,100,*" Margin="10,4,10,8">
+                <TextBlock Text="Realtime" Classes="dim" FontSize="12"/><TextBlock Grid.Column="1" Text="INFO" Foreground="#40BFFF" FontSize="12"/><TextBlock Grid.Column="2" Text="Hệ thống" Classes="label" FontSize="12"/><TextBlock x:Name="MonitorAlertText" Grid.Column="3" Text="Alert: đang chờ Bridge." Foreground="#FFD34D" TextWrapping="Wrap" FontSize="12"/>
+              </Grid>
+            </Grid>
+          </Border>
+        </Grid>
       </Border>
     </StackPanel>
   </ScrollViewer>

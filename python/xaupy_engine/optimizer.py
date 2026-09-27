@@ -48,6 +48,9 @@ OPTIMIZABLE_PATHS = frozenset(
         "pullback.rsi_period",
         "pullback.rsi_buy_level",
         "pullback.rsi_sell_level",
+        "pullback.z_period",
+        "pullback.z_buy_level",
+        "pullback.z_sell_level",
         "trigger.rsi_period",
         "trigger.rsi_reversal_delta",
         "trigger.z_period",
@@ -274,6 +277,9 @@ def _field_relevant(path: str, profile: dict[str, Any]) -> tuple[bool, str]:
         return trailing_enabled, "trailing is disabled"
 
     checks: dict[str, tuple[str, Any, str]] = {
+        "pullback.z_period": ("pullback.z_enabled", True, "Pullback Z is disabled"),
+        "pullback.z_buy_level": ("pullback.z_enabled", True, "Pullback Z is disabled"),
+        "pullback.z_sell_level": ("pullback.z_enabled", True, "Pullback Z is disabled"),
         "direction.ma_period": (
             "direction.ma_enabled",
             True,

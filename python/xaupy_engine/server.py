@@ -31,9 +31,11 @@ from .optimizer import (
     OptimizerRepository,
     heatmap_from_result,
 )
-from .strategy_engine import StrategyEngine
+from .strategy_engine import StrategyEngine, StrategyDataError
 from .settings import SettingsStore, default_settings
 from .diagnostics import collect_diagnostics
+from .history_jobs import HistoryJobs
+from .tick_protocol import TickTransport, validate_tick_payload
 
 DEFAULT_HOST: Final = "127.0.0.1"
 DEFAULT_PORT: Final = 39421
@@ -66,9 +68,21 @@ class EngineServer:
         self._connections_total = 0
         self.instance_id = os.environ.get("XAUPY_INSTANCE_ID", "")
         self.bridge = BridgeRegistry(stale_seconds=bridge_stale_seconds)
+        self.tick_transport = TickTransport()
+        # An explicitly scoped server must not send its other stores back to the
+        # signed-in user's production directories. In particular, protocol tests
+        # historically supplied only state_dir and polluted the real journal.
+        scoped_root = next((Path(value) for value in
+                            (state_dir, journal_dir, backtest_dir, optimizer_dir)
+                            if value is not None), None)
+        if scoped_root is not None:
+            journal_dir = journal_dir if journal_dir is not None else scoped_root / "logs"
+            backtest_dir = backtest_dir if backtest_dir is not None else scoped_root / "backtests"
+            optimizer_dir = optimizer_dir if optimizer_dir is not None else scoped_root / "optimizer"
         self.settings_store = SettingsStore(state_dir if state_dir is not None else
                                             Path(journal_dir) / "state" if journal_dir is not None else None)
         self.active_profile = deepcopy(self.settings_store.profile)
+        self.history_jobs = HistoryJobs(self.settings_store.root_dir)
         self.strategy = StrategyEngine(self.active_profile)
         self.manual_actions = ManualActionSimulator(self.bridge)
         self.journal = StructuredJournal(journal_dir)
@@ -127,6 +141,7 @@ class EngineServer:
         await self._shutdown_event.wait()
 
     async def close(self) -> None:
+        await asyncio.to_thread(self.history_jobs.close)
         optimizer_stopped = await asyncio.to_thread(
             self.optimizer_jobs.shutdown,
             5.0,
@@ -292,7 +307,7 @@ class EngineServer:
         common = self._common()
 
         if request.type in {"diagnostics_get", "settings_get", "settings_defaults_get", "settings_set",
-                            "backup_create", "backup_restore"}:
+                            "backup_create", "backup_restore", "history_download_start", "history_download_status"}:
             return self._maintenance_response(request, common), False
 
         if request.type == "hello":
@@ -320,6 +335,7 @@ class EngineServer:
                 ),
                 "connections_total": self._connections_total,
                 "bridge": bridge_status.to_payload(),
+                "tick_transport": self.tick_transport.payload(),
                 "overview": self.bridge.overview_payload(),
                 "orders_positions": self.bridge.orders_positions_payload(),
                 "strategy": self.strategy.status_payload(
@@ -548,6 +564,7 @@ class EngineServer:
 
         if request.type == "bridge_snapshot":
             previous_bridge = self.bridge.status()
+            previously_fresh = self.bridge.market_data_connected()
             try:
                 self.bridge.record_snapshot(request.payload)
             except BridgeSnapshotError as exc:
@@ -556,10 +573,10 @@ class EngineServer:
             bridge_status = self.bridge.status()
             if (
                 previous_bridge.snapshots_total > 0
-                and not previous_bridge.terminal_connected
+                and not previously_fresh
                 and bridge_status.terminal_connected
             ):
-                self.strategy.reset_setup("MARKET_RECONNECTED")
+                self.strategy.reset_setup("MARKET_RECONNECTED" if not previous_bridge.terminal_connected else "MARKET_DATA_STALE")
                 self._log(
                     "INFO",
                     "Strategy",
@@ -601,6 +618,28 @@ class EngineServer:
                 ),
                 False,
             )
+
+        if request.type == "bridge_ticks":
+            try:
+                validate_tick_payload(request.payload)
+            except ValueError as exc:
+                return self._bridge_error(request, str(exc)), False
+            fresh = self.bridge.market_data_connected()
+            matching = (request.payload["symbol"] == self.bridge.status().symbol
+                        and request.payload["symbol"] == self.active_profile["strategy"]["symbol"])
+            if not fresh or not matching:
+                self.strategy.reset_setup("MARKET_DATA_STALE" if not fresh else "TICK_SYMBOL_MISMATCH")
+                status = self.strategy.status_payload(market_connected=fresh)
+            else:
+                try:
+                    status = self.strategy.ingest_tick_batch(request.payload)
+                except StrategyDataError as exc:
+                    self.strategy.reset_setup("INVALID_TICK_BATCH")
+                    return self._bridge_error(request, str(exc)), False
+                self.tick_transport.record_accepted(request.payload)
+            return Envelope.response("bridge_ticks_ack", request.request_id,
+                                     {**common, "accepted": fresh and matching, "command": None,
+                                      "tick_transport": self.tick_transport.payload(), "strategy": status}), False
 
         if request.type == "manual_action_simulate":
             result = self.manual_actions.simulate(
@@ -1675,6 +1714,11 @@ class EngineServer:
             extra: dict[str, Any] = {}
             if request.type == "diagnostics_get":
                 extra["diagnostics"] = collect_diagnostics(self)
+            elif request.type == "history_download_start":
+                extra["history_download"] = self.history_jobs.start(
+                    request.payload.get("terminal", ""), request.payload.get("symbol", "XAUUSD"))
+            elif request.type == "history_download_status":
+                extra["history_download"] = self.history_jobs.status()
             elif request.type == "settings_defaults_get":
                 extra["settings"] = default_settings()
             else:

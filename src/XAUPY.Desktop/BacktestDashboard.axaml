@@ -3,6 +3,7 @@
              xmlns:local="using:XAUPY.Desktop"
              x:Class="XAUPY.Desktop.BacktestDashboard">
   <UserControl.Styles>
+    <Style Selector="Grid.resultActions Button"><Setter Property="Padding" Value="10,4"/><Setter Property="Height" Value="30"/><Setter Property="FontSize" Value="13"/></Style>
     <Style Selector="TextBlock.btHeader">
       <Setter Property="Foreground" Value="#BED3E8"/>
       <Setter Property="FontSize" Value="12"/>
@@ -36,24 +37,24 @@
     <StackPanel Spacing="8">
       <!-- Approved Backtest configuration zone -->
       <Border Classes="panel">
-        <Grid RowDefinitions="34,Auto,28">
+        <Grid RowDefinitions="32,Auto">
           <Border Grid.Row="0" Background="#082038" Padding="12,7">
             <TextBlock Text="Cấu hình Backtest" Classes="panelTitle"/>
           </Border>
 
           <Grid Grid.Row="1"
-                ColumnDefinitions="0.9*,0.8*,0.95*,0.95*,1.2*,0.75*,0.85*,0.95*"
+                ColumnDefinitions="1.05*,0.95*,0.95*,0.95*,1.3*,0.78*,0.82*,1.0*"
                 ColumnSpacing="8"
-                Margin="12,8,12,6">
+                Margin="12,6,12,8">
             <StackPanel Grid.Column="0" Spacing="3">
               <TextBlock Text="Symbol" Classes="label"/>
-              <Border Classes="panelSoft" Padding="10,8">
+              <Border Classes="panelSoft" Padding="10,5">
                 <TextBlock x:Name="BacktestSymbolText" Text="XAUUSD"/>
               </Border>
             </StackPanel>
 
             <StackPanel Grid.Column="1" Spacing="3">
-              <TextBlock Text="Khung dữ liệu" Classes="label"/>
+              <TextBlock Text="Khung thời gian" Classes="label" ToolTip.Tip="Khung dữ liệu của file kiểm thử"/>
               <ComboBox x:Name="BacktestTimeframeCombo" SelectedIndex="0" IsEnabled="False">
                 <ComboBoxItem Content="M1"/>
               </ComboBox>
@@ -72,7 +73,7 @@
             <StackPanel Grid.Column="4" Spacing="3">
               <TextBlock Text="Model" Classes="label"/>
               <ComboBox SelectedIndex="0" IsEnabled="False">
-                <ComboBoxItem Content="M1 OHLC deterministic parity"/>
+                <ComboBoxItem Content="M1 OHLC" ToolTip.Tip="M1 OHLC deterministic parity — mô phỏng nến M1 có cùng quy tắc chiến lược với Engine."/>
               </ComboBox>
             </StackPanel>
 
@@ -95,30 +96,13 @@
                     Click="RunBacktest_OnClick"/>
           </Grid>
 
-          <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="12,0,12,5">
-            <TextBlock x:Name="DatasetStatusText"
-                       Text="Dữ liệu: chưa chọn file M1 JSON/CSV"
-                       Classes="dim"
-                       FontSize="12"
-                       VerticalAlignment="Center"
-                       TextTrimming="CharacterEllipsis"/>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="12,0">
-              <TextBlock Text="Vốn ban đầu:" Classes="dim" FontSize="12" VerticalAlignment="Center"/>
-              <TextBox x:Name="InitialBalanceBox" Width="110" Height="24" Text="10000"/>
-            </StackPanel>
-            <TextBlock x:Name="BacktestRunStatusText"
-                       Grid.Column="2"
-                       Text="Chờ dữ liệu"
-                       Foreground="#FFD34D"
-                       FontSize="12"
-                       VerticalAlignment="Center"/>
-          </Grid>
+
         </Grid>
       </Border>
 
       <!-- Result title/actions -->
       <Border Classes="panel">
-        <Grid ColumnDefinitions="*,Auto" Margin="12,5">
+        <Grid Classes="resultActions" ColumnDefinitions="*,Auto" Margin="12,3">
           <TextBlock x:Name="BacktestResultHeaderText"
                      Text="Kết quả Backtest — chưa có run"
                      FontSize="16"
@@ -144,7 +128,7 @@
 
       <!-- Approved six KPI cards -->
       <Grid ColumnDefinitions="*,*,*,*,*,*" ColumnSpacing="8">
-        <Border Grid.Column="0" Background="#062D24" BorderBrush="#08A86D" BorderThickness="1" CornerRadius="5" Padding="12">
+        <Border Grid.Column="0" Background="#062D24" BorderBrush="#08A86D" BorderThickness="1" CornerRadius="5" Padding="10">
           <Grid ColumnDefinitions="48,*">
             <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#15D98B" BorderThickness="2">
               <TextBlock Text="$" Foreground="#19E58C" FontSize="25" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -157,7 +141,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Column="1" Background="#06233E" BorderBrush="#0B74D6" BorderThickness="1" CornerRadius="5" Padding="12">
+        <Border Grid.Column="1" Background="#06233E" BorderBrush="#0B74D6" BorderThickness="1" CornerRadius="5" Padding="10">
           <Grid ColumnDefinitions="48,*">
             <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#258DF1" BorderThickness="2">
               <TextBlock Text="↗" Foreground="#6DB9FF" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -170,7 +154,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Column="2" Background="#21163A" BorderBrush="#7344C2" BorderThickness="1" CornerRadius="5" Padding="12">
+        <Border Grid.Column="2" Background="#21163A" BorderBrush="#7344C2" BorderThickness="1" CornerRadius="5" Padding="10">
           <Grid ColumnDefinitions="48,*">
             <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#A36BFF" BorderThickness="2">
               <TextBlock Text="▤" Foreground="#B98CFF" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -183,7 +167,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Column="3" Background="#351321" BorderBrush="#D92F4B" BorderThickness="1" CornerRadius="5" Padding="12">
+        <Border Grid.Column="3" Background="#351321" BorderBrush="#D92F4B" BorderThickness="1" CornerRadius="5" Padding="10">
           <Grid ColumnDefinitions="48,*">
             <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#FF3F5C" BorderThickness="2">
               <TextBlock Text="⌁" Foreground="#FF526C" FontSize="23" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -196,7 +180,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Column="4" Background="#06283C" BorderBrush="#0D85B6" BorderThickness="1" CornerRadius="5" Padding="12">
+        <Border Grid.Column="4" Background="#06283C" BorderBrush="#0D85B6" BorderThickness="1" CornerRadius="5" Padding="10">
           <Grid ColumnDefinitions="48,*">
             <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#21B9E8" BorderThickness="2">
               <TextBlock Text="☷" Foreground="#53D7FF" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -209,7 +193,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Column="5" Background="#332A0D" BorderBrush="#9A7A17" BorderThickness="1" CornerRadius="5" Padding="12">
+        <Border Grid.Column="5" Background="#332A0D" BorderBrush="#9A7A17" BorderThickness="1" CornerRadius="5" Padding="10">
           <Grid ColumnDefinitions="48,*">
             <Border Width="42" Height="42" CornerRadius="21" BorderBrush="#D6A82A" BorderThickness="2">
               <TextBlock Text="≈" Foreground="#FFD04B" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -225,7 +209,7 @@
 
       <!-- Equity + drawdown -->
       <Grid ColumnDefinitions="1.05*,1*" ColumnSpacing="8">
-        <Border Grid.Column="0" Classes="panel" Height="248">
+        <Border Grid.Column="0" Classes="panel" Height="260">
           <Grid RowDefinitions="36,*,24">
             <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="*,Auto" Margin="0">
               <TextBlock Text="Đường cong vốn (Equity Curve)" Classes="panelTitle" Margin="12,8"/>
@@ -251,7 +235,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Column="1" Classes="panel" Height="248">
+        <Border Grid.Column="1" Classes="panel" Height="260">
           <Grid RowDefinitions="36,*,24">
             <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="*,Auto">
               <TextBlock Text="Drawdown (Mức sụt giảm vốn)" Classes="panelTitle" Margin="12,8"/>
@@ -274,7 +258,7 @@
 
       <!-- History + trade list -->
       <Grid ColumnDefinitions="1.42*,1*" ColumnSpacing="8">
-        <Border Grid.Column="0" Classes="panel" MinHeight="222">
+        <Border Grid.Column="0" Classes="panel" MinHeight="254">
           <Grid RowDefinitions="36,Auto,*,44">
             <Border Grid.Row="0" Background="#082038" Padding="12,8">
               <TextBlock Text="Danh sách kết quả Backtest" Classes="panelTitle"/>
@@ -312,7 +296,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Column="1" Classes="panel" MinHeight="222">
+        <Border Grid.Column="1" Classes="panel" MinHeight="254">
           <Grid RowDefinitions="36,Auto,*,44">
             <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="*,Auto">
               <TextBlock Text="Danh sách giao dịch (Backtest)" Classes="panelTitle" Margin="12,8"/>
@@ -348,6 +332,26 @@
           </Grid>
         </Border>
       </Grid>
+      <Expander Header="Dữ liệu kiểm thử &amp; vốn ban đầu" HorizontalAlignment="Stretch">
+          <Grid ColumnDefinitions="*,Auto,Auto" Margin="12,6,12,10">
+            <TextBlock x:Name="DatasetStatusText"
+                       Text="Dữ liệu: chưa chọn file M1 JSON/CSV"
+                       Classes="dim"
+                       FontSize="12"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="12,0">
+              <TextBlock Text="Vốn ban đầu:" Classes="dim" FontSize="12" VerticalAlignment="Center"/>
+              <TextBox x:Name="InitialBalanceBox" Width="110" Height="24" Text="10000"/>
+            </StackPanel>
+            <TextBlock x:Name="BacktestRunStatusText"
+                       Grid.Column="2"
+                       Text="Chờ dữ liệu"
+                       Foreground="#FFD34D"
+                       FontSize="12"
+                       VerticalAlignment="Center"/>
+          </Grid>
+      </Expander>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

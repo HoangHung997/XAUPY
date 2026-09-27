@@ -33,6 +33,12 @@ public sealed partial class EngineProcessSupervisor
     public Task<JsonElement> QueryDiagnosticsAsync(CancellationToken cancellationToken = default) =>
         MaintenanceRequestAsync("diagnostics_get", new { }, cancellationToken);
 
+    public Task<JsonElement> StartHistoryDownloadAsync(string terminal, string symbol, CancellationToken cancellationToken = default) =>
+        MaintenanceRequestAsync("history_download_start", new { terminal, symbol }, cancellationToken);
+
+    public Task<JsonElement> GetHistoryDownloadAsync(CancellationToken cancellationToken = default) =>
+        MaintenanceRequestAsync("history_download_status", new { }, cancellationToken);
+
     public Task<JsonElement> GetSettingsAsync(CancellationToken cancellationToken = default) =>
         MaintenanceRequestAsync("settings_get", new { }, cancellationToken);
 

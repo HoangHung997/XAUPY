@@ -24,6 +24,12 @@ public sealed record StrategySignalSnapshot(
     long? BarTime,
     string? Direction);
 
+public sealed record IntrabarObservationSnapshot(string Mode, long ObservedTicks,
+    double? RsiExtreme, double? ZExtreme, string? Reason, long? LastTickTimeMsc)
+{
+    public static IntrabarObservationSnapshot Empty { get; } = new("CLOSED_BAR", 0, null, null, null, null);
+}
+
 public sealed record StrategySnapshot(
     bool Available,
     bool Ready,
@@ -55,6 +61,7 @@ public sealed record StrategySnapshot(
     bool TradingEnabled,
     bool ExecutionEnabled)
 {
+    public IntrabarObservationSnapshot Intrabar { get; init; } = IntrabarObservationSnapshot.Empty;
     public static StrategySnapshot Empty { get; } = new(
         false,
         false,
@@ -107,6 +114,8 @@ public sealed record StrategySnapshot(
         var pullbackIndicators = ReadObject(indicators, "pullback");
         var triggerIndicators = ReadObject(indicators, "trigger");
         var filterIndicators = ReadObject(indicators, "filters");
+        var intrabar = ReadObject(strategy, "intrabar");
+        var extremes = ReadObject(intrabar, "setup_extremes");
 
         var barsSeen = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var barsSeenElement = ReadObject(strategy, "bars_seen");
@@ -201,7 +210,16 @@ public sealed record StrategySnapshot(
             OverviewSnapshot.ReadString(strategy, "last_reset_reason"),
             OverviewSnapshot.ReadLong(strategy, "last_evaluated_trigger_time"),
             OverviewSnapshot.ReadBool(strategy, "trading_enabled"),
-            OverviewSnapshot.ReadBool(strategy, "execution_enabled"));
+            OverviewSnapshot.ReadBool(strategy, "execution_enabled"))
+        {
+            Intrabar = new IntrabarObservationSnapshot(
+                ReadObjectString(intrabar, "mode", "CLOSED_BAR"),
+                OverviewSnapshot.ReadLong(intrabar, "observed_ticks") ?? 0,
+                OverviewSnapshot.ReadDouble(extremes, "rsi"),
+                OverviewSnapshot.ReadDouble(extremes, "z"),
+                OverviewSnapshot.ReadString(intrabar, "reason"),
+                OverviewSnapshot.ReadLong(intrabar, "last_tick_time_msc"))
+        };
     }
 
     private static JsonElement ReadObject(JsonElement parent, string name)

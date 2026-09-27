@@ -87,8 +87,10 @@ public partial class MainWindow : Window
         _strategyDashboard = this.FindControl<StrategyDashboard>("StrategyDashboard")
             ?? throw new InvalidOperationException("StrategyDashboard missing.");
         _strategyDashboard.AttachSupervisor(_engineSupervisor);
+        _strategyDashboard.HasConflictingDraft = () => _configurationEditor.HasUnsavedChanges || _quickConfigurationDirty;
         _monitoringDashboard = this.FindControl<MonitoringDashboard>("MonitoringDashboard")
             ?? throw new InvalidOperationException("MonitoringDashboard missing.");
+        this.FindControl<ContentControl>("MonitoringAlertsHost")!.Content = _monitoringDashboard.DetachAlertsForFullWidth();
         _ordersPositionsDashboard = this.FindControl<OrdersPositionsDashboard>("OrdersPositionsDashboard")
             ?? throw new InvalidOperationException("OrdersPositionsDashboard missing.");
         _ordersPositionsDashboard.AttachSupervisor(_engineSupervisor);
@@ -182,6 +184,7 @@ public partial class MainWindow : Window
         _configurationEditor.IsVisible = configuration;
         _strategyDashboard.IsVisible = strategy;
         _monitoringDashboard.IsVisible = monitoring;
+        SetMonitoringLayout(monitoring);
         _ordersPositionsDashboard.IsVisible = orders;
         _backtestDashboard.IsVisible = backtest;
         _optimizerDashboard.IsVisible = optimization;
@@ -208,6 +211,26 @@ public partial class MainWindow : Window
         }
         else if (tools) _ = _toolsDashboard.EnsureLoadedAsync(force: true);
         else if (settings) _ = _settingsDashboard.EnsureLoadedAsync(force: true);
+    }
+
+    private void SetMonitoringLayout(bool monitoring)
+    {
+        this.FindControl<ContentControl>("MonitoringAlertsHost")!.IsVisible = monitoring;
+        this.FindControl<Grid>("DashboardGrid")!.ColumnDefinitions[0].Width = new GridLength(monitoring ? 275 : 288);
+        var quote = this.FindControl<Border>("SidebarQuoteCard")!;
+        quote.MinHeight = monitoring ? 154 : 166;
+        quote.Padding = new Avalonia.Thickness(17, monitoring ? 5 : 10);
+        this.FindControl<StackPanel>("SidebarQuoteContent")!.Spacing = monitoring ? 2 : 3;
+        FindText("SymbolValue").FontSize = monitoring ? 24 : 26;
+        FindText("BidValue").FontSize = monitoring ? 36 : 40;
+        this.FindControl<Border>("SidebarEaCard")!.MinHeight = monitoring ? 106 : 116;
+        this.FindControl<Border>("SidebarAccountCard")!.MinHeight = monitoring ? 216 : 250;
+        this.FindControl<Grid>("SidebarAccountRows")!.RowSpacing = monitoring ? 8 : 11;
+        this.FindControl<Grid>("SidebarAccountRows")!.Margin = new Avalonia.Thickness(15, monitoring ? 8 : 9);
+        this.FindControl<Border>("SidebarConnectionCard")!.MinHeight = monitoring ? 194 : 232;
+        this.FindControl<Grid>("SidebarConnectionRows")!.RowSpacing = monitoring ? 8 : 10;
+        FindText("BridgeDetailText").IsVisible = !monitoring;
+        FindText("EngineDetailText").IsVisible = !monitoring;
     }
 
     private void SetNavActive(string activeKey)

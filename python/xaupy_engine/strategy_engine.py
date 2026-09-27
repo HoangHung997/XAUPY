@@ -149,7 +149,7 @@ def _moving_average(values: list[float], period: int, ma_type: str) -> float | N
     raise ValueError(f"unsupported MA type: {ma_type}")
 
 
-def _rsi(values: list[float], period: int) -> float | None:
+def _rsi_state(values: list[float], period: int) -> tuple[float, float] | None:
     if period <= 0 or len(values) < period + 1:
         return None
 
@@ -163,6 +163,10 @@ def _rsi(values: list[float], period: int) -> float | None:
         average_gain = ((average_gain * (period - 1)) + gains[index]) / period
         average_loss = ((average_loss * (period - 1)) + losses[index]) / period
 
+    return average_gain, average_loss
+
+
+def _rsi_value(average_gain: float, average_loss: float) -> float:
     if average_loss == 0.0:
         if average_gain == 0.0:
             return 50.0
@@ -170,6 +174,11 @@ def _rsi(values: list[float], period: int) -> float | None:
 
     relative_strength = average_gain / average_loss
     return 100.0 - (100.0 / (1.0 + relative_strength))
+
+
+def _rsi(values: list[float], period: int) -> float | None:
+    state = _rsi_state(values, period)
+    return None if state is None else _rsi_value(*state)
 
 
 def _zscore(values: list[float], period: int) -> float | None:
@@ -311,6 +320,7 @@ class StrategyEngine:
         self.last_data_error: str | None = None
         self.last_reset_reason: str | None = None
         self._last_evaluated_trigger_time: int | None = None
+        self._observed_ticks_total = 0
 
         self.set_profile(profile or default_profile(), retain_history=False)
 
@@ -344,6 +354,22 @@ class StrategyEngine:
         self.blocked_reason = reason
         self.last_reset_reason = reason
         self._last_evaluated_trigger_time = None
+        self._reset_tick_observation()
+
+    def _reset_tick_observation(self) -> None:
+        self._tick_stream_id: str | None = None
+        self._tick_sequence: int | None = None
+        self._tick_last_time_msc: int | None = None
+        self._tick_bar_times: dict[str, int] = {}
+        self._tick_latch_bar_time: int | None = None
+        self._tick_latches: dict[str, dict[str, bool]] = {}
+        self._tick_candidate_extremes: dict[str, dict[str, float]] = {}
+        self._tick_setup_latches: dict[str, Any] = {}
+        self._tick_bar_extremes: dict[str, dict[str, Any]] = {}
+        self._tick_reason: str | None = "WAIT_TICK_BASELINE"
+        self._tick_required_closed_times: dict[str, int] = {}
+        self._tick_metrics_cache_key: int | None = None
+        self._tick_metrics_cache: tuple[Any, ...] | None = None
 
     def ingest_snapshot(self, payload: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(payload, dict):
@@ -359,6 +385,7 @@ class StrategyEngine:
         bars_payload = payload.get("bars")
         if not isinstance(bars_payload, dict):
             raise StrategyDataError("strategy snapshot bars must be an object")
+        self._tick_metrics_cache_key = None
 
         new_timeframes: set[str] = set()
         errors: list[str] = []
@@ -411,10 +438,281 @@ class StrategyEngine:
             # state machine non-deterministic.
 
         self.last_data_error = "; ".join(errors) if errors else None
-        if new_timeframes:
+        if new_timeframes and self.profile["trigger"]["confirm_closed_bar"]:
             self._evaluate(new_timeframes)
+        elif new_timeframes and self._tick_last_time_msc is None:
+            self.last_metrics, self.warmup_reasons = self._metrics()
+            self.state = "WARMUP" if self.warmup_reasons else "WAIT_INTRABAR"
+            self.blocked_reason = "WARMUP" if self.warmup_reasons else "WAIT_TICK_BASELINE"
 
         return self.status_payload(market_connected=True)
+
+    def ingest_tick_batch(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Consume actual ordered observations, never reconstruct an OHLC tick path.
+
+        A new/discontinuous stream is baseline-only. Sequence numbers make retries
+        idempotent while equal-millisecond ticks retain their supplied ordering.
+        Closed history is filtered at each event time before indicator evaluation.
+        """
+        if self.profile["trigger"]["confirm_closed_bar"]:
+            return self.status_payload(market_connected=True)
+        if not isinstance(payload, dict) or payload.get("symbol") != self.profile["strategy"]["symbol"]:
+            raise StrategyDataError("tick batch symbol does not match active profile")
+        batch = payload.get("tick_batch")
+        if not isinstance(batch, dict):
+            raise StrategyDataError("tick_batch must be an object")
+        stream_id, sequence, complete = batch.get("stream_id"), batch.get("sequence"), batch.get("complete")
+        if not isinstance(stream_id, str) or not stream_id or len(stream_id) > 128:
+            raise StrategyDataError("tick_batch.stream_id must be a nonempty string <= 128 characters")
+        if type(sequence) is not int or sequence < 1 or type(complete) is not bool:
+            raise StrategyDataError("tick batch requires positive sequence and boolean complete")
+        raw_ticks = batch.get("ticks")
+        if not isinstance(raw_ticks, list) or len(raw_ticks) > 1000:
+            raise StrategyDataError("tick_batch.ticks must contain at most 1000 observations")
+        ticks: list[tuple[int, float | None]] = []
+        for row in raw_ticks:
+            if not isinstance(row, dict):
+                raise StrategyDataError("tick observation must be an object")
+            timestamp, bid, ask = row.get("time_msc"), row.get("bid"), row.get("ask")
+            if type(timestamp) is not int or timestamp <= 0:
+                raise StrategyDataError("tick time_msc must be a positive integer")
+            if (type(bid) not in (int, float) or type(ask) not in (int, float)
+                    or not math.isfinite(bid) or not math.isfinite(ask) or bid < 0 or ask < 0
+                    or (bid > 0 and ask > 0 and bid > ask)):
+                raise StrategyDataError("tick bid/ask must be finite nonnegative ordered quotes")
+            if ticks and timestamp < ticks[-1][0]:
+                raise StrategyDataError("ticks must preserve chronological order")
+            ticks.append((timestamp, float(bid) if bid > 0 and ask > 0 else None))
+
+        same_stream = stream_id == self._tick_stream_id
+        if same_stream and self._tick_sequence is not None and sequence <= self._tick_sequence:
+            return self.status_payload(market_connected=True)
+        discontinuity = (
+            not same_stream or not complete
+            or (self._tick_sequence is not None and sequence != self._tick_sequence + 1)
+            or (ticks and self._tick_last_time_msc is not None and ticks[0][0] < self._tick_last_time_msc)
+        )
+        if discontinuity:
+            reason = "TICK_STREAM_BASELINE" if not same_stream else "TICK_STREAM_GAP"
+            self.reset_setup(reason)
+            self._tick_stream_id, self._tick_sequence = stream_id, sequence
+            self._tick_last_time_msc = ticks[-1][0] if ticks else None
+            self._tick_reason = reason
+            if ticks:
+                self._tick_bar_times = self._tick_times(ticks[-1][0])
+            self.last_metrics, self.warmup_reasons = self._metrics()
+            self.state = "WARMUP" if self.warmup_reasons else "WAIT_INTRABAR"
+            return self.status_payload(market_connected=True)
+
+        self._tick_sequence = sequence
+        for timestamp, bid in ticks:
+            if bid is None:
+                # CopyTicks may include trade-only records without a valid
+                # quote. Keep transport ordering but never invent its bid.
+                self._tick_last_time_msc = timestamp
+                continue
+            bar_times = self._tick_times(timestamp)
+            trigger_tf = self.profile["timeframes"]["trigger"]
+            previous_trigger = self._tick_bar_times.get(trigger_tf)
+            trigger_time = bar_times[trigger_tf]
+            if (self._tick_last_time_msc is None or
+                    (previous_trigger is not None and trigger_time > previous_trigger + HISTORY_TIMEFRAME_SECONDS[trigger_tf])):
+                self._clear_arm("TICK_BAR_GAP")
+                self._tick_latches.clear()
+                self._tick_candidate_extremes.clear()
+                self._tick_setup_latches.clear()
+                self._tick_latch_bar_time = None
+                self._tick_bar_extremes.clear()
+                self._tick_required_closed_times.clear()
+                self._tick_reason = "TICK_BAR_GAP"
+            else:
+                for tf, current_time in bar_times.items():
+                    previous_time = self._tick_bar_times.get(tf)
+                    if previous_time is not None and current_time > previous_time:
+                        self._tick_required_closed_times[tf] = previous_time
+                self._evaluate_tick(timestamp, bid, bar_times)
+                self._observed_ticks_total += 1
+            self._tick_last_time_msc = timestamp
+            self._tick_bar_times = bar_times
+        return self.status_payload(market_connected=True)
+
+    def _tick_times(self, timestamp: int) -> dict[str, int]:
+        seconds = timestamp // 1000
+        return {tf: seconds // span * span for tf, span in HISTORY_TIMEFRAME_SECONDS.items()}
+
+    def _tick_metrics(self, timestamp: int, bid: float) -> tuple[dict[str, Any], list[str], dict[str, list[Bar]]]:
+        seconds = timestamp // 1000
+        key = seconds // 60
+        if self._tick_metrics_cache_key != key:
+            closed = {tf: [bar for bar in bars if bar.time + HISTORY_TIMEFRAME_SECONDS[tf] <= seconds]
+                      for tf, bars in self.history.items()}
+            base_metrics, base_warmup = self._metrics(closed)
+            role_state = {}
+            for role in ("pullback", "trigger"):
+                cfg, timeframe = self.profile[role], self.profile["timeframes"][role]
+                values = [bar.close for bar in closed[timeframe]]
+                state = _rsi_state(values, cfg["rsi_period"]) if cfg["rsi_enabled"] else None
+                role_state[role] = (values, state)
+            self._tick_metrics_cache = closed, base_metrics, base_warmup, role_state
+            self._tick_metrics_cache_key = key
+        closed, base_metrics, base_warmup, role_state = self._tick_metrics_cache
+        metrics, warmup = deepcopy(base_metrics), list(base_warmup)
+        # Forming-bar indicators use a single current bid appended to CLOSED
+        # closes, not one appended close per tick, and not the bar's future close.
+        warmup = [reason for reason in warmup if not reason.startswith(("pullback:", "trigger:"))]
+        for role in ("pullback", "trigger"):
+            cfg, timeframe = self.profile[role], self.profile["timeframes"][role]
+            values, rsi_state = role_state[role]
+            for name, calculate in (("rsi", _rsi), ("z", _zscore)):
+                if cfg[f"{name}_enabled"]:
+                    period = cfg[f"{name}_period"]
+                    if name == "rsi" and rsi_state is not None:
+                        # Advance Wilder state once from the preceding CLOSED
+                        # bar, never once per tick. O(1) even after long uptime.
+                        change = bid - values[-1]
+                        gain, loss = rsi_state
+                        value = _rsi_value((gain * (period - 1) + max(change, 0)) / period,
+                                           (loss * (period - 1) + max(-change, 0)) / period)
+                    else:
+                        prefix = values if name == "rsi" else values[-(period - 1):]
+                        value = calculate(prefix + [bid], period)
+                    metrics[role][name] = value
+                    if value is None:
+                        warmup.append(f"{role}:{timeframe}:{name.upper()}{cfg[f'{name}_period']}")
+        required = set(self.profile["timeframes"].values())
+        for gate in ("adx", "atr"):
+            if self.profile["filters"][gate]["enabled"]:
+                required.add(self.profile["filters"][gate]["timeframe"])
+        for tf in required:
+            expected = self._tick_required_closed_times.get(tf)
+            if expected is not None and (not closed[tf] or closed[tf][-1].time < expected):
+                warmup.append(f"history:{tf}:CLOSED_BAR_PENDING")
+        return metrics, sorted(set(warmup)), closed
+
+    def _evaluate_tick(self, timestamp: int, bid: float, bar_times: dict[str, int]) -> None:
+        metrics, warmup, closed = self._tick_metrics(timestamp, bid)
+        self.last_metrics, self.warmup_reasons = metrics, warmup
+        if warmup:
+            self._clear_arm("WARMUP")
+            self.state, self._tick_reason = "WARMUP", "WARMUP"
+            self._tick_latches.clear()
+            self._tick_candidate_extremes.clear()
+            self._tick_setup_latches.clear()
+            return
+        sides, label, reason = self._direction_sides(metrics, closed)
+        self.direction = label
+        if reason is not None or not sides:
+            self._clear_arm(reason or "DIRECTION_NEUTRAL")
+            self.state = "FILTER_BLOCKED" if reason else "WAIT_DIRECTION"
+            self._tick_reason = reason or "DIRECTION_NEUTRAL"
+            self._tick_latches.clear()
+            self._tick_candidate_extremes.clear()
+            self._tick_setup_latches.clear()
+            return
+        if self.armed_side is not None and self.armed_side not in sides:
+            self._clear_arm("DIRECTION_CHANGED")
+            self._tick_latches.clear()
+            self._tick_candidate_extremes.clear()
+            self._tick_setup_latches.clear()
+
+        # Partial AND evidence is also directional, even before a setup arms.
+        # A side becoming eligible again must accumulate fresh observations.
+        for pending_side in set(self._tick_latches) | set(self._tick_candidate_extremes):
+            if pending_side not in sides:
+                self._tick_latches.pop(pending_side, None)
+                self._tick_candidate_extremes.pop(pending_side, None)
+
+        for role in ("pullback", "trigger"):
+            timeframe = self.profile["timeframes"][role]
+            extrema = self._tick_bar_extremes.setdefault(role, {})
+            if extrema.get("bar_time") != bar_times[timeframe]:
+                extrema.clear()
+                extrema["bar_time"] = bar_times[timeframe]
+            for indicator in ("rsi", "z"):
+                value = metrics[role].get(indicator)
+                if value is not None:
+                    observed = extrema.setdefault(indicator, {"min": value, "max": value})
+                    observed["min"], observed["max"] = min(observed["min"], value), max(observed["max"], value)
+
+        pullback_time = bar_times[self.profile["timeframes"]["pullback"]]
+        if self._tick_latch_bar_time != pullback_time:
+            self._tick_latch_bar_time = pullback_time
+            self._tick_latches.clear()
+            self._tick_candidate_extremes.clear()
+        cfg = self.profile["pullback"]
+        for side in sorted(sides):
+            latched = self._tick_latches.setdefault(side, {})
+            extremes = self._tick_candidate_extremes.setdefault(side, {})
+            for indicator in ("rsi", "z"):
+                if cfg[f"{indicator}_enabled"]:
+                    current = metrics["pullback"][indicator]
+                    level = cfg[f"{indicator}_{side.lower()}_level"]
+                    hit = current <= level if side == "BUY" else current >= level
+                    latched[indicator] = latched.get(indicator, False) or hit
+                current_trigger = metrics["trigger"].get(indicator)
+                if current_trigger is not None:
+                    previous = extremes.get(indicator, current_trigger)
+                    extremes[indicator] = min(previous, current_trigger) if side == "BUY" else max(previous, current_trigger)
+
+        self.last_conditions["pullback"] = {
+            side: _logic(list(self._tick_latches[side].values()), cfg["logic"]) for side in sorted(sides)
+        }
+        if self.state.startswith("TRIGGERED_"):
+            if not self._pullback_pass(self.armed_side, metrics):
+                self._clear_arm("PULLBACK_RESET")
+                self._tick_latches.clear()
+                self._tick_candidate_extremes.clear()
+                self._tick_setup_latches.clear()
+            else:
+                self.blocked_reason = "WAIT_PULLBACK_RESET"
+            return
+        trigger_time = bar_times[self.profile["timeframes"]["trigger"]]
+        if self.armed_side is None:
+            candidates = [side for side in sorted(sides) if self.last_conditions["pullback"][side]]
+            if len(candidates) != 1:
+                self.state = "AMBIGUOUS" if candidates else f"WAIT_PULLBACK_{label}"
+                self.blocked_reason = "BOTH_SIDES_VALID" if candidates else "WAIT_PULLBACK"
+                return
+            side = candidates[0]
+            self.armed_side, self._armed_trigger_time = side, trigger_time
+            extrema = self._tick_candidate_extremes[side]
+            self._trigger_rsi_extreme, self._trigger_z_extreme = extrema.get("rsi"), extrema.get("z")
+            self._tick_setup_latches = {"side": side, "bar_time": pullback_time,
+                                       "conditions": deepcopy(self._tick_latches[side])}
+            self.state, self.blocked_reason = f"ARMED_{side}", "WAIT_NEXT_TRIGGER_BAR"
+            self._tick_reason = "THRESHOLD_LATCHED"
+            return
+
+        age = (trigger_time - self._armed_trigger_time) // HISTORY_TIMEFRAME_SECONDS[self.profile["timeframes"]["trigger"]]
+        if age > self.profile["entry"]["max_signal_age_bars"]:
+            self._clear_arm("INTRABAR_SETUP_EXPIRED")
+            self._tick_latches.clear()
+            self._tick_candidate_extremes.clear()
+            self._tick_setup_latches.clear()
+            self._tick_reason = "INTRABAR_SETUP_EXPIRED"
+            return
+        self._update_trigger_extremes(self.armed_side, metrics)
+        passed, details = self._trigger_pass(self.armed_side, metrics)
+        details["confirmation_mode"] = "OBSERVED_TICKS_NEXT_BAR"
+        self.last_conditions["trigger"] = details
+        if trigger_time <= self._armed_trigger_time:
+            self.blocked_reason = "WAIT_NEXT_TRIGGER_BAR"
+            return
+        self._last_evaluated_trigger_time = trigger_time
+        if not passed:
+            self.state, self.blocked_reason = f"ARMED_{self.armed_side}", "WAIT_TRIGGER_REVERSAL"
+            return
+        self.signal_sequence += 1
+        self.state, self.blocked_reason = f"TRIGGERED_{self.armed_side}", None
+        self._tick_reason = "OBSERVED_REVERSAL_CONFIRMED"
+        self.last_signal = {
+            "sequence": self.signal_sequence, "side": self.armed_side, "bar_time": trigger_time,
+            "tick_time_msc": timestamp, "observation_mode": "OBSERVED_TICKS_NEXT_BAR",
+            "tick_stream_id": self._tick_stream_id, "tick_batch_sequence": self._tick_sequence,
+            "profile_hash": self.profile_hash, "direction": self.direction,
+            "timeframes": deepcopy(self.profile["timeframes"]), "indicators": deepcopy(metrics),
+            "threshold_latches": deepcopy(self._tick_setup_latches), "trigger": deepcopy(details),
+        }
 
     def _evaluate(self, new_timeframes: set[str]) -> None:
         metrics, warmup = self._metrics()
@@ -570,7 +868,7 @@ class StrategyEngine:
             extreme = self._trigger_rsi_extreme
             assert current is not None and extreme is not None
             move = current - extreme if side == "BUY" else extreme - current
-            passed = move >= cfg["rsi_reversal_delta"]
+            passed = move + 1e-12 >= cfg["rsi_reversal_delta"]
             detail["rsi"] = {
                 "current": current,
                 "extreme": extreme,
@@ -585,7 +883,7 @@ class StrategyEngine:
             extreme = self._trigger_z_extreme
             assert current is not None and extreme is not None
             move = current - extreme if side == "BUY" else extreme - current
-            passed = move >= cfg["z_reversal_delta"]
+            passed = move + 1e-12 >= cfg["z_reversal_delta"]
             detail["z"] = {
                 "current": current,
                 "extreme": extreme,
@@ -626,10 +924,11 @@ class StrategyEngine:
     def _direction_sides(
         self,
         metrics: dict[str, Any],
+        histories: dict[str, list[Bar]] | None = None,
     ) -> tuple[set[str], str, str | None]:
         cfg = self.profile
         direction_cfg = cfg["direction"]
-        direction_bar = self.history[cfg["timeframes"]["direction"]][-1]
+        direction_bar = (self.history if histories is None else histories)[cfg["timeframes"]["direction"]][-1]
 
         if direction_cfg["ma_enabled"]:
             current_ma = metrics["direction"]["ma"]
@@ -712,17 +1011,18 @@ class StrategyEngine:
             return "BOTH"
         return "NEUTRAL"
 
-    def _metrics(self) -> tuple[dict[str, Any], list[str]]:
+    def _metrics(self, histories: dict[str, list[Bar]] | None = None) -> tuple[dict[str, Any], list[str]]:
         cfg = self.profile
+        histories = self.history if histories is None else histories
         warmup: list[str] = []
 
         direction_tf = cfg["timeframes"]["direction"]
         pullback_tf = cfg["timeframes"]["pullback"]
         trigger_tf = cfg["timeframes"]["trigger"]
 
-        direction_history = self.history[direction_tf]
-        pullback_history = self.history[pullback_tf]
-        trigger_history = self.history[trigger_tf]
+        direction_history = histories[direction_tf]
+        pullback_history = histories[pullback_tf]
+        trigger_history = histories[trigger_tf]
 
         metrics: dict[str, Any] = {
             "direction": {
@@ -782,39 +1082,39 @@ class StrategyEngine:
 
         adx_cfg = cfg["filters"]["adx"]
         if adx_cfg["enabled"]:
-            adx_history = self.history[adx_cfg["timeframe"]]
+            adx_history = histories[adx_cfg["timeframe"]]
             metrics["filters"]["adx"] = _adx(adx_history, adx_cfg["period"])
             if metrics["filters"]["adx"] is None:
                 warmup.append(f"filter:{adx_cfg['timeframe']}:ADX{adx_cfg['period']}")
 
         atr_cfg = cfg["filters"]["atr"]
         if atr_cfg["enabled"]:
-            atr_history = self.history[atr_cfg["timeframe"]]
+            atr_history = histories[atr_cfg["timeframe"]]
             metrics["filters"]["atr"] = _atr(atr_history, atr_cfg["period"])
             if metrics["filters"]["atr"] is None:
                 warmup.append(f"filter:{atr_cfg['timeframe']}:ATR{atr_cfg['period']}")
 
         if direction_cfg["open_filter_enabled"]:
-            reference = self._reference_open(direction_cfg["open_reference_mode"])
+            reference = self._reference_open(direction_cfg["open_reference_mode"], histories)
             metrics["direction"]["open_reference"] = reference
             if reference is None and direction_cfg["open_reference_mode"] != "NONE":
                 warmup.append(f"direction:OPEN:{direction_cfg['open_reference_mode']}")
 
         open_cfg = cfg["filters"]["open"]
         if open_cfg["enabled"]:
-            reference = self._reference_open(open_cfg["reference_mode"])
+            reference = self._reference_open(open_cfg["reference_mode"], histories)
             metrics["filters"]["open_reference"] = reference
             if reference is None and open_cfg["reference_mode"] != "NONE":
                 warmup.append(f"filter:OPEN:{open_cfg['reference_mode']}")
 
         return metrics, sorted(set(warmup))
 
-    def _reference_open(self, mode: str) -> float | None:
+    def _reference_open(self, mode: str, histories: dict[str, list[Bar]] | None = None) -> float | None:
         mode = mode.upper()
         if mode == "NONE":
             return None
 
-        history = self.history["M1"]
+        history = (self.history if histories is None else histories)["M1"]
         if not history:
             return None
 
@@ -895,6 +1195,19 @@ class StrategyEngine:
             "last_data_error": self.last_data_error,
             "last_reset_reason": self.last_reset_reason,
             "last_evaluated_trigger_time": self._last_evaluated_trigger_time,
+            "intrabar": {
+                "mode": "CLOSED_BAR" if self.profile["trigger"]["confirm_closed_bar"] else "OBSERVED_TICKS_NEXT_BAR",
+                "stream_id": self._tick_stream_id,
+                "last_sequence": self._tick_sequence,
+                "last_tick_time_msc": self._tick_last_time_msc,
+                "observed_ticks": self._observed_ticks_total,
+                "current_bar_times": deepcopy(self._tick_bar_times),
+                "threshold_latches": deepcopy(self._tick_latches),
+                "setup_latches": deepcopy(self._tick_setup_latches),
+                "bar_extremes": deepcopy(self._tick_bar_extremes),
+                "setup_extremes": {"rsi": self._trigger_rsi_extreme, "z": self._trigger_z_extreme},
+                "reason": self._tick_reason,
+            },
             "trading_enabled": False,
             "execution_enabled": False,
         }

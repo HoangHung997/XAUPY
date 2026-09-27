@@ -12,6 +12,9 @@ public partial class MainWindow
     private bool _quickConfigurationSync;
     private bool _quickConfigurationDirty;
     private ConfigurationSummary? _quickConfigurationBaseline;
+    private string? _quickLogicBaseline;
+    private string? _quickDetailsHash;
+    private bool _quickDetailsLoading;
 
     private void InitializeQuickConfiguration()
     {
@@ -23,6 +26,8 @@ public partial class MainWindow
         }
         this.FindControl<CheckBox>("QuickAllowBuy")!.IsCheckedChanged += (_, _) => MarkQuickConfigurationChanged();
         this.FindControl<CheckBox>("QuickAllowSell")!.IsCheckedChanged += (_, _) => MarkQuickConfigurationChanged();
+        this.FindControl<ComboBox>("QuickLogic")!.ItemsSource = new[] { "AND", "OR" };
+        this.FindControl<ComboBox>("QuickLogic")!.SelectionChanged += (_, _) => MarkQuickConfigurationChanged();
     }
 
     private void MarkQuickConfigurationChanged()
@@ -33,7 +38,8 @@ public partial class MainWindow
             this.FindControl<ComboBox>("QuickPullback")!.SelectedItem?.ToString() != baseline.PullbackTimeframe ||
             this.FindControl<ComboBox>("QuickTrigger")!.SelectedItem?.ToString() != baseline.TriggerTimeframe ||
             (this.FindControl<CheckBox>("QuickAllowBuy")!.IsChecked == true) != baseline.AllowBuy ||
-            (this.FindControl<CheckBox>("QuickAllowSell")!.IsChecked == true) != baseline.AllowSell;
+            (this.FindControl<CheckBox>("QuickAllowSell")!.IsChecked == true) != baseline.AllowSell ||
+            (_quickLogicBaseline is not null && this.FindControl<ComboBox>("QuickLogic")!.SelectedItem?.ToString() != _quickLogicBaseline);
         this.FindControl<Button>("QuickApply")!.Content = _quickConfigurationDirty ? "Áp dụng thay đổi" : "Áp dụng cấu hình nhanh";
     }
 
@@ -51,6 +57,37 @@ public partial class MainWindow
             this.FindControl<CheckBox>("QuickAllowSell")!.IsChecked = config.AllowSell;
         }
         finally { _quickConfigurationSync = false; }
+        _ = RefreshQuickDetailsAsync();
+    }
+
+    private async Task RefreshQuickDetailsAsync()
+    {
+        if (_quickDetailsLoading || _quickConfigurationDirty || _engineSupervisor.State != EngineConnectionState.Ready) return;
+        var hash = _engineSupervisor.Strategy.ProfileHash;
+        if (_quickDetailsHash == hash && _quickLogicBaseline is not null) return;
+        _quickDetailsLoading = true;
+        try
+        {
+            var profile = await _engineSupervisor.GetActiveConfigAsync();
+            // A heartbeat or a user edit can arrive while the profile is being read.
+            if (_quickConfigurationDirty || hash != _engineSupervisor.Strategy.ProfileHash) return;
+            var logic = profile.GetProperty("pullback").GetProperty("logic").GetString();
+            _quickConfigurationSync = true;
+            try
+            {
+                _quickLogicBaseline = logic;
+                _quickDetailsHash = hash;
+                var combo = this.FindControl<ComboBox>("QuickLogic")!;
+                combo.SelectedItem = logic;
+                combo.IsEnabled = true;
+            }
+            finally { _quickConfigurationSync = false; }
+        }
+        catch (Exception ex)
+        {
+            ToolTip.SetTip(this.FindControl<ComboBox>("QuickLogic")!, $"Chưa tải logic Pullback: {ex.Message}");
+        }
+        finally { _quickDetailsLoading = false; }
     }
 
     private async void QuickApply_OnClick(object? sender, RoutedEventArgs e)
@@ -61,16 +98,29 @@ public partial class MainWindow
         {
             if (_configurationEditor.HasUnsavedChanges)
                 throw new InvalidOperationException("Tab Cấu hình có thay đổi chưa áp dụng. Hãy áp dụng hoặc hoàn tác bản nháp đó trước.");
+            if (_strategyDashboard.HasUnsavedChanges)
+                throw new InvalidOperationException("Tab Chiến lược có thay đổi chưa áp dụng. Hãy áp dụng hoặc hoàn tác bản nháp đó trước.");
             var active = await _engineSupervisor.GetActiveConfigAsync();
             var profile = JsonNode.Parse(active.GetRawText())!.AsObject();
-            profile["timeframes"]!["direction"] = this.FindControl<ComboBox>("QuickDirection")!.SelectedItem?.ToString();
-            profile["timeframes"]!["pullback"] = this.FindControl<ComboBox>("QuickPullback")!.SelectedItem?.ToString();
-            profile["timeframes"]!["trigger"] = this.FindControl<ComboBox>("QuickTrigger")!.SelectedItem?.ToString();
-            profile["strategy"]!["allow_buy"] = this.FindControl<CheckBox>("QuickAllowBuy")!.IsChecked == true;
-            profile["strategy"]!["allow_sell"] = this.FindControl<CheckBox>("QuickAllowSell")!.IsChecked == true;
+            var baseline = _quickConfigurationBaseline ?? throw new InvalidOperationException("Chưa tải cấu hình nhanh.");
+            void PatchChangedValue(string section, string key, JsonNode? proposed, JsonNode? original)
+            {
+                if (JsonNode.DeepEquals(proposed, original)) return;
+                if (!JsonNode.DeepEquals(profile[section]![key], original))
+                    throw new InvalidOperationException("Cấu hình đang chạy đã thay đổi từ nơi khác. Bản nháp được giữ; hoàn tác lựa chọn nhanh để tải lại trước khi áp dụng.");
+                profile[section]![key] = proposed;
+            }
+            PatchChangedValue("timeframes", "direction", JsonValue.Create(this.FindControl<ComboBox>("QuickDirection")!.SelectedItem?.ToString()), JsonValue.Create(baseline.DirectionTimeframe));
+            PatchChangedValue("timeframes", "pullback", JsonValue.Create(this.FindControl<ComboBox>("QuickPullback")!.SelectedItem?.ToString()), JsonValue.Create(baseline.PullbackTimeframe));
+            PatchChangedValue("timeframes", "trigger", JsonValue.Create(this.FindControl<ComboBox>("QuickTrigger")!.SelectedItem?.ToString()), JsonValue.Create(baseline.TriggerTimeframe));
+            PatchChangedValue("strategy", "allow_buy", JsonValue.Create(this.FindControl<CheckBox>("QuickAllowBuy")!.IsChecked == true), JsonValue.Create(baseline.AllowBuy));
+            PatchChangedValue("strategy", "allow_sell", JsonValue.Create(this.FindControl<CheckBox>("QuickAllowSell")!.IsChecked == true), JsonValue.Create(baseline.AllowSell));
+            if (_quickLogicBaseline is not null)
+                PatchChangedValue("pullback", "logic", JsonValue.Create(this.FindControl<ComboBox>("QuickLogic")!.SelectedItem?.ToString()), JsonValue.Create(_quickLogicBaseline));
             var result = await _engineSupervisor.ApplyActiveConfigAsync(JsonSerializer.SerializeToElement(profile));
             if (!result.Applied) throw new InvalidDataException("Các khung thời gian chưa hợp lệ. Kiểm tra ở tab Cấu hình.");
             _quickConfigurationDirty = false;
+            _quickDetailsHash = null;
             button.Content = "Đã áp dụng";
             UpdateQuickConfiguration(_engineSupervisor.Configuration);
             if (!_configurationEditor.HasUnsavedChanges)

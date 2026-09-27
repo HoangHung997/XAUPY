@@ -7,6 +7,7 @@ using System.Collections;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using XAUPY.Desktop;
 using XAUPY.Ipc;
@@ -42,6 +43,20 @@ Control EditorControl(ConfigurationEditor editor, string path) {
     throw new Exception("Editor field missing: " + path);
 }
 string DraftName(ConfigurationEditor editor) => ((JsonObject)Field(editor, "_draft")!)["profile"]!["name"]!.GetValue<string>();
+Control StrategyControl(StrategyDashboard dashboard, string path) =>
+    ((Dictionary<string, Control>)Field(dashboard, "_strategyFields")!)[path];
+JsonObject ActiveProfile(EngineProcessSupervisor connection) {
+    var task = connection.GetActiveConfigAsync(); Complete(task);
+    return JsonNode.Parse(task.Result.GetRawText())!.AsObject();
+}
+void SetActiveProfile(EngineProcessSupervisor connection, JsonObject profile) {
+    var task = connection.ApplyActiveConfigAsync(JsonSerializer.SerializeToElement(profile)); Complete(task);
+    Assert(task.Result.Applied, "isolated external profile update accepted");
+}
+void StrategyAction(StrategyDashboard dashboard, string handler) {
+    Invoke(dashboard, handler, dashboard, new RoutedEventArgs(Button.ClickEvent));
+    PumpUntil(() => !(bool)Field(dashboard, "_actionBusy")!);
+}
 
 using var supervisor = new EngineProcessSupervisor(enginePath, port);
 var main = new MainWindow(); // Never Show(): the real application's auto-start event must not run.
@@ -94,6 +109,121 @@ try {
     var active = supervisor.GetActiveConfigAsync(); Complete(active);
     Assert(active.Result.GetProperty("profile").GetProperty("name").GetString() != "TEST ONLY UNSAVED DRAFT", "unsaved draft never reaches persisted engine profile");
     Assert(!File.Exists(Path.Combine(runtime.Root, "state", "runtime-v1.json")), "test makes no persisted profile or settings mutations");
+
+    Invoke(editor, "ReloadActive_OnClick", editor, new RoutedEventArgs(Button.ClickEvent));
+    PumpUntil(() => !editor.HasUnsavedChanges && !(bool)Field(editor, "_loading")!);
+    var mainStrategy = main.FindControl<StrategyDashboard>("StrategyDashboard")!;
+    mainStrategy.AttachSupervisor(supervisor);
+    mainStrategy.Apply(supervisor.Strategy, supervisor.Configuration);
+    PumpUntil(() => Field(mainStrategy, "_strategyBaseline") is not null && Field(mainStrategy, "_strategyLoad") is Task { IsCompleted: true });
+    var mainZLevel = (NumericUpDown)StrategyControl(mainStrategy, "pullback.z_sell_level");
+    var mainZBaseline = mainZLevel.Value;
+    mainZLevel.Value += .1m;
+    apply.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+    Dispatcher.UIThread.RunJobs();
+    Assert(ToolTip.GetTip(apply)?.ToString()?.Contains("Tab Chiến lược") == true && apply.IsEnabled,
+        "Overview QuickApply guards a real Strategy draft after full editor is clean");
+    Assert(mainStrategy.HasUnsavedChanges && mainZLevel.Value == mainZBaseline + .1m,
+        "Overview conflicting apply preserves the real Strategy draft");
+    mainZLevel.Value = mainZBaseline;
+
+    // The following save/conflict tests intentionally persist ONLY inside the
+    // isolated temporary runtime, using a real engine and real Avalonia controls.
+    var strategy = new StrategyDashboard();
+    strategy.AttachSupervisor(supervisor);
+    strategy.Apply(supervisor.Strategy, supervisor.Configuration);
+    PumpUntil(() => Field(strategy, "_strategyBaseline") is not null && Field(strategy, "_strategyLoad") is Task { IsCompleted: true });
+    Assert(!strategy.HasUnsavedChanges, "Strategy initial profile load remains clean after queued UI events");
+    var zLevel = (NumericUpDown)StrategyControl(strategy, "pullback.z_sell_level");
+    var rsiLevel = (NumericUpDown)StrategyControl(strategy, "pullback.rsi_buy_level");
+    var strategyDirection = (ComboBox)StrategyControl(strategy, "timeframes.direction");
+    var closedBar = (CheckBox)StrategyControl(strategy, "trigger.confirm_closed_bar");
+    var sessionStart = (TextBox)StrategyControl(strategy, "sessions.session1_start");
+    decimal originalZ = zLevel.Value!.Value;
+    Assert(zLevel.IsEnabled && rsiLevel.IsEnabled && strategyDirection.IsEnabled, "Strategy editable fields enable after actual IPC load");
+    zLevel.Value = originalZ + .5m;
+    Assert(strategy.HasUnsavedChanges, "Strategy numeric edit marks its own draft dirty");
+    strategy.Apply(supervisor.Strategy, supervisor.Configuration);
+    Dispatcher.UIThread.RunJobs();
+    Assert(strategy.HasUnsavedChanges && zLevel.Value == originalZ + .5m, "Strategy heartbeat preserves numeric draft");
+    Complete(supervisor.StopAsync());
+    strategy.Apply(StrategySnapshot.Empty, ConfigurationSummary.Default);
+    Complete(supervisor.StartAsync()); PumpUntil(() => supervisor.State == EngineConnectionState.Ready);
+    strategy.Apply(supervisor.Strategy, supervisor.Configuration);
+    Dispatcher.UIThread.RunJobs();
+    Assert(strategy.HasUnsavedChanges && zLevel.Value == originalZ + .5m, "Strategy draft survives actual isolated engine restart");
+    Assert(ActiveProfile(supervisor)["pullback"]!["z_sell_level"]!.GetValue<double>() == (double)originalZ,
+        "Strategy draft remains unapplied after restart");
+    zLevel.Value = originalZ;
+    Assert(!strategy.HasUnsavedChanges, "Strategy numeric revert restores clean baseline");
+    var originalDirection = strategyDirection.SelectedItem;
+    strategyDirection.SelectedItem = "H1";
+    Assert(strategy.HasUnsavedChanges, "Strategy timeframe ComboBox edit marks dirty");
+    strategyDirection.SelectedItem = originalDirection;
+    Assert(!strategy.HasUnsavedChanges, "Strategy timeframe ComboBox revert clears dirty");
+    bool? originalClosed = closedBar.IsChecked;
+    closedBar.IsChecked = !originalClosed;
+    Assert(strategy.HasUnsavedChanges, "Strategy confirmation mode CheckBox edit marks dirty");
+    closedBar.IsChecked = originalClosed;
+    Assert(!strategy.HasUnsavedChanges, "Strategy confirmation mode revert clears dirty");
+    string? originalSession = sessionStart.Text;
+    sessionStart.Text = "12:34"; Dispatcher.UIThread.RunJobs();
+    Assert(strategy.HasUnsavedChanges, "Strategy session TextBox edit marks dirty");
+    sessionStart.Text = originalSession; Dispatcher.UIThread.RunJobs();
+    Assert(!strategy.HasUnsavedChanges, "Strategy session TextBox revert clears dirty");
+
+    zLevel.Value = originalZ + .5m;
+    strategy.HasConflictingDraft = () => true;
+    StrategyAction(strategy, "ApplyStrategy_OnClick");
+    Assert(strategy.HasUnsavedChanges && zLevel.Value == originalZ + .5m,
+        "Strategy cross-tab draft guard retains unsaved values");
+    Assert(strategy.FindControl<TextBlock>("StrategyActionText")!.Text!.Contains("bản nháp"),
+        "Strategy cross-tab conflict reports actionable reason");
+    Assert(ActiveProfile(supervisor)["pullback"]!["z_sell_level"]!.GetValue<double>() == (double)originalZ,
+        "Strategy cross-tab conflict cannot mutate active profile");
+    strategy.HasConflictingDraft = () => false;
+
+    var conflicting = ActiveProfile(supervisor);
+    conflicting["pullback"]!["z_sell_level"] = (double)(originalZ + .8m);
+    SetActiveProfile(supervisor, conflicting);
+    StrategyAction(strategy, "ApplyStrategy_OnClick");
+    Assert(strategy.HasUnsavedChanges && zLevel.Value == originalZ + .5m,
+        "Strategy same-field external conflict preserves local draft");
+    Assert(strategy.FindControl<TextBlock>("StrategyActionText")!.Text!.Contains("đã thay đổi"),
+        "Strategy same-field external conflict explains reload requirement");
+    Assert(ActiveProfile(supervisor)["pullback"]!["z_sell_level"]!.GetValue<double>() == (double)(originalZ + .8m),
+        "Strategy same-field conflict cannot overwrite newer active value");
+    StrategyAction(strategy, "ResetStrategyDraft_OnClick");
+    Assert(!strategy.HasUnsavedChanges && zLevel.Value == originalZ + .8m,
+        "Strategy explicit reload discards draft and adopts newer baseline");
+
+    decimal mergedZ = zLevel.Value!.Value + .3m;
+    zLevel.Value = mergedZ;
+    var independentlyChanged = ActiveProfile(supervisor);
+    double mergedRsi = independentlyChanged["pullback"]!["rsi_buy_level"]!.GetValue<double>() + 1;
+    independentlyChanged["pullback"]!["rsi_buy_level"] = mergedRsi;
+    independentlyChanged["profile"]!["notes"] = "ISOLATED EXTERNAL FIELD MUST SURVIVE";
+    SetActiveProfile(supervisor, independentlyChanged);
+    StrategyAction(strategy, "ApplyStrategy_OnClick");
+    var merged = ActiveProfile(supervisor);
+    Assert(!strategy.HasUnsavedChanges && zLevel.Value == mergedZ,
+        "Strategy successful Apply establishes a clean saved baseline");
+    Assert(merged["pullback"]!["z_sell_level"]!.GetValue<double>() == (double)mergedZ,
+        "Strategy Apply persists the locally modified field");
+    Assert(merged["pullback"]!["rsi_buy_level"]!.GetValue<double>() == mergedRsi && rsiLevel.Value == (decimal)mergedRsi,
+        "Strategy Apply merges and refreshes an externally changed untouched editor field");
+    Assert(merged["profile"]!["notes"]!.GetValue<string>() == "ISOLATED EXTERNAL FIELD MUST SURVIVE",
+        "Strategy Apply preserves unrelated active-profile fields");
+    zLevel.Value = mergedZ + .1m; zLevel.Value = mergedZ;
+    Assert(!strategy.HasUnsavedChanges, "Strategy revert compares against the newly saved baseline");
+    Complete(supervisor.StopAsync());
+    Complete(supervisor.StartAsync()); PumpUntil(() => supervisor.State == EngineConnectionState.Ready);
+    var persisted = ActiveProfile(supervisor);
+    Assert(persisted["pullback"]!["z_sell_level"]!.GetValue<double>() == (double)mergedZ
+        && persisted["pullback"]!["rsi_buy_level"]!.GetValue<double>() == mergedRsi,
+        "Strategy merged saved baseline survives actual engine restart");
+    Assert(File.Exists(Path.Combine(runtime.Root, "state", "runtime-v1.json")),
+        "Strategy save evidence exists exclusively in isolated temporary state");
 }
 finally {
     try { Complete(supervisor.StopAsync()); }

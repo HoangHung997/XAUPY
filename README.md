@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái tiếp quản 28/09/2026: Task 013–015 hoàn thành; bản Windows 0.16.0-rc1 đã qua CI, kiểm tra bộ cài và kết nối MT5 thực tế. Task 016 còn yêu cầu khớp UI 100% chưa đạt. Xem [nghiệm thu](docs/TASK016_RELEASE_ACCEPTANCE.md) và [đối chiếu giao diện](docs/UI_REFERENCE_PARITY_AUDIT.md).
+Trạng thái tiếp quản 28/09/2026: Task 013–015 hoàn thành trên bản Windows 0.16.0-rc1 đã qua CI, kiểm tra bộ cài và kết nối MT5 thực tế. Bản 0.16.0-rc2 bổ sung tải lịch sử MT5 vào ổ đĩa, phân tích RSI/Z theo tick quan sát được và chỉnh sửa cấu hình chiến lược; đang hoàn tất nghiệm thu bản phát hành. Task 016 vẫn ACTIVE, chưa chứng nhận khớp UI 100%. Xem [nghiệm thu RC2](docs/TASK_016_UAT_AUDIT.md), [bằng chứng RC1](docs/TASK016_RELEASE_ACCEPTANCE.md) và [đối chiếu giao diện](docs/UI_REFERENCE_PARITY_AUDIT.md).
 
 ## Tài liệu bắt buộc
 
@@ -31,6 +31,10 @@ Trạng thái tiếp quản 28/09/2026: Task 013–015 hoàn thành; bản Windo
 - [Task 012 Optimizer + Walk-Forward spec](docs/TASK012_OPTIMIZER_WALK_FORWARD_SPEC.md)
 - [Task 012 acceptance](docs/TASK012_OPTIMIZER_WALK_FORWARD_TEST.md)
 - [UI reference](docs/ui-reference/README.md)
+- [Lịch sử đầy đủ theo khả năng MT5 và luồng tick](docs/MT5_HISTORY_AND_TICKS.md)
+- [RSI/Z intrabar: ngưỡng, cực trị và xác nhận](docs/INTRABAR_THRESHOLD_LATCH.md)
+- [Kết quả nghiên cứu RSI/Z trên 598.794 nến](docs/RSI_Z_CALIBRATION_20260928.md)
+- [Nghiệm thu RC2](docs/TASK_016_UAT_AUDIT.md)
 
 ## Nguyên tắc triển khai
 
@@ -262,7 +266,7 @@ Final Task 012 evidence:
 - branch direct ZIP SHA-256:
   d821d039b1c2a74deb7ec87fb1cbd8c401e35e2a717e2cc0e9e50f1ebc0a9b91.
 
-## Bản Windows 0.16.0-rc1 đang kiểm chứng
+## Bản Windows 0.16.0-rc1 đã xác minh
 
 - [Dynamic management và STOP_CONFIRM](docs/TASK013_DYNAMIC_MANAGEMENT_SPEC.md)
 - [Công cụ và chẩn đoán](docs/TASK014_TOOLS_DIAGNOSTICS_SPEC.md)
@@ -276,3 +280,16 @@ Broker execution vẫn khóa; Task013 sử dụng mô phỏng deterministic.
 
 MT5 cần cho phép địa chỉ `http://127.0.0.1` trong Tools → Options → Expert Advisors.
 Socket sử dụng cổng 39421 riêng.
+
+## Thay đổi trong Windows 0.16.0-rc2
+
+- **Công cụ → Xuất / Nhập dữ liệu → Tải lịch sử MT5** tải nến đóng của 8 khung thời gian vào SQLite và CSV. Collector chạy trên tiến trình riêng để kết nối EA/ứng dụng tiếp tục phản hồi. Nút **Tiến độ** hiển thị thư mục kết quả, số nến và giới hạn từ terminal/provider.
+- Bộ nhớ 256 nến cho giao diện và 4.096 nến cho chiến lược không còn là giới hạn của bản lưu lịch sử. Bản lưu trên đĩa không áp trần số nến của ứng dụng; vẫn phụ thuộc Max bars và dữ liệu MT5/broker cung cấp. Nến đang hình thành bị loại, timestamp gốc được giữ nguyên và manifest ghi độ phủ/khoảng trống.
+- Sau khi MT5 báo Max bars 100.000.000, lần thu thập được cố định cho nghiên cứu có **598.794 nến đóng** trên M1/M3/M5/M15/M30/H1/H2/H4. Provider dừng trả thêm dữ liệu sau các lần thử lại; không khẳng định đã lấy toàn bộ lịch sử broker. Các lần tải sau có thể có thêm nến mới.
+- EA gửi các lô tick có thứ tự, tối đa 1.000 tick mỗi gói. `heartbeat.tick_transport` cho biết luồng tick thực có đến Engine ngay cả khi đang dùng chế độ nến đóng. Mất kết nối, thiếu gói hoặc dữ liệu stale làm mất tính liên tục và reset setup.
+- `trigger.confirm_closed_bar=true` vẫn là mặc định. Chỉ khi người dùng đặt `false`, chiến lược mới giữ ngưỡng RSI/Z đã chạm và cực trị quan sát được trong nến; xác nhận đảo chiều phải thuộc nến Trigger tiếp theo trong giới hạn tuổi tín hiệu. Không tự đổi profile đang chạy. Backtest M1 OHLC từ chối chế độ này vì không biết thứ tự tick thật.
+- Tab Chiến lược có chỉnh sửa và lưu cấu hình, bảo toàn bản nháp khi heartbeat/reconnect; các thay đổi không xung đột từ nguồn khác được gộp, xung đột phải xử lý trước khi ghi đè. Broker execution vẫn khóa.
+
+Runtime RC2 đã qua 324 Python test, 102 kiểm tra C# contract, 51 kiểm tra giao diện tương tác và 16 kiểm tra intrabar qua executable, cùng kiểm tra dependency MT5/NumPy và maintenance/config. EA 1.016 thực → Engine RC2 đạt 19/19 kiểm tra trên 13 mẫu, có số gói tick và nến tăng; đây là bằng chứng giao thức, chưa thay thế nghiệm thu giao diện Avalonia. Full Windows build/CI, kiểm tra Desktop/restart cuối và bản sửa cách tách nhật ký test được ghi riêng trong [báo cáo RC2](docs/TASK_016_UAT_AUDIT.md); không dùng bằng chứng RC1 thay cho các bước này.
+
+Build Windows RC2 cần .NET 10, MetaEditor, Python/PyInstaller và package chính thức `MetaTrader5==5.0.6231` cùng NumPy. `scripts/build_windows.ps1` kiểm tra dependency trong executable, chạy smoke intrabar và tạo tên mới `XAUPY-0.16.0-rc2-win-x64.zip`; Inno Setup tạo `XAUPY-0.16.0-rc2-Setup.exe` khi truyền `-Iscc`. Bản RC1 đã xác minh được giữ riêng.

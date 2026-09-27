@@ -18,6 +18,14 @@ public partial class MonitoringDashboard : UserControl
         UpdateQuoteChart();
     }
 
+    public Control DetachAlertsForFullWidth()
+    {
+        var strip = this.FindControl<Border>("MonitoringAlertStrip")!;
+        if (strip.Parent is Panel panel) panel.Children.Remove(strip);
+        this.FindControl<Grid>("MonitoringAlertColumns")!.ColumnDefinitions[0].Width = new GridLength(470);
+        return strip;
+    }
+
     public void Apply(
         StrategySnapshot strategy,
         OverviewSnapshot overview,

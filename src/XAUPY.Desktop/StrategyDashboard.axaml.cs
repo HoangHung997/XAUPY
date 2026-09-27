@@ -20,6 +20,7 @@ public partial class StrategyDashboard : UserControl
     public StrategyDashboard()
     {
         InitializeComponent();
+        InitializeStrategyEditor();
         Apply(StrategySnapshot.Empty, ConfigurationSummary.Default);
     }
 
@@ -50,6 +51,8 @@ public partial class StrategyDashboard : UserControl
     {
         await RunActionAsync(async supervisor =>
         {
+            if (HasConflictingDraft?.Invoke() == true)
+                throw new InvalidOperationException("Cấu hình hoặc Tổng quan có bản nháp chưa áp dụng. Hãy xử lý bản nháp đó trước.");
             var provider = TopLevel.GetTopLevel(this)?.StorageProvider
                 ?? throw new InvalidOperationException("Không mở được hộp thoại chọn file.");
             var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
@@ -70,6 +73,7 @@ public partial class StrategyDashboard : UserControl
             var result = await supervisor.ApplyActiveConfigAsync(validation.Profile.Value);
             if (!result.Applied)
                 throw new InvalidDataException(string.Join(" • ", result.Errors));
+            SetStrategyControls(System.Text.Json.Nodes.JsonNode.Parse(validation.Profile.Value.GetRawText())!.AsObject(), true);
             ShowAction($"Đã xác thực và áp dụng {files[0].Name}. Giao dịch vẫn khóa an toàn.", Brushes.LightGreen);
         });
     }
@@ -78,6 +82,7 @@ public partial class StrategyDashboard : UserControl
     {
         if (_actionBusy) return;
         _actionBusy = true;
+        foreach (var control in _strategyFields.Values) control.IsEnabled = false;
         foreach (var name in new[] { "SaveStrategyButton", "LoadStrategyButton", "ExportStrategyButton" })
             this.FindControl<Button>(name)!.IsEnabled = false;
         try
@@ -93,6 +98,7 @@ public partial class StrategyDashboard : UserControl
         finally
         {
             _actionBusy = false;
+            foreach (var control in _strategyFields.Values) control.IsEnabled = _strategyBaseline is not null;
             foreach (var name in new[] { "SaveStrategyButton", "LoadStrategyButton", "ExportStrategyButton" })
                 this.FindControl<Button>(name)!.IsEnabled = true;
         }
@@ -138,6 +144,10 @@ public partial class StrategyDashboard : UserControl
 
     public void Apply(StrategySnapshot strategy, ConfigurationSummary config)
     {
+        RefreshStrategyEditor(strategy.ProfileHash);
+        Text("IntrabarObservationText").Text = strategy.Intrabar.Mode == "CLOSED_BAR"
+            ? "Đang đánh giá nến đóng. Bỏ chọn xác nhận nến đóng để ghi nhận RSI/Z theo tick."
+            : $"Theo tick: {strategy.Intrabar.ObservedTicks:N0} quan sát • Cực trị RSI {Format(strategy.Intrabar.RsiExtreme)} / Z {Format(strategy.Intrabar.ZExtreme)}\n{strategy.Intrabar.Reason}";
         Text("StrategyStateText").Text = strategy.State;
         Text("StrategyStateText").Foreground = StateBrush(strategy.State);
         Text("BlockedReasonText").Text = strategy.BlockedReason ?? "Không bị block";

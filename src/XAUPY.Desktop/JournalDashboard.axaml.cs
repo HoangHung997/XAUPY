@@ -413,6 +413,8 @@ public partial class JournalDashboard : UserControl
         {
             Tag = item.Sequence,
             Classes = { "journalRow" },
+            BorderBrush = new SolidColorBrush(Color.Parse("#12354F")),
+            BorderThickness = new Thickness(0, 0, 0, 1),
             Content = grid
         };
         if (_selectedEvent?.Sequence == item.Sequence)
@@ -484,12 +486,21 @@ public partial class JournalDashboard : UserControl
         {
             var grid = new Grid
             {
-                ColumnDefinitions = new ColumnDefinitions("72,70,*"),
+                ColumnDefinitions = new ColumnDefinitions("65,60,*"),
+                MinHeight = 48,
                 Margin = new Thickness(4, 2)
             };
             AddCell(grid, 0, LocalClock(item.TimestampUtc), Brushes.LightGray);
             AddCell(grid, 1, item.Level, LevelBrush(item.Level));
             AddCell(grid, 2, item.Message, Brushes.White);
+            foreach (var cell in grid.Children.OfType<TextBlock>())
+                cell.Margin = new Thickness(3, 3);
+            if (grid.Children[^1] is TextBlock message)
+            {
+                message.TextWrapping = TextWrapping.Wrap;
+                message.MaxLines = 2;
+                message.Margin = new Thickness(5, 3);
+            }
 
             var button = new Button
             {
@@ -617,9 +628,9 @@ public partial class JournalDashboard : UserControl
         {
             Text = value,
             Foreground = brush,
-            FontSize = 13,
+            FontSize = 14,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(10, 5),
+            Margin = new Thickness(10, 3),
             TextTrimming = TextTrimming.CharacterEllipsis
         };
         Grid.SetColumn(text, column);

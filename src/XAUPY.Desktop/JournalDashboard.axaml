@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:XAUPY.Desktop"
              x:Class="XAUPY.Desktop.JournalDashboard">
   <UserControl.Styles>
     <Style Selector="Button.sourceFilter">
@@ -35,26 +36,22 @@
     </Style>
     <Style Selector="TextBlock.journalHeader">
       <Setter Property="Foreground" Value="#B8CCE1"/>
-      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontSize" Value="14"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
   </UserControl.Styles>
 
-  <Grid ColumnDefinitions="3.9*,1.05*" ColumnSpacing="8">
+  <Grid ColumnDefinitions="3.52*,1*" ColumnSpacing="8">
     <Grid Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="8">
       <!-- Title -->
       <Border Grid.Row="0" Classes="panel">
         <Grid ColumnDefinitions="Auto,*" Margin="14,10">
           <Border Width="34" Height="34"
                   CornerRadius="4"
-                  BorderBrush="#16A0FF"
-                  BorderThickness="2"
+                  BorderBrush="Transparent"
+                  BorderThickness="0"
                   Background="#06243E">
-            <TextBlock Text="▤"
-                       Foreground="#48B8FF"
-                       FontSize="22"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"/>
+            <local:ReferenceIcon Kind="document" Tint="#24B6FF" Width="31" Height="31"/>
           </Border>
           <StackPanel Grid.Column="1" Margin="12,0,0,0">
             <TextBlock Text="Nhật ký hệ thống"
@@ -76,7 +73,7 @@
                 Tag="ALL"
                 Click="SourceFilter_OnClick">
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <TextBlock Text="▥" Foreground="#8FD0FF" FontSize="18" VerticalAlignment="Center"/>
+            <local:ReferenceIcon Kind="bars" Tint="#8FD0FF" Width="23" Height="23"/>
             <TextBlock Grid.Column="1" Text="Tất cả" Margin="8,0,0,0" VerticalAlignment="Center"/>
             <Border Grid.Column="2" Background="#154D99" CornerRadius="5" Padding="7,3">
               <TextBlock x:Name="SourceAllCountText" Text="0" FontSize="13"/>
@@ -90,7 +87,7 @@
                 Tag="MT5"
                 Click="SourceFilter_OnClick">
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <TextBlock Text="▣" Foreground="#20E08B" FontSize="17" VerticalAlignment="Center"/>
+            <local:ReferenceIcon Kind="monitor" Tint="#20E08B" Width="23" Height="23"/>
             <TextBlock Grid.Column="1" Text="MT5" Margin="8,0,0,0" VerticalAlignment="Center"/>
             <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
               <TextBlock x:Name="SourceMt5CountText" Text="0" FontSize="13"/>
@@ -104,7 +101,7 @@
                 Tag="EA Bridge"
                 Click="SourceFilter_OnClick">
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <TextBlock Text="⌁" Foreground="#4EA8FF" FontSize="17" VerticalAlignment="Center"/>
+            <local:ReferenceIcon Kind="link" Tint="#52C7FF" Width="23" Height="23"/>
             <TextBlock Grid.Column="1" Text="EA Bridge" Margin="8,0,0,0" VerticalAlignment="Center"/>
             <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
               <TextBlock x:Name="SourceBridgeCountText" Text="0" FontSize="13"/>
@@ -238,7 +235,7 @@
       </Border>
 
       <!-- Selected detail -->
-      <Border Grid.Row="4" Classes="panel" MinHeight="150">
+      <Border Grid.Row="4" Classes="panel" Height="160">
         <Grid RowDefinitions="Auto,*">
           <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,7">
@@ -256,11 +253,11 @@
           <Grid Grid.Row="1"
                 ColumnDefinitions="310,1,*"
                 ColumnSpacing="18"
-                Margin="14,10">
+                Margin="14,8">
             <Grid Grid.Column="0"
                   ColumnDefinitions="105,*"
                   RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-                  RowSpacing="5">
+                  RowSpacing="2">
               <TextBlock Grid.Row="0" Text="Thời gian:" Classes="label"/>
               <TextBlock x:Name="DetailTimeText" Grid.Row="0" Grid.Column="1" Text="—"/>
 
@@ -308,8 +305,8 @@
     </Grid>
 
     <!-- Right rail -->
-    <StackPanel Grid.Column="1" Spacing="8">
-      <Border Classes="panel">
+    <Grid Grid.Column="1" RowDefinitions="188,313,*" RowSpacing="8">
+      <Border Grid.Row="0" Classes="panel">
         <StackPanel>
           <Grid Background="#082038" ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,8">
@@ -325,9 +322,9 @@
           </Grid>
 
           <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="6" RowSpacing="6" Margin="10">
-            <Border Grid.Row="0" Grid.Column="0" Classes="panelSoft" Padding="12">
+            <Border Grid.Row="0" Grid.Column="0" Classes="panelSoft" Padding="5,7">
               <Grid ColumnDefinitions="Auto,*">
-                <Border Width="42" Height="42" CornerRadius="21" Background="#0A7BE9">
+                <Border Width="35" Height="35" CornerRadius="18" Background="#0A7BE9">
                   <TextBlock Text="i" FontSize="27" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
@@ -337,9 +334,9 @@
               </Grid>
             </Border>
 
-            <Border Grid.Row="0" Grid.Column="1" Classes="panelSoft" Padding="12">
+            <Border Grid.Row="0" Grid.Column="1" Classes="panelSoft" Padding="5,7">
               <Grid ColumnDefinitions="Auto,*">
-                <Border Width="42" Height="42" CornerRadius="21" Background="#594A07">
+                <Border Width="35" Height="35" CornerRadius="18" Background="#594A07">
                   <TextBlock Text="!" FontSize="25" FontWeight="Bold" Foreground="#FFD34D" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
@@ -349,9 +346,9 @@
               </Grid>
             </Border>
 
-            <Border Grid.Row="1" Grid.Column="0" Classes="panelSoft" Padding="12">
+            <Border Grid.Row="1" Grid.Column="0" Classes="panelSoft" Padding="5,7">
               <Grid ColumnDefinitions="Auto,*">
-                <Border Width="42" Height="42" CornerRadius="21" Background="#5B1A27">
+                <Border Width="35" Height="35" CornerRadius="18" Background="#5B1A27">
                   <TextBlock Text="×" FontSize="30" FontWeight="Bold" Foreground="#FF5B72" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
@@ -361,9 +358,9 @@
               </Grid>
             </Border>
 
-            <Border Grid.Row="1" Grid.Column="1" Classes="panelSoft" Padding="12">
+            <Border Grid.Row="1" Grid.Column="1" Classes="panelSoft" Padding="5,7">
               <Grid ColumnDefinitions="Auto,*">
-                <Border Width="42" Height="42" CornerRadius="21" Background="#16476E">
+                <Border Width="35" Height="35" CornerRadius="18" Background="#16476E">
                   <TextBlock Text="⚙" FontSize="24" Foreground="#7DC7FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
@@ -376,11 +373,11 @@
         </StackPanel>
       </Border>
 
-      <Border Classes="panel">
-        <StackPanel>
+      <Border Grid.Row="1" Classes="panel">
+        <Grid RowDefinitions="42,*">
           <Grid Background="#082038" ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,8">
-              <TextBlock Text="♧" Foreground="#FFD34D" FontSize="17"/>
+              <local:ReferenceIcon Kind="bell" Tint="#FFD34D" Width="22" Height="22"/>
               <TextBlock Text="Cảnh báo gần đây" Classes="panelTitle"/>
             </StackPanel>
             <Button Grid.Column="1"
@@ -389,12 +386,12 @@
                     Click="ShowAlerts_OnClick"
                     Margin="0,4,8,4"/>
           </Grid>
-          <StackPanel x:Name="RecentAlertsHost" Margin="8,4,8,8"/>
-        </StackPanel>
+          <ScrollViewer Grid.Row="1"><StackPanel x:Name="RecentAlertsHost" Margin="8,4,8,8"/></ScrollViewer>
+        </Grid>
       </Border>
 
-      <Border Classes="panel">
-        <StackPanel>
+      <Border Grid.Row="2" Classes="panel">
+        <Grid RowDefinitions="42,*,Auto,Auto">
           <Grid Background="#082038" ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,8">
               <TextBlock Text="🔖" Foreground="#FFD34D"/>
@@ -407,17 +404,14 @@
                     Margin="0,4,8,4"/>
           </Grid>
 
-          <StackPanel x:Name="BookmarksHost" Margin="8,4,8,6"/>
+          <ScrollViewer Grid.Row="1"><StackPanel x:Name="BookmarksHost" Margin="8,4,8,6"/></ScrollViewer>
 
-          <Button Content="+  Thêm dấu trang hiện tại"
+          <Button Grid.Row="2" Content="+  Thêm dấu trang hiện tại"
                   Classes="secondary"
                   Margin="8,0,8,8"
                   Click="ToggleSelectedBookmark_OnClick"/>
-        </StackPanel>
-      </Border>
-
-      <Border Classes="panelSoft" Padding="10">
-        <StackPanel Spacing="4">
+          <Expander Grid.Row="3" Header="Tình trạng nhật ký" FontSize="12" Margin="8,0,8,5" HorizontalAlignment="Stretch">
+            <StackPanel Spacing="4">
           <TextBlock Text="Tính toàn vẹn replay" Classes="label"/>
           <TextBlock x:Name="ReplayIntegrityText"
                      Text="Invalid: 0 • Duplicate: 0"
@@ -428,8 +422,10 @@
                      FontSize="13"
                      Foreground="#FFD34D"
                      TextWrapping="Wrap"/>
-        </StackPanel>
+            </StackPanel>
+          </Expander>
+        </Grid>
       </Border>
-    </StackPanel>
+    </Grid>
   </Grid>
 </UserControl>

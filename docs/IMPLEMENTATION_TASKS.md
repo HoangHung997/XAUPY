@@ -36,7 +36,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-013 | DONE | Dynamic TP/SL + stop-confirm entry | 003,007,011 | Simulation and packaged smoke passed; CI 36340716356 + verified release artifact |
 | XAUPY-014 | DONE | Tools tab + diagnostics | 003,004,010 | Diagnostics/contracts/packaged smoke passed; CI 36340716356 + verified release artifact |
 | XAUPY-015 | DONE | Settings, backup, startup, fail-safe UX | 002,003,004 | Persistence/recovery + 20 UI checks passed; CI 36340716356 + verified release artifact |
-| XAUPY-016 | ACTIVE | Installer, release workflow, demo acceptance | all prior | CI/installer/live connection passed; strict 100% UI parity remains unfulfilled |
+| XAUPY-016 | ACTIVE | Installer, release workflow, demo acceptance | all prior | RC1 CI/installer/live connection passed; RC2 history/intrabar work has local evidence, final RC2 CI/live acceptance pending; strict 100% UI parity remains unfulfilled |
 
 # XAUPY-001
 
@@ -896,3 +896,55 @@ separately in `UI_REFERENCE_PARITY_AUDIT.md`.
 Task 016 retains its remaining visual acceptance work in
 `UI_REFERENCE_PARITY_AUDIT.md`. Broker mutation, real-account permission and
 automatic trading remain disabled.
+
+## RC2 extension and acceptance status — 2026-09-28
+
+The preceding completion records remain evidence for their stated task/source and
+for the verified RC1 artifact. They are not overwritten by RC2 local work.
+Task 016 remains ACTIVE until the changed release has its own required evidence.
+See [RC2 UAT audit](TASK_016_UAT_AUDIT.md).
+
+Implemented RC2 scope:
+
+- disk-backed full-history acquisition through the official MT5 Python provider,
+  separate from bounded realtime UI/strategy caches, available from Tools through
+  an isolated collector process and progress/status IPC;
+- ordered EA tick batches, bounded at 1,000 observations per frame, with explicit
+  stream/sequence/continuity handling and read-only transport counters;
+- opt-in RSI/Z threshold/extreme retention during the forming candle, subsequent
+  Trigger-candle confirmation, expiry and missing-history/reconnect guards;
+- closed-bar confirmation remains the default; OHLC backtesting explicitly rejects
+  intrabar mode instead of claiming a reconstructed tick path;
+- editable Strategy controls and validation/persistence, draft preservation,
+  merge of unrelated external changes and conflict protection;
+- RC2 package names, bundled MT5/NumPy verification and packaged intrabar smoke
+  in the Windows build pipeline.
+
+Actual acquisition after MT5 reported Max bars 100,000,000 produced 598,794 closed
+candles over all eight supported timeframes. Provider errors at the oldest
+available boundary were retried and probed, including date-based requests. The
+archive manifests preserve the limit/error/coverage evidence; this is not a claim
+that all broker history was retrieved. A separate real sample contains 10,150
+ordered ticks and does not claim uninterrupted live capture.
+
+Current local evidence includes 324 Python tests, 102 C# contract checks, 51 headless interaction
+checks, 16 packaged intrabar socket checks, maintenance/config smokes and a real
+packaged MT5-history download. During that download, 75 heartbeats were served
+with a maximum observed response of 0.9614 ms. EA compilation has zero errors and
+warnings. The actual version-1.016 EA → RC2 Engine read-only probe passes all
+19 checks across 13 samples: snapshots 36→49, accepted tick frames 1→14 and
+received ticks 1→60, with 256 closed bars in each timeframe. This protocol probe
+does not certify Avalonia rendering. Final RC2 full-build/CI and Desktop/restart
+evidence remain pending. Production profile/trading settings were not changed by
+these tests.
+
+Final review also corrected legacy unit-test journal isolation: an explicit
+temporary state scope now anchors unspecified journal/backtest/optimizer stores.
+Earlier rejected synthetic command records had reached the normal user journal;
+those records are preserved, not silently removed. A full rerun verifies unchanged
+production rejection counts and profile hash. No broker action was performed.
+
+Remaining live RC2 Desktop/restart checks and final visual captures will be recorded in the
+RC2 audit once available. The original strict UI parity requirement remains
+unfulfilled unless a subsequent actual comparison certifies it. Broker execution
+and real-account permission stay disabled throughout this extension.

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import sys
 
 from . import __version__
 from .server import DEFAULT_HOST, DEFAULT_PORT, EngineServer
@@ -42,6 +43,17 @@ async def run_server(host: str, port: int) -> int:
 
 
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] == "--history-provider-check":
+        # MetaTrader5's native extension imports NumPy dynamically. Keep this
+        # explicit so frozen builds include its runtime and native libraries.
+        import numpy
+        import MetaTrader5
+        print(json.dumps({"history_provider": MetaTrader5.__version__, "numpy": numpy.__version__, "broker_execution_requested": False}))
+        return 0
+    if len(sys.argv) > 1 and sys.argv[1] == "--collect-history":
+        from .history_collect import main as collect_history
+        collect_history(sys.argv[2:])
+        return 0
     args = build_parser().parse_args()
 
     try:

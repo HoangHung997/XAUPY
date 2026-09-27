@@ -16,6 +16,7 @@ function Invoke-Checked([string]$File, [string[]]$Arguments) {
     & $File @Arguments
     if ($LASTEXITCODE -ne 0) { throw "$File exited with $LASTEXITCODE" }
 }
+Invoke-Checked $Python @('-c', 'import MetaTrader5; print("MT5 history provider", MetaTrader5.__version__)')
 if (-not $SkipTests) {
     Invoke-Checked $Python @('-m','unittest','discover','-s','python/tests','-q')
     Invoke-Checked $Dotnet @('run','--project','tests/XAUPY.Ipc.ContractTests/XAUPY.Ipc.ContractTests.csproj','-c','Release')
@@ -40,6 +41,7 @@ foreach ($tool in @(@('engine','engine_entry.py','xaupy-engine'), @('tools','con
         '--workpath',"artifacts/packaging/$($tool[2])",'--specpath',"artifacts/packaging/$($tool[2])","python/$($tool[1])")
 }
 Invoke-Checked $Dotnet @('publish','src/XAUPY.Desktop/XAUPY.Desktop.csproj','-c','Release','-r','win-x64','--self-contained','true','-o',$releaseRoot)
+Invoke-Checked "$releaseRoot/engine/xaupy-engine.exe" @('--history-provider-check')
 $profileRoot = Join-Path $releaseRoot 'profiles'
 New-Item -ItemType Directory -Force $profileRoot | Out-Null
 $configTool = Join-Path $releaseRoot 'tools/xaupy-config.exe'
@@ -64,6 +66,7 @@ if (-not $SkipTests) {
     }
     Invoke-Checked $Python @('scripts/smoke_config_exe.py',$configTool)
     Invoke-Checked $Python @('scripts/smoke_task014_015_maintenance.py',"$releaseRoot/engine/xaupy-engine.exe")
+    Invoke-Checked $Python @('scripts/smoke_intrabar_engine.py',"$releaseRoot/engine/xaupy-engine.exe")
     Invoke-Checked $Dotnet @('run','--project',"$projectRoot/tests/XAUPY.Desktop.InteractionTests/XAUPY.Desktop.InteractionTests.csproj",'-c','Release',
         '--','--engine',"$releaseRoot/engine/xaupy-engine.exe")
 }
@@ -84,12 +87,12 @@ foreach ($required in $requiredFiles) {
     if (-not (Test-Path -LiteralPath (Join-Path $releaseRoot $required) -PathType Leaf)) { throw "Release file missing: $required" }
 }
 if (@(Get-ChildItem -LiteralPath "$releaseRoot/docs/ui-reference" -Filter '*.png' -File).Count -ne 10) { throw 'Release requires all ten approved UI reference images.' }
-$manifest = [ordered]@{version='0.16.0-rc1'; commit=$revision; working_tree_modified=$isDirty; built_at_utc=[DateTime]::UtcNow.ToString('o'); broker_execution_locked=$true; tests_executed=(-not [bool]$SkipTests); files=@()}
+$manifest = [ordered]@{version='0.16.0-rc2'; commit=$revision; working_tree_modified=$isDirty; built_at_utc=[DateTime]::UtcNow.ToString('o'); broker_execution_locked=$true; tests_executed=(-not [bool]$SkipTests); files=@()}
 $manifest.files = @(Get-ChildItem -LiteralPath $releaseRoot -Recurse -File | Where-Object Name -ne 'build-manifest.json' | ForEach-Object {
     @{path=[IO.Path]::GetRelativePath($releaseRoot,$_.FullName).Replace('\','/');bytes=$_.Length;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()}
 })
 $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath "$releaseRoot/build-manifest.json" -Encoding utf8
-$zipPath = Join-Path $distRoot 'XAUPY-0.16.0-rc1-win-x64.zip'
+$zipPath = Join-Path $distRoot 'XAUPY-0.16.0-rc2-win-x64.zip'
 Compress-Archive -Path "$releaseRoot/*" -DestinationPath $zipPath -Force
 $archive = [IO.Compression.ZipFile]::OpenRead($zipPath)
 try {
@@ -106,7 +109,7 @@ try {
 } finally { $archive.Dispose() }
 $artifactPaths = @($zipPath)
 if ($Iscc) {
-    $installerPath = Join-Path $distRoot 'XAUPY-0.16.0-rc1-Setup.exe'
+    $installerPath = Join-Path $distRoot 'XAUPY-0.16.0-rc2-Setup.exe'
     if (Test-Path -LiteralPath $installerPath) { Remove-Item -LiteralPath $installerPath -Force }
     Invoke-Checked $Iscc @('installer/XAUPY.iss')
     if (-not (Test-Path -LiteralPath $installerPath -PathType Leaf)) { throw 'Inno Setup returned without the required installer.' }

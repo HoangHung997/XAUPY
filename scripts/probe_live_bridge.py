@@ -13,7 +13,7 @@ MAX_FRAME_BYTES = 1024 * 1024
 REQUIRED_TIMEFRAMES = {"M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4"}
 
 
-def assess_samples(samples: list[dict]) -> dict[str, bool]:
+def assess_samples(samples: list[dict], *, require_ticks: bool = False) -> dict[str, bool]:
     """Check transport/projection evidence without requiring an open market."""
     if len(samples) < 2:
         return {"multiple_samples": False}
@@ -29,7 +29,7 @@ def assess_samples(samples: list[dict]) -> dict[str, bool]:
     complete_history = REQUIRED_TIMEFRAMES.issubset(history) and all(
         type(history[tf]) is int and 0 < history[tf] <= 256 for tf in REQUIRED_TIMEFRAMES
     )
-    return {
+    checks = {
         "multiple_samples": True,
         "sample_clock_monotonic": valid_elapsed and all(b > a for a, b in zip(elapsed, elapsed[1:])),
         "bridge_connected": all(s["bridge"].get("connected") is True for s in samples),
@@ -60,9 +60,17 @@ def assess_samples(samples: list[dict]) -> dict[str, bool]:
         "tick_timestamp_available": valid_ticks,
         "tick_time_nondecreasing": valid_ticks and all(b >= a for a, b in zip(ticks, ticks[1:])),
     }
+    if require_ticks:
+        transport = [sample.get("tick_transport") or {} for sample in samples]
+        batches = [item.get("accepted_batches", 0) for item in transport]
+        observations = [item.get("received_ticks", 0) for item in transport]
+        checks["tick_batches_arrive"] = batches[-1] > batches[0]
+        checks["tick_observations_arrive"] = observations[-1] > observations[0]
+        checks["tick_batch_counter_monotonic"] = all(b >= a for a, b in zip(batches, batches[1:]))
+    return checks
 
 
-def probe(port: int, duration: float) -> dict:
+def probe(port: int, duration: float, *, require_ticks: bool = False) -> dict:
     if not math.isfinite(duration) or not 1 <= duration <= 300:
         raise ValueError("duration must be 1..300 seconds")
     if not 1 <= port <= 65535:
@@ -103,6 +111,8 @@ def probe(port: int, duration: float) -> dict:
                             "snapshot_received_utc": overview.get("snapshot_received_utc"),
                             "bid": overview.get("bid"), "ask": overview.get("ask"),
                             "tick_time_msc": overview.get("tick_time_msc"),
+                            "tick_transport": payload.get("tick_transport"),
+                            "intrabar": strategy.get("intrabar"),
                             "trading_enabled": payload.get("trading_enabled"),
                             "execution_enabled": payload.get("execution_enabled"),
                             "strategy_trading_enabled": strategy.get("trading_enabled"),
@@ -115,7 +125,7 @@ def probe(port: int, duration: float) -> dict:
                 break
             time.sleep(1)
         stream.close()
-    checks = assess_samples(samples)
+    checks = assess_samples(samples, require_ticks=require_ticks)
     return {"passed": all(checks.values()), "checks": checks,
             "scope": "EA-to-Python (Avalonia requires separate evidence)", "read_only": True,
             "requests_sent": ["hello", "heartbeat"],
@@ -128,9 +138,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=39421)
     parser.add_argument("--duration", type=float, default=10)
+    parser.add_argument("--require-ticks", action="store_true", help="Require observed ticks to advance; use while market is active")
     parser.add_argument("--out", type=Path, default=Path("artifacts/live-bridge-evidence.json"))
     args = parser.parse_args()
-    result = probe(args.port, args.duration)
+    result = probe(args.port, args.duration, require_ticks=args.require_ticks)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
     print(json.dumps({"passed": result["passed"], "samples": len(result["samples"]), "output": str(args.out)}))

@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái tiếp quản 28/09/2026: Task 013–015 hoàn thành trên bản Windows 0.16.0-rc1 đã qua CI, kiểm tra bộ cài và kết nối MT5 thực tế. Bản 0.16.0-rc2 bổ sung tải lịch sử MT5 vào ổ đĩa, phân tích RSI/Z theo tick quan sát được và chỉnh sửa cấu hình chiến lược; đang hoàn tất nghiệm thu bản phát hành. Task 016 vẫn ACTIVE, chưa chứng nhận khớp UI 100%. Xem [nghiệm thu RC2](docs/TASK_016_UAT_AUDIT.md), [bằng chứng RC1](docs/TASK016_RELEASE_ACCEPTANCE.md) và [đối chiếu giao diện](docs/UI_REFERENCE_PARITY_AUDIT.md).
+Trạng thái tiếp quản 28/09/2026: Task 013–015 hoàn thành trên bản Windows 0.16.0-rc1. Bản 0.16.0-rc2 bổ sung tải lịch sử MT5 vào ổ đĩa, phân tích RSI/Z theo tick quan sát được và chỉnh sửa cấu hình chiến lược; đã qua CI, kiểm tra bộ cài và kết nối MT5 thực trên cả bản build tại máy lẫn đúng bản CI tải về. Task 016 vẫn ACTIVE, chưa chứng nhận khớp UI 100%. Xem [nghiệm thu RC2](docs/TASK_016_UAT_AUDIT.md), [bằng chứng RC1](docs/TASK016_RELEASE_ACCEPTANCE.md) và [đối chiếu giao diện](docs/UI_REFERENCE_PARITY_AUDIT.md).
 
 ## Tài liệu bắt buộc
 
@@ -290,6 +290,8 @@ Socket sử dụng cổng 39421 riêng.
 - `trigger.confirm_closed_bar=true` vẫn là mặc định. Chỉ khi người dùng đặt `false`, chiến lược mới giữ ngưỡng RSI/Z đã chạm và cực trị quan sát được trong nến; xác nhận đảo chiều phải thuộc nến Trigger tiếp theo trong giới hạn tuổi tín hiệu. Không tự đổi profile đang chạy. Backtest M1 OHLC từ chối chế độ này vì không biết thứ tự tick thật.
 - Tab Chiến lược có chỉnh sửa và lưu cấu hình, bảo toàn bản nháp khi heartbeat/reconnect; các thay đổi không xung đột từ nguồn khác được gộp, xung đột phải xử lý trước khi ghi đè. Broker execution vẫn khóa.
 
-Runtime RC2 đã qua 324 Python test, 102 kiểm tra C# contract, 51 kiểm tra giao diện tương tác và 16 kiểm tra intrabar qua executable, cùng kiểm tra dependency MT5/NumPy và maintenance/config. EA 1.016 thực → Engine RC2 đạt 19/19 kiểm tra trên 13 mẫu, có số gói tick và nến tăng; đây là bằng chứng giao thức, chưa thay thế nghiệm thu giao diện Avalonia. Full Windows build/CI, kiểm tra Desktop/restart cuối và bản sửa cách tách nhật ký test được ghi riêng trong [báo cáo RC2](docs/TASK_016_UAT_AUDIT.md); không dùng bằng chứng RC1 thay cho các bước này.
+RC2 từ commit `7f968266` đã qua [CI 36359181671](https://github.com/HoangHung997/XAUPY/actions/runs/36359181671): 324 Python test, 102 kiểm tra C# contract, 51 kiểm tra giao diện, chín nhóm packaged smoke gồm 16 kiểm tra intrabar, cùng kiểm tra MT5/NumPy và vòng cài/gỡ bộ cài trên Windows CI. Bản build trên máy đạt 19/19 kiểm tra MT5 trước và sau Stop/Start, mỗi lần 16 mẫu; EA tự kết nối lại trong khoảng ba giây. Xem bằng chứng và phạm vi trong [báo cáo RC2](docs/TASK_016_UAT_AUDIT.md).
+
+Bản CI tải về đã được đối chiếu toàn bộ 282 tệp và 281 SHA-256 trong manifest. ZIP và bộ cài nằm riêng ở `dist/rc2-ci/`; ứng dụng giải nén đã xác minh ở `dist/XAUPY-verified-rc2-win-x64/`. Chính bản CI này đã chạy với MT5 thật: 19/19 kiểm tra đạt qua 21 mẫu trong 20 giây, số gói tick tăng 50→70 và số tick tăng 232→429; EA và Engine đang chạy có SHA-256 trùng manifest. Desktop hiển thị READY và cả 10 trang đã được chụp kiểm tra riêng. Bản build tại máy và RC1 được giữ nguyên.
 
 Build Windows RC2 cần .NET 10, MetaEditor, Python/PyInstaller và package chính thức `MetaTrader5==5.0.6231` cùng NumPy. `scripts/build_windows.ps1` kiểm tra dependency trong executable, chạy smoke intrabar và tạo tên mới `XAUPY-0.16.0-rc2-win-x64.zip`; Inno Setup tạo `XAUPY-0.16.0-rc2-Setup.exe` khi truyền `-Iscc`. Bản RC1 đã xác minh được giữ riêng.

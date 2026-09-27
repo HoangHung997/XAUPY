@@ -36,7 +36,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-013 | DONE | Dynamic TP/SL + stop-confirm entry | 003,007,011 | Simulation and packaged smoke passed; CI 36340716356 + verified release artifact |
 | XAUPY-014 | DONE | Tools tab + diagnostics | 003,004,010 | Diagnostics/contracts/packaged smoke passed; CI 36340716356 + verified release artifact |
 | XAUPY-015 | DONE | Settings, backup, startup, fail-safe UX | 002,003,004 | Persistence/recovery + 20 UI checks passed; CI 36340716356 + verified release artifact |
-| XAUPY-016 | ACTIVE | Installer, release workflow, demo acceptance | all prior | RC1 CI/installer/live connection passed; RC2 history/intrabar work has local evidence, final RC2 CI/live acceptance pending; strict 100% UI parity remains unfulfilled |
+| XAUPY-016 | ACTIVE | Installer, release workflow, demo acceptance | all prior | RC2 CI/installer, independent artifact verification, native local-build restart and exact downloaded-CI MT5 acceptance passed; strict 100% UI parity remains unfulfilled |
 
 # XAUPY-001
 
@@ -901,7 +901,8 @@ automatic trading remain disabled.
 
 The preceding completion records remain evidence for their stated task/source and
 for the verified RC1 artifact. They are not overwritten by RC2 local work.
-Task 016 remains ACTIVE until the changed release has its own required evidence.
+RC2 now has its own build, CI, installer and live evidence. Task 016 remains
+ACTIVE because strict 100% UI parity is still unfulfilled.
 See [RC2 UAT audit](TASK_016_UAT_AUDIT.md).
 
 Implemented RC2 scope:
@@ -934,9 +935,10 @@ with a maximum observed response of 0.9614 ms. EA compilation has zero errors an
 warnings. The actual version-1.016 EA → RC2 Engine read-only probe passes all
 19 checks across 13 samples: snapshots 36→49, accepted tick frames 1→14 and
 received ticks 1→60, with 256 closed bars in each timeframe. This protocol probe
-does not certify Avalonia rendering. Final RC2 full-build/CI and Desktop/restart
-evidence remain pending. Production profile/trading settings were not changed by
-these tests.
+does not certify Avalonia rendering. A subsequent native full-build acceptance
+passes 19/19 checks both before and after Desktop Stop/Start, 16 samples each;
+the port closes on Stop and the real EA reconnects in approximately three seconds
+after Start. Production profile/trading settings were not changed by these tests.
 
 Final review also corrected legacy unit-test journal isolation: an explicit
 temporary state scope now anchors unspecified journal/backtest/optimizer stores.
@@ -944,7 +946,19 @@ Earlier rejected synthetic command records had reached the normal user journal;
 those records are preserved, not silently removed. A full rerun verifies unchanged
 production rejection counts and profile hash. No broker action was performed.
 
-Remaining live RC2 Desktop/restart checks and final visual captures will be recorded in the
-RC2 audit once available. The original strict UI parity requirement remains
+GitHub run 36359181671 succeeds for source
+`7f968266a288a33ff0f30ac2b215004644a9dd95`, repeating 324 Python tests, 102 C#
+contracts, 51 desktop assertions and all nine packaged smoke categories. Windows
+CI also verifies installer install/hash/uninstall. Artifact 10945071140 was
+downloaded and independently checked: all 282 ZIP files / 281 manifest hashes,
+x64 tools, EX5, ten references and execution locks match. The verified pair is
+kept separately in `dist/rc2-ci/`. The exact downloaded CI runtime then passes
+19/19 read-only MT5 checks across 21 samples in 20 seconds: accepted tick frames
+advance 50→70 and received ticks 232→429. Deployed EA and running Engine hashes
+match the CI manifest. Separate native observations show Desktop READY and
+capture all ten pages in `artifacts/ui-audit-rc2-ci/`; detailed scope and hashes
+are retained in the RC2 audit. No local installer execution is claimed.
+
+The original strict UI parity requirement remains
 unfulfilled unless a subsequent actual comparison certifies it. Broker execution
 and real-account permission stay disabled throughout this extension.

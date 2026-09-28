@@ -6,7 +6,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
-from .strategy_engine import Bar, HISTORY_LIMIT, StrategyDataError, validated_bar_history
+from .strategy_engine import Bar, HISTORY_LIMIT, HISTORY_TIMEFRAME_SECONDS, StrategyDataError, validated_bar_history
 
 
 class BridgeSnapshotError(ValueError):
@@ -100,11 +100,12 @@ class BridgeRegistry:
         if not isinstance(guardian, dict):
             raise BridgeSnapshotError("guardian must be an object")
 
-        if guardian.get("execution_locked") is not True:
-            raise BridgeSnapshotError("Task 009 requires guardian.execution_locked=true")
-
-        if guardian.get("execution_ready") is not False:
-            raise BridgeSnapshotError("Task 009 requires guardian.execution_ready=false")
+        if payload.get('execution_capable') is True:
+            if (type(guardian.get('execution_locked')) is not bool or type(guardian.get('execution_ready')) is not bool
+                    or guardian['execution_locked'] and guardian['execution_ready']):
+                raise BridgeSnapshotError('Invalid guardian execution state')
+        elif guardian.get('execution_locked') is not True or guardian.get('execution_ready') is not False:
+            raise BridgeSnapshotError('Legacy bridge requires locked execution')
 
         bars = payload["bars"]
         if not isinstance(bars, dict):
@@ -162,7 +163,9 @@ class BridgeRegistry:
 
         if self._latest_snapshot and self._latest_snapshot.get("symbol") != symbol:
             self._bar_history.clear()
-        for timeframe in required_timeframes:
+        # Keep every supported series, including optional D1 from newer EAs.
+        # The required set above stays compatible with the older eight-TF bridge.
+        for timeframe in HISTORY_TIMEFRAME_SECONDS:
             combined = {item["time"]: item for item in self._bar_history.get(timeframe, [])}
             for bar in validated_history.get(timeframe, []):
                 combined[bar.time] = vars(bar).copy()
@@ -356,8 +359,10 @@ class BridgeRegistry:
             "stops_level": snapshot.get("stops_level"),
             "freeze_level": snapshot.get("freeze_level"),
             "guardian_reason": status.guardian_reason,
-            "broker_execution_locked": True,
-            "simulation_only": True,
+            "broker_execution_locked": status.execution_locked,
+            "simulation_only": snapshot.get('execution_capable') is not True,
+            "account_server": snapshot.get('account_server'),
+            "magic": snapshot.get('magic'),
         }
 
     def latest_fresh_snapshot(self) -> dict[str, Any] | None:
@@ -406,8 +411,8 @@ class BridgeRegistry:
                 if snapshot.get("account_trade_mode") is not None
                 else None
             ),
-            execution_ready=False,
-            execution_locked=True,
+            execution_ready=connected and snapshot.get('execution_capable') is True and guardian.get('execution_ready') is True,
+            execution_locked=not connected or snapshot.get('execution_capable') is not True or guardian.get('execution_locked', True),
             guardian_reason=str(
                 guardian.get("reason", "TASK003_EXECUTION_LOCKED")
             ),

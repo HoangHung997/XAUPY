@@ -114,6 +114,20 @@ class Task010JournalProtocolTests(unittest.IsolatedAsyncioTestCase):
             self.server.bound_port,
         )
 
+    async def test_long_native_log_pages_stay_within_transport_and_keep_all_rows(self):
+        from xaupy_engine.server import MAX_LINE_BYTES
+        for i in range(80):
+            self.server.journal.append('INFO','MT5','MT5_EXPERTS','Thông báo '+str(i)+' '+('x'*15000),details={'raw':'y'*15000})
+        cursor=None;seen=[]
+        while True:
+            request=Envelope.create('journal_query',{'sources':['MT5'],'date_scope':'ALL','limit':2000,'before_sequence':cursor})
+            response=self.server._journal_query_response(request,{})
+            self.assertLess(len(response.to_json().encode('utf-8')),MAX_LINE_BYTES)
+            events=response.payload['journal']['events']
+            if not events:break
+            seen.extend(e['sequence'] for e in events);cursor=min(e['sequence'] for e in events)
+        self.assertEqual(80,len(seen));self.assertEqual(80,len(set(seen)))
+
     async def test_heartbeat_includes_compact_real_journal_summary(self):
         reader, writer = await self.connect()
         heartbeat = await exchange(reader, writer, "heartbeat")

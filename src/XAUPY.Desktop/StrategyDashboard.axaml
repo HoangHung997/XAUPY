@@ -18,88 +18,88 @@
       <StackPanel Grid.Column="0" Spacing="8">
         <Border Classes="panel">
           <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" Margin="12,6" RowSpacing="5">
-            <TextBlock Text="Xây dựng chiến lược giao dịch" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            <TextBlock Text="{DynamicResource Text_0c8e1fbc4d542801}" FontSize="{DynamicResource Font_20}" FontWeight="SemiBold" VerticalAlignment="Center"/>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-              <Button x:Name="SaveStrategyButton" Classes="secondary" Padding="8,6" FontSize="13" Content="▣  Lưu chiến lược" Click="SaveStrategy_OnClick" ToolTip.Tip="Lưu hồ sơ chiến lược đang áp dụng thành file JSON."/>
-              <Button x:Name="LoadStrategyButton" Classes="secondary" Padding="8,6" FontSize="13" Content="⬇  Tải chiến lược" Click="LoadStrategy_OnClick" ToolTip.Tip="Mở JSON, kiểm tra tham số và xác nhận trước khi áp dụng."/>
-              <Button Classes="secondary" Padding="8,6" FontSize="13" Content="☆  Đặt làm mặc định" IsEnabled="False" ToolTip.Tip="Hồ sơ đang áp dụng đã tự lưu để phục hồi khi khởi động. Chưa có chức năng mặc định riêng."/>
-              <Button x:Name="ExportStrategyButton" Classes="secondary" Padding="8,6" FontSize="13" Content="⬇  Xuất cấu hình" Click="SaveStrategy_OnClick" ToolTip.Tip="Xuất toàn bộ cấu hình canonical đang áp dụng thành JSON."/>
+              <Button x:Name="SaveStrategyButton" Classes="secondary" Padding="8,6" FontSize="{DynamicResource Font_13}" Content="{DynamicResource Text_7eceb9acc612e9d2}" Click="SaveStrategy_OnClick" ToolTip.Tip="{DynamicResource Text_bdfc8aa9aec4bfde}"/>
+              <Button x:Name="LoadStrategyButton" Classes="secondary" Padding="8,6" FontSize="{DynamicResource Font_13}" Content="{DynamicResource Text_e65d15fbaa054d5b}" Click="LoadStrategy_OnClick" ToolTip.Tip="{DynamicResource Text_2bdd11aa56b6f331}"/>
+              <Button Classes="secondary" Padding="8,6" FontSize="{DynamicResource Font_13}" Content="{DynamicResource Text_abe01fa5a45dbba9}" Click="SetStartupStrategy_OnClick" ToolTip.Tip="{DynamicResource Text_35d4f1ab33a3c168}"/>
+              <Button x:Name="ExportStrategyButton" Classes="secondary" Padding="8,6" FontSize="{DynamicResource Font_13}" Content="{DynamicResource Text_b7768ac622b6e19f}" Click="SaveStrategy_OnClick" ToolTip.Tip="{DynamicResource Text_22868495abb27e68}"/>
             </StackPanel>
-            <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="Thiết lập khung thời gian, bộ lọc, điều kiện kích hoạt và quản lý lệnh theo quy tắc N30." Classes="dim" FontSize="14"/>
-            <TextBlock x:Name="StrategyActionText" Grid.Row="2" Grid.ColumnSpan="2" IsVisible="False" FontSize="12" TextWrapping="Wrap"/>
+            <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="{DynamicResource Text_c16ab2d850733306}" Classes="dim" FontSize="{DynamicResource Font_14}"/>
+            <TextBlock x:Name="StrategyActionText" Grid.Row="2" Grid.ColumnSpan="2" IsVisible="False" FontSize="{DynamicResource Font_12}" TextWrapping="Wrap"/>
           </Grid>
         </Border>
 
         <!-- Approved 3-stage Direction → Pullback → Trigger flow -->
         <Grid ColumnDefinitions="*,28,*,28,*" ColumnSpacing="6">
-          <Border Grid.Column="0" Classes="stage" BorderBrush="#0C9DFF">
-            <Border.Background><LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%"><GradientStop Color="#052B50" Offset="0"/><GradientStop Color="#051932" Offset="1"/></LinearGradientBrush></Border.Background>
+          <Border Grid.Column="0" Classes="stage" BorderBrush="{DynamicResource Brush_0C9DFF}">
+            <Border.Background><LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%"><GradientStop Color="{DynamicResource Color_052B50}" Offset="0"/><GradientStop Color="{DynamicResource Color_051932}" Offset="1"/></LinearGradientBrush></Border.Background>
             <StackPanel Spacing="6">
               <StackPanel Orientation="Horizontal" Spacing="10">
-                <Border Width="38" Height="38" CornerRadius="19" Background="#0A66F2"><TextBlock Text="1" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                <Border Width="38" Height="38" CornerRadius="19" Background="{DynamicResource Brush_0A66F2}"><TextBlock Text="1" FontSize="{DynamicResource Font_22}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
                 <StackPanel>
-                  <TextBlock Text="Direction TF" FontSize="18" FontWeight="Bold"/>
-                  <TextBlock Text="Xác định xu hướng chính" Classes="dim" FontSize="13"/>
+                  <TextBlock Text="Direction TF" FontSize="{DynamicResource Font_18}" FontWeight="Bold"/>
+                  <TextBlock Text="{DynamicResource Text_41e6b24d883b4716}" Classes="dim" FontSize="{DynamicResource Font_13}"/>
                 </StackPanel>
               </StackPanel>
               <Border Background="Transparent" Padding="0,5,0,7">
                 <StackPanel x:Name="DirectionEditor"><TextBlock x:Name="DirectionTfText" IsVisible="False" Text="M30"/></StackPanel>
               </Border>
-              <Border Background="#2A1830" BorderBrush="#6B2C5D" BorderThickness="1" CornerRadius="5" Padding="12,9">
+              <Border Background="{DynamicResource Brush_2A1830}" BorderBrush="{DynamicResource Brush_6B2C5D}" BorderThickness="1" CornerRadius="5" Padding="12,9">
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                  <TextBlock x:Name="DirectionArrow" Text="—" Foreground="#94B6D2" FontSize="23" FontWeight="Bold"/>
-                  <TextBlock x:Name="DirectionText" Text="NEUTRAL" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
+                  <TextBlock x:Name="DirectionArrow" Text="—" Foreground="{DynamicResource Brush_94B6D2}" FontSize="{DynamicResource Font_23}" FontWeight="Bold"/>
+                  <TextBlock x:Name="DirectionText" Text="NEUTRAL" FontSize="{DynamicResource Font_16}" FontWeight="Bold" VerticalAlignment="Center"/>
                 </StackPanel>
               </Border>
-              <TextBlock x:Name="DirectionRuleText" Text="EMA50" Foreground="#C9DDEF"/>
+              <TextBlock x:Name="DirectionRuleText" Text="EMA50" Foreground="{DynamicResource Brush_C9DDEF}"/>
               <TextBlock x:Name="DirectionMaText" Text="MA: —" Classes="dim"/>
               <TextBlock x:Name="DirectionOpenText" IsVisible="False" Text="Open ref: —" Classes="dim"/>
             </StackPanel>
           </Border>
 
-          <TextBlock Grid.Column="1" Text="→" FontSize="37" Foreground="#59AFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          <TextBlock Grid.Column="1" Text="→" FontSize="{DynamicResource Font_37}" Foreground="{DynamicResource Brush_59AFFF}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-          <Border Grid.Column="2" Classes="stage" BorderBrush="#A04BFF">
-            <Border.Background><LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%"><GradientStop Color="#1C254A" Offset="0"/><GradientStop Color="#16152D" Offset="1"/></LinearGradientBrush></Border.Background>
+          <Border Grid.Column="2" Classes="stage" BorderBrush="{DynamicResource Brush_A04BFF}">
+            <Border.Background><LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%"><GradientStop Color="{DynamicResource Color_1C254A}" Offset="0"/><GradientStop Color="{DynamicResource Color_16152D}" Offset="1"/></LinearGradientBrush></Border.Background>
             <StackPanel Spacing="6">
               <StackPanel Orientation="Horizontal" Spacing="10">
-                <Border Width="38" Height="38" CornerRadius="19" Background="#6842D8"><TextBlock Text="2" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                <Border Width="38" Height="38" CornerRadius="19" Background="{DynamicResource Brush_6842D8}"><TextBlock Text="2" FontSize="{DynamicResource Font_22}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
                 <StackPanel>
-                  <TextBlock Text="Pullback TF" FontSize="18" FontWeight="Bold"/>
-                  <TextBlock Text="Tìm nhịp hồi để vào lệnh" Classes="dim" FontSize="13"/>
+                  <TextBlock Text="Pullback TF" FontSize="{DynamicResource Font_18}" FontWeight="Bold"/>
+                  <TextBlock Text="{DynamicResource Text_a204d99f40c62b9e}" Classes="dim" FontSize="{DynamicResource Font_13}"/>
                 </StackPanel>
               </StackPanel>
               <Border Background="Transparent" Padding="0,5,0,7">
                 <StackPanel x:Name="PullbackEditor"><TextBlock x:Name="PullbackTfText" IsVisible="False" Text="M5"/></StackPanel>
               </Border>
-              <Border Background="#2A1743" BorderBrush="#8049B6" BorderThickness="1" CornerRadius="5" Padding="12,9">
-                <TextBlock x:Name="PullbackStateText" Text="WAIT" Foreground="#CB73FF" FontSize="16" FontWeight="Bold"/>
+              <Border Background="{DynamicResource Brush_2A1743}" BorderBrush="{DynamicResource Brush_8049B6}" BorderThickness="1" CornerRadius="5" Padding="12,9">
+                <TextBlock x:Name="PullbackStateText" Text="WAIT" Foreground="{DynamicResource Brush_CB73FF}" FontSize="{DynamicResource Font_16}" FontWeight="Bold"/>
               </Border>
-              <TextBlock x:Name="PullbackRsiText" Text="RSI: —" Foreground="#C9DDEF"/>
+              <TextBlock x:Name="PullbackRsiText" Text="RSI: —" Foreground="{DynamicResource Brush_C9DDEF}"/>
               <TextBlock x:Name="PullbackZText" Text="Z: —" Classes="dim"/>
               <TextBlock x:Name="PullbackConditionText" IsVisible="False" Text="BUY — • SELL —" Classes="dim"/>
             </StackPanel>
           </Border>
 
-          <TextBlock Grid.Column="3" Text="→" FontSize="37" Foreground="#59AFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          <TextBlock Grid.Column="3" Text="→" FontSize="{DynamicResource Font_37}" Foreground="{DynamicResource Brush_59AFFF}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-          <Border Grid.Column="4" Classes="stage" BorderBrush="#00D4A2">
-            <Border.Background><LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%"><GradientStop Color="#07373D" Offset="0"/><GradientStop Color="#051E2D" Offset="1"/></LinearGradientBrush></Border.Background>
+          <Border Grid.Column="4" Classes="stage" BorderBrush="{DynamicResource Brush_00D4A2}">
+            <Border.Background><LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%"><GradientStop Color="{DynamicResource Color_07373D}" Offset="0"/><GradientStop Color="{DynamicResource Color_051E2D}" Offset="1"/></LinearGradientBrush></Border.Background>
             <StackPanel Spacing="6">
               <StackPanel Orientation="Horizontal" Spacing="10">
-                <Border Width="38" Height="38" CornerRadius="19" Background="#0C9F73"><TextBlock Text="3" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+                <Border Width="38" Height="38" CornerRadius="19" Background="{DynamicResource Brush_0C9F73}"><TextBlock Text="3" FontSize="{DynamicResource Font_22}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
                 <StackPanel>
-                  <TextBlock Text="Trigger TF" FontSize="18" FontWeight="Bold"/>
-                  <TextBlock Text="Tín hiệu vào lệnh chính xác" Classes="dim" FontSize="13"/>
+                  <TextBlock Text="Trigger TF" FontSize="{DynamicResource Font_18}" FontWeight="Bold"/>
+                  <TextBlock Text="{DynamicResource Text_ec8770d6314748a6}" Classes="dim" FontSize="{DynamicResource Font_13}"/>
                 </StackPanel>
               </StackPanel>
               <Border Background="Transparent" Padding="0,5,0,7">
                 <StackPanel x:Name="TriggerEditor"><TextBlock x:Name="TriggerTfText" IsVisible="False" Text="M1"/></StackPanel>
               </Border>
-              <Border Background="#082B3D" BorderBrush="#14657A" BorderThickness="1" CornerRadius="5" Padding="12,9">
-                <TextBlock x:Name="TriggerStateText" Text="WAIT" Foreground="#40C9FF" FontSize="16" FontWeight="Bold"/>
+              <Border Background="{DynamicResource Brush_082B3D}" BorderBrush="{DynamicResource Brush_14657A}" BorderThickness="1" CornerRadius="5" Padding="12,9">
+                <TextBlock x:Name="TriggerStateText" Text="WAIT" Foreground="{DynamicResource Brush_40C9FF}" FontSize="{DynamicResource Font_16}" FontWeight="Bold"/>
               </Border>
-              <TextBlock x:Name="TriggerRsiText" Text="RSI: —" Foreground="#C9DDEF"/>
+              <TextBlock x:Name="TriggerRsiText" Text="RSI: —" Foreground="{DynamicResource Brush_C9DDEF}"/>
               <TextBlock x:Name="TriggerZText" Text="Z: —" Classes="dim"/>
               <TextBlock x:Name="TriggerConditionText" IsVisible="False" Text="Reversal: —" Classes="dim"/>
             </StackPanel>
@@ -108,56 +108,56 @@
 
         <Border Classes="panel">
           <StackPanel>
-            <Border Background="#082038" Padding="12,7">
-              <TextBlock Text="▦  Bộ lọc và điều kiện chiến lược" Classes="panelTitle"/>
+            <Border Background="{DynamicResource Brush_082038}" Padding="12,7">
+              <TextBlock Text="{DynamicResource Text_96e7f58ed91baa99}" Classes="panelTitle"/>
             </Border>
             <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8" Margin="10,0,10,8">
               <Border Grid.Row="0" Grid.Column="0" Classes="panelSoft" Padding="9,6">
                 <StackPanel Spacing="2">
-                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="pulse" Width="23" Height="23" Tint="#59B7FF"/><TextBlock Text="Z-Score (Mean Reversion)" Foreground="#59B7FF" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="pulse" Width="23" Height="23" Tint="{DynamicResource Brush_59B7FF}"/><TextBlock Text="Z-Score (Mean Reversion)" Foreground="{DynamicResource Brush_59B7FF}" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
                   <StackPanel x:Name="ZEditor" Spacing="3"/>
-                  <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="Z Pullback:" Classes="dim" FontSize="12"/><TextBlock x:Name="PullbackZFilterMirror" Text="—" FontSize="12"/><TextBlock Text="Trigger:" Classes="dim" FontSize="12"/><TextBlock x:Name="TriggerZFilterMirror" Text="—" FontSize="12"/></StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="Z Pullback:" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="PullbackZFilterMirror" Text="—" FontSize="{DynamicResource Font_12}"/><TextBlock Text="Trigger:" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="TriggerZFilterMirror" Text="—" FontSize="{DynamicResource Font_12}"/></StackPanel>
                 </StackPanel>
               </Border>
 
               <Border Grid.Row="0" Grid.Column="1" Classes="panelSoft" Padding="9,6">
                 <StackPanel Spacing="2">
-                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="bars" Width="23" Height="23" Tint="#56A8FF"/><TextBlock Text="RSI (Momentum)" Foreground="#56A8FF" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="bars" Width="23" Height="23" Tint="{DynamicResource Brush_56A8FF}"/><TextBlock Text="RSI (Momentum)" Foreground="{DynamicResource Brush_56A8FF}" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
                   <StackPanel x:Name="RsiEditor" Spacing="3"/>
-                  <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="RSI Pullback:" Classes="dim" FontSize="12"/><TextBlock x:Name="PullbackRsiMirror" Text="—" FontSize="12"/><TextBlock Text="Trigger:" Classes="dim" FontSize="12"/><TextBlock x:Name="TriggerRsiMirror" Text="—" FontSize="12"/></StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="RSI Pullback:" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="PullbackRsiMirror" Text="—" FontSize="{DynamicResource Font_12}"/><TextBlock Text="Trigger:" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="TriggerRsiMirror" Text="—" FontSize="{DynamicResource Font_12}"/></StackPanel>
                 </StackPanel>
               </Border>
 
               <Border Grid.Row="0" Grid.Column="2" Classes="panelSoft" Padding="9,6">
                 <StackPanel Spacing="2">
-                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="bars" Width="23" Height="23" Tint="#42DDF4"/><TextBlock Text="ADX (Xu hướng)" Foreground="#42DDF4" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="bars" Width="23" Height="23" Tint="{DynamicResource Brush_42DDF4}"/><TextBlock Text="{DynamicResource Text_70b93e523576cc53}" Foreground="{DynamicResource Brush_42DDF4}" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
                   <StackPanel x:Name="AdxEditor" Spacing="3"/>
-                  <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="ADX hiện tại:" Classes="dim" FontSize="12"/><TextBlock x:Name="AdxText" Text="—" FontSize="13"/></StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="{DynamicResource Text_a2543e63387a3729}" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="AdxText" Text="—" FontSize="{DynamicResource Font_13}"/></StackPanel>
                 </StackPanel>
               </Border>
 
               <Border Grid.Row="1" Grid.Column="0" Classes="panelSoft" Padding="9,6">
                 <StackPanel Spacing="2">
-                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="pulse" Width="23" Height="23" Tint="#59B7FF"/><TextBlock Text="ATR (Biến động)" Foreground="#59B7FF" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="pulse" Width="23" Height="23" Tint="{DynamicResource Brush_59B7FF}"/><TextBlock Text="{DynamicResource Text_c65109d1cbb71d90}" Foreground="{DynamicResource Brush_59B7FF}" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
                   <StackPanel x:Name="AtrEditor" Spacing="3"/>
-                  <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="ATR hiện tại:" Classes="dim" FontSize="12"/><TextBlock x:Name="AtrText" Text="—" FontSize="13"/></StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="{DynamicResource Text_265fad23b16d520d}" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="AtrText" Text="—" FontSize="{DynamicResource Font_13}"/></StackPanel>
                 </StackPanel>
               </Border>
 
               <Border Grid.Row="1" Grid.Column="1" Classes="panelSoft" Padding="9,6">
                 <StackPanel Spacing="2">
-                  <TextBlock Text="◷  Open Filter (Thời gian giao dịch)" Foreground="#44C8FF" FontWeight="SemiBold"/>
+                  <TextBlock Text="{DynamicResource Text_5dd42ba409ad3390}" Foreground="{DynamicResource Brush_44C8FF}" FontWeight="SemiBold"/>
                   <StackPanel x:Name="SessionEditor" Spacing="3"/>
-                  <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="Giờ theo cấu hình phiên · Open:" Classes="dim" FontSize="12"/><TextBlock x:Name="OpenFilterText" Text="—" FontSize="13"/></StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="{DynamicResource Text_2d2a75f982414710}" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="OpenFilterText" Text="—" FontSize="{DynamicResource Font_13}"/></StackPanel>
                 </StackPanel>
               </Border>
 
               <Border Grid.Row="1" Grid.Column="2" Classes="panelSoft" Padding="9,6">
                 <StackPanel Spacing="2">
-                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="shield" Width="23" Height="23" Tint="#59B7FF"/><TextBlock Text="SL / TP Mode" Foreground="#59B7FF" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
+                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="shield" Width="23" Height="23" Tint="{DynamicResource Brush_59B7FF}"/><TextBlock Text="SL / TP Mode" Foreground="{DynamicResource Brush_59B7FF}" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
                   <StackPanel x:Name="StopsEditor" Spacing="3"/>
-                  <TextBlock x:Name="ConfigSummaryText" Text="Direction EMA50" FontSize="15" TextWrapping="Wrap"/>
-                  <TextBlock Text="Execution vẫn LOCKED" Foreground="#FFD34D" FontSize="12"/>
+                  <TextBlock x:Name="ConfigSummaryText" Text="Direction EMA50" FontSize="{DynamicResource Font_15}" TextWrapping="Wrap"/>
+                  <TextBlock x:Name="StopsExecutionText" Text="—" Foreground="{DynamicResource Brush_FFD34D}" FontSize="{DynamicResource Font_12}"/>
                 </StackPanel>
               </Border>
             </Grid>
@@ -166,19 +166,19 @@
               <Border Grid.Column="0" Classes="panelSoft" Padding="10,7">
                 <Grid ColumnDefinitions="1.2*,1*" ColumnSpacing="8">
                   <StackPanel>
-                    <TextBlock Text="⌘  Logic kết hợp điều kiện" Foreground="#5ED3FF" FontWeight="SemiBold"/>
+                    <TextBlock Text="{DynamicResource Text_aba0a31d58d81bee}" Foreground="{DynamicResource Brush_5ED3FF}" FontWeight="SemiBold"/>
                     <StackPanel x:Name="LogicEditor" Spacing="3"/>
                   </StackPanel>
                   <StackPanel Grid.Column="1">
-                    <TextBlock Text="State / Armed" Classes="dim" FontSize="12"/>
+                    <TextBlock Text="State / Armed" Classes="dim" FontSize="{DynamicResource Font_12}"/>
                     <TextBlock x:Name="ArmedSideText" Text="Armed: —"/>
-                    <TextBlock x:Name="BlockedReasonText" Text="BRIDGE_STALE" Classes="dim" FontSize="13" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="BlockedReasonText" Text="BRIDGE_STALE" Classes="dim" FontSize="{DynamicResource Font_13}" TextWrapping="Wrap"/>
                   </StackPanel>
                 </Grid>
               </Border>
-              <Border Grid.Column="1" Classes="panelSoft" Padding="10,7" ToolTip.Tip="Bỏ chọn nến đóng: ghi nhớ chạm RSI/Z trong nến, xét hồi từ nến sau.">
+              <Border Grid.Column="1" Classes="panelSoft" Padding="10,7" ToolTip.Tip="{DynamicResource Text_5250aef74da181d9}">
                 <StackPanel>
-                  <TextBlock Text="⚙  Điều kiện nâng cao (Tùy chọn)" Foreground="#5ED3FF" FontWeight="SemiBold"/>
+                  <TextBlock Text="{DynamicResource Text_3210ce532965cd42}" Foreground="{DynamicResource Brush_5ED3FF}" FontWeight="SemiBold"/>
                   <StackPanel x:Name="AdvancedEditor" Spacing="3"/>
                 </StackPanel>
               </Border>
@@ -186,21 +186,21 @@
           </StackPanel>
         </Border>
 
-        <Expander Header="Tham số bổ sung, dữ liệu và tín hiệu gần nhất" IsExpanded="False" HorizontalAlignment="Stretch">
+        <Expander Header="{DynamicResource Text_a40edc63bbb9f895}" IsExpanded="False" HorizontalAlignment="Stretch">
         <Border Classes="panel" Padding="12">
           <Grid ColumnDefinitions="1.4*,1*" ColumnSpacing="10">
             <StackPanel>
               <StackPanel x:Name="SupplementalEditor" Spacing="5" Margin="0,0,0,10"/>
-              <TextBlock Text="Warm-up / dữ liệu" Classes="panelTitle"/>
+              <TextBlock Text="{DynamicResource Text_068be052b9055203}" Classes="panelTitle"/>
               <TextBlock x:Name="BarsSeenText" Text="Bars: —" FontFamily="Consolas" Classes="label" TextWrapping="Wrap"/>
-              <TextBlock x:Name="WarmupText" Text="Warm-up: chờ dữ liệu thật." Classes="dim" FontSize="13" TextWrapping="Wrap"/>
-              <TextBlock x:Name="DataErrorText" Text="Data error: none" Classes="dim" FontSize="13" TextWrapping="Wrap"/>
-              <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="Symbol / sẵn sàng / lần reset:" Classes="dim" FontSize="12"/><TextBlock Text="{Binding #SymbolText.Text}" FontSize="12"/><TextBlock Text="{Binding #ReadyText.Text}" FontSize="12"/><TextBlock Text="{Binding #ResetReasonText.Text}" FontSize="12"/></StackPanel>
+              <TextBlock x:Name="WarmupText" Text="{local:InitialText 8b4c4e3246e3723c}" Classes="dim" FontSize="{DynamicResource Font_13}" TextWrapping="Wrap"/>
+              <TextBlock x:Name="DataErrorText" Text="Data error: none" Classes="dim" FontSize="{DynamicResource Font_13}" TextWrapping="Wrap"/>
+              <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="{DynamicResource Text_45bb2ac5b671fd2c}" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock Text="{Binding #SymbolText.Text}" FontSize="{DynamicResource Font_12}"/><TextBlock Text="{Binding #ReadyText.Text}" FontSize="{DynamicResource Font_12}"/><TextBlock Text="{Binding #ResetReasonText.Text}" FontSize="{DynamicResource Font_12}"/></StackPanel>
             </StackPanel>
             <StackPanel Grid.Column="1">
-              <TextBlock Text="Tín hiệu gần nhất" Classes="panelTitle"/>
-              <TextBlock x:Name="LastSignalText" Text="Chưa có signal." Classes="label" TextWrapping="Wrap"/>
-              <TextBlock x:Name="SignalSequenceText" Text="Sequence: 0" Classes="dim" FontSize="13"/>
+              <TextBlock Text="{DynamicResource Text_09344a08177450fe}" Classes="panelTitle"/>
+              <TextBlock x:Name="LastSignalText" Text="{local:InitialText ea4c47dfa83494db}" Classes="label" TextWrapping="Wrap"/>
+              <TextBlock x:Name="SignalSequenceText" Text="Sequence: 0" Classes="dim" FontSize="{DynamicResource Font_13}"/>
             </StackPanel>
           </Grid>
         </Border>
@@ -211,22 +211,22 @@
       <StackPanel Grid.Column="1" Spacing="8">
         <Border Classes="panel">
           <StackPanel>
-            <Grid Background="#082038" ColumnDefinitions="*,Auto" Margin="12,7">
-              <TextBlock Text="Chiến lược hiện tại" Classes="panelTitle"/>
-              <Border Grid.Column="1" Background="#063B2C" BorderBrush="#0D9C70" BorderThickness="1" CornerRadius="4" Padding="8,3">
-                <TextBlock x:Name="StrategyStateText" Text="STALE" Foreground="#18E58B" FontSize="13" FontWeight="Bold"/>
+            <Grid Background="{DynamicResource Brush_082038}" ColumnDefinitions="*,Auto" Margin="12,7">
+              <TextBlock Text="{DynamicResource Text_57da818846d0901f}" Classes="panelTitle"/>
+              <Border Grid.Column="1" Background="{DynamicResource Brush_063B2C}" BorderBrush="{DynamicResource Brush_0D9C70}" BorderThickness="1" CornerRadius="4" Padding="8,3">
+                <TextBlock x:Name="StrategyStateText" Text="STALE" Foreground="{DynamicResource Brush_18E58B}" FontSize="{DynamicResource Font_13}" FontWeight="Bold"/>
               </Border>
             </Grid>
             <StackPanel Margin="12,8" Spacing="7">
-              <TextBlock Text="Tên chiến lược" Classes="dim" FontSize="12"/>
+              <TextBlock Text="{DynamicResource Text_8edd8f139923b2d4}" Classes="dim" FontSize="{DynamicResource Font_12}"/>
               <Border Classes="panelSoft" Padding="9,7"><TextBlock x:Name="ProfileText" Text="Baseline"/></Border>
-              <TextBlock x:Name="ProfileHashText" Text="Hash: —" Classes="dim" FontSize="12" IsVisible="False"/>
-              <TextBlock Text="Mô tả" Classes="dim" FontSize="12"/>
-              <Border Classes="panelSoft" Padding="9" MinHeight="70"><TextBlock x:Name="StrategyDescriptionText" Text="Đang tải quy tắc chiến lược." TextWrapping="Wrap" FontSize="13"/></Border>
-              <TextBlock Text="Cấu hình chính" Foreground="#7DB7E8" FontWeight="SemiBold"/>
+              <TextBlock x:Name="ProfileHashText" Text="Hash: —" Classes="dim" FontSize="{DynamicResource Font_12}" IsVisible="False"/>
+              <TextBlock Text="{DynamicResource Text_9eca256d0e8dc458}" Classes="dim" FontSize="{DynamicResource Font_12}"/>
+              <Border Classes="panelSoft" Padding="9" MinHeight="70"><TextBlock x:Name="StrategyDescriptionText" Text="{local:InitialText e28597a0f65e0d87}" TextWrapping="Wrap" FontSize="{DynamicResource Font_13}"/></Border>
+              <TextBlock Text="{DynamicResource Text_bdcd6a86b253c70f}" Foreground="{DynamicResource Brush_7DB7E8}" FontWeight="SemiBold"/>
               <StackPanel x:Name="StrategyRulesHost" Spacing="0"/>
               <Grid ColumnDefinitions="1.2*,*" RowDefinitions="Auto,0,0,0" RowSpacing="0" Margin="8,0">
-                <TextBlock Grid.Row="0" Text="Khung thời gian" Classes="label" ToolTip.Tip="Direction → Pullback → Trigger"/>
+                <TextBlock Grid.Row="0" Text="{DynamicResource Text_5c8a102271043192}" Classes="label" ToolTip.Tip="Direction → Pullback → Trigger"/>
                 <TextBlock x:Name="TimeframeSummaryText" Grid.Row="0" Grid.Column="1" Text="M30 → M5 → M1" HorizontalAlignment="Right"/>
                 <TextBlock x:Name="SymbolText" Grid.Row="1" Grid.Column="1" IsVisible="False" Text="XAUUSD"/>
                 <TextBlock x:Name="ReadyText" Grid.Row="2" Grid.Column="1" IsVisible="False" Text="NO"/>
@@ -238,31 +238,31 @@
 
         <Border Classes="panel">
           <StackPanel>
-            <Grid Background="#082038" ColumnDefinitions="*,Auto" Margin="12,7">
-              <TextBlock Text="Trạng thái điều kiện (Realtime)" Classes="panelTitle"/>
-              <TextBlock Grid.Column="1" Text="↻" Foreground="#7DB7E8"/>
+            <Grid Background="{DynamicResource Brush_082038}" ColumnDefinitions="*,Auto" Margin="12,7">
+              <TextBlock Text="{DynamicResource Text_8037ab771c4d8b30}" Classes="panelTitle"/>
+              <TextBlock Grid.Column="1" Text="↻" Foreground="{DynamicResource Brush_7DB7E8}"/>
             </Grid>
             <Grid Margin="12,8" ColumnDefinitions="Auto,1.1*,1*,1*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
-              <TextBlock x:Name="DirectionDot" Grid.Row="0" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="0" Grid.Column="1" Text="Direction" Classes="label"/><TextBlock x:Name="DirectionConditionText" Grid.Row="0" Grid.Column="2" Text="NEUTRAL"/><TextBlock Grid.Row="0" Grid.Column="3" Text="Realtime" Classes="dim" FontSize="12"/>
-              <TextBlock x:Name="PullbackDot" Grid.Row="1" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="1" Grid.Column="1" Text="Pullback" Classes="label"/><TextBlock x:Name="PullbackConditionMirror" Grid.Row="1" Grid.Column="2" Text="—"/><TextBlock Grid.Row="1" Grid.Column="3" Text="Realtime" Classes="dim" FontSize="12"/>
-              <TextBlock x:Name="TriggerDot" Grid.Row="2" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="2" Grid.Column="1" Text="Trigger" Classes="label"/><TextBlock x:Name="TriggerConditionMirror" Grid.Row="2" Grid.Column="2" Text="—"/><TextBlock Grid.Row="2" Grid.Column="3" Text="Realtime" Classes="dim" FontSize="12"/>
-              <TextBlock Grid.Row="3" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="3" Grid.Column="1" Text="ADX Filter" Classes="label"/><TextBlock x:Name="AdxConditionText" Grid.Row="3" Grid.Column="2" Text="—"/><TextBlock Grid.Row="3" Grid.Column="3" Text="Engine" Classes="dim" FontSize="12"/>
-              <TextBlock Grid.Row="4" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="4" Grid.Column="1" Text="ATR Filter" Classes="label"/><TextBlock x:Name="AtrConditionText" Grid.Row="4" Grid.Column="2" Text="—"/><TextBlock Grid.Row="4" Grid.Column="3" Text="Engine" Classes="dim" FontSize="12"/>
-              <TextBlock Grid.Row="5" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="5" Grid.Column="1" Text="Tất cả điều kiện" Classes="label"/><TextBlock x:Name="AllConditionText" Grid.Row="5" Grid.Column="2" Text="—"/><TextBlock Grid.Row="5" Grid.Column="3" Text="Locked" Classes="dim" FontSize="12"/>
+              <TextBlock x:Name="DirectionDot" Grid.Row="0" Text="●" Foreground="{DynamicResource Brush_8092A6}" Margin="0,0,8,0"/><TextBlock Grid.Row="0" Grid.Column="1" Text="Direction" Classes="label"/><TextBlock x:Name="DirectionConditionText" Grid.Row="0" Grid.Column="2" Text="NEUTRAL"/><TextBlock Grid.Row="0" Grid.Column="3" Text="Realtime" Classes="dim" FontSize="{DynamicResource Font_12}"/>
+              <TextBlock x:Name="PullbackDot" Grid.Row="1" Text="●" Foreground="{DynamicResource Brush_8092A6}" Margin="0,0,8,0"/><TextBlock Grid.Row="1" Grid.Column="1" Text="Pullback" Classes="label"/><TextBlock x:Name="PullbackConditionMirror" Grid.Row="1" Grid.Column="2" Text="—"/><TextBlock Grid.Row="1" Grid.Column="3" Text="Realtime" Classes="dim" FontSize="{DynamicResource Font_12}"/>
+              <TextBlock x:Name="TriggerDot" Grid.Row="2" Text="●" Foreground="{DynamicResource Brush_8092A6}" Margin="0,0,8,0"/><TextBlock Grid.Row="2" Grid.Column="1" Text="Trigger" Classes="label"/><TextBlock x:Name="TriggerConditionMirror" Grid.Row="2" Grid.Column="2" Text="—"/><TextBlock Grid.Row="2" Grid.Column="3" Text="Realtime" Classes="dim" FontSize="{DynamicResource Font_12}"/>
+              <TextBlock Grid.Row="3" Text="●" Foreground="{DynamicResource Brush_8092A6}" Margin="0,0,8,0"/><TextBlock Grid.Row="3" Grid.Column="1" Text="ADX Filter" Classes="label"/><TextBlock x:Name="AdxConditionText" Grid.Row="3" Grid.Column="2" Text="—"/><TextBlock Grid.Row="3" Grid.Column="3" Text="Engine" Classes="dim" FontSize="{DynamicResource Font_12}"/>
+              <TextBlock Grid.Row="4" Text="●" Foreground="{DynamicResource Brush_8092A6}" Margin="0,0,8,0"/><TextBlock Grid.Row="4" Grid.Column="1" Text="ATR Filter" Classes="label"/><TextBlock x:Name="AtrConditionText" Grid.Row="4" Grid.Column="2" Text="—"/><TextBlock Grid.Row="4" Grid.Column="3" Text="Engine" Classes="dim" FontSize="{DynamicResource Font_12}"/>
+              <TextBlock Grid.Row="5" Text="●" Foreground="{DynamicResource Brush_8092A6}" Margin="0,0,8,0"/><TextBlock Grid.Row="5" Grid.Column="1" Text="{DynamicResource Text_ecffb0308da56418}" Classes="label"/><TextBlock x:Name="AllConditionText" Grid.Row="5" Grid.Column="2" Text="—"/><TextBlock x:Name="ConditionExecutionText" Grid.Row="5" Grid.Column="3" Text="—" Classes="dim" FontSize="{DynamicResource Font_12}" TextTrimming="CharacterEllipsis"/>
             </Grid>
           </StackPanel>
         </Border>
 
         <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-          <Button x:Name="ApplyStrategyButton" Classes="primary" Content="Áp dụng cấu hình" Click="ApplyStrategy_OnClick" HorizontalAlignment="Stretch" FontSize="14" Padding="8,10"/>
-          <Button Grid.Column="1" Classes="secondary" Content="Tải lại" Click="ResetStrategyDraft_OnClick" HorizontalAlignment="Stretch" FontSize="14" ToolTip.Tip="Bỏ thay đổi trong tab này và tải cấu hình đang áp dụng."/>
+          <Button x:Name="ApplyStrategyButton" Classes="primary" Content="{DynamicResource Text_804ad55c828c1f31}" Click="ApplyStrategy_OnClick" HorizontalAlignment="Stretch" FontSize="{DynamicResource Font_14}" Padding="8,10"/>
+          <Button Grid.Column="1" Classes="secondary" Content="{DynamicResource Text_46140fa81747ba87}" Click="ResetStrategyDraft_OnClick" HorizontalAlignment="Stretch" FontSize="{DynamicResource Font_14}" ToolTip.Tip="{DynamicResource Text_15efbda7e0c4e9de}"/>
         </Grid>
-        <Border Classes="panelSoft" Padding="10,7"><TextBlock x:Name="IntrabarObservationText" FontSize="12" TextWrapping="Wrap" Foreground="#97CFED"/></Border>
+        <Border Classes="panelSoft" Padding="10,7"><TextBlock x:Name="IntrabarObservationText" FontSize="{DynamicResource Font_12}" TextWrapping="Wrap" Foreground="{DynamicResource Brush_97CFED}"/></Border>
         <Border Classes="panel" Padding="12">
           <StackPanel Spacing="6">
             <TextBlock Text="Broker safety" Classes="panelTitle"/>
-            <TextBlock Text="EXECUTION LOCKED" Foreground="#FFD34D" FontWeight="Bold" FontSize="17"/>
-            <TextBlock Text="Giao dịch đang khóa; chỉ theo dõi chiến lược và tín hiệu." Classes="dim" FontSize="13" TextWrapping="Wrap"/>
+            <TextBlock x:Name="StrategyExecutionText" Text="{local:InitialText eb8aca06dfc879d5}" Foreground="{DynamicResource Brush_FFD34D}" FontWeight="Bold" FontSize="{DynamicResource Font_17}"/>
+            <TextBlock Text="{DynamicResource Text_d8cba75685355dd8}" Classes="dim" FontSize="{DynamicResource Font_13}" TextWrapping="Wrap"/>
           </StackPanel>
         </Border>
       </StackPanel>

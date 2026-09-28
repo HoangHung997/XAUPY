@@ -49,7 +49,7 @@ internal static class DemoOncePresentation
 
     public static string Detail(DemoOnceSnapshot report)
     {
-        var parts = new List<string> { Summary(report), "Khóa giao dịch chung vẫn bật; nút đặt lệnh thủ công chỉ mô phỏng." };
+        var parts = new List<string> { Summary(report), "Đây là quyền một lệnh của phiên cũ; quyền giao dịch hiện tại hiển thị riêng." };
         if (!report.IsFresh) parts.Add($"Trạng thái cuối được báo: {report.State}. Chưa xác nhận kết quả mới; cần kiểm tra MT5.");
         if (!string.IsNullOrWhiteSpace(report.AttemptId)) parts.Add($"Attempt: {report.AttemptId}");
         if (!string.IsNullOrWhiteSpace(report.Reason)) parts.Add(report.Reason);

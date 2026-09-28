@@ -127,7 +127,7 @@ public partial class MainWindow
             UpdateQuickConfiguration(_engineSupervisor.Configuration);
             if (!_configurationEditor.HasUnsavedChanges)
                 await _configurationEditor.EnsureLoadedAsync(force: true);
-            AppendQuickLog("Đã áp dụng cấu hình nhanh. Giao dịch vẫn khóa.");
+            AppendQuickLog($"Đã áp dụng cấu hình nhanh. Chế độ giao dịch: {_engineSupervisor.Execution.Label}.");
         }
         catch (Exception ex)
         {
@@ -148,17 +148,17 @@ public partial class MainWindow
     private async void QuickHelp_OnClick(object? sender, RoutedEventArgs e)
     {
         var content = new StackPanel { Margin = new Avalonia.Thickness(24), Spacing = 18 };
-        content.Children.Add(new TextBlock { Text = "Sử dụng Control Center", FontSize = 24, FontWeight = FontWeight.SemiBold });
+        content.Children.Add(new TextBlock { [LocalizationService.TextProperty] = "Sử dụng Control Center", [AppearanceService.BaseFontSizeProperty] = 24d, FontWeight = FontWeight.SemiBold });
         content.Children.Add(new TextBlock
         {
             Text = "1. Mở MT5 và gắn XAUPY Bridge vào biểu đồ XAUUSD.\n\n" +
                    "2. Kiểm tra Python READY, EA Bridge kết nối và thời điểm giá. Khi nghỉ phiên, hệ thống giữ giá và nến gần nhất.\n\n" +
                    "3. Chỉnh tham số ở Cấu hình, xác thực rồi áp dụng. Các nút Nhập / Xuất giúp lưu profile JSON và preset MT5 .set.\n\n" +
-                   "4. Backtest và Tối ưu sử dụng dữ liệu lịch sử đã chọn. Lệnh thử chỉ mô phỏng; gửi lệnh broker vẫn khóa.",
+                   "4. Backtest và Tối ưu sử dụng dữ liệu lịch sử đã chọn. Quyền giao dịch được chọn tại tab Lệnh & Vị thế.",
             TextWrapping = TextWrapping.Wrap
         });
         var dialog = new Window { Title = "Hướng dẫn", Width = 600, Height = 470, CanResize = false, Content = content, WindowStartupLocation = WindowStartupLocation.CenterOwner };
-        var close = new Button { Content = "Đóng", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
+        var close = new Button { [LocalizationService.TextProperty] = "Đóng", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
         close.Click += (_, _) => dialog.Close();
         content.Children.Add(close);
         await dialog.ShowDialog(this);

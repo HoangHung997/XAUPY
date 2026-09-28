@@ -63,7 +63,7 @@ def main(argv: list[str] | None = None) -> None:
               "account_mode": account.trade_mode if account else None, "columns": list(CANDLE_COLUMNS),
               "timestamp_semantics": "Original MT5 epoch timestamps preserved; no local-time conversion",
               "forming_bar_excluded": True, "broker_execution_requested": False,
-              "symbol_metadata": {key: getattr(symbol, key) for key in ["digits", "point", "trade_tick_size", "trade_tick_value", "volume_min", "volume_max", "volume_step", "trade_contract_size"]}}
+              "symbol_metadata": {key: getattr(symbol, key) for key in ["digits", "point", "trade_tick_size", "trade_tick_value", "volume_min", "volume_max", "volume_step", "trade_contract_size", "trade_stops_level", "trade_freeze_level"]}}
     write_json(root / "progress.json", report)
     try:
         for timeframe in args.timeframes:

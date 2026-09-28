@@ -6,15 +6,16 @@
     <FluentTheme />
 
     <Style Selector="Window">
+      <Setter Property="Background" Value="{DynamicResource Brush_031426}"/>
       <Setter Property="FontFamily" Value="Segoe UI"/>
-      <Setter Property="Foreground" Value="#EAF3FF"/>
-      <Setter Property="FontSize" Value="15"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_EAF3FF}"/>
+      <Setter Property="FontSize" Value="{DynamicResource Font_15}"/>
     </Style>
 
     <Style Selector="Button.navTab">
       <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="Foreground" Value="#D7E5F5"/>
-      <Setter Property="BorderBrush" Value="#103653"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_D7E5F5}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush_103653}"/>
       <Setter Property="BorderThickness" Value="0,0,1,0"/>
       <Setter Property="CornerRadius" Value="6"/>
       <Setter Property="Padding" Value="12,7"/>
@@ -23,82 +24,82 @@
       <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
     <Style Selector="Button.navTab:pointerover">
-      <Setter Property="Background" Value="#0B2A49"/>
+      <Setter Property="Background" Value="{DynamicResource Brush_0B2A49}"/>
       <Setter Property="Foreground" Value="White"/>
     </Style>
     <Style Selector="Button.navTab.active">
-      <Setter Property="Background"><LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%"><GradientStop Color="#086FFF" Offset="0"/><GradientStop Color="#0052E7" Offset="1"/></LinearGradientBrush></Setter>
+      <Setter Property="Background"><LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%"><GradientStop Color="{DynamicResource Color_086FFF}" Offset="0"/><GradientStop Color="{DynamicResource Color_0052E7}" Offset="1"/></LinearGradientBrush></Setter>
       <Setter Property="Foreground" Value="White"/>
-      <Setter Property="BorderBrush" Value="#2491FF"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush_2491FF}"/>
       <Setter Property="BorderThickness" Value="1"/>
     </Style>
 
     <Style Selector="Button.primary">
-      <Setter Property="Background"><LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%"><GradientStop Color="#086FFF" Offset="0"/><GradientStop Color="#0052E7" Offset="1"/></LinearGradientBrush></Setter>
+      <Setter Property="Background"><LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%"><GradientStop Color="{DynamicResource Color_086FFF}" Offset="0"/><GradientStop Color="{DynamicResource Color_0052E7}" Offset="1"/></LinearGradientBrush></Setter>
       <Setter Property="Foreground" Value="White"/>
-      <Setter Property="BorderBrush" Value="#238AF7"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush_238AF7}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="5"/>
       <Setter Property="Padding" Value="14,8"/>
     </Style>
     <Style Selector="Button.secondary">
-      <Setter Property="Background"><LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%"><GradientStop Color="#0D3457" Offset="0"/><GradientStop Color="#08223D" Offset="1"/></LinearGradientBrush></Setter>
-      <Setter Property="Foreground" Value="#DCEBFA"/>
-      <Setter Property="BorderBrush" Value="#23547C"/>
+      <Setter Property="Background"><LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%"><GradientStop Color="{DynamicResource Color_0D3457}" Offset="0"/><GradientStop Color="{DynamicResource Color_08223D}" Offset="1"/></LinearGradientBrush></Setter>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_DCEBFA}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush_23547C}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="5"/>
       <Setter Property="Padding" Value="12,7"/>
     </Style>
 
     <Style Selector="Border.panel">
-      <Setter Property="Background"><LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%"><GradientStop Color="#031E35" Offset="0"/><GradientStop Color="#031827" Offset="1"/></LinearGradientBrush></Setter>
-      <Setter Property="BorderBrush" Value="#14517A"/>
+      <Setter Property="Background"><LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%"><GradientStop Color="{DynamicResource Color_031E35}" Offset="0"/><GradientStop Color="{DynamicResource Color_031827}" Offset="1"/></LinearGradientBrush></Setter>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush_14517A}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="5"/>
     </Style>
     <Style Selector="Border.panelSoft">
-      <Setter Property="Background" Value="#081E34"/>
-      <Setter Property="BorderBrush" Value="#123D5D"/>
+      <Setter Property="Background" Value="{DynamicResource Brush_081E34}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush_123D5D}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="5"/>
     </Style>
     <Style Selector="TextBlock.panelTitle">
-      <Setter Property="FontSize" Value="17"/>
+      <Setter Property="FontSize" Value="{DynamicResource Font_17}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="Foreground" Value="#C9DDF2"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_C9DDF2}"/>
     </Style>
     <Style Selector="TextBlock.dim">
-      <Setter Property="Foreground" Value="#86A0BA"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_86A0BA}"/>
     </Style>
     <Style Selector="TextBlock.label">
-      <Setter Property="Foreground" Value="#B7CBE0"/>
-      <Setter Property="FontSize" Value="15"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_B7CBE0}"/>
+      <Setter Property="FontSize" Value="{DynamicResource Font_15}"/>
     </Style>
     <Style Selector="TextBlock.success">
-      <Setter Property="Foreground" Value="#18E58B"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_18E58B}"/>
     </Style>
     <Style Selector="TextBlock.warn">
-      <Setter Property="Foreground" Value="#FFD34D"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_FFD34D}"/>
     </Style>
     <Style Selector="TextBlock.danger">
-      <Setter Property="Foreground" Value="#FF415C"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_FF415C}"/>
     </Style>
     <Style Selector="TextBox">
-      <Setter Property="Background" Value="#0B2844"/>
-      <Setter Property="BorderBrush" Value="#23547C"/>
+      <Setter Property="Background" Value="{DynamicResource Brush_0B2844}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush_23547C}"/>
       <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="Foreground" Value="#EDF6FF"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_EDF6FF}"/>
       <Setter Property="CornerRadius" Value="4"/>
     </Style>
     <Style Selector="ComboBox">
-      <Setter Property="Background" Value="#0B2844"/>
-      <Setter Property="BorderBrush" Value="#23547C"/>
+      <Setter Property="Background" Value="{DynamicResource Brush_0B2844}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush_23547C}"/>
       <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="Foreground" Value="#EDF6FF"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_EDF6FF}"/>
       <Setter Property="CornerRadius" Value="4"/>
     </Style>
     <Style Selector="CheckBox">
-      <Setter Property="Foreground" Value="#DCEAF8"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_DCEAF8}"/>
       <Setter Property="Padding" Value="7,0,0,0"/>
     </Style>
     <Style Selector="Button">
@@ -108,21 +109,21 @@
       <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
     <Style Selector="Button.secondary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="#12456E"/>
-      <Setter Property="BorderBrush" Value="#2787CC"/>
+      <Setter Property="Background" Value="{DynamicResource Brush_12456E}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush_2787CC}"/>
     </Style>
     <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="Background" Value="#2081FF"/>
+      <Setter Property="Background" Value="{DynamicResource Brush_2081FF}"/>
     </Style>
     <Style Selector="TextBox">
       <Setter Property="MinHeight" Value="28"/>
       <Setter Property="Padding" Value="8,4"/>
-      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="FontSize" Value="{DynamicResource Font_14}"/>
     </Style>
     <Style Selector="ComboBox">
       <Setter Property="MinHeight" Value="28"/>
       <Setter Property="Padding" Value="8,3"/>
-      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="FontSize" Value="{DynamicResource Font_14}"/>
       <Setter Property="HorizontalAlignment" Value="Stretch"/>
     </Style>
     <Style Selector="ScrollBar">

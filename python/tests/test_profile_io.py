@@ -25,7 +25,7 @@ class ProfileIoTests(unittest.TestCase):
 
     def test_invalid_profile_is_not_saved(self):
         profile = default_profile()
-        profile["execution"]["allow_real_account"] = True
+        profile["execution"]["allow_real_account"] = "invalid_boolean"
 
         with tempfile.TemporaryDirectory() as directory:
             path = pathlib.Path(directory) / "bad.json"

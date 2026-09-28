@@ -1,3 +1,4 @@
+from ui_source_support import read_xaml
 import pathlib
 import unittest
 
@@ -15,9 +16,9 @@ REFERENCE = ROOT / "docs" / "ui-reference" / "Tab Tối Ưu.png"
 class Task012OptimizerUiSourceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.main_xaml = MAIN_XAML.read_text(encoding="utf-8")
+        cls.main_xaml = read_xaml(MAIN_XAML)
         cls.main_code = MAIN_CODE.read_text(encoding="utf-8")
-        cls.xaml = OPT_XAML.read_text(encoding="utf-8")
+        cls.xaml = read_xaml(OPT_XAML)
         cls.code = OPT_CODE.read_text(encoding="utf-8")
         cls.supervisor = SUPERVISOR.read_text(encoding="utf-8")
         cls.model = MODEL.read_text(encoding="utf-8")
@@ -87,7 +88,8 @@ class Task012OptimizerUiSourceTests(unittest.TestCase):
             self.assertNotIn(mock_value, self.xaml)
 
     def test_system_resource_metrics_are_not_fabricated(self):
-        self.assertIn("Chưa có dữ liệu", self.xaml)
+        self.assertIn('x:Name="SystemResourcesText"', self.xaml)
+        self.assertIn('GetProperty("cpu_percent")', self.code)
         self.assertIn("Worker slots", self.xaml)
         self.assertIn("Throughput", self.xaml)
         self.assertNotIn("CPU 68%", self.xaml)
@@ -140,7 +142,7 @@ class Task012OptimizerUiSourceTests(unittest.TestCase):
             self.assertIn(f'"{name}"', self.code)
 
     def test_task012_version_and_safety_guards_remain(self):
-        self.assertIn('desktop_version = "0.17.2-remediation"', self.supervisor)
+        self.assertIn('desktop_version = "1.0.0-dev"', self.supervisor)
         self.assertIn("RejectUnexpectedExecutionEnable", self.supervisor)
         self.assertIn("RejectUnexpectedOrdersExecutionEnable", self.supervisor)
         self.assertIn(

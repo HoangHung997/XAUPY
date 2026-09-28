@@ -48,7 +48,11 @@ public sealed record DealSnapshot(
     double RealizedTotal,
     string Reason,
     long Time,
-    string Comment);
+    string Comment)
+{
+    public double Sl { get; init; }
+    public double Tp { get; init; }
+}
 
 public sealed record OrdersPositionsSnapshot(
     bool Available,
@@ -88,6 +92,8 @@ public sealed record OrdersPositionsSnapshot(
     bool BrokerExecutionLocked,
     bool SimulationOnly)
 {
+    public string? AccountServer { get; init; }
+    public long? Magic { get; init; }
     public static OrdersPositionsSnapshot Empty { get; } = new(
         false,
         null,
@@ -204,7 +210,8 @@ public sealed record OrdersPositionsSnapshot(
             OverviewSnapshot.ReadString(book, "guardian_reason") ?? "TASK003_EXECUTION_LOCKED",
             !book.TryGetProperty("broker_execution_locked", out var locked) ||
                 locked.ValueKind != JsonValueKind.False,
-            OverviewSnapshot.ReadBool(book, "simulation_only"));
+            OverviewSnapshot.ReadBool(book, "simulation_only"))
+        { AccountServer = OverviewSnapshot.ReadString(book, "account_server"), Magic = OverviewSnapshot.ReadLong(book, "magic") };
     }
 
     private static bool TryReadPosition(JsonElement item, out PositionSnapshot position)
@@ -277,7 +284,7 @@ public sealed record OrdersPositionsSnapshot(
         return true;
     }
 
-    private static bool TryReadDeal(JsonElement item, out DealSnapshot deal)
+    public static bool TryReadDeal(JsonElement item, out DealSnapshot deal)
     {
         deal = default!;
         if (item.ValueKind != JsonValueKind.Object)
@@ -291,7 +298,7 @@ public sealed record OrdersPositionsSnapshot(
         var priceOut = OverviewSnapshot.ReadDouble(item, "price_out");
         var time = OverviewSnapshot.ReadLong(item, "time");
         if (ticket is null || orderTicket is null || magic is null ||
-            volume is null || priceIn is null || priceOut is null || time is null)
+            volume is null || priceOut is null || time is null)
         {
             return false;
         }
@@ -304,7 +311,7 @@ public sealed record OrdersPositionsSnapshot(
             OverviewSnapshot.ReadString(item, "side") ?? "UNKNOWN",
             OverviewSnapshot.ReadString(item, "entry") ?? "UNKNOWN",
             volume.Value,
-            priceIn.Value,
+            priceIn ?? 0,
             priceOut.Value,
             OverviewSnapshot.ReadDouble(item, "profit") ?? 0,
             OverviewSnapshot.ReadDouble(item, "commission") ?? 0,
@@ -312,7 +319,11 @@ public sealed record OrdersPositionsSnapshot(
             OverviewSnapshot.ReadDouble(item, "realized_total") ?? 0,
             OverviewSnapshot.ReadString(item, "reason") ?? "UNKNOWN",
             time.Value,
-            OverviewSnapshot.ReadString(item, "comment") ?? string.Empty);
+            OverviewSnapshot.ReadString(item, "comment") ?? string.Empty)
+        {
+            Sl = OverviewSnapshot.ReadDouble(item, "sl") ?? 0,
+            Tp = OverviewSnapshot.ReadDouble(item, "tp") ?? 0,
+        };
         return true;
     }
 }

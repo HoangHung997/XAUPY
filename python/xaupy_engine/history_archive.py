@@ -9,7 +9,7 @@ import sqlite3
 from typing import Any, Iterable
 
 TIMEFRAME_SECONDS = {"M1": 60, "M3": 180, "M5": 300, "M15": 900, "M30": 1800,
-                     "H1": 3600, "H2": 7200, "H4": 14400}
+                     "H1": 3600, "H2": 7200, "H4": 14400, "D1": 86400}
 CANDLE_COLUMNS = ("time", "open", "high", "low", "close", "tick_volume", "spread", "real_volume")
 
 

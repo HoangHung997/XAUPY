@@ -8,7 +8,7 @@ import re
 from typing import Any, Callable
 
 PROFILE_SCHEMA_VERSION = 1
-TIMEFRAME_OPTIONS = ("M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4")
+TIMEFRAME_OPTIONS = ("M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4", "D1")
 MA_TYPES = ("SMA", "EMA", "SMMA", "LWMA")
 PRICE_SOURCES = ("CLOSE", "OPEN", "HIGH", "LOW", "MEDIAN", "TYPICAL", "WEIGHTED")
 LOGIC_OPTIONS = ("AND", "OR")
@@ -88,6 +88,9 @@ FIELDS: tuple[ConfigField, ...] = (
     _f("timeframes.direction","enum","M30","XAUPY_DirectionTF",aliases=("DirectionTF","InpDirectionTF"),enum=TIMEFRAME_OPTIONS),
     _f("timeframes.pullback","enum","M5","XAUPY_PullbackTF",aliases=("PullbackTF","InpPullbackTF"),enum=TIMEFRAME_OPTIONS),
     _f("timeframes.trigger","enum","M1","XAUPY_TriggerTF",aliases=("TriggerTF","InpTriggerTF"),enum=TIMEFRAME_OPTIONS),
+    _f("mtf.pullback_timeframes","str","","XAUPY_MtfPullback",description="Khung Pullback xác nhận thêm, cách nhau bằng dấu phẩy; tối đa 3, ví dụ M5,M15. Để trống dùng khung chính."),
+    _f("mtf.trigger_timeframes","str","","XAUPY_MtfTrigger",description="Khung Trigger xác nhận thêm, cách nhau bằng dấu phẩy; tối đa 3. Mỗi cặp Pullback/Trigger có setup RSI/Z riêng."),
+    _f("mtf.logic","enum","AND","XAUPY_MtfLogic",enum=LOGIC_OPTIONS,description="AND: tất cả cặp xác nhận thêm; OR: ít nhất một. Tín hiệu chính vẫn bắt buộc. Mỗi tín hiệu phụ chỉ dùng một lần."),
 
     _f("direction.ma_enabled","bool",True,"XAUPY_DirectionMAEnabled",aliases=("DirectionMAEnabled","InpDirectionMAEnabled")),
     _f("direction.ma_type","enum","EMA","XAUPY_DirectionMAType",aliases=("DirectionMAType","InpDirectionMAType"),enum=MA_TYPES),
@@ -221,8 +224,8 @@ FIELDS: tuple[ConfigField, ...] = (
     _f("execution.magic","int",991188,"XAUPY_Magic",aliases=("Magic","MagicNumber","InpMagic"),minimum=1,maximum=2147483647),
     _f("execution.order_comment","str","XAUPY","XAUPY_OrderComment",aliases=("OrderComment","InpOrderComment")),
     _f("execution.max_retry_count","int",0,"XAUPY_MaxRetryCount",aliases=("MaxRetryCount","InpMaxRetryCount"),minimum=0,maximum=0,locked_value=0),
-    _f("execution.demo_only","bool",True,"XAUPY_DemoOnly",aliases=("DemoOnly","InpDemoOnly"),locked_value=True),
-    _f("execution.allow_real_account","bool",False,"XAUPY_AllowRealAccount",aliases=("AllowRealAccount","InpAllowRealAccount"),locked_value=False),
+    _f("execution.demo_only","bool",True,"XAUPY_DemoOnly",aliases=("DemoOnly","InpDemoOnly"),description="Chỉ dùng tài khoản DEMO theo lựa chọn người dùng"),
+    _f("execution.allow_real_account","bool",False,"XAUPY_AllowRealAccount",aliases=("AllowRealAccount","InpAllowRealAccount"),description="Cho phép REAL; còn cần quyền tài khoản được người dùng xác nhận trong app"),
 
     _f("safety.never_widen_sl","bool",True,"XAUPY_NeverWidenSL",aliases=("NeverWidenSL","InpNeverWidenSL"),locked_value=True),
     _f("safety.require_server_sl","bool",True,"XAUPY_RequireServerSL",aliases=("RequireServerSL","InpRequireServerSL"),locked_value=True),
@@ -348,6 +351,8 @@ def validate_profile(profile: dict[str, Any]) -> list[str]:
         try:
             raw = get_path(profile, field.path)
         except KeyError:
+            if field.path.startswith('mtf.'):
+                continue # Optional v1 extension; old profiles preserve baseline behavior.
             errors.append(f"{field.path}: missing")
             continue
 
@@ -365,6 +370,13 @@ def validate_profile(profile: dict[str, Any]) -> list[str]:
             errors.append(
                 f"{field.path}: locked safety value must be {field.locked_value!r}"
             )
+
+    for role in ('pullback','trigger'):
+        value=profile.get('mtf',{}).get(role+'_timeframes','') if isinstance(profile.get('mtf',{}),dict) else None
+        if not isinstance(value,str):errors.append('mtf.'+role+'_timeframes: must be comma-separated timeframes');continue
+        selected=[s.strip().upper() for s in value.split(',') if s.strip()]
+        if len(selected)>3 or len(set(selected))!=len(selected) or any(tf not in TIMEFRAME_OPTIONS for tf in selected):
+            errors.append('mtf.'+role+'_timeframes: choose up to 3 distinct supported timeframes')
 
     def check_order(low_path: str, high_path: str, message: str) -> None:
         try:
@@ -449,7 +461,12 @@ def normalized_profile(profile: dict[str, Any]) -> dict[str, Any]:
 
     result = {"schema_version": PROFILE_SCHEMA_VERSION}
     for field in FIELDS:
-        _set_path(result, field.path, coerce_value(field, get_path(profile, field.path)))
+        try:raw=get_path(profile, field.path)
+        except KeyError:raw=deepcopy(field.default)
+        value=coerce_value(field,raw)
+        if field.path in ('mtf.pullback_timeframes','mtf.trigger_timeframes'):
+            value=','.join(s.strip().upper() for s in value.split(',') if s.strip())
+        _set_path(result, field.path, value)
     return result
 
 

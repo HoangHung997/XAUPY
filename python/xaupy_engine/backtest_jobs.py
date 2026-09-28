@@ -50,10 +50,16 @@ class BacktestJobs:
             if cancel.is_set():
                 raise BacktestCancelled("Backtest cancelled")
             self._update(job_id, state="RUNNING")
-            engine = BacktestEngine(profile, initial_balance=float(parameters.get("initial_balance", 10000)),
+            dataset = load_historical_dataset(parameters["path"])
+            from .tick_backtest import TickDataset, TickBacktestEngine
+            engine_type=TickBacktestEngine if isinstance(dataset,TickDataset) else BacktestEngine
+            selected_model=parameters.get('model','AUTO')
+            if selected_model not in ('AUTO','M1_OHLC','REAL_TICKS'): raise BacktestError('Unknown backtest model')
+            if (selected_model=='REAL_TICKS' and not isinstance(dataset,TickDataset)) or (selected_model=='M1_OHLC' and isinstance(dataset,TickDataset)):
+                raise BacktestError('Selected model does not match dataset. Observed ticks cannot be reconstructed from OHLC.')
+            engine = engine_type(profile, initial_balance=float(parameters.get("initial_balance", 10000)),
                                     spread_pips=float(parameters.get("spread_pips", 20)),
                                     commission_per_lot=float(parameters.get("commission_per_lot", 7)))
-            dataset = load_historical_dataset(parameters["path"])
             self.log("INFO", "Python Engine", "BACKTEST_RUN", "Backtest started in background",
                      details={"job_id": job_id, "dataset_fingerprint": dataset.fingerprint})
             result = engine.run(dataset, from_date=str(parameters.get("from_date", "")).strip(),

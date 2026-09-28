@@ -1,6 +1,7 @@
 import pathlib
 import re
 import unittest
+from collections import Counter
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "mql5" / "XAUPY_Bridge_EA.mq5"
@@ -14,13 +15,13 @@ class Mql5BridgeSourceSafetyTests(unittest.TestCase):
         cls.parser = (SOURCE.parent / "XAUPY_StrictJson.mqh").read_text(encoding="utf-8")
         cls.all_source = "\n".join((cls.text, cls.demo, cls.parser))
 
-    def test_task003_execution_is_hard_locked(self):
-        self.assertIn("TASK003_EXECUTION_LOCKED = true", self.text)
+    def test_bridge_reports_actual_user_mode(self):
+        self.assertIn('if(!g_full_enabled)', self.text)
         self.assertIn("execution_locked", self.text)
         self.assertIn("execution_ready", self.text)
-        self.assertIn("TASK003_EXECUTION_LOCKED", self.text)
+        self.assertIn('return "USER_STOPPED"', self.text)
 
-    def test_general_execution_has_only_one_separate_bounded_demo_send(self):
+    def test_legacy_demo_execution_keeps_its_single_bounded_send(self):
         forbidden = (
             "OrderSendAsync(",
             "CTrade ",
@@ -60,10 +61,20 @@ class Mql5BridgeSourceSafetyTests(unittest.TestCase):
             with self.subTest(token=token):
                 self.assertIn(token, self.text)
 
-    def test_task009_order_book_cannot_manage_or_close_positions(self):
-        self.assertIn("ORDER BOOK ACTIVE; BROKER EXECUTION LOCKED", self.text)
+    def test_legacy_demo_adapter_cannot_manage_or_close_positions(self):
         for token in ("PositionClose(", "PositionModify(", "OrderDelete(", "TRADE_ACTION_REMOVE", "TRADE_ACTION_SLTP", "TRADE_ACTION_CLOSE_BY", "TRADE_ACTION_PENDING"):
             self.assertNotIn(token, self.all_source)
+
+    def test_general_adapter_claims_before_send_and_does_not_retry_send(self):
+        full=(SOURCE.parent/'XAUPY_Execution.mqh').read_text(encoding='utf-8')
+        self.assertEqual(1,len(re.findall(r'\bOrderSend\s*\(',full)))
+        handler=full.split('void FullHandleAck(string text)',1)[1].split('void FullDiscoverEvidence',1)[0]
+        self.assertLess(handler.index('FileFlush(lock)'),handler.index('OrderSend(request,sent)'))
+        self.assertLess(handler.index('OrderCheck(request,check)'),handler.index('FileFlush(lock)'))
+        self.assertNotRegex(handler,r'\b(?:for|while)\s*\(')
+        recovery=full.split('void FullDiscoverEvidence',1)[1]
+        self.assertNotIn('OrderSend(',recovery)
+        self.assertIn('FullDealAggregate',full)
 
     def test_one_shot_claim_and_unknown_report_precede_single_broker_send(self):
         send_path = self.demo.split("void DemoOnceHandleAck(string response)", 1)[1]
@@ -139,6 +150,17 @@ class Mql5BridgeSourceSafetyTests(unittest.TestCase):
         for token in ("SocketCreate(", "SocketConnect(", "SocketSend(", "SocketRead(", "bridge_snapshot"):
             with self.subTest(token=token):
                 self.assertIn(token, self.text)
+
+    def test_snapshot_builder_has_unique_top_level_fields(self):
+        # Python rejects duplicate JSON keys. A successful EA compile/hello must
+        # not hide a snapshot that is unusable by every data consumer.
+        builder = self.text.split("string BuildSnapshotPayload(", 1)[1].split("string BuildEnvelope(", 1)[0]
+        fields = re.findall(r'JsonKey\("([^"\\]+)"\)', builder)
+        duplicates = {key: count for key, count in Counter(fields).items() if count > 1}
+        self.assertGreater(len(fields), 40)
+        self.assertFalse(duplicates, f"Duplicate snapshot fields: {duplicates}")
+        for required in ("terminal_path", "terminal_data_path", "bars", "bar_history", "indicator_probes"):
+            self.assertIn(required, fields)
 
 
 if __name__ == "__main__":

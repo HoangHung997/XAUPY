@@ -95,7 +95,7 @@ class BridgeHistoryTests(unittest.TestCase):
             lambda p: p["bar_history"]["M1"].append(deepcopy(p["bar_history"]["M1"][-1])),
             lambda p: p.__setitem__("server_time", p["server_time"] - 60),
             lambda p: p["bar_history"]["M1"][0].__setitem__("high", 0),
-            lambda p: p["bar_history"].__setitem__("D1", []),
+            lambda p: p["bar_history"].__setitem__("W1", []),
         )
         for mutate in mutations:
             with self.subTest(mutate=mutate):
@@ -125,6 +125,7 @@ class BridgeHistoryTests(unittest.TestCase):
         self.assertEqual(256, len(overview["bar_history"]["M1"]))
         self.assertEqual(ordinary["bars"]["M1"], overview["bar_history"]["M1"][-1])
         self.assertEqual(payload["bar_history"]["M30"], overview["bar_history"]["M30"])
+        self.assertEqual(payload["bar_history"]["D1"], overview["bar_history"]["D1"])
 
     def test_symbol_switch_clears_previous_symbol_history(self):
         payload = history_snapshot()
@@ -205,6 +206,7 @@ class HistoryProtocolTests(unittest.IsolatedAsyncioTestCase):
                 result = json.loads((await asyncio.wait_for(reader.readline(), 3)).decode())
                 overview = result["payload"]["overview"]
                 self.assertEqual(256, len(overview["bar_history"]["M30"]))
+                self.assertEqual(256, len(overview["bar_history"]["D1"]))
                 self.assertEqual(256, result["payload"]["strategy"]["bars_seen"]["M30"])
                 self.assertFalse(result["payload"]["execution_enabled"])
                 self.assertEqual(0, result["payload"]["strategy"]["signal_sequence"])

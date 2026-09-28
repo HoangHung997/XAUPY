@@ -11,6 +11,14 @@ namespace XAUPY.Desktop;
 
 public partial class StrategyDashboard : UserControl
 {
+    public void ApplyExecution(ExecutionSnapshot state)
+    {
+        this.FindControl<TextBlock>("StrategyExecutionText")!.Text = state.Label;
+        ToolTip.SetTip(this.FindControl<TextBlock>("StrategyExecutionText")!, state.Reason);
+        Text("StopsExecutionText").Text = state.Label;
+        Text("ConditionExecutionText").Text = state.Label;
+        ToolTip.SetTip(Text("ConditionExecutionText"), state.Reason);
+    }
     private EngineProcessSupervisor? _supervisor;
     private bool _actionBusy;
     private static readonly FilePickerFileType StrategyJson = new("XAUPY strategy JSON") { Patterns = ["*.json"] };
@@ -28,7 +36,9 @@ public partial class StrategyDashboard : UserControl
     {
         await RunActionAsync(async supervisor =>
         {
-            var profile = await supervisor.GetActiveConfigAsync();
+            var profile = (sender as Button)?.Name == "ExportStrategyButton" ? await supervisor.GetActiveConfigAsync() : BuildStrategyDraft();
+            var validation=await supervisor.ValidateConfigAsync(profile);
+            if(!validation.Valid)throw new InvalidDataException(string.Join(" • ",validation.Errors));
             var provider = TopLevel.GetTopLevel(this)?.StorageProvider
                 ?? throw new InvalidOperationException("Không mở được hộp thoại lưu file.");
             var file = await provider.SaveFilePickerAsync(new FilePickerSaveOptions
@@ -43,7 +53,7 @@ public partial class StrategyDashboard : UserControl
             stream.SetLength(0);
             await using var writer = new StreamWriter(stream, new UTF8Encoding(false));
             await writer.WriteAsync(JsonSerializer.Serialize(profile, new JsonSerializerOptions { WriteIndented = true }));
-            ShowAction($"Đã lưu cấu hình đang áp dụng: {file.Name}.", Brushes.LightGreen);
+            ShowAction($"Đã lưu {file.Name}. Bản đang chạy chỉ đổi khi Áp dụng.", Brushes.LightGreen);
         });
     }
 
@@ -74,7 +84,7 @@ public partial class StrategyDashboard : UserControl
             if (!result.Applied)
                 throw new InvalidDataException(string.Join(" • ", result.Errors));
             SetStrategyControls(System.Text.Json.Nodes.JsonNode.Parse(validation.Profile.Value.GetRawText())!.AsObject(), true);
-            ShowAction($"Đã xác thực và áp dụng {files[0].Name}. Giao dịch vẫn khóa an toàn.", Brushes.LightGreen);
+            ShowAction($"Đã xác thực và áp dụng {files[0].Name}. Quyền giao dịch giữ theo lựa chọn người dùng.", Brushes.LightGreen);
         });
     }
 
@@ -123,8 +133,8 @@ public partial class StrategyDashboard : UserControl
             Title = "Áp dụng chiến lược", Width = 530, Height = 285, CanResize = false,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, Background = new SolidColorBrush(Color.Parse("#031426"))
         };
-        var cancel = new Button { Content = "Hủy", Classes = { "secondary" } };
-        var apply = new Button { Content = "Áp dụng cấu hình", Classes = { "primary" } };
+        var cancel = new Button { [LocalizationService.TextProperty] = "Hủy", Classes = { "secondary" } };
+        var apply = new Button { [LocalizationService.TextProperty] = "Áp dụng cấu hình", Classes = { "primary" } };
         cancel.Click += (_, _) => dialog.Close();
         apply.Click += (_, _) => { accepted = true; dialog.Close(); };
         dialog.Content = new StackPanel
@@ -132,9 +142,9 @@ public partial class StrategyDashboard : UserControl
             Margin = new Avalonia.Thickness(20), Spacing = 12,
             Children =
             {
-                new TextBlock { Text = $"Áp dụng {fileName}?", FontSize = 19, FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap },
+                new TextBlock { Text = $"Áp dụng {fileName}?", [AppearanceService.BaseFontSizeProperty] = 19d, FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap },
                 new TextBlock { Text = $"Hồ sơ: {Read(profile, "profile", "name")}\nKhung: {Read(profile, "timeframes", "direction")} → {Read(profile, "timeframes", "pullback")} → {Read(profile, "timeframes", "trigger")}\nRisk mỗi lệnh: {Read(profile, "risk", "risk_percent")}% · Max lot: {Read(profile, "risk", "max_lot")}", TextWrapping = TextWrapping.Wrap },
-                new TextBlock { Text = "Chiến lược sẽ tính lại trạng thái từ cấu hình mới. Khóa giao dịch vẫn được giữ.", Foreground = Brushes.Gold, TextWrapping = TextWrapping.Wrap },
+                new TextBlock { [LocalizationService.TextProperty] = "Chiến lược sẽ tính lại trạng thái từ cấu hình mới. Quyền giao dịch giữ theo lựa chọn hiện tại.", Foreground = Brushes.Gold, TextWrapping = TextWrapping.Wrap },
                 new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8, Children = { cancel, apply } }
             }
         };

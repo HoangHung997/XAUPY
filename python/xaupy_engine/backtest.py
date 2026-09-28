@@ -26,7 +26,7 @@ TIMEFRAME_SECONDS: dict[str, int] = {
     "M30": 1800,
     "H1": 3600,
     "H2": 7200,
-    "H4": 14400,
+    "H4": 14400, "D1": 86400,
 }
 BACKTEST_MODEL = "M1_OHLC_COST_GUARDS_V2"
 DATASET_SCHEMA_VERSION = 1
@@ -189,17 +189,57 @@ def load_historical_dataset(path_value: str | os.PathLike[str]) -> HistoricalDat
     if suffix == ".json":
         metadata, bars = _load_json_dataset(raw_bytes)
     elif suffix == ".csv":
-        metadata, bars = _load_csv_dataset(raw_bytes)
+        if raw_bytes.decode('utf-8-sig').startswith('time,open,high,low,close,tick_volume,spread,real_volume'):
+            manifest_path=path.parent/'manifest.json'
+            if not manifest_path.is_file(): raise BacktestError('Raw MT5 archive requires its adjacent manifest.json')
+            manifest_bytes=manifest_path.read_bytes()
+            manifest=json.loads(manifest_bytes)
+            entry=manifest.get('timeframes',{}).get('M1',{})
+            if Path(entry.get('path','')).resolve()!=path.resolve() or entry.get('sha256')!=fingerprint:
+                raise BacktestError('Archive must be the unchanged M1 CSV registered in its manifest')
+            values=manifest['symbol_metadata']
+            # Archive epochs already preserve the provider calendar. Zero here
+            # means no second timezone conversion; do not add broker UTC offset.
+            mapping=dict(symbol=manifest['symbol'],point_size=values['point'],tick_size=values['trade_tick_size'],
+                tick_value=values['trade_tick_value'],volume_min=values['volume_min'],volume_max=values['volume_max'],
+                volume_step=values['volume_step'],timezone_offset_minutes=0,
+                stops_level_points=values.get('trade_stops_level',0),freeze_level_points=values.get('trade_freeze_level',0))
+            metadata=_metadata_from_mapping(mapping)
+            bars=[Bar.from_payload({key:float(row[key]) if key not in ('time','tick_volume') else int(row[key])
+                                   for key in ('time','open','high','low','close','tick_volume')})
+                  for row in csv.DictReader(raw_bytes.decode('utf-8-sig').splitlines())]
+            fingerprint=hashlib.sha256(raw_bytes+b'\n'+manifest_bytes).hexdigest()
+        else:
+            metadata, bars = _load_csv_dataset(raw_bytes)
     else:
         raise BacktestError("Task 011 dataset must be .json or .csv")
 
     _validate_bar_sequence(bars)
-    return HistoricalDataset(
+    result = HistoricalDataset(
         path=path,
         fingerprint=fingerprint,
         metadata=metadata,
         bars=tuple(bars),
     )
+    if suffix=='.json':
+        payload=json.loads(raw_bytes.decode('utf-8-sig'))
+        if payload.get('input_model')=='REAL_TICKS':
+            from .tick_backtest import tick_dataset
+            if 'ticks_file' in payload:
+                tick_path=(path.parent/str(payload['ticks_file'])).resolve()
+                if tick_path.parent!=path.parent.resolve():raise BacktestError('Tick sidecar must be adjacent to its dataset')
+                from .tick_tape import TickTape
+                digest=hashlib.sha256();ticks=TickTape()
+                with tick_path.open('rb') as stream:
+                    for line in stream:
+                        digest.update(line)
+                        if line.strip():
+                            try:ticks.append(json.loads(line))
+                            except (ValueError,AttributeError,OverflowError) as exc:raise BacktestError(str(exc)) from exc
+                if digest.hexdigest()!=payload.get('ticks_sha256'):raise BacktestError('Tick sidecar integrity mismatch')
+                payload['ticks']=ticks.seal()
+            return tick_dataset(result,payload)
+    return result
 
 
 def _load_json_dataset(raw_bytes: bytes) -> tuple[DatasetMetadata, list[Bar]]:

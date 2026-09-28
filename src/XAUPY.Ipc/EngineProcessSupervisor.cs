@@ -63,6 +63,8 @@ public sealed class EngineStateChangedEventArgs(
     public ConfigurationSummary Configuration { get; } = configuration;
     public StrategySnapshot Strategy { get; } = strategy;
     public DemoOnceSnapshot DemoOnce { get; init; } = DemoOnceSnapshot.Disabled;
+    public ExecutionSnapshot Execution { get; init; } = ExecutionSnapshot.Offline;
+    public JsonElement? Monitoring { get; init; }
 }
 
 public sealed partial class EngineProcessSupervisor : IDisposable
@@ -94,7 +96,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
                 "engine",
                 OperatingSystem.IsWindows() ? "xaupy-engine.exe" : "xaupy-engine");
 
-        Port = port ?? ReadPortFromEnvironment() ?? DefaultPort;
+        Port = port ?? ReadPortFromEnvironment() ?? ReadSavedPort() ?? DefaultPort;
     }
 
     public event EventHandler<EngineStateChangedEventArgs>? StateChanged;
@@ -111,6 +113,8 @@ public sealed partial class EngineProcessSupervisor : IDisposable
     public ConfigurationSummary Configuration { get; private set; } = ConfigurationSummary.Default;
     public StrategySnapshot Strategy { get; private set; } = StrategySnapshot.Empty;
     public DemoOnceSnapshot DemoOnce { get; private set; } = DemoOnceSnapshot.Disabled;
+    public ExecutionSnapshot Execution { get; private set; } = ExecutionSnapshot.Offline;
+    public JsonElement? Monitoring { get; private set; }
 
     public Task StartAsync()
     {
@@ -267,7 +271,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
                     var heartbeat = ProtocolEnvelope.Create(
                         updateKind,
-                        new { component = "desktop", desktop_version = "0.17.2-remediation" });
+                        new { component = "desktop", desktop_version = "1.0.0-dev" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
@@ -286,6 +290,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
                     OrdersPositions = OrdersPositionsSnapshot.FromHeartbeatPayload(response.Payload);
                     if (fullHeartbeat)
                     {
+                        Monitoring = response.Payload.TryGetProperty("monitoring", out var monitoring) ? monitoring.Clone() : null;
                         JournalSummary = JournalSummarySnapshot.FromHeartbeatPayload(response.Payload);
                         OptimizerStatus = OptimizerStatusSnapshot.FromHeartbeatPayload(response.Payload);
                         lastFullHeartbeat = DateTimeOffset.UtcNow;
@@ -294,6 +299,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
                     RejectUnexpectedStrategyExecutionEnable(Strategy);
                     RejectUnexpectedOrdersExecutionEnable(OrdersPositions);
                     DemoOnce = DemoOnceSnapshot.FromHeartbeatPayload(response.Payload);
+                    Execution = ExecutionSnapshot.Parse(response.Payload);
 
                     LastHeartbeatUtc = DateTimeOffset.UtcNow;
                     SetState(
@@ -349,7 +355,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "0.17.2-remediation" });
+            new { component = "desktop", desktop_version = "1.0.0-dev" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -367,7 +373,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
         var configRequest = ProtocolEnvelope.Create(
             "config_active_get",
-            new { component = "desktop", desktop_version = "0.17.2-remediation" });
+            new { component = "desktop", desktop_version = "1.0.0-dev" });
 
         var configResponse = await SendReceiveAsync(
             configRequest,
@@ -383,16 +389,12 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
     private static void RejectUnexpectedExecutionEnable(ProtocolEnvelope response)
     {
-        if (response.Payload.TryGetProperty("trading_enabled", out var trading) &&
-            trading.ValueKind == JsonValueKind.True)
+        bool capable = response.Payload.TryGetProperty("execution_capable", out var capability) && capability.ValueKind == JsonValueKind.True;
+        foreach (string name in new[] { "trading_enabled", "execution_enabled" })
         {
-            throw new InvalidDataException("Task 012 Engine unexpectedly reported trading_enabled=true.");
-        }
-
-        if (response.Payload.TryGetProperty("execution_enabled", out var execution) &&
-            execution.ValueKind == JsonValueKind.True)
-        {
-            throw new InvalidDataException("Task 012 Engine unexpectedly reported execution_enabled=true.");
+            if (!response.Payload.TryGetProperty(name, out var flag)) continue;
+            if (flag.ValueKind is not (JsonValueKind.True or JsonValueKind.False) || flag.ValueKind == JsonValueKind.True && !capable)
+                throw new InvalidDataException($"Invalid execution capability: {name}");
         }
     }
 
@@ -404,8 +406,8 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
     private static void RejectUnexpectedOrdersExecutionEnable(OrdersPositionsSnapshot orders)
     {
-        if (!orders.BrokerExecutionLocked || !orders.SimulationOnly)
-            throw new InvalidDataException("Task 012 order-book projection unexpectedly unlocked broker execution.");
+        if (orders.SimulationOnly && !orders.BrokerExecutionLocked)
+            throw new InvalidDataException("A simulation bridge cannot enable broker execution.");
     }
 
     private static Mt5BridgeStatus ParseBridgeStatus(JsonElement payload)
@@ -448,8 +450,8 @@ public sealed partial class EngineProcessSupervisor : IDisposable
             countElement.TryGetInt32(out snapshots);
         }
 
-        if (executionReady || !executionLocked)
-            throw new InvalidDataException("Task 012 bridge guardian unexpectedly reported execution ready.");
+        if (executionReady && executionLocked)
+            throw new InvalidDataException("Bridge execution state is contradictory.");
 
         return new Mt5BridgeStatus(
             connected,
@@ -457,8 +459,8 @@ public sealed partial class EngineProcessSupervisor : IDisposable
             symbol,
             terminalConnected,
             tradeMode,
-            false,
-            true,
+            executionReady,
+            executionLocked,
             guardianReason,
             snapshots);
     }
@@ -714,7 +716,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
     public async Task<BacktestResultSnapshot> RunBacktestAsync(
         string path, string fromDate, string toDate, double initialBalance,
         double spreadPips, double commissionPerLot, CancellationToken cancellationToken = default,
-        IProgress<BacktestJobSnapshot>? progress = null)
+        IProgress<BacktestJobSnapshot>? progress = null, string model = "AUTO")
     {
         ThrowIfDisposed();
         cancellationToken.ThrowIfCancellationRequested();
@@ -729,7 +731,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
             return BacktestJobSnapshot.FromAck(response.Payload);
         }
         var job = await Exchange("backtest_start", new { path, from_date = fromDate, to_date = toDate,
-            initial_balance = initialBalance, spread_pips = spreadPips, commission_per_lot = commissionPerLot });
+            initial_balance = initialBalance, spread_pips = spreadPips, commission_per_lot = commissionPerLot, model });
         string jobId = job.JobId;
         try
         {
@@ -1201,7 +1203,11 @@ public sealed partial class EngineProcessSupervisor : IDisposable
     {
         State = state;
         if (state != EngineConnectionState.Ready)
+        {
             DemoOnce = DemoOnce.AsStale();
+            Execution = Execution with { Fresh = false, Enabled = false };
+            Monitoring = null;
+        }
         if (lastHeartbeatUtc.HasValue)
             LastHeartbeatUtc = lastHeartbeatUtc;
 
@@ -1217,7 +1223,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
                 JournalSummary,
                 OptimizerStatus,
                 Configuration,
-                Strategy) { DemoOnce = DemoOnce });
+                Strategy) { DemoOnce = DemoOnce, Execution = Execution, Monitoring = Monitoring });
     }
 
     private static int? ReadPortFromEnvironment()

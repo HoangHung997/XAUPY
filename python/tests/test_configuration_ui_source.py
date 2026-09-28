@@ -1,3 +1,4 @@
+from ui_source_support import read_xaml
 import pathlib
 import unittest
 
@@ -12,9 +13,9 @@ REFERENCE = ROOT / "docs" / "ui-reference" / "Tab Cấu Hình.png"
 class ConfigurationUiSourceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.xaml = EDITOR_XAML.read_text(encoding="utf-8")
+        cls.xaml = read_xaml(EDITOR_XAML)
         cls.code = EDITOR_CODE.read_text(encoding="utf-8")
-        cls.main_xaml = MAIN_XAML.read_text(encoding="utf-8")
+        cls.main_xaml = read_xaml(MAIN_XAML)
         cls.main_code = MAIN_CODE.read_text(encoding="utf-8")
 
     def test_visual_reference_exists(self):
@@ -90,8 +91,9 @@ class ConfigurationUiSourceTests(unittest.TestCase):
             self.assertIn(f'x:Name="{name}"', self.xaml)
             self.assertIn(f'"{name}"', self.code)
 
-    def test_hard_safety_is_visible_and_locked(self):
-        self.assertIn("TÀI KHOẢN THẬT ĐANG KHÓA", self.xaml)
+    def test_trading_permission_hint_and_fixed_protocol_invariants(self):
+        self.assertIn("Quyền giao dịch theo lựa chọn", self.xaml)
+        self.assertNotIn("TÀI KHOẢN THẬT ĐANG KHÓA", self.xaml)
         self.assertIn("descriptor.LockedValue", self.code)
         self.assertIn("editor.IsEnabled = false", self.code)
 

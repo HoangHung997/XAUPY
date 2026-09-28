@@ -60,7 +60,7 @@ def engine_session(executable: str, runtime: Path):
         stream = sock.makefile("rwb")
         hello = exchange(stream, "hello", {"component": "maintenance-smoke"})
         assert hello["engine_instance_id"] == instance, "launched process identity missing"
-        assert hello["engine_version"] == "0.17.2-remediation"
+        assert hello["engine_version"] == "1.0.0-dev"
         yield stream
     finally:
         if stream is not None and process.poll() is None:
@@ -97,7 +97,7 @@ def main() -> None:
             checks = {item["name"]: item["status"] for item in diagnostic["diagnostics"]["checks"]}
             assert checks["Python Engine"] == checks["Local IPC"] == "OK"
             assert checks["EA Bridge"] == checks["Market data"] == "WAIT"
-            assert checks["Execution Guardian"] == "LOCKED"
+            assert checks["Execution"] == "OFF"
 
             settings = exchange(stream, "settings_get")["settings"]
             settings["startup"]["auto_restart_engine"] = False
@@ -114,13 +114,15 @@ def main() -> None:
             assert len(restored["backups"]) <= 2
             assert exchange(stream, "config_active_get")["profile"]["profile"]["name"] == "Maintenance recovery acceptance"
             settings["safety"]["allow_real_account"] = True
-            assert not exchange(stream, "settings_set", {"settings": settings})["ok"]
+            assert exchange(stream, "settings_set", {"settings": settings})["ok"]
+            execution=exchange(stream, 'diagnostics_get')['diagnostics']['execution']
+            assert execution['mode']=='OFF' and not execution['execution_enabled']
             assert not exchange(stream, "backup_restore", {"backup_id": "../runtime-v1.json"})["ok"]
 
         with engine_session(executable, runtime) as stream:
             saved = exchange(stream, "settings_get")
             assert not saved["settings"]["startup"]["auto_restart_engine"]
-            assert not saved["settings"]["safety"]["allow_real_account"]
+            assert saved["settings"]["safety"]["allow_real_account"]
             assert "reconciliation" in saved["recovery_message"]
             assert exchange(stream, "config_active_get")["profile"]["profile"]["name"] == "Maintenance recovery acceptance"
 

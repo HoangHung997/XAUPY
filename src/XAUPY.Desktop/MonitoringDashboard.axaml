@@ -4,7 +4,7 @@
              x:Class="XAUPY.Desktop.MonitoringDashboard">
   <UserControl.Styles>
     <Style Selector="Grid.timeframeTable > TextBlock">
-      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="FontSize" Value="{DynamicResource Font_13}"/>
       <Setter Property="TextWrapping" Value="Wrap"/>
       <Setter Property="Margin" Value="0,0,4,0"/>
     </Style>
@@ -15,23 +15,26 @@
         <!-- Main market chart -->
         <Border Grid.Column="0" Classes="panel" Height="318">
           <Grid RowDefinitions="42,*,27">
-            <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="Auto,*,Auto" Margin="12,0">
+            <Grid Grid.Row="0" Background="{DynamicResource Brush_082038}" ColumnDefinitions="Auto,*,Auto" Margin="12,0">
               <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                <TextBlock Text="XAUUSD" FontSize="17" FontWeight="Bold"/>
-                <TextBlock Text="M5" FontSize="17" FontWeight="Bold"/>
+                <TextBlock Text="XAUUSD" FontSize="{DynamicResource Font_17}" FontWeight="Bold"/>
+                <TextBlock Text="M5" FontSize="{DynamicResource Font_17}" FontWeight="Bold"/>
               </StackPanel>
               <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left" Margin="25,0,0,0" Spacing="5" VerticalAlignment="Center">
                 <Border Classes="panelSoft" Padding="7,4"><TextBlock Text="M1"/></Border>
-                <Border Background="#0866F4" BorderBrush="#2A8EFF" BorderThickness="1" CornerRadius="4" Padding="7,4"><TextBlock Text="M5"/></Border>
+                <Border Background="{DynamicResource Brush_0866F4}" BorderBrush="{DynamicResource Brush_2A8EFF}" BorderThickness="1" CornerRadius="4" Padding="7,4"><TextBlock Text="M5"/></Border>
                 <Border Classes="panelSoft" Padding="7,4"><TextBlock Text="M15"/></Border>
                 <Border Classes="panelSoft" Padding="7,4"><TextBlock Text="M30"/></Border>
                 <Border Classes="panelSoft" Padding="7,4"><TextBlock Text="H1"/></Border>
                 <Border Classes="panelSoft" Padding="7,4"><TextBlock Text="H4"/></Border>
+                <Border Classes="panelSoft" Padding="7,4"><TextBlock Text="D1"/></Border>
               </StackPanel>
-              <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
-                <TextBlock Text="+ So sánh" Classes="label"/>
-                <TextBlock Text="ƒ  Chỉ báo" Classes="label"/>
-                <TextBlock Text="Nến Nhật" Classes="label"/>
+              <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+                <TextBlock x:Name="ChartCompareAction" Text="{local:InitialText d9f83df1218e6d0d}" Classes="label"/>
+                <TextBlock x:Name="ChartIndicatorsAction" Text="{local:InitialText fa69ae37bae25532}" Classes="label"/>
+                <TextBlock x:Name="ChartStyleAction" Text="{local:InitialText 54929e087d480e99}" Classes="label"/>
+                <Border x:Name="ChartSaveAction" Background="Transparent" Padding="4" ToolTip.Tip="Lưu biểu đồ PNG"><local:ReferenceIcon Kind="camera" Width="20" Height="20" Tint="{DynamicResource Brush_B7CBE0}"/></Border>
+                <Border x:Name="ChartFullScreenAction" Background="Transparent" Padding="4" ToolTip.Tip="{DynamicResource Text_ebe2ccb4a480f518}"><local:ReferenceIcon Kind="expand" Width="20" Height="20" Tint="{DynamicResource Brush_B7CBE0}"/></Border>
               </StackPanel>
             </Grid>
 
@@ -48,8 +51,8 @@
         <!-- Approved multi-timeframe condition table -->
         <Border Grid.Column="1" Classes="panel" Height="318">
           <StackPanel>
-            <Border Background="#082038" Padding="12,8">
-              <TextBlock Text="Trạng thái điều kiện đa khung thời gian" Classes="panelTitle"/>
+            <Border Background="{DynamicResource Brush_082038}" Padding="12,8">
+              <TextBlock Text="{DynamicResource Text_8707037312d87dc9}" Classes="panelTitle"/>
             </Border>
             <ScrollViewer Height="276" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
               <Grid x:Name="MonitorConditionMatrix" Margin="6,0,6,8" ColumnDefinitions="0.82*,0.92*,1*,1.1*,1.05*"/>
@@ -63,94 +66,94 @@
         <!-- Indicator cards -->
         <Border Grid.Column="0" Classes="panel">
           <StackPanel>
-            <Border Background="#082038" Padding="12,7"><TextBlock Text="Chỉ báo &amp; Thị trường (Realtime)" Classes="panelTitle"/></Border>
+            <Border Background="{DynamicResource Brush_082038}" Padding="12,7"><TextBlock Text="{DynamicResource Text_6e07e37031df4d68}" Classes="panelTitle"/></Border>
             <Grid ColumnDefinitions="1.18*,1.18*,1.18*,1.18*,0.82*,0.82*,0.82*,0.82*" ColumnSpacing="6" Margin="5,3,5,8">
               <Border Grid.Column="0" Classes="panelSoft" Padding="5,5" Height="124">
                 <Grid RowDefinitions="22,60,*">
-                  <TextBlock Text="Z-Score" HorizontalAlignment="Center" FontSize="13"/>
+                  <TextBlock Text="Z-Score" HorizontalAlignment="Center" FontSize="{DynamicResource Font_13}"/>
                   <Grid Grid.Row="1">
-                    <local:ReferenceGauge x:Name="MonitorZGauge" Width="104" Height="58" Tint="#359CFF" Minimum="-3" Maximum="+3"/>
-                    <TextBlock x:Name="MonitorPbZText" Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,3"/>
+                    <local:ReferenceGauge x:Name="MonitorZGauge" Width="104" Height="58" Tint="{DynamicResource Brush_359CFF}" Minimum="-3" Maximum="+3"/>
+                    <TextBlock x:Name="MonitorPbZText" Text="—" FontSize="{DynamicResource Font_21}" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,3"/>
                   </Grid>
                   <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Bottom">
-                    <TextBlock Text="-3" FontSize="11" Classes="dim"/>
-                    <TextBlock Grid.Column="1" Text="Pullback" FontSize="11" Classes="dim" HorizontalAlignment="Center"/>
-                    <TextBlock Grid.Column="2" Text="+3" FontSize="11" Classes="dim"/>
+                    <TextBlock Text="-3" FontSize="{DynamicResource Font_11}" Classes="dim"/>
+                    <TextBlock Grid.Column="1" Text="Pullback" FontSize="{DynamicResource Font_11}" Classes="dim" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="+3" FontSize="{DynamicResource Font_11}" Classes="dim"/>
                   </Grid>
                 </Grid>
               </Border>
               <Border Grid.Column="1" Classes="panelSoft" Padding="5,5" Height="124">
                 <Grid RowDefinitions="22,60,*">
-                  <TextBlock Text="RSI" HorizontalAlignment="Center" FontSize="13"/>
+                  <TextBlock Text="RSI" HorizontalAlignment="Center" FontSize="{DynamicResource Font_13}"/>
                   <Grid Grid.Row="1">
-                    <local:ReferenceGauge x:Name="MonitorRsiGauge" Width="104" Height="58" Tint="#3A98FB" Minimum="0" Maximum="100"/>
-                    <TextBlock x:Name="MonitorTriggerRsiText" Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,3"/>
+                    <local:ReferenceGauge x:Name="MonitorRsiGauge" Width="104" Height="58" Tint="{DynamicResource Brush_3A98FB}" Minimum="0" Maximum="100"/>
+                    <TextBlock x:Name="MonitorTriggerRsiText" Text="—" FontSize="{DynamicResource Font_21}" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,3"/>
                   </Grid>
                   <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Bottom">
-                    <TextBlock Text="0" FontSize="11" Classes="dim"/>
-                    <TextBlock Grid.Column="1" Text="Trigger" FontSize="11" Classes="dim" HorizontalAlignment="Center"/>
-                    <TextBlock Grid.Column="2" Text="100" FontSize="11" Classes="dim"/>
+                    <TextBlock Text="0" FontSize="{DynamicResource Font_11}" Classes="dim"/>
+                    <TextBlock Grid.Column="1" Text="Trigger" FontSize="{DynamicResource Font_11}" Classes="dim" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="100" FontSize="{DynamicResource Font_11}" Classes="dim"/>
                   </Grid>
                 </Grid>
               </Border>
               <Border Grid.Column="2" Classes="panelSoft" Padding="5,5" Height="124">
                 <Grid RowDefinitions="22,60,*">
-                  <TextBlock Text="ADX" HorizontalAlignment="Center" FontSize="13"/>
+                  <TextBlock Text="ADX" HorizontalAlignment="Center" FontSize="{DynamicResource Font_13}"/>
                   <Grid Grid.Row="1">
-                    <local:ReferenceGauge x:Name="MonitorAdxGauge" Width="104" Height="58" Tint="#7398CB" Minimum="0" Maximum="50"/>
-                    <TextBlock x:Name="MonitorAdxText" Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,3"/>
+                    <local:ReferenceGauge x:Name="MonitorAdxGauge" Width="104" Height="58" Tint="{DynamicResource Brush_7398CB}" Minimum="0" Maximum="50"/>
+                    <TextBlock x:Name="MonitorAdxText" Text="—" FontSize="{DynamicResource Font_21}" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,3"/>
                   </Grid>
                   <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Bottom">
-                    <TextBlock Text="0" FontSize="11" Classes="dim"/>
-                    <TextBlock Grid.Column="1" Text="Trend" FontSize="11" Classes="dim" HorizontalAlignment="Center"/>
-                    <TextBlock Grid.Column="2" Text="50" FontSize="11" Classes="dim"/>
+                    <TextBlock Text="0" FontSize="{DynamicResource Font_11}" Classes="dim"/>
+                    <TextBlock Grid.Column="1" Text="Trend" FontSize="{DynamicResource Font_11}" Classes="dim" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="50" FontSize="{DynamicResource Font_11}" Classes="dim"/>
                   </Grid>
                 </Grid>
               </Border>
               <Border Grid.Column="3" Classes="panelSoft" Padding="5,5" Height="124">
                 <Grid RowDefinitions="22,60,*">
-                  <TextBlock Text="ATR" HorizontalAlignment="Center" FontSize="13"/>
+                  <TextBlock Text="ATR" HorizontalAlignment="Center" FontSize="{DynamicResource Font_13}"/>
                   <Grid Grid.Row="1">
-                    <local:ReferenceGauge x:Name="MonitorAtrGauge" Width="104" Height="58" Tint="#7398CB" Minimum="0" Maximum="50"/>
-                    <TextBlock x:Name="MonitorAtrText" Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,3"/>
+                    <local:ReferenceGauge x:Name="MonitorAtrGauge" Width="104" Height="58" Tint="{DynamicResource Brush_7398CB}" Minimum="0" Maximum="50"/>
+                    <TextBlock x:Name="MonitorAtrText" Text="—" FontSize="{DynamicResource Font_21}" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,3"/>
                   </Grid>
                   <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Bottom">
-                    <TextBlock Text="0" FontSize="11" Classes="dim"/>
-                    <TextBlock Grid.Column="1" Text="Volatility" FontSize="11" Classes="dim" HorizontalAlignment="Center"/>
-                    <TextBlock Grid.Column="2" Text="50" FontSize="11" Classes="dim"/>
+                    <TextBlock Text="0" FontSize="{DynamicResource Font_11}" Classes="dim"/>
+                    <TextBlock Grid.Column="1" Text="Volatility" FontSize="{DynamicResource Font_11}" Classes="dim" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="50" FontSize="{DynamicResource Font_11}" Classes="dim"/>
                   </Grid>
                 </Grid>
               </Border>
               <Border Grid.Column="4" Classes="panelSoft" Padding="4,5" Height="124">
                 <StackPanel Spacing="4" HorizontalAlignment="Stretch">
-                  <TextBlock Text="MA" FontSize="13" HorizontalAlignment="Center"/>
-                  <local:ReferenceIcon Kind="bars" Width="23" Height="23" Tint="#B6D9FF" HorizontalAlignment="Center"/>
-                  <TextBlock x:Name="MonitorMaText" Text="—" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center"/>
-                  <TextBlock Text="Direction" FontSize="12" Classes="dim" HorizontalAlignment="Center"/>
+                  <TextBlock Text="MA" FontSize="{DynamicResource Font_13}" HorizontalAlignment="Center"/>
+                  <local:ReferenceIcon Kind="bars" Width="23" Height="23" Tint="{DynamicResource Brush_B6D9FF}" HorizontalAlignment="Center"/>
+                  <TextBlock x:Name="MonitorMaText" Text="—" FontSize="{DynamicResource Font_18}" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center"/>
+                  <TextBlock Text="Direction" FontSize="{DynamicResource Font_12}" Classes="dim" HorizontalAlignment="Center"/>
                 </StackPanel>
               </Border>
               <Border Grid.Column="5" Classes="panelSoft" Padding="4,5" Height="124">
                 <StackPanel Spacing="4" HorizontalAlignment="Stretch">
-                  <TextBlock Text="Latency" FontSize="13" HorizontalAlignment="Center"/>
-                  <local:ReferenceIcon Kind="pulse" Width="23" Height="23" Tint="#00D980" HorizontalAlignment="Center"/>
-                  <TextBlock x:Name="MonitorAgeText" Text="—" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center"/>
-                  <TextBlock Text="ms" FontSize="12" Classes="dim" HorizontalAlignment="Center"/>
+                  <TextBlock Text="Latency" FontSize="{DynamicResource Font_13}" HorizontalAlignment="Center"/>
+                  <local:ReferenceIcon Kind="pulse" Width="23" Height="23" Tint="{DynamicResource Brush_00D980}" HorizontalAlignment="Center"/>
+                  <TextBlock x:Name="MonitorAgeText" Text="—" FontSize="{DynamicResource Font_18}" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center"/>
+                  <TextBlock Text="ms" FontSize="{DynamicResource Font_12}" Classes="dim" HorizontalAlignment="Center"/>
                 </StackPanel>
               </Border>
               <Border Grid.Column="6" Classes="panelSoft" Padding="4,5" Height="124">
                 <StackPanel Spacing="4" HorizontalAlignment="Stretch">
-                  <TextBlock Text="Strategy" FontSize="13" HorizontalAlignment="Center"/>
-                  <local:ReferenceIcon Kind="pulse" Width="23" Height="23" Tint="#FF4264" HorizontalAlignment="Center"/>
-                  <TextBlock x:Name="MonitorStrategyText" Text="—" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center"/>
-                  <TextBlock Text="" FontSize="12" Classes="dim" HorizontalAlignment="Center"/><TextBlock x:Name="MonitorDirectionText" Text="Direction: —" IsVisible="False"/>
+                  <TextBlock Text="Strategy" FontSize="{DynamicResource Font_13}" HorizontalAlignment="Center"/>
+                  <local:ReferenceIcon Kind="pulse" Width="23" Height="23" Tint="{DynamicResource Brush_FF4264}" HorizontalAlignment="Center"/>
+                  <TextBlock x:Name="MonitorStrategyText" Text="—" FontSize="{DynamicResource Font_12}" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center"/>
+                  <TextBlock Text="" FontSize="{DynamicResource Font_12}" Classes="dim" HorizontalAlignment="Center"/><TextBlock x:Name="MonitorDirectionText" Text="Direction: —" IsVisible="False"/>
                 </StackPanel>
               </Border>
               <Border Grid.Column="7" Classes="panelSoft" Padding="4,5" Height="124">
                 <StackPanel Spacing="4" HorizontalAlignment="Stretch">
-                  <TextBlock Text="Bridge" FontSize="13" HorizontalAlignment="Center"/>
-                  <local:ReferenceIcon Kind="database" Width="23" Height="23" Tint="#329AFF" HorizontalAlignment="Center"/>
-                  <TextBlock x:Name="MonitorBridgeText" Text="—" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center"/>
-                  <TextBlock Text="Realtime" FontSize="12" Classes="dim" HorizontalAlignment="Center"/>
+                  <TextBlock Text="Bridge" FontSize="{DynamicResource Font_13}" HorizontalAlignment="Center"/>
+                  <local:ReferenceIcon Kind="database" Width="23" Height="23" Tint="{DynamicResource Brush_329AFF}" HorizontalAlignment="Center"/>
+                  <TextBlock x:Name="MonitorBridgeText" Text="—" FontSize="{DynamicResource Font_12}" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center"/>
+                  <TextBlock Text="Realtime" FontSize="{DynamicResource Font_12}" Classes="dim" HorizontalAlignment="Center"/>
                 </StackPanel>
               </Border>
             </Grid>
@@ -160,32 +163,32 @@
         <!-- Connection -->
         <Border Grid.Column="1" Classes="panel">
           <StackPanel>
-            <Border Background="#082038" Padding="12,7"><TextBlock Text="Kết nối &amp; Engine" Classes="panelTitle"/></Border>
+            <Border Background="{DynamicResource Brush_082038}" Padding="12,7"><TextBlock Text="{DynamicResource Text_e4db3a4afa68a583}" Classes="panelTitle"/></Border>
             <Grid Margin="8,0,8,5" ColumnDefinitions="22,1.15*,1.35*" RowDefinitions="26,26,26,26,26">
-              <Border Grid.Row="0" Grid.ColumnSpan="3" BorderBrush="#103450" BorderThickness="0,0,0,1"/>
-              <Grid Grid.Row="0" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorTerminalDot.Foreground}"/><TextBlock x:Name="MonitorTerminalDot" Foreground="#8092A6" IsVisible="False"/></Grid>
-              <TextBlock Grid.Row="0" Grid.Column="1" Text="MT5 Terminal" FontSize="13" VerticalAlignment="Center"/>
-              <TextBlock x:Name="MonitorTerminalText" Grid.Row="0" Grid.Column="2" Text="—" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+              <Border Grid.Row="0" Grid.ColumnSpan="3" BorderBrush="{DynamicResource Brush_103450}" BorderThickness="0,0,0,1"/>
+              <Grid Grid.Row="0" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorTerminalDot.Foreground}"/><TextBlock x:Name="MonitorTerminalDot" Foreground="{DynamicResource Brush_8092A6}" IsVisible="False"/></Grid>
+              <TextBlock Grid.Row="0" Grid.Column="1" Text="MT5 Terminal" FontSize="{DynamicResource Font_13}" VerticalAlignment="Center"/>
+              <TextBlock x:Name="MonitorTerminalText" Grid.Row="0" Grid.Column="2" Text="—" FontSize="{DynamicResource Font_13}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
 
-              <Border Grid.Row="1" Grid.ColumnSpan="3" BorderBrush="#103450" BorderThickness="0,0,0,1"/>
-              <Grid Grid.Row="1" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorBridgeDot.Foreground}"/><TextBlock x:Name="MonitorBridgeDot" Foreground="#8092A6" IsVisible="False"/></Grid>
-              <TextBlock Grid.Row="1" Grid.Column="1" Text="EA Bridge (MQL5)" FontSize="13" VerticalAlignment="Center"/>
-              <TextBlock x:Name="MonitorBridgeConnectionText" Grid.Row="1" Grid.Column="2" Text="—" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+              <Border Grid.Row="1" Grid.ColumnSpan="3" BorderBrush="{DynamicResource Brush_103450}" BorderThickness="0,0,0,1"/>
+              <Grid Grid.Row="1" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorBridgeDot.Foreground}"/><TextBlock x:Name="MonitorBridgeDot" Foreground="{DynamicResource Brush_8092A6}" IsVisible="False"/></Grid>
+              <TextBlock Grid.Row="1" Grid.Column="1" Text="EA Bridge (MQL5)" FontSize="{DynamicResource Font_13}" VerticalAlignment="Center"/>
+              <TextBlock x:Name="MonitorBridgeConnectionText" Grid.Row="1" Grid.Column="2" Text="—" FontSize="{DynamicResource Font_13}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
 
-              <Border Grid.Row="2" Grid.ColumnSpan="3" BorderBrush="#103450" BorderThickness="0,0,0,1"/>
-              <Grid Grid.Row="2" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorEngineDot.Foreground}"/><TextBlock x:Name="MonitorEngineDot" Foreground="#8092A6" IsVisible="False"/></Grid>
-              <TextBlock Grid.Row="2" Grid.Column="1" Text="Python Engine" FontSize="13" VerticalAlignment="Center"/>
-              <TextBlock x:Name="MonitorSnapshotCountText" Grid.Row="2" Grid.Column="2" Text="—" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+              <Border Grid.Row="2" Grid.ColumnSpan="3" BorderBrush="{DynamicResource Brush_103450}" BorderThickness="0,0,0,1"/>
+              <Grid Grid.Row="2" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorEngineDot.Foreground}"/><TextBlock x:Name="MonitorEngineDot" Foreground="{DynamicResource Brush_8092A6}" IsVisible="False"/></Grid>
+              <TextBlock Grid.Row="2" Grid.Column="1" Text="Python Engine" FontSize="{DynamicResource Font_13}" VerticalAlignment="Center"/>
+              <TextBlock x:Name="MonitorSnapshotCountText" Grid.Row="2" Grid.Column="2" Text="—" FontSize="{DynamicResource Font_13}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
 
-              <Border Grid.Row="3" Grid.ColumnSpan="3" BorderBrush="#103450" BorderThickness="0,0,0,1"/>
-              <Grid Grid.Row="3" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorDataDot.Foreground}"/><TextBlock x:Name="MonitorDataDot" Foreground="#8092A6" IsVisible="False"/></Grid>
-              <TextBlock Grid.Row="3" Grid.Column="1" Text="Dữ liệu thị trường" FontSize="13" VerticalAlignment="Center"/>
-              <TextBlock x:Name="MonitorDataStatusText" Grid.Row="3" Grid.Column="2" Text="—" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+              <Border Grid.Row="3" Grid.ColumnSpan="3" BorderBrush="{DynamicResource Brush_103450}" BorderThickness="0,0,0,1"/>
+              <Grid Grid.Row="3" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorDataDot.Foreground}"/><TextBlock x:Name="MonitorDataDot" Foreground="{DynamicResource Brush_8092A6}" IsVisible="False"/></Grid>
+              <TextBlock Grid.Row="3" Grid.Column="1" Text="{DynamicResource Text_ed70da7e3b80d964}" FontSize="{DynamicResource Font_13}" VerticalAlignment="Center"/>
+              <TextBlock x:Name="MonitorDataStatusText" Grid.Row="3" Grid.Column="2" Text="—" FontSize="{DynamicResource Font_13}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
 
-              <Border Grid.Row="4" Grid.ColumnSpan="3" BorderBrush="#103450" BorderThickness="0,0,0,1"/>
-              <Grid Grid.Row="4" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorProfileDot.Foreground}"/><TextBlock x:Name="MonitorProfileDot" Foreground="#8092A6" IsVisible="False"/></Grid>
-              <TextBlock Grid.Row="4" Grid.Column="1" Text="Profile" FontSize="13" VerticalAlignment="Center"/>
-              <TextBlock x:Name="MonitorProfileText" Grid.Row="4" Grid.Column="2" Text="—" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+              <Border Grid.Row="4" Grid.ColumnSpan="3" BorderBrush="{DynamicResource Brush_103450}" BorderThickness="0,0,0,1"/>
+              <Grid Grid.Row="4" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorProfileDot.Foreground}"/><TextBlock x:Name="MonitorProfileDot" Foreground="{DynamicResource Brush_8092A6}" IsVisible="False"/></Grid>
+              <TextBlock Grid.Row="4" Grid.Column="1" Text="Profile" FontSize="{DynamicResource Font_13}" VerticalAlignment="Center"/>
+              <TextBlock x:Name="MonitorProfileText" Grid.Row="4" Grid.Column="2" Text="—" FontSize="{DynamicResource Font_13}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
 
             </Grid>
           </StackPanel>
@@ -196,22 +199,22 @@
         <!-- Session/news panel kept in correct location but honestly unavailable -->
         <Border Grid.Column="0" Classes="panel" MinHeight="176">
           <StackPanel>
-            <Border Background="#082038" Padding="12,7"><TextBlock Text="Phiên giao dịch &amp; Tin tức" Classes="panelTitle"/></Border>
+            <Border Background="{DynamicResource Brush_082038}" Padding="12,7"><TextBlock Text="{DynamicResource Text_f5e92e4f86e83c97}" Classes="panelTitle"/></Border>
             <Grid ColumnDefinitions="0.9*,1.5*" Margin="10,8" ColumnSpacing="10">
               <StackPanel>
-                <Border Background="#0866F4" CornerRadius="4" Padding="7,4"><TextBlock Text="Phiên thị trường" HorizontalAlignment="Center"/></Border>
+                <Border Background="{DynamicResource Brush_0866F4}" CornerRadius="4" Padding="7,4"><TextBlock Text="{DynamicResource Text_298c5641137adac1}" HorizontalAlignment="Center"/></Border>
                 <Grid Margin="4,7" ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6">
-                  <TextBlock Grid.Row="0" Text="Sydney" Classes="label"/><TextBlock Grid.Row="0" Grid.Column="1" Text="—" Classes="dim"/><TextBlock Grid.Row="0" Grid.Column="2" Text="—" Classes="dim"/>
-                  <TextBlock Grid.Row="1" Text="Tokyo" Classes="label"/><TextBlock Grid.Row="1" Grid.Column="1" Text="—" Classes="dim"/><TextBlock Grid.Row="1" Grid.Column="2" Text="—" Classes="dim"/>
-                  <TextBlock Grid.Row="2" Text="London" Classes="label"/><TextBlock Grid.Row="2" Grid.Column="1" Text="—" Classes="dim"/><TextBlock Grid.Row="2" Grid.Column="2" Text="—" Classes="dim"/>
-                  <TextBlock Grid.Row="3" Text="New York" Classes="label"/><TextBlock Grid.Row="3" Grid.Column="1" Text="—" Classes="dim"/><TextBlock Grid.Row="3" Grid.Column="2" Text="—" Classes="dim"/>
+                  <TextBlock Grid.Row="0" Text="Sydney" Classes="label"/><TextBlock x:Name="SydneySession" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Text="—" Classes="dim"/>
+                  <TextBlock Grid.Row="1" Text="Tokyo" Classes="label"/><TextBlock x:Name="TokyoSession" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="—" Classes="dim"/>
+                  <TextBlock Grid.Row="2" Text="London" Classes="label"/><TextBlock x:Name="LondonSession" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="—" Classes="dim"/>
+                  <TextBlock Grid.Row="3" Text="New York" Classes="label"/><TextBlock x:Name="NewYorkSession" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Text="—" Classes="dim"/>
                 </Grid>
               </StackPanel>
               <StackPanel Grid.Column="1">
-                <TextBlock Text="Tin tức quan trọng (Hôm nay)" FontWeight="SemiBold"/>
+                <TextBlock Text="{DynamicResource Text_52a5def3d9497bbd}" FontWeight="SemiBold"/>
                 <Border Classes="panelSoft" Margin="0,6,0,0" Padding="12,13">
-                  <TextBlock Text="Chưa có lịch tin tức được tải."
-                             Classes="dim" TextWrapping="Wrap" TextAlignment="Center"/>
+                  <ScrollViewer MaxHeight="95"><TextBlock x:Name="CalendarEventsText" Text="{local:InitialText 9f0fe1d458a29de9}"
+                             Classes="dim" TextWrapping="Wrap" FontSize="{DynamicResource Font_12}"/></ScrollViewer>
                 </Border>
               </StackPanel>
             </Grid>
@@ -221,28 +224,28 @@
         <!-- Execution state -->
         <Border Grid.Column="1" Classes="panel">
           <StackPanel>
-            <Border Background="#082038" Padding="12,7"><TextBlock Text="Trạng thái thực thi" Classes="panelTitle"/></Border>
+            <Border Background="{DynamicResource Brush_082038}" Padding="12,7"><TextBlock Text="{DynamicResource Text_e897b44e29a3a662}" Classes="panelTitle"/></Border>
             <Grid Margin="12,6" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="2">
-              <TextBlock Grid.Row="0" Text="Tổng lệnh hôm nay" Classes="label"/><TextBlock Grid.Row="0" Grid.Column="1" Text="—"/>
-              <TextBlock Grid.Row="1" Text="Lệnh đã khớp" Classes="label"/><TextBlock Grid.Row="1" Grid.Column="1" Text="—" Foreground="#18E58B"/>
-              <TextBlock Grid.Row="2" Text="Lệnh bị từ chối" Classes="label"/><TextBlock Grid.Row="2" Grid.Column="1" Text="—"/>
-              <TextBlock Grid.Row="3" Text="Lệnh chờ xử lý" Classes="label"/><TextBlock Grid.Row="3" Grid.Column="1" Text="—"/>
-              <TextBlock Grid.Row="4" Text="Execution" Classes="label"/><TextBlock Grid.Row="4" Grid.Column="1" Text="LOCKED" Foreground="#FFD34D" FontWeight="Bold"/>
+              <TextBlock Grid.Row="0" Text="{DynamicResource Text_f4bdd290d784c059}" Classes="label"/><TextBlock x:Name="ExecutionTotal" Grid.Row="0" Grid.Column="1" Text="—"/>
+              <TextBlock Grid.Row="1" Text="{DynamicResource Text_e72d13e31a137a58}" Classes="label"/><TextBlock x:Name="ExecutionConfirmed" Grid.Row="1" Grid.Column="1" Text="—" Foreground="{DynamicResource Brush_18E58B}"/>
+              <TextBlock Grid.Row="2" Text="{DynamicResource Text_2dac5991a0516773}" Classes="label"/><TextBlock x:Name="ExecutionRejected" Grid.Row="2" Grid.Column="1" Text="—"/>
+              <TextBlock Grid.Row="3" Text="{DynamicResource Text_05daadcf11e5bd3b}" Classes="label"/><TextBlock x:Name="ExecutionPending" Grid.Row="3" Grid.Column="1" Text="—"/>
+              <TextBlock Grid.Row="4" Text="{DynamicResource Text_be2836c8bcf24351}" Classes="label"/><TextBlock x:Name="ExecutionMode" Grid.Row="4" Grid.Column="1" Text="{local:InitialText eb8aca06dfc879d5}" Foreground="{DynamicResource Brush_FFD34D}" FontWeight="Bold"/>
             </Grid>
-            <TextBlock Text="Giao dịch đang khóa an toàn." Classes="dim" FontSize="10" TextWrapping="Wrap" Margin="12,0,12,8"/>
+            <TextBlock x:Name="ExecutionReason" Text="{local:InitialText c5eeaa6e10f06115}" Classes="dim" FontSize="{DynamicResource Font_10}" TextWrapping="Wrap" Margin="12,0,12,8"/>
           </StackPanel>
         </Border>
 
         <!-- Resources -->
         <Border Grid.Column="2" Classes="panel">
           <StackPanel>
-            <Border Background="#082038" Padding="12,7"><TextBlock Text="Tài nguyên hệ thống" Classes="panelTitle"/></Border>
+            <Border Background="{DynamicResource Brush_082038}" Padding="12,7"><TextBlock Text="{DynamicResource Text_8108e095d4fadad1}" Classes="panelTitle"/></Border>
             <Grid ColumnDefinitions="*,*,*" Margin="10,5,10,8" ColumnSpacing="8">
-              <Border Grid.Column="0" Width="78" Height="78" CornerRadius="39" BorderBrush="#00B873" BorderThickness="8" HorizontalAlignment="Center"><StackPanel VerticalAlignment="Center" Spacing="1"><TextBlock Text="CPU" FontSize="13" HorizontalAlignment="Center"/><TextBlock Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center"/></StackPanel></Border>
-              <Border Grid.Column="1" Width="78" Height="78" CornerRadius="39" BorderBrush="#258DEC" BorderThickness="8" HorizontalAlignment="Center"><StackPanel VerticalAlignment="Center" Spacing="1"><TextBlock Text="RAM" FontSize="13" HorizontalAlignment="Center"/><TextBlock Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center"/></StackPanel></Border>
-              <Border Grid.Column="2" Width="78" Height="78" CornerRadius="39" BorderBrush="#9746F4" BorderThickness="8" HorizontalAlignment="Center"><StackPanel VerticalAlignment="Center" Spacing="1"><TextBlock Text="Disk" FontSize="13" HorizontalAlignment="Center"/><TextBlock Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center"/></StackPanel></Border>
+              <Border Grid.Column="0" Width="78" Height="78" CornerRadius="39" BorderBrush="{DynamicResource Brush_00B873}" BorderThickness="8" HorizontalAlignment="Center"><StackPanel VerticalAlignment="Center" Spacing="1"><TextBlock Text="CPU" FontSize="{DynamicResource Font_13}" HorizontalAlignment="Center"/><TextBlock x:Name="CpuPercent" Text="—" FontSize="{DynamicResource Font_19}" FontWeight="SemiBold" HorizontalAlignment="Center"/></StackPanel></Border>
+              <Border Grid.Column="1" Width="78" Height="78" CornerRadius="39" BorderBrush="{DynamicResource Brush_258DEC}" BorderThickness="8" HorizontalAlignment="Center"><StackPanel VerticalAlignment="Center" Spacing="1"><TextBlock Text="RAM" FontSize="{DynamicResource Font_13}" HorizontalAlignment="Center"/><TextBlock x:Name="RamPercent" Text="—" FontSize="{DynamicResource Font_19}" FontWeight="SemiBold" HorizontalAlignment="Center"/></StackPanel></Border>
+              <Border Grid.Column="2" Width="78" Height="78" CornerRadius="39" BorderBrush="{DynamicResource Brush_9746F4}" BorderThickness="8" HorizontalAlignment="Center"><StackPanel VerticalAlignment="Center" Spacing="1"><TextBlock Text="Disk" FontSize="{DynamicResource Font_13}" HorizontalAlignment="Center"/><TextBlock x:Name="DiskPercent" Text="—" FontSize="{DynamicResource Font_19}" FontWeight="SemiBold" HorizontalAlignment="Center"/></StackPanel></Border>
             </Grid>
-            <TextBlock Text="Chưa có dữ liệu tài nguyên hệ thống." Classes="dim" FontSize="12" TextWrapping="Wrap" Margin="10,0,10,8"/>
+            <TextBlock x:Name="ResourceDetail" Text="{local:InitialText 1f6855bd7479de24}" Classes="dim" FontSize="{DynamicResource Font_12}" TextWrapping="Wrap" Margin="10,0,10,8"/>
           </StackPanel>
         </Border>
       </Grid>
@@ -252,23 +255,23 @@
         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8" Margin="10,8">
           <Border Grid.Column="0" Classes="panelSoft" Padding="10">
             <StackPanel>
-              <TextBlock x:Name="DirectionBarRoleText" Text="DIRECTION • M30" Foreground="#59B7FF" FontWeight="SemiBold"/>
+              <TextBlock x:Name="DirectionBarRoleText" Text="DIRECTION • M30" Foreground="{DynamicResource Brush_59B7FF}" FontWeight="SemiBold"/>
               <TextBlock x:Name="DirectionBarText" Text="OHLC: —" Classes="label" TextWrapping="Wrap"/>
-              <TextBlock x:Name="DirectionBarTimeText" Text="Closed: —" Classes="dim" FontSize="12"/>
+              <TextBlock x:Name="DirectionBarTimeText" Text="Closed: —" Classes="dim" FontSize="{DynamicResource Font_12}"/>
             </StackPanel>
           </Border>
           <Border Grid.Column="1" Classes="panelSoft" Padding="10">
             <StackPanel>
-              <TextBlock x:Name="PullbackBarRoleText" Text="PULLBACK • M5" Foreground="#B67AFF" FontWeight="SemiBold"/>
+              <TextBlock x:Name="PullbackBarRoleText" Text="PULLBACK • M5" Foreground="{DynamicResource Brush_B67AFF}" FontWeight="SemiBold"/>
               <TextBlock x:Name="PullbackBarText" Text="OHLC: —" Classes="label" TextWrapping="Wrap"/>
-              <TextBlock x:Name="PullbackBarTimeText" Text="Closed: —" Classes="dim" FontSize="12"/>
+              <TextBlock x:Name="PullbackBarTimeText" Text="Closed: —" Classes="dim" FontSize="{DynamicResource Font_12}"/>
             </StackPanel>
           </Border>
           <Border Grid.Column="2" Classes="panelSoft" Padding="10">
             <StackPanel>
-              <TextBlock x:Name="TriggerBarRoleText" Text="TRIGGER • M1" Foreground="#18E58B" FontWeight="SemiBold"/>
+              <TextBlock x:Name="TriggerBarRoleText" Text="TRIGGER • M1" Foreground="{DynamicResource Brush_18E58B}" FontWeight="SemiBold"/>
               <TextBlock x:Name="TriggerBarText" Text="OHLC: —" Classes="label" TextWrapping="Wrap"/>
-              <TextBlock x:Name="TriggerBarTimeText" Text="Closed: —" Classes="dim" FontSize="12"/>
+              <TextBlock x:Name="TriggerBarTimeText" Text="Closed: —" Classes="dim" FontSize="{DynamicResource Font_12}"/>
             </StackPanel>
           </Border>
         </Grid>
@@ -278,16 +281,16 @@
       <Border x:Name="MonitoringAlertStrip" Classes="panel" Height="91">
         <Grid x:Name="MonitoringAlertColumns" ColumnDefinitions="315,*">
           <StackPanel Margin="12,8" Spacing="12" Orientation="Horizontal" VerticalAlignment="Top">
-            <TextBlock Text="Cảnh báo &amp; Thông báo" Classes="panelTitle"/>
-            <Border Background="#0866F4" CornerRadius="4" Padding="10,3" HorizontalAlignment="Left"><TextBlock Text="Tất cả"/></Border>
+            <TextBlock Text="{DynamicResource Text_ae4dc7daf3697cdf}" Classes="panelTitle"/>
+            <Border Background="{DynamicResource Brush_0866F4}" CornerRadius="4" Padding="10,3" HorizontalAlignment="Left"><TextBlock Text="{DynamicResource Text_49c73a3150d77038}"/></Border>
           </StackPanel>
-          <Border Grid.Column="1" BorderBrush="#14517A" BorderThickness="1,0,0,0">
+          <Border Grid.Column="1" BorderBrush="{DynamicResource Brush_14517A}" BorderThickness="1,0,0,0">
             <Grid RowDefinitions="25,*">
-              <Grid Background="#082038" ColumnDefinitions="95,75,100,*" Margin="10,3">
-                <TextBlock Text="Thời gian" Classes="dim" FontSize="12"/><TextBlock Grid.Column="1" Text="Mức" Classes="dim" FontSize="12"/><TextBlock Grid.Column="2" Text="Loại" Classes="dim" FontSize="12"/><TextBlock Grid.Column="3" Text="Thông báo" Classes="dim" FontSize="12"/>
+              <Grid Background="{DynamicResource Brush_082038}" ColumnDefinitions="95,75,100,*" Margin="10,3">
+                <TextBlock Text="{DynamicResource Text_b295fd620d82e277}" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock Grid.Column="1" Text="{DynamicResource Text_10267bc5184ddeec}" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock Grid.Column="2" Text="{DynamicResource Text_3bfbf92340103cf7}" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock Grid.Column="3" Text="{DynamicResource Text_a9b656f50b4edb64}" Classes="dim" FontSize="{DynamicResource Font_12}"/>
               </Grid>
               <Grid Grid.Row="1" ColumnDefinitions="95,75,100,*" Margin="10,4,10,8">
-                <TextBlock Text="Realtime" Classes="dim" FontSize="12"/><TextBlock Grid.Column="1" Text="INFO" Foreground="#40BFFF" FontSize="12"/><TextBlock Grid.Column="2" Text="Hệ thống" Classes="label" FontSize="12"/><TextBlock x:Name="MonitorAlertText" Grid.Column="3" Text="Alert: đang chờ Bridge." Foreground="#FFD34D" TextWrapping="Wrap" FontSize="12"/>
+                <TextBlock Text="Realtime" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock Grid.Column="1" Text="INFO" Foreground="{DynamicResource Brush_40BFFF}" FontSize="{DynamicResource Font_12}"/><TextBlock Grid.Column="2" Text="{DynamicResource Text_66cb299cfd8f81f8}" Classes="label" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="MonitorAlertText" Grid.Column="3" Text="{local:InitialText 4d6599d26ca4dd4a}" Foreground="{DynamicResource Brush_FFD34D}" TextWrapping="Wrap" FontSize="{DynamicResource Font_12}"/>
               </Grid>
             </Grid>
           </Border>

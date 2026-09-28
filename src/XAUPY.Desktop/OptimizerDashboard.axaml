@@ -1,14 +1,14 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:XAUPY.Desktop" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="XAUPY.Desktop.OptimizerDashboard">
   <UserControl.Styles>
-    <Style Selector="ProgressBar"><Setter Property="Background" Value="#031E34"/><Setter Property="Foreground" Value="#0866F4"/><Setter Property="BorderBrush" Value="#1199D7"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="5"/></Style>
-    <Style Selector="ProgressBar.resourceBar"><Setter Property="Foreground" Value="#00C56B"/><Setter Property="Height" Value="18"/><Setter Property="CornerRadius" Value="9"/></Style>
-    <Style Selector="Grid.walkForward TextBlock.label"><Setter Property="FontSize" Value="13"/></Style>
-    <Style Selector="Grid.walkForward TextBox, Grid.walkForward ComboBox"><Setter Property="MinHeight" Value="25"/><Setter Property="Height" Value="25"/><Setter Property="FontSize" Value="12"/><Setter Property="Padding" Value="6,2"/></Style>
+    <Style Selector="ProgressBar"><Setter Property="Background" Value="{DynamicResource Brush_031E34}"/><Setter Property="Foreground" Value="{DynamicResource Brush_0866F4}"/><Setter Property="BorderBrush" Value="{DynamicResource Brush_1199D7}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="5"/></Style>
+    <Style Selector="ProgressBar.resourceBar"><Setter Property="Foreground" Value="{DynamicResource Brush_00C56B}"/><Setter Property="Height" Value="18"/><Setter Property="CornerRadius" Value="9"/></Style>
+    <Style Selector="Grid.walkForward TextBlock.label"><Setter Property="FontSize" Value="{DynamicResource Font_13}"/></Style>
+    <Style Selector="Grid.walkForward TextBox, Grid.walkForward ComboBox"><Setter Property="MinHeight" Value="25"/><Setter Property="Height" Value="25"/><Setter Property="FontSize" Value="{DynamicResource Font_12}"/><Setter Property="Padding" Value="6,2"/></Style>
     <Style Selector="TextBlock.optHeader">
-      <Setter Property="Foreground" Value="#BDD3E8"/>
-      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_BDD3E8}"/>
+      <Setter Property="FontSize" Value="{DynamicResource Font_12}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
     <Style Selector="Button.optRow">
@@ -19,7 +19,7 @@
       <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
     </Style>
     <Style Selector="Button.optRow:pointerover">
-      <Setter Property="Background" Value="#0A2844"/>
+      <Setter Property="Background" Value="{DynamicResource Brush_0A2844}"/>
     </Style>
   </UserControl.Styles>
 
@@ -31,17 +31,18 @@
         <Grid ColumnDefinitions="*,150,105,105,193,143"
               ColumnSpacing="8"
               Margin="12,8">
-          <StackPanel Grid.Column="0">
-            <TextBlock Text="Tối ưu chiến lược - Parameter Sweep"
-                       FontSize="21"
+          <StackPanel Grid.Column="0" Spacing="3">
+            <TextBlock Text="{DynamicResource Text_4d6293c65211ad65}"
+                       FontSize="{DynamicResource Font_21}"
                        FontWeight="SemiBold"/>
-            <TextBlock Text="Tìm kiếm bộ tham số tối ưu cho XAUUSD bằng backtest đa luồng"
-                       Classes="dim"
-                       FontSize="14"/>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+              <Button x:Name="ResearchButton" Classes="secondary" Padding="7,3" FontSize="{DynamicResource Font_12}" Content="{DynamicResource Text_307d0cc83af178e3}" Click="Research_OnClick" ToolTip.Tip="{DynamicResource Text_7539576df92d49e3}"/>
+              <Button x:Name="ResearchReportButton" Classes="secondary" Padding="7,3" FontSize="{DynamicResource Font_12}" Content="{DynamicResource Text_fe8562f967d79e77}" Click="ResearchReport_OnClick" IsEnabled="False"/>
+            </StackPanel>
           </StackPanel>
 
           <StackPanel Grid.Column="1" Spacing="3">
-            <TextBlock Text="Preset tối ưu" Classes="label"/>
+            <TextBlock Text="{DynamicResource Text_6083e2fbbd7dd613}" Classes="label"/>
             <ComboBox x:Name="OptimizerPresetCombo" SelectedIndex="0">
               <ComboBoxItem Content="Custom"/>
             </ComboBox>
@@ -49,25 +50,25 @@
 
           <Button Grid.Column="2"
                   Classes="secondary"
-                  Content="Lưu preset"
+                  Content="{DynamicResource Text_960fe6721786988d}"
                   VerticalAlignment="Bottom"
                   Click="SavePreset_OnClick"/>
 
           <Button Grid.Column="3"
                   Classes="secondary"
-                  Content="Tải preset"
+                  Content="{DynamicResource Text_bd0aed4975f43409}"
                   VerticalAlignment="Bottom"
                   Click="LoadPreset_OnClick"/>
 
           <Button x:Name="StartOptimizerButton"
                   Grid.Column="4"
-                  Background="#078B3C"
-                  BorderBrush="#16D36B"
+                  Background="{DynamicResource Brush_078B3C}"
+                  BorderBrush="{DynamicResource Brush_16D36B}"
                   BorderThickness="1"
                   CornerRadius="5"
                   Foreground="White"
                   FontWeight="Bold"
-                  Content="▶  BẮT ĐẦU TỐI ƯU"
+                  Content="{DynamicResource Text_3469c665635e93ed}"
                   VerticalAlignment="Bottom"
                   MinHeight="58"
                   Click="StartOptimizer_OnClick"/>
@@ -75,7 +76,7 @@
           <Button x:Name="StopOptimizerButton"
                   Grid.Column="5"
                   Classes="secondary"
-                  Content="■  DỪNG"
+                  Content="{DynamicResource Text_0033ff3d40f38dbf}"
                   VerticalAlignment="Bottom"
                   MinHeight="58"
                   IsEnabled="False"
@@ -87,10 +88,10 @@
         <!-- Parameter ranges -->
         <Border Grid.Column="0" Classes="panel">
           <Grid RowDefinitions="36,Auto,Auto">
-            <Border Grid.Row="0" Background="#082038" Padding="12,8">
+            <Border Grid.Row="0" Background="{DynamicResource Brush_082038}" Padding="12,8">
               <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Text="Phạm vi tham số tối ưu" Classes="panelTitle"/>
-                <Button Grid.Column="1" Content="Chu kỳ RSI / Z…" Classes="secondary" Padding="6,0" MinHeight="20" FontSize="12" Click="ExtraRanges_OnClick"/>
+                <TextBlock Text="{DynamicResource Text_3841e861038ddd95}" Classes="panelTitle"/>
+                <Button Grid.Column="1" Content="{DynamicResource Text_15717626328b80cf}" Classes="secondary" Padding="6,0" MinHeight="20" FontSize="{DynamicResource Font_12}" Click="ExtraRanges_OnClick"/>
               </Grid>
             </Border>
 
@@ -100,11 +101,11 @@
                   ColumnSpacing="6"
                   RowSpacing="4"
                   Margin="10,7,10,5">
-              <TextBlock Grid.Row="0" Text="Tham số" Classes="optHeader"/>
-              <TextBlock Grid.Row="0" Grid.Column="1" Text="Giá trị tối thiểu" Classes="optHeader"/>
-              <TextBlock Grid.Row="0" Grid.Column="2" Text="Giá trị tối đa" Classes="optHeader"/>
-              <TextBlock Grid.Row="0" Grid.Column="3" Text="Bước nhảy" Classes="optHeader"/>
-              <TextBlock Grid.Row="0" Grid.Column="4" Text="Giá trị mặc định" Classes="optHeader"/>
+              <TextBlock Grid.Row="0" Text="{DynamicResource Text_f2f1607c0c07fff0}" Classes="optHeader"/>
+              <TextBlock Grid.Row="0" Grid.Column="1" Text="{DynamicResource Text_84322b1e28fa6aa4}" Classes="optHeader"/>
+              <TextBlock Grid.Row="0" Grid.Column="2" Text="{DynamicResource Text_3bc0747598a79fb3}" Classes="optHeader"/>
+              <TextBlock Grid.Row="0" Grid.Column="3" Text="{DynamicResource Text_5273f567ee64cdce}" Classes="optHeader"/>
+              <TextBlock Grid.Row="0" Grid.Column="4" Text="{DynamicResource Text_6ff7105ac753b48e}" Classes="optHeader"/>
 
               <TextBlock Grid.Row="1" Text="Direction TF" Classes="label" VerticalAlignment="Center"/>
               <ComboBox x:Name="DirectionTfMinCombo" Grid.Row="1" Grid.Column="1" SelectionChanged="ParameterSelection_OnChanged"/>
@@ -170,21 +171,21 @@
         <StackPanel Grid.Column="1" Spacing="8">
           <Border Classes="panel" MinHeight="200">
             <Grid RowDefinitions="36,Auto,Auto">
-              <Border Grid.Row="0" Background="#082038" Padding="12,8">
-                <TextBlock Text="Trạng thái tối ưu" Classes="panelTitle"/>
+              <Border Grid.Row="0" Background="{DynamicResource Brush_082038}" Padding="12,8">
+                <TextBlock Text="{DynamicResource Text_efc99a39e14bcb6d}" Classes="panelTitle"/>
               </Border>
 
               <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="12,10,12,4">
-                <Border Width="46" Height="46" CornerRadius="23" BorderBrush="#15D97F" BorderThickness="3" Background="#063225">
-                  <TextBlock Text="⚙" Foreground="#1AE38B" FontSize="25" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border Width="46" Height="46" CornerRadius="23" BorderBrush="{DynamicResource Brush_15D97F}" BorderThickness="3" Background="{DynamicResource Brush_063225}">
+                  <TextBlock Text="⚙" Foreground="{DynamicResource Brush_1AE38B}" FontSize="{DynamicResource Font_25}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                  <TextBlock x:Name="OptimizerStateText" Text="CHƯA CHẠY" FontSize="18" FontWeight="Bold" Foreground="#FFD34D"/>
-                  <TextBlock x:Name="OptimizerPhaseText" Text="Chọn dataset và cấu hình phạm vi tham số." Classes="dim" FontSize="13"/>
+                  <TextBlock x:Name="OptimizerStateText" Text="{local:InitialText f80c1cf02ecd8d0e}" FontSize="{DynamicResource Font_18}" FontWeight="Bold" Foreground="{DynamicResource Brush_FFD34D}"/>
+                  <TextBlock x:Name="OptimizerPhaseText" Text="{local:InitialText e4b5fdc2ad5c1198}" Classes="dim" FontSize="{DynamicResource Font_13}"/>
                 </StackPanel>
                 <StackPanel Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center">
-                  <TextBlock Text="Thời gian đã chạy" Classes="dim" FontSize="12"/>
-                  <TextBlock x:Name="OptimizerElapsedText" Text="00:00:00" FontSize="18" Foreground="#70B9FF"/>
+                  <TextBlock Text="{DynamicResource Text_b2121795d12f8dc6}" Classes="dim" FontSize="{DynamicResource Font_12}"/>
+                  <TextBlock x:Name="OptimizerElapsedText" Text="00:00:00" FontSize="{DynamicResource Font_18}" Foreground="{DynamicResource Brush_70B9FF}"/>
                 </StackPanel>
               </Grid>
 
@@ -204,12 +205,12 @@
                 </Grid>
 
                 <Grid ColumnDefinitions="*,*,*,*,*,*" ColumnSpacing="8">
-                  <StackPanel Grid.Column="0"><TextBlock x:Name="TotalWorkLabelText" Text="Tổng tổ hợp" Classes="dim" FontSize="12"/><TextBlock x:Name="TotalWorkText" Text="0" FontWeight="Bold"/></StackPanel>
-                  <StackPanel Grid.Column="1"><TextBlock Text="Đã hoàn thành" Classes="dim" FontSize="12"/><TextBlock x:Name="CompletedWorkText" Text="0" FontWeight="Bold"/></StackPanel>
-                  <StackPanel Grid.Column="2"><TextBlock Text="Đang xử lý" Classes="dim" FontSize="12"/><TextBlock x:Name="InFlightText" Text="0" FontWeight="Bold"/></StackPanel>
-                  <StackPanel Grid.Column="3"><TextBlock Text="Còn lại" Classes="dim" FontSize="12"/><TextBlock x:Name="RemainingWorkText" Text="0" FontWeight="Bold"/></StackPanel>
-                  <StackPanel Grid.Column="4"><TextBlock Text="Tốc độ" Classes="dim" FontSize="12"/><TextBlock x:Name="OptimizerSpeedText" Text="0 /phút" FontWeight="Bold"/></StackPanel>
-                  <StackPanel Grid.Column="5"><TextBlock Text="Dự kiến xong" Classes="dim" FontSize="12"/><TextBlock x:Name="OptimizerEtaText" Text="—" FontWeight="Bold"/></StackPanel>
+                  <StackPanel Grid.Column="0"><TextBlock x:Name="TotalWorkLabelText" Text="{local:InitialText 00b73cbf4c5423fe}" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="TotalWorkText" Text="0" FontWeight="Bold"/></StackPanel>
+                  <StackPanel Grid.Column="1"><TextBlock Text="{DynamicResource Text_14eefbabb79b7cdf}" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="CompletedWorkText" Text="0" FontWeight="Bold"/></StackPanel>
+                  <StackPanel Grid.Column="2"><TextBlock Text="{DynamicResource Text_e84898db736f9ec3}" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="InFlightText" Text="0" FontWeight="Bold"/></StackPanel>
+                  <StackPanel Grid.Column="3"><TextBlock Text="{DynamicResource Text_b3edb1ba3d614cc0}" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="RemainingWorkText" Text="0" FontWeight="Bold"/></StackPanel>
+                  <StackPanel Grid.Column="4"><TextBlock Text="{DynamicResource Text_16ee09145b01490b}" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="OptimizerSpeedText" Text="{local:InitialText b0de40e1efc4dd8a}" FontWeight="Bold"/></StackPanel>
+                  <StackPanel Grid.Column="5"><TextBlock Text="{DynamicResource Text_872b10932fa91fc6}" Classes="dim" FontSize="{DynamicResource Font_12}"/><TextBlock x:Name="OptimizerEtaText" Text="—" FontWeight="Bold"/></StackPanel>
                 </Grid>
               </StackPanel>
             </Grid>
@@ -217,8 +218,8 @@
 
           <Border Classes="panel">
             <Grid RowDefinitions="36,Auto">
-              <Border Grid.Row="0" Background="#082038" Padding="12,8">
-                <TextBlock Text="Tài nguyên tính toán" Classes="panelTitle"/>
+              <Border Grid.Row="0" Background="{DynamicResource Brush_082038}" Padding="12,8">
+                <TextBlock Text="{DynamicResource Text_89c098aefe6a0dc4}" Classes="panelTitle"/>
               </Border>
               <Grid Grid.Row="1" ColumnDefinitions="1.3*,1*" ColumnSpacing="15" Margin="12,7">
                 <StackPanel Spacing="8">
@@ -234,15 +235,15 @@
                   </Grid>
                   <Grid ColumnDefinitions="140,*">
                     <TextBlock Text="CPU / RAM / Disk" Classes="label"/>
-                    <TextBlock Grid.Column="1" Text="Chưa có dữ liệu" Classes="dim"/>
+                    <TextBlock x:Name="SystemResourcesText" Grid.Column="1" Text="{local:InitialText b96f70fdda6e8a9e}" Classes="dim" TextWrapping="Wrap"/>
                   </Grid>
                 </StackPanel>
 
                 <Grid Grid.Column="1" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="7">
-                  <TextBlock Grid.Row="0" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="0" Grid.Column="1" Text="Python Engine" Classes="label"/><TextBlock x:Name="EngineResourceText" Grid.Row="0" Grid.Column="2" Text="WAIT" Foreground="#FFD34D"/>
-                  <TextBlock Grid.Row="1" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="1" Grid.Column="1" Text="Dataset" Classes="label"/><TextBlock x:Name="DatasetResourceText" Grid.Row="1" Grid.Column="2" Text="WAIT" Foreground="#FFD34D"/>
-                  <TextBlock Grid.Row="2" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="2" Grid.Column="1" Text="Backtest Engine" Classes="label"/><TextBlock x:Name="BacktestResourceText" Grid.Row="2" Grid.Column="2" Text="WAIT" Foreground="#FFD34D"/>
-                  <TextBlock Grid.Row="3" Text="●" Foreground="#18E58B"/><TextBlock Grid.Row="3" Grid.Column="1" Text="Result Writer" Classes="label"/><TextBlock x:Name="WriterResourceText" Grid.Row="3" Grid.Column="2" Text="READY" Foreground="#18E58B"/>
+                  <TextBlock Grid.Row="0" Text="●" Foreground="{DynamicResource Brush_18E58B}"/><TextBlock Grid.Row="0" Grid.Column="1" Text="Python Engine" Classes="label"/><TextBlock x:Name="EngineResourceText" Grid.Row="0" Grid.Column="2" Text="WAIT" Foreground="{DynamicResource Brush_FFD34D}"/>
+                  <TextBlock Grid.Row="1" Text="●" Foreground="{DynamicResource Brush_18E58B}"/><TextBlock Grid.Row="1" Grid.Column="1" Text="Dataset" Classes="label"/><TextBlock x:Name="DatasetResourceText" Grid.Row="1" Grid.Column="2" Text="WAIT" Foreground="{DynamicResource Brush_FFD34D}"/>
+                  <TextBlock Grid.Row="2" Text="●" Foreground="{DynamicResource Brush_18E58B}"/><TextBlock Grid.Row="2" Grid.Column="1" Text="Backtest Engine" Classes="label"/><TextBlock x:Name="BacktestResourceText" Grid.Row="2" Grid.Column="2" Text="WAIT" Foreground="{DynamicResource Brush_FFD34D}"/>
+                  <TextBlock Grid.Row="3" Text="●" Foreground="{DynamicResource Brush_18E58B}"/><TextBlock Grid.Row="3" Grid.Column="1" Text="Result Writer" Classes="label"/><TextBlock x:Name="WriterResourceText" Grid.Row="3" Grid.Column="2" Text="READY" Foreground="{DynamicResource Brush_18E58B}"/>
                 </Grid>
               </Grid>
             </Grid>
@@ -255,8 +256,8 @@
         <!-- Top setups -->
         <Border Grid.Column="0" Classes="panel" Height="334">
           <Grid RowDefinitions="36,Auto,*">
-            <Border Grid.Row="0" Background="#082038" Padding="12,8">
-              <TextBlock Text="Top 10 bộ tham số tốt nhất" Classes="panelTitle"/>
+            <Border Grid.Row="0" Background="{DynamicResource Brush_082038}" Padding="12,8">
+              <TextBlock Text="{DynamicResource Text_a01402b426ebd761}" Classes="panelTitle"/>
             </Border>
 
             <Grid Grid.Row="1"
@@ -264,12 +265,12 @@
                   Margin="8,6,8,3">
               <TextBlock Text="#" Classes="optHeader"/>
               <TextBlock Grid.Column="1" Text="Score" Classes="optHeader"/>
-              <TextBlock Grid.Column="2" Text="Lợi nhuận" Classes="optHeader"/>
+              <TextBlock Grid.Column="2" Text="{DynamicResource Text_bf783ab732e8e763}" Classes="optHeader"/>
               <TextBlock Grid.Column="3" Text="Sharpe" Classes="optHeader"/>
               <TextBlock Grid.Column="4" Text="Max DD" Classes="optHeader"/>
               <TextBlock Grid.Column="5" Text="Winrate" Classes="optHeader"/>
-              <TextBlock Grid.Column="6" Text="Tham số chính" Classes="optHeader"/>
-              <TextBlock Grid.Column="7" Text="Hành động" Classes="optHeader"/>
+              <TextBlock Grid.Column="6" Text="{DynamicResource Text_a90438bf7d9a319c}" Classes="optHeader"/>
+              <TextBlock Grid.Column="7" Text="{DynamicResource Text_ccf586e4b95f494a}" Classes="optHeader"/>
             </Grid>
 
             <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
@@ -281,23 +282,23 @@
         <!-- Heatmap -->
         <Border Grid.Column="1" Classes="panel" Height="334">
           <Grid RowDefinitions="36,Auto,*">
-            <Border Grid.Row="0" Background="#082038" Padding="12,8">
-              <TextBlock Text="Heatmap kết quả tối ưu" Classes="panelTitle"/>
+            <Border Grid.Row="0" Background="{DynamicResource Brush_082038}" Padding="12,8">
+              <TextBlock Text="{DynamicResource Text_b7f5cd572e2aa8fe}" Classes="panelTitle"/>
             </Border>
 
             <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="6" Margin="9,7,9,4">
               <StackPanel Grid.Column="0" Spacing="3">
-                <TextBlock Text="Trục X" Classes="dim" FontSize="12"/>
+                <TextBlock Text="{DynamicResource Text_d0a746078225ed05}" Classes="dim" FontSize="{DynamicResource Font_12}"/>
                 <ComboBox x:Name="HeatmapXCombo" SelectionChanged="HeatmapSelection_OnChanged"/>
               </StackPanel>
               <StackPanel Grid.Column="1" Spacing="3">
-                <TextBlock Text="Trục Y" Classes="dim" FontSize="12"/>
+                <TextBlock Text="{DynamicResource Text_859088b15b04d9e9}" Classes="dim" FontSize="{DynamicResource Font_12}"/>
                 <ComboBox x:Name="HeatmapYCombo" SelectionChanged="HeatmapSelection_OnChanged"/>
               </StackPanel>
               <StackPanel Grid.Column="2" Spacing="3">
-                <TextBlock Text="Chỉ số màu" Classes="dim" FontSize="12"/>
+                <TextBlock Text="{DynamicResource Text_c3d3bee24bea7f34}" Classes="dim" FontSize="{DynamicResource Font_12}"/>
                 <ComboBox x:Name="HeatmapMetricCombo" SelectedIndex="0" SelectionChanged="HeatmapSelection_OnChanged">
-                  <ComboBoxItem Content="Lợi nhuận ròng" Tag="net_profit"/>
+                  <ComboBoxItem Content="{DynamicResource Text_bcf512fa299d15ef}" Tag="net_profit"/>
                   <ComboBoxItem Content="Robust Score" Tag="score"/>
                   <ComboBoxItem Content="Winrate" Tag="win_rate"/>
                   <ComboBoxItem Content="Profit Factor" Tag="profit_factor"/>
@@ -315,25 +316,25 @@
               </ScrollViewer>
 
               <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto,*,Auto">
-                <TextBlock x:Name="HeatmapMaxText" Text="—" FontSize="11" HorizontalAlignment="Center"/>
+                <TextBlock x:Name="HeatmapMaxText" Text="—" FontSize="{DynamicResource Font_11}" HorizontalAlignment="Center"/>
                 <Border Grid.Row="1" Width="14" HorizontalAlignment="Center" CornerRadius="2">
                   <Border.Background>
                     <LinearGradientBrush StartPoint="50%,0%" EndPoint="50%,100%">
-                      <GradientStop Color="#25CE6A" Offset="0"/>
-                      <GradientStop Color="#F7D548" Offset="0.5"/>
+                      <GradientStop Color="{DynamicResource Color_25CE6A}" Offset="0"/>
+                      <GradientStop Color="{DynamicResource Color_F7D548}" Offset="0.5"/>
                     </LinearGradientBrush>
                   </Border.Background>
                 </Border>
-                <TextBlock x:Name="HeatmapMidText" Grid.Row="2" Text="0" FontSize="11" HorizontalAlignment="Center"/>
+                <TextBlock x:Name="HeatmapMidText" Grid.Row="2" Text="0" FontSize="{DynamicResource Font_11}" HorizontalAlignment="Center"/>
                 <Border Grid.Row="3" Width="14" HorizontalAlignment="Center" CornerRadius="2">
                   <Border.Background>
                     <LinearGradientBrush StartPoint="50%,0%" EndPoint="50%,100%">
-                      <GradientStop Color="#F7D548" Offset="0"/>
-                      <GradientStop Color="#D92F4B" Offset="1"/>
+                      <GradientStop Color="{DynamicResource Color_F7D548}" Offset="0"/>
+                      <GradientStop Color="{DynamicResource Color_D92F4B}" Offset="1"/>
                     </LinearGradientBrush>
                   </Border.Background>
                 </Border>
-                <TextBlock x:Name="HeatmapMinText" Grid.Row="4" Text="—" FontSize="11" HorizontalAlignment="Center"/>
+                <TextBlock x:Name="HeatmapMinText" Grid.Row="4" Text="—" FontSize="{DynamicResource Font_11}" HorizontalAlignment="Center"/>
               </Grid>
             </Grid>
           </Grid>
@@ -342,7 +343,7 @@
         <!-- Walk-forward -->
         <Border Grid.Column="2" Classes="panel" Height="334">
           <Grid Classes="walkForward" RowDefinitions="34,Auto,Auto,*">
-            <Border Grid.Row="0" Background="#082038" Padding="12,8">
+            <Border Grid.Row="0" Background="{DynamicResource Brush_082038}" Padding="12,8">
               <TextBlock Text="Walk-Forward Validation" Classes="panelTitle"/>
             </Border>
 
@@ -352,52 +353,52 @@
                   RowSpacing="4"
                   ColumnSpacing="7"
                   Margin="10,6,10,5">
-              <TextBlock Grid.Row="0" Text="Số giai đoạn (folds)" Classes="label" VerticalAlignment="Center"/>
+              <TextBlock Grid.Row="0" Text="{DynamicResource Text_c8f564fbf8b8cc6b}" Classes="label" VerticalAlignment="Center"/>
               <TextBox x:Name="WalkForwardFoldsBox" Grid.Row="0" Grid.Column="1" Text="5"/>
 
-              <TextBlock Grid.Row="1" Text="Tỷ lệ train / test" Classes="label" VerticalAlignment="Center"/>
+              <TextBlock Grid.Row="1" Text="{DynamicResource Text_a0174eb986c18cb0}" Classes="label" VerticalAlignment="Center"/>
               <ComboBox x:Name="WalkForwardRatioCombo" Grid.Row="1" Grid.Column="1" SelectedIndex="0">
                 <ComboBoxItem Content="70% / 30%" Tag="0.70"/>
                 <ComboBoxItem Content="60% / 40%" Tag="0.60"/>
                 <ComboBoxItem Content="80% / 20%" Tag="0.80"/>
               </ComboBox>
 
-              <TextBlock Grid.Row="2" Text="Bước trượt (rolling)" Classes="label" VerticalAlignment="Center"/>
+              <TextBlock Grid.Row="2" Text="{DynamicResource Text_22dea2c561e22760}" Classes="label" VerticalAlignment="Center"/>
               <ComboBox x:Name="WalkForwardRollingCombo" Grid.Row="2" Grid.Column="1" SelectedIndex="0">
-                <ComboBoxItem Content="Có" Tag="true"/>
-                <ComboBoxItem Content="Không (anchored)" Tag="false"/>
+                <ComboBoxItem Content="{DynamicResource Text_e25427d0c2bf3ab8}" Tag="true"/>
+                <ComboBoxItem Content="{DynamicResource Text_a2acbe98517e989f}" Tag="false"/>
               </ComboBox>
             </Grid>
 
             <Button Grid.Row="2"
                     x:Name="RunWalkForwardButton"
                     Height="30" Padding="8,4" Margin="10,2,10,6"
-                    Background="#0866F4"
-                    BorderBrush="#238AFF"
+                    Background="{DynamicResource Brush_0866F4}"
+                    BorderBrush="{DynamicResource Brush_238AFF}"
                     BorderThickness="1"
                     CornerRadius="5"
                     Foreground="White"
                     FontWeight="Bold"
-                    Content="▶  CHẠY WALK-FORWARD"
+                    Content="{DynamicResource Text_aef258a670fc392c}"
                     Click="RunWalkForward_OnClick"/>
 
             <ScrollViewer Grid.Row="3"><StackPanel Margin="10,0,10,6" Spacing="3">
-              <Border Background="#082038" Padding="8,5">
-                <TextBlock Text="Kết quả Walk-Forward" FontWeight="SemiBold"/>
+              <Border Background="{DynamicResource Brush_082038}" Padding="8,5">
+                <TextBlock Text="{DynamicResource Text_04a7badfbf0a160e}" FontWeight="SemiBold"/>
               </Border>
               <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="2">
-                <TextBlock Grid.Row="0" Text="Lợi nhuận trung bình" Classes="label"/><TextBlock x:Name="WfAverageProfitText" Grid.Row="0" Grid.Column="1" Text="—" Foreground="#18E58B"/>
-                <TextBlock Grid.Row="1" Text="Sharpe trung bình" Classes="label"/><TextBlock x:Name="WfAverageSharpeText" Grid.Row="1" Grid.Column="1" Text="—" Foreground="#18E58B"/>
-                <TextBlock Grid.Row="2" Text="Winrate trung bình" Classes="label"/><TextBlock x:Name="WfAverageWinrateText" Grid.Row="2" Grid.Column="1" Text="—" Foreground="#18E58B"/>
-                <TextBlock Grid.Row="3" Text="Max DD trung bình" Classes="label"/><TextBlock x:Name="WfAverageDdText" Grid.Row="3" Grid.Column="1" Text="—" Foreground="#FF526C"/>
+                <TextBlock Grid.Row="0" Text="{DynamicResource Text_67a6021f1687b47f}" Classes="label"/><TextBlock x:Name="WfAverageProfitText" Grid.Row="0" Grid.Column="1" Text="—" Foreground="{DynamicResource Brush_18E58B}"/>
+                <TextBlock Grid.Row="1" Text="{DynamicResource Text_78b04a746f94aead}" Classes="label"/><TextBlock x:Name="WfAverageSharpeText" Grid.Row="1" Grid.Column="1" Text="—" Foreground="{DynamicResource Brush_18E58B}"/>
+                <TextBlock Grid.Row="2" Text="{DynamicResource Text_a427942a7d17effd}" Classes="label"/><TextBlock x:Name="WfAverageWinrateText" Grid.Row="2" Grid.Column="1" Text="—" Foreground="{DynamicResource Brush_18E58B}"/>
+                <TextBlock Grid.Row="3" Text="{DynamicResource Text_5570eed740a6a1c5}" Classes="label"/><TextBlock x:Name="WfAverageDdText" Grid.Row="3" Grid.Column="1" Text="—" Foreground="{DynamicResource Brush_FF526C}"/>
                 <TextBlock Grid.Row="4" Text="Positive folds" Classes="label"/><TextBlock x:Name="WfPositiveFoldsText" Grid.Row="4" Grid.Column="1" Text="—"/>
-                <TextBlock Grid.Row="5" Text="Độ ổn định (Stability)" Classes="label"/><TextBlock x:Name="WfStabilityText" Grid.Row="5" Grid.Column="1" Text="—" Foreground="#18E58B"/>
+                <TextBlock Grid.Row="5" Text="{DynamicResource Text_522cff2cd1933e90}" Classes="label"/><TextBlock x:Name="WfStabilityText" Grid.Row="5" Grid.Column="1" Text="—" Foreground="{DynamicResource Brush_18E58B}"/>
               </Grid>
               <Border Classes="panelSoft" Padding="8,6">
                 <TextBlock x:Name="WfLeakageText"
-                           Text="Chưa có Walk-Forward result."
+                           Text="{local:InitialText 76a19e21becd8ee4}"
                            Classes="dim"
-                           FontSize="12"
+                           FontSize="{DynamicResource Font_12}"
                            TextWrapping="Wrap"/>
               </Border>
               <StackPanel x:Name="WalkForwardFoldHost" Spacing="3"/>
@@ -405,41 +406,41 @@
           </Grid>
         </Border>
       </Grid>
-      <Expander Header="Dữ liệu, khoảng thời gian &amp; chi phí kiểm thử" IsExpanded="False" HorizontalAlignment="Stretch">            <Border Background="#06182A" BorderBrush="#123D5D" BorderThickness="0,1,0,0" Padding="10,7">
+      <Expander Header="{DynamicResource Text_a1566f9ad33718e7}" IsExpanded="False" HorizontalAlignment="Stretch">            <Border Background="{DynamicResource Brush_06182A}" BorderBrush="{DynamicResource Brush_123D5D}" BorderThickness="0,1,0,0" Padding="10,7">
               <WrapPanel>
-                <Button Classes="secondary" Content="⬆  Chọn dữ liệu M1" Click="SelectDataset_OnClick" Margin="0,0,10,4" Padding="10,4"/>
+                <Button Classes="secondary" Content="{DynamicResource Text_6ba9c0a4ede24d15}" Click="SelectDataset_OnClick" Margin="0,0,10,4" Padding="10,4"/>
                 <TextBlock x:Name="OptimizerDatasetText" Margin="0,0,10,0"
-                           Text="Dataset: chưa chọn"
+                           Text="{local:InitialText 24aa9d6ce614c509}"
                            Classes="dim"
-                           FontSize="12"
+                           FontSize="{DynamicResource Font_12}"
                            VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis"/>
                 <StackPanel Margin="0,3,10,3" Orientation="Horizontal" Spacing="5">
-                  <TextBlock Text="Range:" Classes="dim" FontSize="12" VerticalAlignment="Center"/>
+                  <TextBlock Text="Range:" Classes="dim" FontSize="{DynamicResource Font_12}" VerticalAlignment="Center"/>
                   <TextBox x:Name="OptimizeFromDateBox" Width="88" Height="25" Text="2024-01-01"/>
                   <TextBlock Text="→" VerticalAlignment="Center"/>
                   <TextBox x:Name="OptimizeToDateBox" Width="88" Height="25" Text="2024-01-31"/>
                 </StackPanel>
                 <StackPanel Margin="0,3,10,3" Orientation="Horizontal" Spacing="4">
-                  <TextBlock Text="Vốn:" Classes="dim" FontSize="12" VerticalAlignment="Center"/>
+                  <TextBlock Text="{DynamicResource Text_ecb332851a487933}" Classes="dim" FontSize="{DynamicResource Font_12}" VerticalAlignment="Center"/>
                   <TextBox x:Name="OptimizeBalanceBox" Width="72" Height="25" Text="10000"/>
-                  <TextBlock Text="Spr:" Classes="dim" FontSize="12" VerticalAlignment="Center"/>
+                  <TextBlock Text="Spr:" Classes="dim" FontSize="{DynamicResource Font_12}" VerticalAlignment="Center"/>
                   <TextBox x:Name="OptimizeSpreadBox" Width="42" Height="25" Text="20"/>
-                  <TextBlock Text="Com:" Classes="dim" FontSize="12" VerticalAlignment="Center"/>
+                  <TextBlock Text="Com:" Classes="dim" FontSize="{DynamicResource Font_12}" VerticalAlignment="Center"/>
                   <TextBox x:Name="OptimizeCommissionBox" Width="42" Height="25" Text="7"/>
                 </StackPanel>
                 <StackPanel Margin="0,3,10,3" Orientation="Horizontal" Spacing="5">
-                  <TextBlock Text="Min trades:" Classes="dim" FontSize="12" VerticalAlignment="Center"/>
+                  <TextBlock Text="Min trades:" Classes="dim" FontSize="{DynamicResource Font_12}" VerticalAlignment="Center"/>
                   <TextBox x:Name="MinTradesBox" Width="50" Height="25" Text="20"/>
                 </StackPanel>
                 <StackPanel Margin="0,3,10,3" Orientation="Horizontal" Spacing="5">
-                  <TextBlock Text="Workers:" Classes="dim" FontSize="12" VerticalAlignment="Center"/>
+                  <TextBlock Text="Workers:" Classes="dim" FontSize="{DynamicResource Font_12}" VerticalAlignment="Center"/>
                   <TextBox x:Name="WorkersBox" Width="42" Height="25" Text="2"/>
                 </StackPanel>
                 <TextBlock x:Name="CombinationPreviewText"
 
-                           Text="Tổ hợp: —"
-                           Foreground="#61B8FF"
+                           Text="{local:InitialText 3a35d1c318075019}"
+                           Foreground="{DynamicResource Brush_61B8FF}"
                            FontWeight="SemiBold"
                            VerticalAlignment="Center"/>
               </WrapPanel>

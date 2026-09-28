@@ -1,0 +1,2798 @@
+{
+  "f99e29bf92580f84": {
+    "vi": "      Khoảng SL, tick value và lot size",
+    "en": "      SL distance, tick value and lot size"
+  },
+  "61bb9c3e5eae9ed1": {
+    "vi": "      Kiểm tra lịch tin JSON từ máy",
+    "en": "      Check a local news calendar JSON"
+  },
+  "d23fbfa9a290a402": {
+    "vi": "      Kiểm tra môi trường, log, kết nối",
+    "en": "      Check environment, logs and connection"
+  },
+  "1209b6803bdef174": {
+    "vi": "      Lưu, tải, sao lưu cấu hình",
+    "en": "      Save, load and back up profiles"
+  },
+  "a0463b95df9b1edc": {
+    "vi": "      Probe indicator, tín hiệu và dữ liệu",
+    "en": "      Inspect indicators, signals and data"
+  },
+  "7e05bfff289c1970": {
+    "vi": "      So sánh profile đang chạy với mặc định",
+    "en": "      Compare the active profile with defaults"
+  },
+  "6fe12e67558f14ab": {
+    "vi": "      Sửa file config, tham số EA, chiến lược",
+    "en": "      Edit configuration and strategy parameters"
+  },
+  "426ca53a4fd349d7": {
+    "vi": "      Test kết nối EA Bridge ↔ Python",
+    "en": "      Test EA Bridge ↔ Python connection"
+  },
+  "396101d53f898e3c": {
+    "vi": "      Thông số giao dịch, spread, phiên",
+    "en": "      Contract details, spread and sessions"
+  },
+  "b5db0b08b5db73f5": {
+    "vi": "      Xuất báo cáo, nhập cấu hình JSON",
+    "en": "      Export reports and import JSON profiles"
+  },
+  "839a9271f1ff511b": {
+    "vi": "$  Đóng lãi",
+    "en": "$  Close winners"
+  },
+  "6b406456ff21d279": {
+    "vi": "+  Thêm dấu trang hiện tại",
+    "en": "+  Bookmark current selection"
+  },
+  "d9f83df1218e6d0d": {
+    "vi": "+ So sánh",
+    "en": "+ Compare"
+  },
+  "b0de40e1efc4dd8a": {
+    "vi": "0 /phút",
+    "en": "0 /minute"
+  },
+  "55b9d642c2eda358": {
+    "vi": "0 tham số",
+    "en": "0 parameters"
+  },
+  "c0c4958f3db4aaf6": {
+    "vi": "10. Bộ lọc",
+    "en": "10. Filters"
+  },
+  "be7d97001597475d": {
+    "vi": "11. Thời gian",
+    "en": "11. Sessions"
+  },
+  "1e57b401e99417aa": {
+    "vi": "12. Khác",
+    "en": "12. Other"
+  },
+  "70b93e523576cc53": {
+    "vi": "ADX (Xu hướng)",
+    "en": "ADX (Trend)"
+  },
+  "a2543e63387a3729": {
+    "vi": "ADX hiện tại:",
+    "en": "Current ADX:"
+  },
+  "c65109d1cbb71d90": {
+    "vi": "ATR (Biến động)",
+    "en": "ATR (Volatility)"
+  },
+  "265fad23b16d520d": {
+    "vi": "ATR hiện tại:",
+    "en": "Current ATR:"
+  },
+  "89a8e2c21c38f636": {
+    "vi": "Active profile từ Python Engine",
+    "en": "Active profile from Python Engine"
+  },
+  "4d6599d26ca4dd4a": {
+    "vi": "Alert: đang chờ Bridge.",
+    "en": "Alert: waiting for Bridge."
+  },
+  "22474724a7626156": {
+    "vi": "An toàn",
+    "en": "Safety"
+  },
+  "fe8562f967d79e77": {
+    "vi": "Báo cáo nghiên cứu",
+    "en": "Research report"
+  },
+  "5273f567ee64cdce": {
+    "vi": "Bước nhảy",
+    "en": "Step"
+  },
+  "22dea2c561e22760": {
+    "vi": "Bước trượt (rolling)",
+    "en": "Rolling window"
+  },
+  "6141e7f13f0ff975": {
+    "vi": "Bắt buộc",
+    "en": "Required"
+  },
+  "bc3c4e39bdf06d9e": {
+    "vi": "Bắt đầu / dừng chờ tại Lệnh & Vị thế.",
+    "en": "Start or stop in Orders & Positions."
+  },
+  "2dac5991a0516773": {
+    "vi": "Bị từ chối",
+    "en": "Rejected"
+  },
+  "5250aef74da181d9": {
+    "vi": "Bỏ chọn nến đóng: ghi nhớ chạm RSI/Z trong nến, xét hồi từ nến sau.",
+    "en": "Uncheck closed bars to remember intrabar RSI/Z touches and evaluate a reversal from the next bar."
+  },
+  "15efbda7e0c4e9de": {
+    "vi": "Bỏ thay đổi trong tab này và tải cấu hình đang áp dụng.",
+    "en": "Discard edits in this tab and reload the active profile."
+  },
+  "1e76effadfcbc0f4": {
+    "vi": "Bố cục sẽ bám đúng ảnh UI reference; không hiển thị dữ liệu giao dịch giả.",
+    "en": "Reference layout with actual trading data when connected."
+  },
+  "b2393e6ba660a786": {
+    "vi": "Bộ công cụ hỗ trợ vận hành, kiểm tra và quản lý hệ thống",
+    "en": "Tools for operating, checking and managing the system"
+  },
+  "f80c1cf02ecd8d0e": {
+    "vi": "CHƯA CHẠY",
+    "en": "NOT STARTED"
+  },
+  "07c912214164e4bc": {
+    "vi": "CHỜ KẾT NỐI",
+    "en": "WAITING FOR CONNECTION"
+  },
+  "d6bd61f37175b6ec": {
+    "vi": "Chi tiết nhật ký",
+    "en": "Journal details"
+  },
+  "362f1e204484b264": {
+    "vi": "Chi tiết đầy đủ:",
+    "en": "Full details:"
+  },
+  "d3c238c34b0943ab": {
+    "vi": "Chiến lược",
+    "en": "Strategy"
+  },
+  "57da818846d0901f": {
+    "vi": "Chiến lược hiện tại",
+    "en": "Current strategy"
+  },
+  "50127e10748a6c56": {
+    "vi": "Cho phép BUY",
+    "en": "Allow BUY"
+  },
+  "9c7f58d54d2c2806": {
+    "vi": "Cho phép SELL",
+    "en": "Allow SELL"
+  },
+  "f44f66c9ea854308": {
+    "vi": "Cho phép tài khoản thật",
+    "en": "Allow real accounts"
+  },
+  "15717626328b80cf": {
+    "vi": "Chu kỳ RSI / Z…",
+    "en": "RSI / Z periods…"
+  },
+  "0e560af63841c6a1": {
+    "vi": "Chưa bắt đầu",
+    "en": "Not started"
+  },
+  "4e290379f702e813": {
+    "vi": "Chưa chọn dòng",
+    "en": "No row selected"
+  },
+  "76a19e21becd8ee4": {
+    "vi": "Chưa có Walk-Forward result.",
+    "en": "No walk-forward result yet."
+  },
+  "5e9cb695bb028b25": {
+    "vi": "Chưa có dữ liệu lệnh chi tiết.",
+    "en": "No detailed order data yet."
+  },
+  "ea4c47dfa83494db": {
+    "vi": "Chưa có signal.",
+    "en": "No signal yet."
+  },
+  "a1ee871580eb3b2e": {
+    "vi": "Chưa nhận snapshot MT5.",
+    "en": "No MT5 snapshot received."
+  },
+  "be2836c8bcf24351": {
+    "vi": "Chế độ",
+    "en": "Mode"
+  },
+  "3d2b670806e0ba86": {
+    "vi": "Chế độ Bridge",
+    "en": "Bridge mode"
+  },
+  "dabaac51a42bc4fc": {
+    "vi": "Chế độ hoạt động",
+    "en": "Operating mode"
+  },
+  "a9804d9f6393d089": {
+    "vi": "Chỉ buy/sell hoặc 2 chiều",
+    "en": "Buy only, sell only or both"
+  },
+  "6e07e37031df4d68": {
+    "vi": "Chỉ báo & Thị trường (Realtime)",
+    "en": "Indicators & Market (Live)"
+  },
+  "373f12612c54ee73": {
+    "vi": "Chỉ báo & tín hiệu trigger",
+    "en": "Indicators & trigger signals"
+  },
+  "26dc97c6308a1954": {
+    "vi": "Chỉ gửi khi có tín hiệu mới đúng chiến lược. Dừng chờ không đóng vị thế đã khớp.",
+    "en": "Only fresh strategy signals are sent. Stopping does not close filled positions."
+  },
+  "c3d3bee24bea7f34": {
+    "vi": "Chỉ số màu",
+    "en": "Color metric"
+  },
+  "af17bff786c5cbdb": {
+    "vi": "Chỉnh sửa file cấu hình hệ thống, EA, chiến lược. Hỗ trợ kiểm tra cú pháp và áp dụng nhanh.",
+    "en": "Edit and validate system, EA and strategy configuration files."
+  },
+  "8388941960726f2d": {
+    "vi": "Chỉnh sửa, kiểm tra và quản lý các file cấu hình của EA, chiến lược và hệ thống.",
+    "en": "Edit, validate and manage EA, strategy and system configuration files."
+  },
+  "25f8a36102a138ff": {
+    "vi": "Chọn bản sao lưu",
+    "en": "Select a backup"
+  },
+  "6c26521c21ec7f1a": {
+    "vi": "Chọn chế độ giao dịch để bắt đầu",
+    "en": "Choose a trading mode to start"
+  },
+  "e4b5fdc2ad5c1198": {
+    "vi": "Chọn dataset và cấu hình phạm vi tham số.",
+    "en": "Choose a dataset and parameter ranges."
+  },
+  "4d4f94d591d94579": {
+    "vi": "Chọn dữ liệu",
+    "en": "Choose data"
+  },
+  "5c60626b450b20fd": {
+    "vi": "Chọn file cấu hình",
+    "en": "Configuration file"
+  },
+  "e8398a51d4b4e7a5": {
+    "vi": "Chọn hai lần chạy để so sánh dữ liệu, chi phí, tham số và kết quả.",
+    "en": "Select two runs to compare data, costs, parameters and results."
+  },
+  "f56fbb83ceb20bc6": {
+    "vi": "Chọn hai preset để so sánh…",
+    "en": "Choose two presets to compare…"
+  },
+  "3a386b30b0a25cee": {
+    "vi": "Chọn một dòng để xem chi tiết.",
+    "en": "Select a row for details."
+  },
+  "23078a36dcbe86d3": {
+    "vi": "Chọn profile",
+    "en": "Choose profile"
+  },
+  "cd439b4457557ea7": {
+    "vi": "Chọn terminal64.exe",
+    "en": "Select terminal64.exe"
+  },
+  "7be69a9f6ad0c183": {
+    "vi": "Chọn tài khoản đang đăng nhập trong MT5.",
+    "en": "Use the account currently signed in to MT5."
+  },
+  "f0db4969606d90dd": {
+    "vi": "Chờ (phút)",
+    "en": "Cooldown (minutes)"
+  },
+  "b1239ed0a8503f6d": {
+    "vi": "Chờ Python Engine sẵn sàng.",
+    "en": "Waiting for Python Engine."
+  },
+  "c4374806771a5cd5": {
+    "vi": "Chờ dữ liệu",
+    "en": "Waiting for data"
+  },
+  "1f6855bd7479de24": {
+    "vi": "Chờ dữ liệu tài nguyên hệ thống.",
+    "en": "Waiting for system resource measurements."
+  },
+  "cd4fa58ddf6342d3": {
+    "vi": "Chờ giá",
+    "en": "Waiting for prices"
+  },
+  "e70ab716ceeefeea": {
+    "vi": "Chờ kết nối DEMO · tối đa một lệnh",
+    "en": "Waiting for DEMO connection · at most one order"
+  },
+  "9f0fe1d458a29de9": {
+    "vi": "Chờ lịch tin MT5.",
+    "en": "Waiting for MT5 news calendar."
+  },
+  "220d29b837633da8": {
+    "vi": "Chờ nạp dữ liệu",
+    "en": "Waiting to load data"
+  },
+  "05daadcf11e5bd3b": {
+    "vi": "Chờ xử lý",
+    "en": "Pending"
+  },
+  "e023196f93845776": {
+    "vi": "Chờ ảnh chụp tài khoản và lịch sử ngày đầy đủ khi khôi phục chế độ đã lưu. Mọi lệnh luôn cần kết nối và báo giá hiện tại.",
+    "en": "Wait for the complete account and daily history snapshot before restoring a saved mode. Every order requires a current connection and quote."
+  },
+  "bb0533a52ade7514": {
+    "vi": "Chủ đề (Theme)",
+    "en": "Theme"
+  },
+  "61d73063a032f5aa": {
+    "vi": "Chức năng backend chưa được triển khai.",
+    "en": "This backend feature is not implemented yet."
+  },
+  "202e0e9b0b8556f6": {
+    "vi": "Cài đặt",
+    "en": "Settings"
+  },
+  "7e545f42879e2265": {
+    "vi": "Cài đặt hệ thống",
+    "en": "System settings"
+  },
+  "498f23b16ca5d60c": {
+    "vi": "Cài đặt nhanh",
+    "en": "Quick settings"
+  },
+  "b3edb1ba3d614cc0": {
+    "vi": "Còn lại",
+    "en": "Remaining"
+  },
+  "e25427d0c2bf3ab8": {
+    "vi": "Có",
+    "en": "Yes"
+  },
+  "5cacd09f0694a84d": {
+    "vi": "Công cụ",
+    "en": "Tools"
+  },
+  "effd54601a2162af": {
+    "vi": "Công cụ & Tham số đầy đủ (Trung tâm cấu hình)",
+    "en": "Tools & Full Parameters (Configuration Center)"
+  },
+  "c6f79c1a4d458e5b": {
+    "vi": "Công cụ đã chọn",
+    "en": "Selected tool"
+  },
+  "689c71f4b5e1fe49": {
+    "vi": "Cũ hơn →",
+    "en": "Older →"
+  },
+  "0df37728ad393b0c": {
+    "vi": "Cả hai",
+    "en": "Both"
+  },
+  "ae4dc7daf3697cdf": {
+    "vi": "Cảnh báo & Thông báo",
+    "en": "Alerts & Notifications"
+  },
+  "db81f810e768745f": {
+    "vi": "Cảnh báo gần đây",
+    "en": "Recent alerts"
+  },
+  "660248b5094a19f5": {
+    "vi": "Cảnh báo hiển thị trong ứng dụng. Sự kiện luôn được lưu trong Nhật ký.",
+    "en": "Notifications appear in the app. Events are always recorded in the Journal."
+  },
+  "f30b26e523e0162b": {
+    "vi": "Cấu hình",
+    "en": "Configuration"
+  },
+  "9a6f5e3a8bddc6fa": {
+    "vi": "Cấu hình Backtest",
+    "en": "Backtest configuration"
+  },
+  "d84ba864098f634c": {
+    "vi": "Cấu hình chiến lược giao dịch",
+    "en": "Trading strategy configuration"
+  },
+  "bdcd6a86b253c70f": {
+    "vi": "Cấu hình chính",
+    "en": "Main configuration"
+  },
+  "65c9bd82979d214d": {
+    "vi": "Cấu hình hiện tại",
+    "en": "Current configuration"
+  },
+  "1cc8f12c2514f211": {
+    "vi": "Cổng (Port)",
+    "en": "Port"
+  },
+  "a0e11e9ffd9486d6": {
+    "vi": "Cỡ chữ (%)",
+    "en": "Font size (%)"
+  },
+  "bbbae258f14c7fb3": {
+    "vi": "DD tối đa",
+    "en": "Maximum DD"
+  },
+  "47f6f75381438479": {
+    "vi": "DEMO 1 LỆNH · CHƯA BẮT ĐẦU",
+    "en": "ONE DEMO ORDER · NOT STARTED"
+  },
+  "8e008b5c07d79765": {
+    "vi": "Danh mục cấu hình",
+    "en": "Configuration categories"
+  },
+  "8e48d5dfb621aa5f": {
+    "vi": "Danh sách giao dịch (Backtest)",
+    "en": "Backtest trades"
+  },
+  "1f03c3238508e6af": {
+    "vi": "Danh sách kết quả Backtest",
+    "en": "Saved backtest results"
+  },
+  "24aa9d6ce614c509": {
+    "vi": "Dataset: chưa chọn",
+    "en": "Dataset: not selected"
+  },
+  "96e541405d30d5af": {
+    "vi": "Drawdown (Mức sụt giảm vốn)",
+    "en": "Drawdown"
+  },
+  "169ec52d0328d90d": {
+    "vi": "Drawdown tối đa",
+    "en": "Maximum drawdown"
+  },
+  "04c17ff7ff4d3517": {
+    "vi": "Dùng phiên MT5 đang mở qua EA Bridge; không yêu cầu mật khẩu.",
+    "en": "Use the open MT5 session through the EA Bridge; no password required."
+  },
+  "76c62fa1a35fe03f": {
+    "vi": "Dấu trang (Bookmarks)",
+    "en": "Bookmarks"
+  },
+  "0f68dd400e646441": {
+    "vi": "Dừng Python Engine",
+    "en": "Stop Python Engine"
+  },
+  "a4c8fcc24bfeb753": {
+    "vi": "Dữ liệu kiểm thử & vốn ban đầu",
+    "en": "Test data & starting balance"
+  },
+  "ed70da7e3b80d964": {
+    "vi": "Dữ liệu thị trường",
+    "en": "Market data"
+  },
+  "a1566f9ad33718e7": {
+    "vi": "Dữ liệu, khoảng thời gian & chi phí kiểm thử",
+    "en": "Data, date range & test costs"
+  },
+  "f9dff25100421508": {
+    "vi": "Dữ liệu: chưa chọn file M1 JSON/CSV",
+    "en": "Data: no M1 JSON/CSV selected"
+  },
+  "872b10932fa91fc6": {
+    "vi": "Dự kiến xong",
+    "en": "Estimated completion"
+  },
+  "ad3e8d881ddfe65a": {
+    "vi": "Dựa trên server SL thật",
+    "en": "Based on actual broker SL"
+  },
+  "82261a8b9e1bbeb5": {
+    "vi": "Giao diện & Ngôn ngữ",
+    "en": "Appearance & Language"
+  },
+  "d8cba75685355dd8": {
+    "vi": "Giao dịch đang khóa; chỉ theo dõi chiến lược và tín hiệu.",
+    "en": "Trading is stopped; observing strategy and signals."
+  },
+  "3d0e1b06628814be": {
+    "vi": "Giao dịch: đã dừng",
+    "en": "Trading: stopped"
+  },
+  "3ad7165ffa3308c2": {
+    "vi": "Giá hiện tại",
+    "en": "Current price"
+  },
+  "33efd4f756d0a1e4": {
+    "vi": "Giá ra",
+    "en": "Exit price"
+  },
+  "1946533c33f349bb": {
+    "vi": "Giá thoát",
+    "en": "Exit price"
+  },
+  "6ff7105ac753b48e": {
+    "vi": "Giá trị mặc định",
+    "en": "Default value"
+  },
+  "84322b1e28fa6aa4": {
+    "vi": "Giá trị tối thiểu",
+    "en": "Minimum value"
+  },
+  "3bc0747598a79fb3": {
+    "vi": "Giá trị tối đa",
+    "en": "Maximum value"
+  },
+  "dd9aa148e58dcd46": {
+    "vi": "Giá vào",
+    "en": "Entry price"
+  },
+  "69834280e10579f0": {
+    "vi": "Giá đóng",
+    "en": "Close price"
+  },
+  "529a0b4abe020e13": {
+    "vi": "Giá đặt",
+    "en": "Order price"
+  },
+  "8473daf9902b64a6": {
+    "vi": "Giám sát",
+    "en": "Monitoring"
+  },
+  "ccd2c8ac3ebb06df": {
+    "vi": "Giới hạn an toàn",
+    "en": "Risk limits"
+  },
+  "f80cdcfe64cdfe31": {
+    "vi": "Giới hạn lỗ ngày (%)",
+    "en": "Daily loss limit (%)"
+  },
+  "2efabd57a97e0131": {
+    "vi": "Giờ máy:",
+    "en": "Local time:"
+  },
+  "2d2a75f982414710": {
+    "vi": "Giờ theo cấu hình phiên · Open:",
+    "en": "Configured session time · Open:"
+  },
+  "7539576df92d49e3": {
+    "vi": "Giữ chiến lược đang dùng • 60% chọn / 20% xác nhận / 20% kiểm tra • Không tự áp dụng",
+    "en": "Keep current strategy • 60% selection / 20% validation / 20% test • No automatic application"
+  },
+  "7c723ae4739ef469": {
+    "vi": "Giữ tối đa",
+    "en": "Keep"
+  },
+  "b7f5cd572e2aa8fe": {
+    "vi": "Heatmap kết quả tối ưu",
+    "en": "Optimization heatmap"
+  },
+  "f234bec042bf81ed": {
+    "vi": "Hiển thị 0 / 0 giao dịch",
+    "en": "Showing 0 / 0 trades"
+  },
+  "1cba614923d97058": {
+    "vi": "Hiển thị symbol hiện tại",
+    "en": "Current symbol"
+  },
+  "13d231460e225eba": {
+    "vi": "Hiển thị tất cả symbol XAUPY",
+    "en": "All XAUPY symbols"
+  },
+  "dd1d2ddfdab6962b": {
+    "vi": "Hiện cảnh báo lỗi hệ thống",
+    "en": "Show system errors"
+  },
+  "798513cb6f9b735d": {
+    "vi": "Hiện thay đổi kết nối",
+    "en": "Show connection changes"
+  },
+  "ad008883bfdcec6f": {
+    "vi": "Hoa hồng (USD/lot)",
+    "en": "Commission (USD/lot)"
+  },
+  "e72ff675217efc5e": {
+    "vi": "Hoàn tác",
+    "en": "Undo"
+  },
+  "ccf586e4b95f494a": {
+    "vi": "Hành động",
+    "en": "Action"
+  },
+  "e6747a82b6ddc4b2": {
+    "vi": "Hôm nay",
+    "en": "Today"
+  },
+  "fcf4e46d3d79e00f": {
+    "vi": "Hôm nay: —",
+    "en": "Today: —"
+  },
+  "986946214dd5bb9e": {
+    "vi": "Hướng dẫn",
+    "en": "Help"
+  },
+  "92c12c35f7e2244c": {
+    "vi": "Hướng giao dịch",
+    "en": "Trading direction"
+  },
+  "66cb299cfd8f81f8": {
+    "vi": "Hệ thống",
+    "en": "System"
+  },
+  "74fcd3522be7e175": {
+    "vi": "Hủy",
+    "en": "Cancel"
+  },
+  "0748244c527f7fea": {
+    "vi": "Hủy thay đổi",
+    "en": "Discard changes"
+  },
+  "44c1cbec2bc3e50b": {
+    "vi": "ID dòng:",
+    "en": "Row ID:"
+  },
+  "26830835c5d92a6e": {
+    "vi": "Khoảng SL",
+    "en": "SL distance"
+  },
+  "323ddb7ec21fb111": {
+    "vi": "Khoảng cách",
+    "en": "Distance"
+  },
+  "bcc7252aaa9f7a37": {
+    "vi": "Khung dữ liệu của file kiểm thử",
+    "en": "Input data timeframe"
+  },
+  "254e71805e8c3e94": {
+    "vi": "Khung dữ liệu lấy từ file; các khung chiến lược lấy từ profile đang áp dụng.",
+    "en": "Input timeframe comes from the file; strategy timeframes come from the active profile."
+  },
+  "912bece9b1a0258f": {
+    "vi": "Khung giờ, bộ lọc phiên",
+    "en": "Hours and session filters"
+  },
+  "5c8a102271043192": {
+    "vi": "Khung thời gian",
+    "en": "Timeframe"
+  },
+  "ebf73e08599c9527": {
+    "vi": "Khung thời gian chính",
+    "en": "Main timeframe"
+  },
+  "a62c7618fb8812ed": {
+    "vi": "Khôi phục chế độ giao dịch đã chọn",
+    "en": "Restore selected trading mode"
+  },
+  "a2acbe98517e989f": {
+    "vi": "Không (anchored)",
+    "en": "No (anchored)"
+  },
+  "e9a9760f15a6d16e": {
+    "vi": "Không tự xóa nhật ký giao dịch. Bản sao lưu cũ được luân phiên theo số bản giữ tối đa.",
+    "en": "Trading logs are never automatically deleted. Older backups rotate according to the retention limit."
+  },
+  "7b92c7d3c766c4cc": {
+    "vi": "Khối lượng vị thế đang mở",
+    "en": "Open position volume"
+  },
+  "3ae7be0c5d751e1a": {
+    "vi": "Khởi tạo & an toàn",
+    "en": "Startup & safety"
+  },
+  "b38f9c317c08c5de": {
+    "vi": "Khởi động Python Engine",
+    "en": "Start Python Engine"
+  },
+  "6158c244a9bd6b29": {
+    "vi": "Khởi động ứng dụng",
+    "en": "Application startup"
+  },
+  "63548597c21a87a9": {
+    "vi": "Kiểm tra cấu hình trước khi áp dụng.",
+    "en": "Validate configuration before applying."
+  },
+  "e4db3a4afa68a583": {
+    "vi": "Kết nối & Engine",
+    "en": "Connection & Engine"
+  },
+  "214371fd84c5a741": {
+    "vi": "Kết nối & Hệ thống",
+    "en": "Connection & System"
+  },
+  "e51c7db8225450f3": {
+    "vi": "Kết nối MT5",
+    "en": "MT5 connection"
+  },
+  "4dfb7d85b62c476e": {
+    "vi": "Kết quả Backtest — chưa có run",
+    "en": "Backtest results — no run yet"
+  },
+  "04a7badfbf0a160e": {
+    "vi": "Kết quả Walk-Forward",
+    "en": "Walk-forward results"
+  },
+  "ee1a26f94d3fba2d": {
+    "vi": "Kết quả kiểm tra",
+    "en": "Validation results"
+  },
+  "7cac44bc4d55fec9": {
+    "vi": "Logic kết hợp",
+    "en": "Combined logic"
+  },
+  "9598f50952a88cea": {
+    "vi": "Logic kết hợp bộ lọc Pullback; logic Trigger được chỉnh ở tab Cấu hình.",
+    "en": "Pullback filter logic; Trigger logic is set in Configuration."
+  },
+  "11d4867833cec55c": {
+    "vi": "Loopback 127.0.0.1 • Heartbeat liên tục",
+    "en": "Loopback 127.0.0.1 • Continuous heartbeat"
+  },
+  "3bfbf92340103cf7": {
+    "vi": "Loại",
+    "en": "Type"
+  },
+  "523f8059a0ae022a": {
+    "vi": "Loại cấu hình",
+    "en": "Configuration type"
+  },
+  "ef379944557c2db1": {
+    "vi": "Loại tài khoản",
+    "en": "Account type"
+  },
+  "c22768166a888374": {
+    "vi": "Lãi/Lỗ",
+    "en": "Profit/Loss"
+  },
+  "1a51692b3430fb20": {
+    "vi": "Lý do",
+    "en": "Reason"
+  },
+  "45db3cf60e339fe7": {
+    "vi": "Lý do / Comment",
+    "en": "Reason / Comment"
+  },
+  "3393d00821d77b97": {
+    "vi": "Lưu .set",
+    "en": "Save .set"
+  },
+  "5830bd73b41d31f1": {
+    "vi": "Lưu JSON ra file • Ctrl+S. Dùng Áp dụng vào hệ thống để đổi cấu hình đang chạy.",
+    "en": "Save JSON to a file • Ctrl+S. Use Apply to system to change the active configuration."
+  },
+  "bdfc8aa9aec4bfde": {
+    "vi": "Lưu bản nháp chiến lược đang hiển thị thành file JSON.",
+    "en": "Save the displayed strategy draft as a JSON file."
+  },
+  "35d4f1ab33a3c168": {
+    "vi": "Lưu bản nháp hiện tại thành hồ sơ được chọn ở lần khởi động Engine tiếp theo.",
+    "en": "Use the current draft as the startup profile for the next Engine launch."
+  },
+  "5df37315694e88a2": {
+    "vi": "Lưu cấu hình",
+    "en": "Save configuration"
+  },
+  "32f1c93f25221869": {
+    "vi": "Lưu phiên bản",
+    "en": "Save revision"
+  },
+  "960fe6721786988d": {
+    "vi": "Lưu preset",
+    "en": "Save preset"
+  },
+  "0cb1c4d77a5a0196": {
+    "vi": "Lưu quyền rồi chọn Thủ công hoặc Tự động tại tab Lệnh & Vị thế.",
+    "en": "Save permission, then choose Manual or Automatic in Orders & Positions."
+  },
+  "dd2c8d849d74969c": {
+    "vi": "Lưu trữ dữ liệu",
+    "en": "Data storage"
+  },
+  "4e88d86a1c566c57": {
+    "vi": "Lưu để áp dụng màu và cỡ chữ. N30 Dark 100% là giao diện tham chiếu; N30 Contrast tăng tương phản.",
+    "en": "Save to apply colors and font size. N30 Dark at 100% is the reference appearance; N30 Contrast increases contrast."
+  },
+  "59a57820373065b2": {
+    "vi": "Lệnh & Vị thế",
+    "en": "Orders"
+  },
+  "cbc8601b47b64389": {
+    "vi": "Lệnh chờ",
+    "en": "Pending orders"
+  },
+  "c9ec34729b8d1889": {
+    "vi": "Lệnh chờ đang hoạt động",
+    "en": "Active pending orders"
+  },
+  "810123f2699e70e0": {
+    "vi": "Lệnh chờ đang hoạt động (0)",
+    "en": "Active pending orders (0)"
+  },
+  "923710bccc47026c": {
+    "vi": "Lệnh gần đây",
+    "en": "Recent orders"
+  },
+  "d5af83e12a32743f": {
+    "vi": "Lệnh hôm nay",
+    "en": "Orders today"
+  },
+  "08a0be11fd80e042": {
+    "vi": "Lệnh đang mở",
+    "en": "Open positions"
+  },
+  "2c0dfc72057506fc": {
+    "vi": "Lệnh đã đóng",
+    "en": "Closed trades"
+  },
+  "bfaa71a6aa22fdaf": {
+    "vi": "Lệnh được đối chiếu trực tiếp với broker.",
+    "en": "Orders are reconciled directly with the broker."
+  },
+  "a92375b5f1e19fcc": {
+    "vi": "Lịch sử giao dịch (Deals)",
+    "en": "Trade history (Deals)"
+  },
+  "58ce82b99ccdbd6d": {
+    "vi": "Lịch sử thao tác",
+    "en": "Action history"
+  },
+  "b5c8af5385a3682d": {
+    "vi": "Lọc tin",
+    "en": "News filter"
+  },
+  "bf783ab732e8e763": {
+    "vi": "Lợi nhuận",
+    "en": "Profit"
+  },
+  "217cc8e2899fcf87": {
+    "vi": "Lợi nhuận hôm nay",
+    "en": "Today's profit"
+  },
+  "bcf512fa299d15ef": {
+    "vi": "Lợi nhuận ròng",
+    "en": "Net profit"
+  },
+  "67a6021f1687b47f": {
+    "vi": "Lợi nhuận trung bình",
+    "en": "Average profit"
+  },
+  "6270b7886a32136d": {
+    "vi": "M1 OHLC deterministic parity — mô phỏng nến M1 có cùng quy tắc chiến lược với Engine.",
+    "en": "M1 OHLC replay uses the same closed-bar strategy rules as the Engine."
+  },
+  "6b1661727a31d84e": {
+    "vi": "Max DD hôm nay",
+    "en": "Maximum DD today"
+  },
+  "5570eed740a6a1c5": {
+    "vi": "Max DD trung bình",
+    "en": "Average maximum DD"
+  },
+  "413e952304dbc212": {
+    "vi": "Max lot mỗi lệnh",
+    "en": "Max lot per order"
+  },
+  "473f6f83b2467548": {
+    "vi": "Max lệnh / ngày",
+    "en": "Max trades / day"
+  },
+  "c9eae0e2f235b6b8": {
+    "vi": "Max lệnh đồng thời",
+    "en": "Max concurrent positions"
+  },
+  "78f88da024d1c962": {
+    "vi": "Mã hồ sơ",
+    "en": "Profile ID"
+  },
+  "9eca256d0e8dc458": {
+    "vi": "Mô tả",
+    "en": "Description"
+  },
+  "f8d8d35d3d717b4e": {
+    "vi": "Mở .set",
+    "en": "Open .set"
+  },
+  "2bdd11aa56b6f331": {
+    "vi": "Mở JSON, kiểm tra tham số và xác nhận trước khi áp dụng.",
+    "en": "Open JSON, review parameters and confirm before applying."
+  },
+  "ec0f7b6c33c9240d": {
+    "vi": "Mở MT5 theo đường dẫn đã chọn",
+    "en": "Open the selected MT5 terminal"
+  },
+  "e4ad521cc47a8da2": {
+    "vi": "Mở preset",
+    "en": "Open preset"
+  },
+  "449c8ab78665164d": {
+    "vi": "Mở thư mục backtest",
+    "en": "Open backtest folder"
+  },
+  "8e60d527997da2bd": {
+    "vi": "Mở thư mục dữ liệu",
+    "en": "Open data folder"
+  },
+  "087b23039ca1d602": {
+    "vi": "Mở thư mục log",
+    "en": "Open log folder"
+  },
+  "531aad8ba0e1e57c": {
+    "vi": "Mở thư mục lịch sử",
+    "en": "Open history folder"
+  },
+  "10267bc5184ddeec": {
+    "vi": "Mức",
+    "en": "Level"
+  },
+  "9709dbacb492ef03": {
+    "vi": "Mức độ",
+    "en": "Severity"
+  },
+  "d0a91ab6e983a5b7": {
+    "vi": "Mức độ:",
+    "en": "Severity:"
+  },
+  "307d0cc83af178e3": {
+    "vi": "Nghiên cứu RSI / Z",
+    "en": "RSI / Z research"
+  },
+  "c76d57b348bd2310": {
+    "vi": "Nguồn",
+    "en": "Source"
+  },
+  "dcfd8415efc0567b": {
+    "vi": "Nguồn:",
+    "en": "Source:"
+  },
+  "4df0408f8fa8cc48": {
+    "vi": "Ngày bắt đầu theo dấu thời gian MT5",
+    "en": "Start date using MT5 timestamps"
+  },
+  "fa34c5af771b00ed": {
+    "vi": "Ngày kết thúc, bao gồm cả ngày",
+    "en": "End date, inclusive"
+  },
+  "f1231b2c9aa2f32e": {
+    "vi": "Ngôn ngữ",
+    "en": "Language"
+  },
+  "2607ec7b3dea343f": {
+    "vi": "Nhận diện nhịp hồi",
+    "en": "Identify pullbacks"
+  },
+  "446c3523e11b5d6f": {
+    "vi": "Nhập JSON",
+    "en": "Import JSON"
+  },
+  "4c45ec1b91e57e9c": {
+    "vi": "Nhập gói dữ liệu",
+    "en": "Import data bundle"
+  },
+  "1e6c3c1079ec26d8": {
+    "vi": "Nhật ký",
+    "en": "Journal"
+  },
+  "860e5baefe84af19": {
+    "vi": "Nhật ký hệ thống",
+    "en": "System journal"
+  },
+  "54929e087d480e99": {
+    "vi": "Nến Nhật",
+    "en": "Candlesticks"
+  },
+  "d4a090f67179271e": {
+    "vi": "P/L đã thực hiện",
+    "en": "Realized P/L"
+  },
+  "487b844fbcf41b9a": {
+    "vi": "Phiên giao dịch",
+    "en": "Trading session"
+  },
+  "f5e92e4f86e83c97": {
+    "vi": "Phiên giao dịch & Tin tức",
+    "en": "Trading sessions & News"
+  },
+  "298c5641137adac1": {
+    "vi": "Phiên thị trường",
+    "en": "Market sessions"
+  },
+  "3841e861038ddd95": {
+    "vi": "Phạm vi tham số tối ưu",
+    "en": "Optimization parameter ranges"
+  },
+  "02fde5e3de280156": {
+    "vi": "Phần trăm (%)",
+    "en": "Percentage (%)"
+  },
+  "87e34bc5906ff4a1": {
+    "vi": "Preset cấu hình",
+    "en": "Configuration preset"
+  },
+  "f5e71f4689fbaa1f": {
+    "vi": "Preset hiện tại",
+    "en": "Current preset"
+  },
+  "6083e2fbbd7dd613": {
+    "vi": "Preset tối ưu",
+    "en": "Optimizer preset"
+  },
+  "e5afd6473fffc778": {
+    "vi": "Profile từ Engine",
+    "en": "Profile from Engine"
+  },
+  "41d789978d3b1406": {
+    "vi": "Pullback & điều kiện hồi",
+    "en": "Pullback & reversal conditions"
+  },
+  "13cb8cc0d5e8ddc3": {
+    "vi": "Python Bridge (Khuyến nghị)",
+    "en": "Python Bridge (Recommended)"
+  },
+  "92ade541cd0e3f02": {
+    "vi": "Quyền & Bảo mật tài khoản",
+    "en": "Account permissions"
+  },
+  "7de7a0c34a3a4ee0": {
+    "vi": "Quản lý cấu hình, kết nối, bảo mật và tùy chọn hoạt động của N30 Control Center",
+    "en": "Manage configuration, connection, permissions and operation of N30 Control Center"
+  },
+  "f9f6d24ac95e0a5d": {
+    "vi": "Quản lý sau vào",
+    "en": "Position management"
+  },
+  "4cb6c9b94424c640": {
+    "vi": "Quản lý set",
+    "en": "Manage sets"
+  },
+  "5d195f4648aae408": {
+    "vi": "Rủi ro hiện tại",
+    "en": "Current risk"
+  },
+  "fec135458dc1a88d": {
+    "vi": "Sao lưu & Khôi phục",
+    "en": "Backup & Restore"
+  },
+  "5f43350857704865": {
+    "vi": "Sao lưu trước thay đổi",
+    "en": "Back up before changes"
+  },
+  "78b04a746f94aead": {
+    "vi": "Sharpe trung bình",
+    "en": "Average Sharpe"
+  },
+  "45bb2ac5b671fd2c": {
+    "vi": "Symbol / sẵn sàng / lần reset:",
+    "en": "Symbol / ready / last reset:"
+  },
+  "c8f564fbf8b8cc6b": {
+    "vi": "Số giai đoạn (folds)",
+    "en": "Number of folds"
+  },
+  "eca31d98e6a0d9a5": {
+    "vi": "Số lệnh",
+    "en": "Trade count"
+  },
+  "d9a0d7f42b2b7d58": {
+    "vi": "Tab chưa triển khai",
+    "en": "Tab not implemented"
+  },
+  "f2f1607c0c07fff0": {
+    "vi": "Tham số",
+    "en": "Parameters"
+  },
+  "a40edc63bbb9f895": {
+    "vi": "Tham số bổ sung, dữ liệu và tín hiệu gần nhất",
+    "en": "Extra parameters, data and latest signal"
+  },
+  "a90438bf7d9a319c": {
+    "vi": "Tham số chính",
+    "en": "Main parameters"
+  },
+  "fc29e7e6df308b3b": {
+    "vi": "Thao tác",
+    "en": "Actions"
+  },
+  "f4bdd290d784c059": {
+    "vi": "Thao tác hôm nay",
+    "en": "Actions today"
+  },
+  "f3cc76b2c772967f": {
+    "vi": "Thao tác nhanh",
+    "en": "Quick actions"
+  },
+  "665549f12fdee2a3": {
+    "vi": "Theo dõi hoạt động chi tiết của hệ thống, EA và các thành phần giao dịch",
+    "en": "Detailed system, EA and trading component activity"
+  },
+  "0a1f76228ec40bcc": {
+    "vi": "Theo dữ liệu",
+    "en": "From data"
+  },
+  "c5eeaa6e10f06115": {
+    "vi": "Theo lựa chọn người dùng.",
+    "en": "According to user selection."
+  },
+  "c16ab2d850733306": {
+    "vi": "Thiết lập khung thời gian, bộ lọc, điều kiện kích hoạt và quản lý lệnh theo quy tắc N30.",
+    "en": "Configure timeframes, filters, triggers and position management with N30 rules."
+  },
+  "9e38c64004e8bda8": {
+    "vi": "Thiết lập đầy đủ thông số cho hệ thống giao dịch tự động - XAUUSD",
+    "en": "Full configuration for the XAUUSD automated trading system"
+  },
+  "a9b656f50b4edb64": {
+    "vi": "Thông báo",
+    "en": "Notifications"
+  },
+  "4aa16c9282a68669": {
+    "vi": "Thông tin",
+    "en": "Information"
+  },
+  "dec304f22e1b807d": {
+    "vi": "Thông tin chiến lược (Realtime)",
+    "en": "Strategy information (Live)"
+  },
+  "e621701cf5b1e362": {
+    "vi": "Thông tin file",
+    "en": "File information"
+  },
+  "26ce69687724b412": {
+    "vi": "Thông tin hệ thống",
+    "en": "System information"
+  },
+  "15b3cf5bb57c06a9": {
+    "vi": "Thông điệp",
+    "en": "Message"
+  },
+  "30898118d6cd55e4": {
+    "vi": "Thông điệp:",
+    "en": "Message:"
+  },
+  "3df7f939ee6fca76": {
+    "vi": "Thư mục backtest",
+    "en": "Backtest folder"
+  },
+  "56f33f461bc1ad85": {
+    "vi": "Thư mục dữ liệu",
+    "en": "Data folder"
+  },
+  "4ef5cf10211bb0a0": {
+    "vi": "Thư mục log",
+    "en": "Log folder"
+  },
+  "d42af8a38bdbc882": {
+    "vi": "Thư mục lịch sử MT5",
+    "en": "MT5 history folder"
+  },
+  "2b96b6e309248b0f": {
+    "vi": "Thư mục sao lưu",
+    "en": "Backup folder"
+  },
+  "e7d11849cea48274": {
+    "vi": "Thư viện hồ sơ",
+    "en": "Profile library"
+  },
+  "77dd21dd80b5070b": {
+    "vi": "Thị trường",
+    "en": "Market"
+  },
+  "b295fd620d82e277": {
+    "vi": "Thời gian",
+    "en": "Time"
+  },
+  "c0bb553f31237883": {
+    "vi": "Thời gian chạy",
+    "en": "Runtime"
+  },
+  "b590663e05b2e26d": {
+    "vi": "Thời gian giữ",
+    "en": "Holding time"
+  },
+  "b2121795d12f8dc6": {
+    "vi": "Thời gian đã chạy",
+    "en": "Elapsed time"
+  },
+  "fbe0ffb4ddd272cd": {
+    "vi": "Thời gian:",
+    "en": "Time:"
+  },
+  "8c544b74093bd5cc": {
+    "vi": "Thủ công",
+    "en": "Manual"
+  },
+  "76f246720a934bc0": {
+    "vi": "Tick Bid/Ask thật",
+    "en": "Observed Bid/Ask ticks"
+  },
+  "d527a868c3a8eb84": {
+    "vi": "Tick giữ nguyên dấu thời gian MT5; spread thực tế. Thông số hợp đồng và lịch phiên hiện tại được ghi rõ trong dữ liệu để kiểm tra trước khi dùng cho giai đoạn cũ.",
+    "en": "Original MT5 timestamps and observed spread are preserved. Current contract and session assumptions are recorded for review before historical use."
+  },
+  "52a5def3d9497bbd": {
+    "vi": "Tin tức quan trọng (Hôm nay)",
+    "en": "Important news (Today)"
+  },
+  "749f45b173a7a71c": {
+    "vi": "Tin tức, thời gian tránh giao dịch",
+    "en": "News and no-entry windows"
+  },
+  "e59478450504f4b8": {
+    "vi": "Tiến độ",
+    "en": "Progress"
+  },
+  "9245be589af94d31": {
+    "vi": "Tiến độ gói",
+    "en": "Bundle progress"
+  },
+  "690829f87a103acd": {
+    "vi": "Tiếng Việt",
+    "en": "Tiếng Việt"
+  },
+  "a01402b426ebd761": {
+    "vi": "Top 10 bộ tham số tốt nhất",
+    "en": "Top 10 parameter sets"
+  },
+  "ebe2ccb4a480f518": {
+    "vi": "Toàn màn hình",
+    "en": "Full screen"
+  },
+  "3499d617b377d679": {
+    "vi": "Trung tâm công cụ",
+    "en": "Tools center"
+  },
+  "54fb4b2e456fd4aa": {
+    "vi": "Trình chỉnh sửa cấu hình",
+    "en": "Configuration editor"
+  },
+  "cb31de8160c9d623": {
+    "vi": "Trạng thái",
+    "en": "Status"
+  },
+  "c315843d2c9efa67": {
+    "vi": "Trạng thái EA",
+    "en": "EA status"
+  },
+  "e897b44e29a3a662": {
+    "vi": "Trạng thái thực thi",
+    "en": "Execution status"
+  },
+  "efc99a39e14bcb6d": {
+    "vi": "Trạng thái tối ưu",
+    "en": "Optimization status"
+  },
+  "8037ab771c4d8b30": {
+    "vi": "Trạng thái điều kiện (Realtime)",
+    "en": "Condition status (Live)"
+  },
+  "8707037312d87dc9": {
+    "vi": "Trạng thái điều kiện đa khung thời gian",
+    "en": "Multi-timeframe condition status"
+  },
+  "d0a746078225ed05": {
+    "vi": "Trục X",
+    "en": "X axis"
+  },
+  "859088b15b04d9e9": {
+    "vi": "Trục Y",
+    "en": "Y axis"
+  },
+  "1e25fd540fe6a3b0": {
+    "vi": "Tài khoản (Login)",
+    "en": "Account login"
+  },
+  "33ea5c3e67976be0": {
+    "vi": "Tài khoản giao dịch",
+    "en": "Trading account"
+  },
+  "4baa11bc78273b13": {
+    "vi": "Tài khoản, lot, rủi ro, giới hạn",
+    "en": "Account, volume, risk and limits"
+  },
+  "8108e095d4fadad1": {
+    "vi": "Tài nguyên hệ thống",
+    "en": "System resources"
+  },
+  "89c098aefe6a0dc4": {
+    "vi": "Tài nguyên tính toán",
+    "en": "Compute resources"
+  },
+  "8edd8f139923b2d4": {
+    "vi": "Tên chiến lược",
+    "en": "Strategy name"
+  },
+  "87ae432c9f654c1e": {
+    "vi": "Tìm kiếm",
+    "en": "Search"
+  },
+  "a13c0a542fad5ba6": {
+    "vi": "Tìm kiếm bộ tham số tối ưu cho XAUUSD bằng backtest đa luồng",
+    "en": "Explore XAUUSD parameters with parallel backtests"
+  },
+  "51f67f928c9d647a": {
+    "vi": "Tìm kiếm trong file",
+    "en": "Search in file"
+  },
+  "a204d99f40c62b9e": {
+    "vi": "Tìm nhịp hồi để vào lệnh",
+    "en": "Find pullbacks for entry"
+  },
+  "19d9435a27ba9bfe": {
+    "vi": "Tìm tham số…",
+    "en": "Find parameter…"
+  },
+  "26ee6e2d24b01ecc": {
+    "vi": "Tìm tiếp",
+    "en": "Find next"
+  },
+  "69b101d30d89cd8f": {
+    "vi": "Tìm trong JSON…",
+    "en": "Find in JSON…"
+  },
+  "6fbf55b89486c2c8": {
+    "vi": "Tình trạng nhật ký",
+    "en": "Journal status"
+  },
+  "09344a08177450fe": {
+    "vi": "Tín hiệu gần nhất",
+    "en": "Latest signal"
+  },
+  "ec8770d6314748a6": {
+    "vi": "Tín hiệu vào lệnh chính xác",
+    "en": "Entry confirmation signal"
+  },
+  "329cb4fcbd0bcd8f": {
+    "vi": "Tính cả spread hiện tại, phí tối đa và trượt giá từ profile; làm tròn xuống theo broker.",
+    "en": "Includes current spread, maximum fees and configured slippage; rounds down to the broker volume step."
+  },
+  "ba189c6d55f2bcbb": {
+    "vi": "Tính lot theo mức rủi ro",
+    "en": "Calculate lot from risk"
+  },
+  "740a236889b3b756": {
+    "vi": "Tính năng chính:",
+    "en": "Features:"
+  },
+  "4b6735949861dba2": {
+    "vi": "Tính toàn vẹn replay",
+    "en": "Replay integrity"
+  },
+  "598c1b2664898a6f": {
+    "vi": "Tùy chọn",
+    "en": "Options"
+  },
+  "3ead156489fb3b4a": {
+    "vi": "Tải / Lưu file .set",
+    "en": "Load / Save .set"
+  },
+  "46140fa81747ba87": {
+    "vi": "Tải lại",
+    "en": "Reload"
+  },
+  "248874316eab5b03": {
+    "vi": "Tải lại cấu hình từ Engine",
+    "en": "Reload configuration from Engine"
+  },
+  "ae4c5f29c2b3e316": {
+    "vi": "Tải lịch sử MT5",
+    "en": "Download MT5 history"
+  },
+  "bbe9437a6a7285de": {
+    "vi": "Tải nến đóng của 9 khung thời gian MT5 cung cấp. Tiến độ và giới hạn được lưu cùng CSV.",
+    "en": "Download closed bars for all nine MT5 timeframes. Progress and coverage limits are stored with the CSV files."
+  },
+  "bd0aed4975f43409": {
+    "vi": "Tải preset",
+    "en": "Load preset"
+  },
+  "35c27078d270bf66": {
+    "vi": "Tải profile đã lưu; chờ dữ liệu mới trước khi đánh giá chiến lược.",
+    "en": "Restore the saved profile; wait for fresh data before evaluating the strategy."
+  },
+  "d2f8f7f292981fa5": {
+    "vi": "Tải tick Bid/Ask",
+    "en": "Download Bid/Ask ticks"
+  },
+  "a131089cd2e6a6df": {
+    "vi": "Tải toàn bộ từ MT5",
+    "en": "Download full MT5 history"
+  },
+  "49c73a3150d77038": {
+    "vi": "Tất cả",
+    "en": "All"
+  },
+  "4ab123688afec6b5": {
+    "vi": "Tất cả thời gian",
+    "en": "All time"
+  },
+  "ecffb0308da56418": {
+    "vi": "Tất cả điều kiện",
+    "en": "All conditions"
+  },
+  "16ee09145b01490b": {
+    "vi": "Tốc độ",
+    "en": "Speed"
+  },
+  "ef7b6c69c6e5769b": {
+    "vi": "Tối ưu",
+    "en": "Optimizer"
+  },
+  "4d6293c65211ad65": {
+    "vi": "Tối ưu chiến lược - Parameter Sweep",
+    "en": "Strategy Optimization - Parameter Sweep"
+  },
+  "3a35d1c318075019": {
+    "vi": "Tổ hợp: —",
+    "en": "Combinations: —"
+  },
+  "e9a7e6963c579da2": {
+    "vi": "Tổng P/L đang mở",
+    "en": "Total open P/L"
+  },
+  "c7010640708d3aec": {
+    "vi": "Tổng lãi / Tổng lỗ",
+    "en": "Gross profit / Gross loss"
+  },
+  "cf9b85f3c8b573e6": {
+    "vi": "Tổng mức tiếp xúc",
+    "en": "Total exposure"
+  },
+  "120adc28a8f81b02": {
+    "vi": "Tổng quan",
+    "en": "Overview"
+  },
+  "e70626eaf8c57ef8": {
+    "vi": "Tổng quan nhật ký",
+    "en": "Journal overview"
+  },
+  "5627b53ece48513d": {
+    "vi": "Tổng số lệnh",
+    "en": "Total trades"
+  },
+  "00b73cbf4c5423fe": {
+    "vi": "Tổng tổ hợp",
+    "en": "Total combinations"
+  },
+  "eaf8fd8c9ca9f33e": {
+    "vi": "Tổng: 0 kết quả",
+    "en": "Total: 0 results"
+  },
+  "695f892aecf7e875": {
+    "vi": "Từ ngày",
+    "en": "From date"
+  },
+  "3fa3a3dd904f66ee": {
+    "vi": "Tự khởi động lại khi lỗi",
+    "en": "Restart Engine after a failure"
+  },
+  "dfee8adcaa2cf4c3": {
+    "vi": "Tự động khởi động Engine",
+    "en": "Start Engine automatically"
+  },
+  "61b8c9bcc6a2f7ca": {
+    "vi": "Tự động khởi động cùng Windows",
+    "en": "Start with Windows"
+  },
+  "1648715d7c160fac": {
+    "vi": "Tỷ lệ thắng",
+    "en": "Win rate"
+  },
+  "a0174eb986c18cb0": {
+    "vi": "Tỷ lệ train / test",
+    "en": "Train / test ratio"
+  },
+  "7f38f5a0e962b585": {
+    "vi": "Vị thế đang mở (0)",
+    "en": "Open positions (0)"
+  },
+  "61f2e1dc415de7c4": {
+    "vi": "Vốn ban đầu:",
+    "en": "Starting balance:"
+  },
+  "ecb332851a487933": {
+    "vi": "Vốn:",
+    "en": "Balance:"
+  },
+  "068be052b9055203": {
+    "vi": "Warm-up / dữ liệu",
+    "en": "Warm-up / data"
+  },
+  "8b4c4e3246e3723c": {
+    "vi": "Warm-up: chờ dữ liệu thật.",
+    "en": "Warm-up: waiting for live data."
+  },
+  "a427942a7d17effd": {
+    "vi": "Winrate trung bình",
+    "en": "Average win rate"
+  },
+  "21af1018b2d15693": {
+    "vi": "Xem báo cáo",
+    "en": "View report"
+  },
+  "44aeb8cb93acb03d": {
+    "vi": "Xem tất cả",
+    "en": "View all"
+  },
+  "9fbf128d64b2619f": {
+    "vi": "Xuất JSON",
+    "en": "Export JSON"
+  },
+  "fef6e03701b80c31": {
+    "vi": "Xuất gói dữ liệu",
+    "en": "Export data bundle"
+  },
+  "22868495abb27e68": {
+    "vi": "Xuất toàn bộ cấu hình canonical đang áp dụng thành JSON.",
+    "en": "Export the complete active canonical profile as JSON."
+  },
+  "9e34822c8ad30d7f": {
+    "vi": "Xuất toàn bộ lịch sử đã tải phù hợp bộ lọc symbol, cùng vị thế và lệnh chờ hiện tại.",
+    "en": "Export all downloaded history matching the symbol filter, with current positions and pending orders."
+  },
+  "febe6be9649c5c5f": {
+    "vi": "Xác nhận trước khi đóng / sửa / hủy",
+    "en": "Confirm before closing, modifying or cancelling"
+  },
+  "6b7f7814e00fd267": {
+    "vi": "Xác nhận vào lệnh",
+    "en": "Entry confirmation"
+  },
+  "62e0add88f465653": {
+    "vi": "Xác nhận đặt lệnh",
+    "en": "Confirm order"
+  },
+  "41e6b24d883b4716": {
+    "vi": "Xác định xu hướng chính",
+    "en": "Determine the main trend"
+  },
+  "0c8e1fbc4d542801": {
+    "vi": "Xây dựng chiến lược giao dịch",
+    "en": "Build a trading strategy"
+  },
+  "e4b7995dd4df108a": {
+    "vi": "{}{ }  Định dạng",
+    "en": "{}{ }  Format"
+  },
+  "804ad55c828c1f31": {
+    "vi": "Áp dụng cấu hình",
+    "en": "Apply configuration"
+  },
+  "b372436adab61fc6": {
+    "vi": "Áp dụng cấu hình nhanh",
+    "en": "Apply quick configuration"
+  },
+  "8db71ed28b0f2f14": {
+    "vi": "×",
+    "en": "×"
+  },
+  "6644db70136a08f6": {
+    "vi": "Đa khung thời gian - Pullback",
+    "en": "Multi-timeframe - Pullback"
+  },
+  "1bd6791ec61edf31": {
+    "vi": "Đa khung thời gian - Trigger",
+    "en": "Multi-timeframe - Trigger"
+  },
+  "d722745443ae3781": {
+    "vi": "Đang chuẩn bị Engine...",
+    "en": "Preparing Engine..."
+  },
+  "71fa287879b7912a": {
+    "vi": "Đang chờ Engine...",
+    "en": "Waiting for Engine..."
+  },
+  "257f6625e3f82dc2": {
+    "vi": "Đang chờ Python Engine...",
+    "en": "Waiting for Python Engine..."
+  },
+  "b96f70fdda6e8a9e": {
+    "vi": "Đang chờ số đo",
+    "en": "Waiting for measurements"
+  },
+  "4306c056103fad99": {
+    "vi": "Đang khởi tạo Control Center...",
+    "en": "Starting Control Center..."
+  },
+  "e28597a0f65e0d87": {
+    "vi": "Đang tải quy tắc chiến lược.",
+    "en": "Loading strategy rules."
+  },
+  "de8cb798e1fe32fc": {
+    "vi": "Đang tải thông tin lưu trữ…",
+    "en": "Loading storage information…"
+  },
+  "42d77f3ae5dbd3f4": {
+    "vi": "Đang tải…",
+    "en": "Loading…"
+  },
+  "e84898db736f9ec3": {
+    "vi": "Đang xử lý",
+    "en": "Processing"
+  },
+  "ac6325923439c790": {
+    "vi": "Điều chỉnh giới hạn trong tab Cấu hình.",
+    "en": "Change limits in the Configuration tab."
+  },
+  "32fee1a7ff5feb2b": {
+    "vi": "Điều kiện Pullback",
+    "en": "Pullback conditions"
+  },
+  "eb8aca06dfc879d5": {
+    "vi": "Đã dừng",
+    "en": "Stopped"
+  },
+  "14eefbabb79b7cdf": {
+    "vi": "Đã hoàn thành",
+    "en": "Completed"
+  },
+  "e72d13e31a137a58": {
+    "vi": "Đã xác nhận",
+    "en": "Confirmed"
+  },
+  "60201f2289d9a84b": {
+    "vi": "Đường cong vốn (Equity Curve)",
+    "en": "Equity curve"
+  },
+  "7a387a758a6e86db": {
+    "vi": "Đường dẫn & Dữ liệu",
+    "en": "Paths & Data"
+  },
+  "512f5c1bdef0ea74": {
+    "vi": "Đường dẫn MT5",
+    "en": "MT5 path"
+  },
+  "d650a93468b83cb5": {
+    "vi": "Đến ngày",
+    "en": "To date"
+  },
+  "6e47e82686b79cf1": {
+    "vi": "Định dạng       JSON",
+    "en": "Format       JSON"
+  },
+  "8815d39b987d62f9": {
+    "vi": "Định dạng JSON",
+    "en": "Format JSON"
+  },
+  "dc47805aa12690c8": {
+    "vi": "Đọc tick quan sát; lệnh và quản lý khớp từ tick kế tiếp. Không suy diễn đường giá từ nến.",
+    "en": "Replay observed ticks; orders and management execute from the next quote. No intrabar price path is inferred from candles."
+  },
+  "4554e4ca6cd8c6f5": {
+    "vi": "Đọc trạng thái hiện tại",
+    "en": "Read current status"
+  },
+  "4a4e22b404cca3cd": {
+    "vi": "Đồng bộ trước khôi phục giao dịch",
+    "en": "Sync before restoring trading"
+  },
+  "522cff2cd1933e90": {
+    "vi": "Độ ổn định (Stability)",
+    "en": "Stability"
+  },
+  "fa69ae37bae25532": {
+    "vi": "ƒ  Chỉ báo",
+    "en": "ƒ  Indicators"
+  },
+  "cb656cbb645c3140": {
+    "vi": "Ảnh chụp gần nhất • tải lịch sử để tra cứu đầy đủ",
+    "en": "Latest snapshot • download full history for complete queries"
+  },
+  "af12581b2fc87874": {
+    "vi": "← Mới hơn",
+    "en": "← Newer"
+  },
+  "e73b477a93a2c31a": {
+    "vi": "↗   Kiểm tra kết nối Bridge",
+    "en": "↗   Check Bridge connection"
+  },
+  "bd29f3dfa329b4da": {
+    "vi": "↗  Kiểm tra kết nối",
+    "en": "↗  Check connection"
+  },
+  "b3df03fab1c060e9": {
+    "vi": "↥  Sao lưu ngay",
+    "en": "↥  Back up now"
+  },
+  "33bcbba67c55cbf1": {
+    "vi": "↧  Khôi phục",
+    "en": "↧  Restore"
+  },
+  "6788ea255aa16710": {
+    "vi": "↶  Khôi phục mặc định",
+    "en": "↶  Restore defaults"
+  },
+  "5dc488857b5855d9": {
+    "vi": "↶  Mặc định",
+    "en": "↶  Defaults"
+  },
+  "d6fafb3017013271": {
+    "vi": "↻  Làm mới",
+    "en": "↻  Refresh"
+  },
+  "db3f0c0589163588": {
+    "vi": "↻  Tải lại",
+    "en": "↻  Reload"
+  },
+  "1e4b96175ac072cd": {
+    "vi": "↻ Kiểm tra lại",
+    "en": "↻ Check again"
+  },
+  "f3a29de96b38b604": {
+    "vi": "⇄   So sánh Preset",
+    "en": "⇄   Compare presets"
+  },
+  "30af933e9b6e0912": {
+    "vi": "⇄  So sánh kết quả",
+    "en": "⇄  Compare results"
+  },
+  "f99cc9a29be078f3": {
+    "vi": "⇅   Xuất / Nhập dữ liệu",
+    "en": "⇅   Export / Import data"
+  },
+  "3caf314c164e1f9a": {
+    "vi": "⊘  Hủy tất cả lệnh chờ",
+    "en": "⊘  Cancel all pending orders"
+  },
+  "c0b61543bab67062": {
+    "vi": "⌁   Chẩn đoán hệ thống",
+    "en": "⌁   System diagnostics"
+  },
+  "aba0a31d58d81bee": {
+    "vi": "⌘  Logic kết hợp điều kiện",
+    "en": "⌘  Condition combination logic"
+  },
+  "0033ff3d40f38dbf": {
+    "vi": "■  DỪNG",
+    "en": "■  STOP"
+  },
+  "6ba4d4f5a44de5cf": {
+    "vi": "■  Dừng chờ",
+    "en": "■  Stop waiting"
+  },
+  "881cab5fd1353d7b": {
+    "vi": "■ Dừng",
+    "en": "■ Stop"
+  },
+  "a116e0bfe0d31497": {
+    "vi": "■ Hủy chạy",
+    "en": "■ Cancel run"
+  },
+  "a7fbbca0a910c5bc": {
+    "vi": "▣  Lưu bản nháp",
+    "en": "▣  Save draft"
+  },
+  "7eceb9acc612e9d2": {
+    "vi": "▣  Lưu chiến lược",
+    "en": "▣  Save strategy"
+  },
+  "5574700e06fb2b0a": {
+    "vi": "▣  Lưu cài đặt",
+    "en": "▣  Save settings"
+  },
+  "b3109196955d13fa": {
+    "vi": "▤   Kiểm tra file tin tức",
+    "en": "▤   Check news file"
+  },
+  "f808a1498dc816e9": {
+    "vi": "▤   Trình chỉnh sửa cấu hình",
+    "en": "▤   Configuration editor"
+  },
+  "dcaeed7d6b707ff8": {
+    "vi": "▤  Lưu thành…",
+    "en": "▤  Save as…"
+  },
+  "ba9c3e558dbdd2ac": {
+    "vi": "▤  Mở file cấu hình…",
+    "en": "▤  Open configuration…"
+  },
+  "2fe86732e9ac713f": {
+    "vi": "▥   Kiểm tra chỉ báo",
+    "en": "▥   Check indicators"
+  },
+  "953b63a81a9118ea": {
+    "vi": "▥  Đóng lỗ",
+    "en": "▥  Close losers"
+  },
+  "a24dde8687c91279": {
+    "vi": "▦   Tính toán rủi ro",
+    "en": "▦   Risk calculator"
+  },
+  "96e7f58ed91baa99": {
+    "vi": "▦  Bộ lọc và điều kiện chiến lược",
+    "en": "▦  Strategy filters and conditions"
+  },
+  "3469c665635e93ed": {
+    "vi": "▶  BẮT ĐẦU TỐI ƯU",
+    "en": "▶  START OPTIMIZER"
+  },
+  "6a6caa090894634a": {
+    "vi": "▶  Bắt đầu chờ tín hiệu",
+    "en": "▶  Wait for a signal"
+  },
+  "aef258a670fc392c": {
+    "vi": "▶  CHẠY WALK-FORWARD",
+    "en": "▶  RUN WALK-FORWARD"
+  },
+  "8292e40a0a8e99aa": {
+    "vi": "▶  Chạy Backtest",
+    "en": "▶  Run Backtest"
+  },
+  "4cac9f7792beca47": {
+    "vi": "▶ Tự động",
+    "en": "▶ Automatic"
+  },
+  "7bed9701de5f81da": {
+    "vi": "▶ Áp dụng cấu hình",
+    "en": "▶ Apply configuration"
+  },
+  "74f5c7f800731d34": {
+    "vi": "▷  Áp dụng vào hệ thống",
+    "en": "▷  Apply to system"
+  },
+  "917be122aa534c14": {
+    "vi": "◉  Mẹo nhanh",
+    "en": "◉  Quick tip"
+  },
+  "4a49a9658ef00dea": {
+    "vi": "◉  Đóng tất cả vị thế",
+    "en": "◉  Close all positions"
+  },
+  "28505fa47223dda8": {
+    "vi": "◎   Thông tin Symbol & Phiên",
+    "en": "◎   Symbol & Session information"
+  },
+  "5f8e0cfb6014c5dd": {
+    "vi": "●  Chưa kiểm tra",
+    "en": "●  Not checked"
+  },
+  "67161c3350dbae0d": {
+    "vi": "●  Chờ MT5",
+    "en": "●  Waiting for MT5"
+  },
+  "b5268e3d819cb9ce": {
+    "vi": "◔  Đóng một phần",
+    "en": "◔  Partial close"
+  },
+  "5dd42ba409ad3390": {
+    "vi": "◷  Open Filter (Thời gian giao dịch)",
+    "en": "◷  Open Filter (Trading hours)"
+  },
+  "abe01fa5a45dbba9": {
+    "vi": "☆  Đặt làm mặc định",
+    "en": "☆  Use as startup default"
+  },
+  "506094ba0e4df180": {
+    "vi": "♙   Quản lý hồ sơ (Profile)",
+    "en": "♙   Profile manager"
+  },
+  "3210ce532965cd42": {
+    "vi": "⚙  Điều kiện nâng cao (Tùy chọn)",
+    "en": "⚙  Advanced conditions (Optional)"
+  },
+  "dfcf4468ef3e693f": {
+    "vi": "⛶  Toàn màn hình",
+    "en": "⛶  Full screen"
+  },
+  "f31df443ae928d37": {
+    "vi": "✓  Kiểm tra & Xác thực cấu hình",
+    "en": "✓  Validate configuration"
+  },
+  "72134d67c0b17ebd": {
+    "vi": "✓  Kiểm tra cú pháp",
+    "en": "✓  Check syntax"
+  },
+  "40af6a6fb0f6ec3c": {
+    "vi": "✔  Chỉnh sửa trực tiếp với tô màu cú pháp\n✔  Kiểm tra cú pháp JSON / schema\n✔  Sao lưu và khôi phục nhanh\n✔  Áp dụng cấu hình vào hệ thống\n✔  Quyền giao dịch do người dùng chọn",
+    "en": "✔  Edit with syntax highlighting\n✔  Validate JSON and schema\n✔  Quick backup and restore\n✔  Apply configuration to the system\n✔  Trading permissions chosen by the user"
+  },
+  "6ba9c0a4ede24d15": {
+    "vi": "⬆  Chọn dữ liệu M1",
+    "en": "⬆  Choose M1 data"
+  },
+  "95f4c7f6d65b29ca": {
+    "vi": "⬆  Nhập .set",
+    "en": "⬆  Import .set"
+  },
+  "52e388a578baa175": {
+    "vi": "⬆  Nhập JSON",
+    "en": "⬆  Import JSON"
+  },
+  "d59cbfd1904f451e": {
+    "vi": "⬆  Tải từ file",
+    "en": "⬆  Load from file"
+  },
+  "e65d15fbaa054d5b": {
+    "vi": "⬇  Tải chiến lược",
+    "en": "⬇  Load strategy"
+  },
+  "b0fdfad3e822de32": {
+    "vi": "⬇  Xuất .set",
+    "en": "⬇  Export .set"
+  },
+  "9fed9f813f7b7365": {
+    "vi": "⬇  Xuất báo cáo",
+    "en": "⬇  Export report"
+  },
+  "b7768ac622b6e19f": {
+    "vi": "⬇  Xuất cấu hình",
+    "en": "⬇  Export configuration"
+  },
+  "f0d492dc1b08ba13": {
+    "vi": "⬇  Xuất log",
+    "en": "⬇  Export log"
+  },
+  "ae8dc6a24ed1d722": {
+    "vi": "⬟  Chuyển SL về BE",
+    "en": "⬟  Move SL to breakeven"
+  },
+  "6ab1e9857f32274e": {
+    "vi": "💾  Lưu JSON",
+    "en": "💾  Save JSON"
+  },
+  "54d4e133c5a1cea9": {
+    "vi": "💾  Lưu kết quả",
+    "en": "💾  Save result"
+  },
+  "f230d4bd477b6c87": {
+    "vi": "💾  Lưu thành...",
+    "en": "💾  Save as..."
+  },
+  "5a59e2ddb4940135": {
+    "vi": "🔎  Tìm kiếm trong nhật ký...",
+    "en": "🔎  Search journal..."
+  },
+  "ce1c0168d7fffd42": {
+    "vi": "🔖  Dấu trang",
+    "en": "🔖  Bookmarks"
+  },
+  "86b0369dec271dc4": {
+    "vi": "🗑  Mặc định",
+    "en": "🗑  Defaults"
+  },
+  "8c264171aa90795b": {
+    "vi": "🗑  Xóa kết quả",
+    "en": "🗑  Delete result"
+  },
+  "620a01a9ba95ce10": {
+    "vi": "1. Mở MT5 và gắn XAUPY Bridge vào biểu đồ XAUUSD.\n\n",
+    "en": "1. Open MT5 and attach XAUPY Bridge to the XAUUSD chart.\n\n"
+  },
+  "f26cbc4addc0d19b": {
+    "vi": "Bật",
+    "en": "On"
+  },
+  "ab265606e9c4ed84": {
+    "vi": "Bắt đầu chờ tín hiệu DEMO",
+    "en": "Wait for a DEMO signal"
+  },
+  "e01800bc71ff4eec": {
+    "vi": "Bỏ thay đổi",
+    "en": "Discard changes"
+  },
+  "8731191ac2c96cef": {
+    "vi": "Chiến lược sẽ tính lại trạng thái từ cấu hình mới. Quyền giao dịch giữ theo lựa chọn hiện tại.",
+    "en": "The strategy will recalculate using the new configuration. Trading permissions remain as selected."
+  },
+  "20537235eece4909": {
+    "vi": "Chưa có dữ liệu lệnh từ MT5. Quyền giao dịch được chọn tại tab Lệnh & Vị thế.",
+    "en": "No order data received from MT5. Choose trading permissions in Orders & Positions."
+  },
+  "9ce9e1520a6b3249": {
+    "vi": "Chưa có số đo",
+    "en": "No measurements yet"
+  },
+  "ffdf77e69ad4ec77": {
+    "vi": "Chưa rõ giờ giá",
+    "en": "Quote time unavailable"
+  },
+  "658f066a522778d8": {
+    "vi": "Chưa áp dụng",
+    "en": "Not applied"
+  },
+  "daa39bbef8718ace": {
+    "vi": "Chọn file khác…",
+    "en": "Choose another file…"
+  },
+  "475956a8f6a30269": {
+    "vi": "Chọn hai lần chạy khác nhau.",
+    "en": "Select two different runs."
+  },
+  "b6c2e70054eadeb7": {
+    "vi": "Ctrl+F tìm kiếm • Ctrl+Shift+F định dạng • Ctrl+S lưu bản nháp ra file • F11 mở rộng. Áp dụng vào hệ thống thay đổi cấu hình đang chạy.",
+    "en": "Ctrl+F search • Ctrl+Shift+F format • Ctrl+S save a draft file • F11 expand. Apply changes the running configuration."
+  },
+  "c6fc216ea38782b7": {
+    "vi": "Dùng kho đã tải",
+    "en": "Use downloaded history"
+  },
+  "d5d46327a4b2656d": {
+    "vi": "EMA (ngăn bởi dấu phẩy)",
+    "en": "EMA periods (comma-separated)"
+  },
+  "f2e99e0dd9a9ac0b": {
+    "vi": "Giá đặt không hợp lệ.",
+    "en": "Invalid order price."
+  },
+  "24f0bfe2eda360b1": {
+    "vi": "Giá đặt lệnh",
+    "en": "Order price"
+  },
+  "554478e27da845a5": {
+    "vi": "Giữ bản nháp",
+    "en": "Keep draft"
+  },
+  "ce0a11fa3953aefe": {
+    "vi": "Gửi lệnh chờ",
+    "en": "Place pending order"
+  },
+  "b75bca249eb8a53a": {
+    "vi": "Gửi thay đổi",
+    "en": "Submit changes"
+  },
+  "80305c50480a03f1": {
+    "vi": "Hiển thị chỉ báo",
+    "en": "Show indicators"
+  },
+  "7d52544b3fb92d79": {
+    "vi": "Hạn tín hiệu (nến)",
+    "en": "Signal expiry (bars)"
+  },
+  "14d919547d942419": {
+    "vi": "Kho lịch sử MT5 • nến đóng và tick Bid/Ask thực tế",
+    "en": "MT5 history library • closed candles and actual Bid/Ask ticks"
+  },
+  "8552be8fa14bce6c": {
+    "vi": "Không có bản ghi phù hợp với bộ lọc hiện tại.",
+    "en": "No records match the current filters."
+  },
+  "438e5cde4a92d548": {
+    "vi": "Không tìm thấy",
+    "en": "Not found"
+  },
+  "e4ee5a33dd04a550": {
+    "vi": "Khối lượng, SL và TP lấy từ biểu mẫu bên phải; để trống SL/TP để dùng cấu hình.",
+    "en": "Volume, SL and TP come from the form on the right; leave SL/TP blank to use the configuration."
+  },
+  "f2513e55f36abfdd": {
+    "vi": "Kiểm tra và nhấn Áp dụng nếu muốn thay cấu hình đang chạy.",
+    "en": "Review and click Apply to change the running configuration."
+  },
+  "f02e1a7018013452": {
+    "vi": "Mỗi lần lưu giữ một phiên bản. Nạp bản nháp để kiểm tra trước khi áp dụng.",
+    "en": "Each save keeps a version. Load a draft to review before applying."
+  },
+  "5ff619ddef1abb53": {
+    "vi": "Nhập SL > 0, TP ≥ 0 và xác nhận tài khoản.",
+    "en": "Enter SL > 0, TP ≥ 0 and confirm the account."
+  },
+  "ca67036f2c45bd02": {
+    "vi": "Nhập giá, khối lượng hợp lệ và xác nhận tài khoản.",
+    "en": "Enter a valid price and volume, then confirm the account."
+  },
+  "71297d5dd7d8000e": {
+    "vi": "Nhập từ cần tìm",
+    "en": "Enter search text"
+  },
+  "b50e762ccc16b723": {
+    "vi": "Nạp vào bản nháp",
+    "en": "Load into draft"
+  },
+  "c7905ec8619c5176": {
+    "vi": "Nội dung đang sửa sẽ bị thay thế. Bạn có thể giữ lại để lưu hoặc áp dụng trước.",
+    "en": "Your edits will be replaced. Keep the draft to save or apply it first."
+  },
+  "6d79358229669d3b": {
+    "vi": "Quay lại",
+    "en": "Back"
+  },
+  "7d16819a4488dad2": {
+    "vi": "RSI Δ Trigger",
+    "en": "RSI Δ Trigger"
+  },
+  "4a4e8bab336e01f8": {
+    "vi": "SL (giữ hoặc thu hẹp rủi ro)",
+    "en": "SL (keep or reduce risk)"
+  },
+  "43de5540d1da7f0f": {
+    "vi": "SL ATR ×",
+    "en": "SL ATR ×"
+  },
+  "11591add86f95720": {
+    "vi": "So sánh",
+    "en": "Compare"
+  },
+  "3e1af7f3ba09b87b": {
+    "vi": "Sử dụng Control Center",
+    "en": "Using Control Center"
+  },
+  "dd247aa3d33bc572": {
+    "vi": "TP (0 để bỏ TP theo lựa chọn của bạn)",
+    "en": "TP (0 to remove TP if desired)"
+  },
+  "1e995ddaf342ce6e": {
+    "vi": "TP động: mục tiêu gốc",
+    "en": "Dynamic TP: initial target"
+  },
+  "23867ec571445bcc": {
+    "vi": "Tham số                           Min           Max          Bước",
+    "en": "Parameter                         Min           Max          Step"
+  },
+  "64e9512f4f5d1b07": {
+    "vi": "Tôi chọn áp dụng bộ tham số đã xem vào cấu hình đang dùng",
+    "en": "Apply the reviewed parameters to my current configuration"
+  },
+  "425666cd7e87b7e0": {
+    "vi": "Tôi xác nhận tài khoản và chế độ ở trên",
+    "en": "I confirm the account and mode shown above"
+  },
+  "c8688a646925f660": {
+    "vi": "Xuất báo cáo HTML",
+    "en": "Export HTML report"
+  },
+  "b4adfe1676857cb1": {
+    "vi": "Xuất profile JSON",
+    "en": "Export JSON profile"
+  },
+  "992fe281015ed941": {
+    "vi": "Xuất toàn bộ bằng chứng JSON",
+    "en": "Export all JSON evidence"
+  },
+  "a2f44560f3b1a7e6": {
+    "vi": "Xóa kết quả",
+    "en": "Delete result"
+  },
+  "56befcab348a0033": {
+    "vi": "Xóa kết quả Backtest đã lưu?",
+    "en": "Delete the saved Backtest result?"
+  },
+  "4520c5e8f50ef6b2": {
+    "vi": "Xếp hạng trên mẫu đã chạy; chưa phải bằng chứng ngoài mẫu. Chỉ các tham số bên dưới được thay đổi. Quyền giao dịch giữ theo lựa chọn hiện tại.",
+    "en": "Ranking uses the tested sample and is not out-of-sample evidence. Only the parameters below change. Trading permissions remain as selected."
+  },
+  "55653a5cf75c3ec9": {
+    "vi": "Z-score (độ lệch chuẩn tổng thể)",
+    "en": "Z-score (population standard deviation)"
+  },
+  "ff631576384c41cd": {
+    "vi": "Áp dụng",
+    "en": "Apply"
+  },
+  "cb1cdd22c611521a": {
+    "vi": "Áp dụng các thay đổi này",
+    "en": "Apply these changes"
+  },
+  "d0f6878688139433": {
+    "vi": "Áp dụng trên biểu đồ",
+    "en": "Apply to chart"
+  },
+  "5094117c7b5ded56": {
+    "vi": "Đang đọc toàn bộ lịch sử từ broker…",
+    "en": "Reading full broker history…"
+  },
+  "d34a73270124987e": {
+    "vi": "Đã xuất báo cáo.",
+    "en": "Report exported."
+  },
+  "81deb4a87cc2ff68": {
+    "vi": "Đã xuất cấu hình; bản đang chạy chưa đổi.",
+    "en": "Configuration exported; running configuration unchanged."
+  },
+  "0e69eb7224cfcf77": {
+    "vi": "Đã áp dụng",
+    "en": "Applied"
+  },
+  "5d54c2a1a341732e": {
+    "vi": "Đóng",
+    "en": "Close"
+  },
+  "232804a1a3a3645a": {
+    "vi": "Đĩa: dung lượng đã dùng · ",
+    "en": "Disk: space used · "
+  },
+  "73efff126acf864f": {
+    "vi": "Ứng dụng sẽ gửi tối đa một lệnh khi có tín hiệu mới theo cấu hình đang áp dụng, kèm SL/TP. Không tự gửi lại. Nút Dừng chờ chỉ hủy thời gian chờ, không đóng vị thế đã gửi.",
+    "en": "The application will send at most one order on a fresh signal under the active configuration, with SL/TP. It will not retry automatically. Stop waiting cancels the waiting period and does not close a submitted position."
+  },
+  "e4e18b9918779e7e": {
+    "vi": "Bỏ mặc định khởi động",
+    "en": "Clear startup default"
+  },
+  "8115d61375f81a12": {
+    "vi": "Lưu ảnh PNG",
+    "en": "Save PNG image"
+  },
+  "2713f5579d7b524e": {
+    "vi": "1. Mở MT5 và gắn XAUPY Bridge vào biểu đồ XAUUSD.\n\n2. Kiểm tra Python READY, EA Bridge kết nối và thời điểm giá. Khi nghỉ phiên, hệ thống giữ giá và nến gần nhất.\n\n3. Chỉnh tham số ở Cấu hình, xác thực rồi áp dụng. Các nút Nhập / Xuất giúp lưu profile JSON và preset MT5 .set.\n\n4. Backtest và Tối ưu sử dụng dữ liệu lịch sử đã chọn. Quyền giao dịch được chọn tại tab Lệnh & Vị thế.",
+    "en": "1. Open MT5 and attach XAUPY Bridge to the XAUUSD chart.\n\n2. Check Python READY, the EA Bridge connection and the quote time. Between sessions the latest quote and candles remain visible.\n\n3. Edit parameters in Configuration, validate and apply. Import / Export saves JSON profiles and MT5 .set presets.\n\n4. Backtest and Optimization use your selected history. Choose trading permissions in Orders & Positions."
+  },
+  "731653ed81d6f9fa": {
+    "vi": "Sửa file config, tham số EA, chiến lược",
+    "en": "Edit configuration and strategy parameters"
+  },
+  "3b135c5c3c475061": {
+    "vi": "So sánh Preset",
+    "en": "Compare presets"
+  },
+  "9a2c0560d9ed8655": {
+    "vi": "So sánh profile đang chạy với mặc định",
+    "en": "Compare the active profile with defaults"
+  },
+  "42cf840fbfda1da8": {
+    "vi": "Kiểm tra chỉ báo",
+    "en": "Check indicators"
+  },
+  "75c0724b895ba22b": {
+    "vi": "Probe indicator, tín hiệu và dữ liệu",
+    "en": "Inspect indicators, signals and data"
+  },
+  "9a7320d0dca98337": {
+    "vi": "Tính toán rủi ro",
+    "en": "Risk calculator"
+  },
+  "40c7e5f8f38f7ee3": {
+    "vi": "Khoảng SL, tick value và lot size",
+    "en": "SL distance, tick value and lot size"
+  },
+  "6331cf778aea1154": {
+    "vi": "Thông tin Symbol & Phiên",
+    "en": "Symbol & Session information"
+  },
+  "7066042a492610a6": {
+    "vi": "Thông số giao dịch, spread, phiên",
+    "en": "Contract details, spread and sessions"
+  },
+  "97b80c829b328bc5": {
+    "vi": "Kiểm tra file tin tức",
+    "en": "Check news file"
+  },
+  "3294ab26b17a4b92": {
+    "vi": "Kiểm tra lịch tin JSON từ máy",
+    "en": "Check a local news calendar JSON"
+  },
+  "cbd8dda133bfb096": {
+    "vi": "Chẩn đoán hệ thống",
+    "en": "System diagnostics"
+  },
+  "681cc6c98e9e3d16": {
+    "vi": "Kiểm tra môi trường, log, kết nối",
+    "en": "Check environment, logs and connection"
+  },
+  "9fdded3d53bcf354": {
+    "vi": "Kiểm tra kết nối Bridge",
+    "en": "Check Bridge connection"
+  },
+  "13c6a97096aeaad4": {
+    "vi": "Test kết nối EA Bridge ↔ Python",
+    "en": "Test EA Bridge ↔ Python connection"
+  },
+  "6dbff3260333c47b": {
+    "vi": "Quản lý hồ sơ (Profile)",
+    "en": "Profile manager"
+  },
+  "9aa65dfbef7b5a8c": {
+    "vi": "Lưu, tải, sao lưu cấu hình",
+    "en": "Save, load and back up profiles"
+  },
+  "19fa9d1f7eff56ef": {
+    "vi": "Xuất / Nhập dữ liệu",
+    "en": "Export / Import data"
+  },
+  "eca89b6d84eb3fce": {
+    "vi": "Xuất báo cáo, nhập cấu hình JSON",
+    "en": "Export reports and import JSON profiles"
+  },
+  "e22e751168504ca9": {
+    "vi": "Quyền giao dịch theo lựa chọn tại Lệnh & Vị thế.",
+    "en": "Trading follows the mode selected in Orders."
+  },
+  "a77d5d6f3bd9fce5": {
+    "vi": "Pullback bổ sung (VD: M3,M5)",
+    "en": "Extra pullback TFs (e.g. M3,M5)"
+  },
+  "8b48ee0dd84b93cf": {
+    "vi": "Trigger bổ sung (VD: M1,M3)",
+    "en": "Extra trigger TFs (e.g. M1,M3)"
+  },
+  "8bc51eb98465665d": {
+    "vi": "Kết hợp xác nhận thêm",
+    "en": "Extra confirmation logic"
+  },
+  "9973826efd5f8ba1": {
+    "vi": "Cách tính khối lượng",
+    "en": "Position sizing"
+  },
+  "16a8e64f9fd8d1a8": {
+    "vi": "Risk mỗi lệnh (%)",
+    "en": "Risk per trade (%)"
+  },
+  "bc1322f81c904cc1": {
+    "vi": "Lot cố định",
+    "en": "Fixed lot"
+  },
+  "e553cfe38ba1c0ee": {
+    "vi": "Lỗ tối đa ngày (%)",
+    "en": "Daily loss limit (%)"
+  },
+  "83645efea1a5cb20": {
+    "vi": "Số lệnh / ngày",
+    "en": "Trades per day"
+  },
+  "76d2f8c4217d42fb": {
+    "vi": "Số vị thế tối đa",
+    "en": "Maximum positions"
+  },
+  "1b2737cfdb09def7": {
+    "vi": "Chờ giữa lệnh (phút)",
+    "en": "Trade cooldown (min)"
+  },
+  "c7357ee1c375acee": {
+    "vi": "Số lệnh thua liên tiếp",
+    "en": "Consecutive loss limit"
+  },
+  "89e84be815c88972": {
+    "vi": "Dừng khi đạt mục tiêu",
+    "en": "Stop at daily target"
+  },
+  "ffe4f4bfbbd2b036": {
+    "vi": "Mục tiêu ngày (%)",
+    "en": "Daily target (%)"
+  },
+  "067efedd364cfcff": {
+    "vi": "Lọc theo MA xu hướng",
+    "en": "Trend MA filter"
+  },
+  "94d8cfc199088362": {
+    "vi": "Loại MA",
+    "en": "MA type"
+  },
+  "cdb3104c8c979bb5": {
+    "vi": "Chu kỳ MA",
+    "en": "MA period"
+  },
+  "4db8293e183f249d": {
+    "vi": "Giá tham chiếu",
+    "en": "Price source"
+  },
+  "105eaef6d0e3aafa": {
+    "vi": "Nến đóng cùng hướng",
+    "en": "Close on trend side"
+  },
+  "61572001b8e0fc85": {
+    "vi": "Bật lọc giá mở cửa",
+    "en": "Enable open price filter"
+  },
+  "9c68042c86d1c116": {
+    "vi": "Giá mở tham chiếu",
+    "en": "Reference open"
+  },
+  "fe0c9f15a3732e77": {
+    "vi": "Bật bộ lọc RSI",
+    "en": "Enable RSI filter"
+  },
+  "8f1ec6dee150aaaf": {
+    "vi": "Chu kỳ RSI",
+    "en": "RSI period"
+  },
+  "09eef31773315f72": {
+    "vi": "RSI mua (≤)",
+    "en": "BUY RSI (≤)"
+  },
+  "4b7a28b96451f5e1": {
+    "vi": "RSI bán (≥)",
+    "en": "SELL RSI (≥)"
+  },
+  "23c336a928c99347": {
+    "vi": "Bật Z-Score",
+    "en": "Enable Z-Score"
+  },
+  "a926d00de9b17c28": {
+    "vi": "Chu kỳ Z-Score",
+    "en": "Z-Score period"
+  },
+  "582d4310f4940ced": {
+    "vi": "Z-Score mua (≤)",
+    "en": "BUY Z-Score (≤)"
+  },
+  "9b9982c4cebcab70": {
+    "vi": "Z-Score bán (≥)",
+    "en": "SELL Z-Score (≥)"
+  },
+  "cec5ff9e3840d192": {
+    "vi": "Logic xác nhận",
+    "en": "Confirmation logic"
+  },
+  "479b1d3a2a4784ef": {
+    "vi": "Xác nhận RSI",
+    "en": "RSI confirmation"
+  },
+  "8ff37c1c35ed3b5b": {
+    "vi": "RSI đảo chiều (Δ)",
+    "en": "RSI reversal (Δ)"
+  },
+  "d4154ab2ac976e46": {
+    "vi": "Xác nhận Z-Score",
+    "en": "Z-Score confirmation"
+  },
+  "0c8ec69f78a6cb0f": {
+    "vi": "Z đảo chiều (Δ)",
+    "en": "Z reversal (Δ)"
+  },
+  "9d81cbc366894246": {
+    "vi": "Xác nhận nến đóng",
+    "en": "Confirm closed bar"
+  },
+  "a9f7d476913f716e": {
+    "vi": "Kiểu SL",
+    "en": "SL mode"
+  },
+  "879273ef9ac95c88": {
+    "vi": "SL cố định (giá)",
+    "en": "Fixed SL (price)"
+  },
+  "38b1c8ebf31f304d": {
+    "vi": "Khung ATR",
+    "en": "ATR timeframe"
+  },
+  "adf48a348b59df5a": {
+    "vi": "Hệ số ATR",
+    "en": "ATR multiplier"
+  },
+  "534bffba3b32ad35": {
+    "vi": "Khung cấu trúc",
+    "en": "Structure timeframe"
+  },
+  "7da6da991e61413b": {
+    "vi": "Số nến cấu trúc",
+    "en": "Structure lookback"
+  },
+  "81d6da24654e4133": {
+    "vi": "Đệm cấu trúc (giá)",
+    "en": "Structure buffer (price)"
+  },
+  "e5d1671245756f51": {
+    "vi": "SL tối thiểu (giá)",
+    "en": "Minimum SL (price)"
+  },
+  "f3d02574b056d013": {
+    "vi": "SL tối đa (giá)",
+    "en": "Maximum SL (price)"
+  },
+  "18b573ffbd801cfc": {
+    "vi": "Kiểu TP",
+    "en": "TP mode"
+  },
+  "39645092e6aa0b12": {
+    "vi": "TP cố định (giá)",
+    "en": "Fixed TP (price)"
+  },
+  "b7ee74012e8acbbb": {
+    "vi": "Tỷ lệ R:R",
+    "en": "R:R ratio"
+  },
+  "26c03e8d683dbacf": {
+    "vi": "Bật lọc tin tức",
+    "en": "Enable news filter"
+  },
+  "5b0043d16166a70e": {
+    "vi": "Trước tin (phút)",
+    "en": "Before news (min)"
+  },
+  "f02ac8c4f46f46f0": {
+    "vi": "Sau tin (phút)",
+    "en": "After news (min)"
+  },
+  "f4188e76a873d9a6": {
+    "vi": "Chỉ tin mạnh",
+    "en": "High impact only"
+  },
+  "f048e4627da5e010": {
+    "vi": "Bật phiên 1",
+    "en": "Enable session 1"
+  },
+  "5e6bf279afc656f9": {
+    "vi": "Bật phiên 2",
+    "en": "Enable session 2"
+  },
+  "b3cacc46a7dba138": {
+    "vi": "Bắt đầu",
+    "en": "Start"
+  },
+  "35184912fa636159": {
+    "vi": "Kết thúc",
+    "en": "End"
+  },
+  "02e2b5e302a1720b": {
+    "vi": "Kích hoạt BE (R)",
+    "en": "Breakeven trigger (R)"
+  },
+  "f9ddb3006349f975": {
+    "vi": "Chốt một phần",
+    "en": "Partial close"
+  },
+  "ceda2bcfbc605890": {
+    "vi": "Tỷ lệ chốt (%)",
+    "en": "Partial close (%)"
+  },
+  "7b61799dccc494ed": {
+    "vi": "Gần TP (giá)",
+    "en": "Near TP (price)"
+  },
+  "36040c4d400fd381": {
+    "vi": "Mở rộng (giá)",
+    "en": "Extension (price)"
+  },
+  "d9ec26e8d42e688b": {
+    "vi": "Chu kỳ Z",
+    "en": "Z period"
+  },
+  "78ede9b906314a27": {
+    "vi": "Hồi Z (Trigger)",
+    "en": "Z reversal (Trigger)"
+  },
+  "faf17030ce241658": {
+    "vi": "Ngưỡng BUY",
+    "en": "BUY threshold"
+  },
+  "6abb96428dc0b03e": {
+    "vi": "Ngưỡng SELL",
+    "en": "SELL threshold"
+  },
+  "d0b458c3d36af556": {
+    "vi": "Hồi RSI (Trigger)",
+    "en": "RSI reversal (Trigger)"
+  },
+  "d2e80dc1e10bd3e2": {
+    "vi": "Bật bộ lọc ADX",
+    "en": "Enable ADX filter"
+  },
+  "63c8c3871bc71b41": {
+    "vi": "Bật bộ lọc ATR",
+    "en": "Enable ATR filter"
+  },
+  "002c1f583f5400ad": {
+    "vi": "Chu kỳ",
+    "en": "Period"
+  },
+  "20825b6151a5c2ed": {
+    "vi": "Ngưỡng tối thiểu",
+    "en": "Minimum"
+  },
+  "c0d191c43d7976dd": {
+    "vi": "Ngưỡng tối đa",
+    "en": "Maximum"
+  },
+  "eaeda7f50e8a9776": {
+    "vi": "Phiên 1",
+    "en": "Session 1"
+  },
+  "67a546d53eb09c3a": {
+    "vi": "Phiên 2",
+    "en": "Session 2"
+  },
+  "43406a1ce7a8d590": {
+    "vi": "Phiên 1 bắt đầu",
+    "en": "Session 1 start"
+  },
+  "f8df80f0bdc58996": {
+    "vi": "Phiên 2 bắt đầu",
+    "en": "Session 2 start"
+  },
+  "3dbb2243052f75b5": {
+    "vi": "Chỉ xác nhận khi nến đóng",
+    "en": "Confirm only after bar close"
+  },
+  "5805dd7b47e82a75": {
+    "vi": "Chu kỳ RSI Trigger",
+    "en": "Trigger RSI period"
+  },
+  "30fe35f4bcbcde67": {
+    "vi": "Chu kỳ Z Trigger",
+    "en": "Trigger Z period"
+  },
+  "1db9f19a276ef474": {
+    "vi": "Đảo chiều RSI / Z",
+    "en": "RSI / Z reversal"
+  },
+  "df072d5511a189d7": {
+    "vi": "Cấu trúc",
+    "en": "Structure"
+  },
+  "26c249d7f19ef21d": {
+    "vi": "Cố định",
+    "en": "Fixed"
+  },
+  "42c1bac1aadedf69": {
+    "vi": "Động RSI/Z",
+    "en": "Dynamic RSI/Z"
+  },
+  "a93ce9a217d38e2b": {
+    "vi": "Đang tải tham số và cấu hình đang dùng…",
+    "en": "Loading parameters and active profile…"
+  },
+  "cd07e6f14191925b": {
+    "vi": "Đang chạy",
+    "en": "Running"
+  },
+  "f892c11552e55986": {
+    "vi": "Mất kết nối",
+    "en": "Disconnected"
+  },
+  "ac29f0e71d506c9e": {
+    "vi": "Xác nhận đa khung thời gian bổ sung",
+    "en": "Additional timeframe confirmation"
+  },
+  "0a663b110b4839c3": {
+    "vi": "11. Hồ sơ cấu hình",
+    "en": "11. Profile"
+  },
+  "b13d82f35c68ff54": {
+    "vi": "12. Quyền giao dịch",
+    "en": "12. Trading permissions"
+  },
+  "4d6ebc6f75dea29c": {
+    "vi": "5. Khung thời gian (Timeframe)",
+    "en": "5. Timeframes"
+  },
+  "10aba042303189ae": {
+    "vi": "2. Hướng giao dịch",
+    "en": "2. Direction"
+  },
+  "922e66ca66251e11": {
+    "vi": "3. Nhận diện nhịp hồi (Pullback)",
+    "en": "3. Pullback recognition"
+  },
+  "c3e200de8a401e77": {
+    "vi": "4. Xác nhận vào lệnh (Trigger)",
+    "en": "4. Entry confirmation"
+  },
+  "243ae40000f08237": {
+    "vi": "1. Khởi tạo & an toàn",
+    "en": "1. Setup & risk"
+  },
+  "43daf338590b9c16": {
+    "vi": "6. Stop loss (SL)",
+    "en": "6. Stop loss (SL)"
+  },
+  "d869b1160b2c84a9": {
+    "vi": "7. Take profit (TP)",
+    "en": "7. Take profit (TP)"
+  },
+  "c944d41c977fb7f5": {
+    "vi": "8. Quản lý sau vào",
+    "en": "8. Position management"
+  },
+  "bc27953a6e536ab1": {
+    "vi": "9. Phiên giao dịch",
+    "en": "9. Trading sessions"
+  },
+  "23ebf88b25f523d9": {
+    "vi": "10. Lọc tin tức",
+    "en": "10. News filter"
+  },
+  "95f00a0891aa2ca4": {
+    "vi": "⬡  1. Khởi tạo & an toàn",
+    "en": "⬡  1. Setup & risk"
+  },
+  "39f7ec7add55b618": {
+    "vi": "⇄  2. Hướng giao dịch",
+    "en": "⇄  2. Direction"
+  },
+  "cc9f4d518dad92a0": {
+    "vi": "⌁  3. Nhận diện nhịp hồi (Pullback)",
+    "en": "⌁  3. Pullback recognition"
+  },
+  "dee05eae7d8cea75": {
+    "vi": "◎  4. Xác nhận vào lệnh (Trigger)",
+    "en": "◎  4. Entry confirmation"
+  },
+  "78ecf8e54f2f418c": {
+    "vi": "▥  5. Khung thời gian (Timeframe)",
+    "en": "▥  5. Timeframes"
+  },
+  "5c9c73e129f7bb4c": {
+    "vi": "◷  9. Phiên giao dịch",
+    "en": "◷  9. Trading sessions"
+  },
+  "2ce6354e9f76f91a": {
+    "vi": "⬡  6. Stop loss (SL)",
+    "en": "⬡  6. Stop loss (SL)"
+  },
+  "991edb170c0f8b88": {
+    "vi": "◎  7. Take profit (TP)",
+    "en": "◎  7. Take profit (TP)"
+  },
+  "d0109af12cb5b17c": {
+    "vi": "⚙  8. Quản lý sau vào",
+    "en": "⚙  8. Position management"
+  },
+  "9a8afc4c3fadb1c7": {
+    "vi": "▤  10. Lọc tin tức",
+    "en": "▤  10. News filter"
+  },
+  "e5ebc0e292651e5e": {
+    "vi": "Tham số bổ sung • 11. Hồ sơ cấu hình",
+    "en": "More parameters • 11. Profile"
+  },
+  "2f007cafecbca84e": {
+    "vi": "Tham số bổ sung • 12. Quyền giao dịch",
+    "en": "More parameters • 12. Trading permissions"
+  },
+  "b2b0e86491b32caf": {
+    "vi": "Tham số bổ sung • 5. Khung thời gian (Timeframe)",
+    "en": "More parameters • 5. Timeframes"
+  },
+  "6757c971cde46980": {
+    "vi": "Tham số bổ sung • Xác nhận đa khung thời gian bổ sung",
+    "en": "More parameters • Additional timeframe confirmation"
+  },
+  "2b18d8752276621e": {
+    "vi": "Tham số bổ sung • 2. Hướng giao dịch",
+    "en": "More parameters • 2. Direction"
+  },
+  "5ff0e7e4485f58c3": {
+    "vi": "Tham số bổ sung • 3. Nhận diện nhịp hồi (Pullback)",
+    "en": "More parameters • 3. Pullback recognition"
+  },
+  "35b2ff92a75c5ef4": {
+    "vi": "Tham số bổ sung • 4. Xác nhận vào lệnh (Trigger)",
+    "en": "More parameters • 4. Entry confirmation"
+  },
+  "b34c1b8c38633f93": {
+    "vi": "Tham số bổ sung • 07. ADX",
+    "en": "More parameters • 07. ADX"
+  },
+  "1e704cb52b2fb88c": {
+    "vi": "Tham số bổ sung • 08. ATR",
+    "en": "More parameters • 08. ATR"
+  },
+  "255238037abd0f8f": {
+    "vi": "Tham số bổ sung • 09. Open Filter",
+    "en": "More parameters • 09. Open Filter"
+  },
+  "e1a03091e6667959": {
+    "vi": "Tham số bổ sung • 10. Entry",
+    "en": "More parameters • 10. Entry"
+  },
+  "7faf2632afe0519f": {
+    "vi": "Tham số bổ sung • 1. Khởi tạo & an toàn",
+    "en": "More parameters • 1. Setup & risk"
+  },
+  "f45b9dd1156c3eb0": {
+    "vi": "Tham số bổ sung • 6. Stop loss (SL)",
+    "en": "More parameters • 6. Stop loss (SL)"
+  },
+  "cf2485d672fd8081": {
+    "vi": "Tham số bổ sung • 7. Take profit (TP)",
+    "en": "More parameters • 7. Take profit (TP)"
+  },
+  "6fd878eea6baa589": {
+    "vi": "Tham số bổ sung • 14. Dynamic TP",
+    "en": "More parameters • 14. Dynamic TP"
+  },
+  "30dfb6970927a567": {
+    "vi": "Tham số bổ sung • 8. Quản lý sau vào",
+    "en": "More parameters • 8. Position management"
+  },
+  "1fc30d9cd740a719": {
+    "vi": "Tham số bổ sung • 9. Phiên giao dịch",
+    "en": "More parameters • 9. Trading sessions"
+  },
+  "5be327b31dc26dc1": {
+    "vi": "Tham số bổ sung • 10. Lọc tin tức",
+    "en": "More parameters • 10. News filter"
+  },
+  "4296f7f456d65688": {
+    "vi": "Tham số bổ sung • 18. Cost Filters",
+    "en": "More parameters • 18. Cost Filters"
+  },
+  "c16e188de21ea64b": {
+    "vi": "Tham số bổ sung • 19. Execution Identity",
+    "en": "More parameters • 19. Execution Identity"
+  },
+  "57d939b2a9436acf": {
+    "vi": "Tham số bổ sung • 20. Hard Safety",
+    "en": "More parameters • 20. Hard Safety"
+  },
+  "27a9f6332c77c629": {
+    "vi": "Tham số bổ sung • 21. Logging",
+    "en": "More parameters • 21. Logging"
+  },
+  "e46b4243f8030f7a": {
+    "vi": "Thời gian MT5",
+    "en": "MT5 time"
+  }
+}

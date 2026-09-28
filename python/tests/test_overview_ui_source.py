@@ -1,3 +1,4 @@
+from ui_source_support import read_xaml
 import pathlib
 import unittest
 
@@ -10,7 +11,7 @@ REFERENCE = ROOT / "docs" / "ui-reference" / "Tab Tổng Quan.png"
 class OverviewUiSourceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.xaml = XAML.read_text(encoding="utf-8")
+        cls.xaml = read_xaml(XAML)
         cls.code = CODE.read_text(encoding="utf-8")
 
     def test_visual_reference_exists(self):
@@ -69,12 +70,13 @@ class OverviewUiSourceTests(unittest.TestCase):
         self.assertIn('_toolsDashboard.EnsureLoadedAsync', self.code)
         self.assertIn('_settingsDashboard.EnsureLoadedAsync', self.code)
 
-    def test_execution_lock_remains_visible(self):
-        # The approved screenshot does not require a giant global lock badge,
-        # but the hard safety state must remain visible in the rendered shell.
+    def test_user_execution_state_remains_visible(self):
+        # The shell must display the actual execution state selected by the user.
         self.assertIn('x:Name="GuardianReasonValue"', self.xaml)
-        self.assertIn('Text="LOCKED"', self.xaml)
-        self.assertIn("broker execution hiện đang khóa", self.code)
+        self.assertNotIn('Text="LOCKED"', self.xaml)
+        self.assertIn('e.Execution.Label', self.code)
+        self.assertIn('e.Execution.Reason', self.code)
+        self.assertNotIn("broker execution hiện đang khóa", self.code)
 
 
 if __name__ == "__main__":

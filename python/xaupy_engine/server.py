@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from copy import deepcopy
 import asyncio
+import json
 import os
+import sqlite3
 from pathlib import Path
 import time
 from typing import Any, Final
@@ -36,9 +38,14 @@ from .strategy_engine import StrategyEngine, StrategyDataError
 from .settings import SettingsStore, default_settings
 from .diagnostics import collect_diagnostics
 from .history_jobs import HistoryJobs
+from .broker_history_jobs import BrokerHistoryJobs
+from .user_library import UserLibrary
 from .backtest_jobs import BacktestJobs
 from .tick_protocol import TickTransport, validate_tick_payload
 from .demo_once import DemoOnceController, DemoOnceError, UnavailableDemoOnceController, profile_hash
+from .broker_execution import BrokerExecution, UnavailableBrokerExecution
+from .trade_plan import TradePlanError
+from .monitoring import MonitoringService
 
 DEFAULT_HOST: Final = "127.0.0.1"
 DEFAULT_PORT: Final = 39421
@@ -85,8 +92,25 @@ class EngineServer:
         self.settings_store = SettingsStore(state_dir if state_dir is not None else
                                             Path(journal_dir) / "state" if journal_dir is not None else None)
         self.active_profile = deepcopy(self.settings_store.profile)
+        self.library = UserLibrary(self.settings_store.root_dir)
+        try:
+            startup_profile=self.library.startup_profile()
+            if startup_profile is not None:
+                if self.active_profile != startup_profile:
+                    self.settings_store.save(profile=startup_profile)
+                self.active_profile=deepcopy(startup_profile)
+                self.settings_store.recovery_message += '; explicit startup profile selected'
+        except (OSError,ValueError,KeyError,TypeError) as exc:
+            self.settings_store.recovery_message += '; startup profile rejected: '+str(exc)
         self.history_jobs = HistoryJobs(self.settings_store.root_dir)
+        self.broker_history_jobs = BrokerHistoryJobs(self.settings_store.root_dir)
         self.strategy = StrategyEngine(self.active_profile)
+        try:
+            self.execution = BrokerExecution(self.settings_store.root_dir, self.bridge, self.strategy, self.settings_store.settings)
+            self.execution.snapshot_transform = self.library.merge_calendar
+        except (sqlite3.Error, OSError, ValueError) as exc:
+            self.execution = UnavailableBrokerExecution(exc)
+        self.strategy.observation_callback = self._on_strategy_observation
         try:
             self.demo_once = DemoOnceController(self.settings_store.root_dir, self.bridge, self.strategy)
         except (DemoOnceError, OSError) as exc:
@@ -96,9 +120,14 @@ class EngineServer:
         self._demo_bridge_writer: asyncio.StreamWriter | None = None
         self.manual_actions = ManualActionSimulator(self.bridge)
         self.journal = StructuredJournal(journal_dir)
+        from .mt5_logs import Mt5LogReader
+        self.mt5_logs = Mt5LogReader(self.settings_store.root_dir,self.journal)
+        self.monitoring = MonitoringService(self.settings_store.root_dir)
         self.backtests = BacktestRepository(backtest_dir)
         self.backtest_jobs = BacktestJobs(self.backtests, self._log)
         self.optimizers = OptimizerRepository(optimizer_dir)
+        from .data_transfer import DataTransfer
+        self.data_transfer=DataTransfer(self.settings_store.root_dir,self.journal.root_dir,self.backtests.root_dir,self.optimizers.root_dir)
         self.optimizer_jobs = OptimizerJobManager(
             self.optimizers,
             journal_callback=self._optimizer_journal,
@@ -112,6 +141,7 @@ class EngineServer:
         self._last_deal_signature: tuple[int, ...] | None = None
         self._last_market_bar_signature: tuple[tuple[str, int], ...] | None = None
         self._last_decision_trace_signature: tuple[Any, ...] | None = None
+        self._last_demo_result_log: tuple[str, float] | None = None
 
         self._log(
             "INFO",
@@ -152,8 +182,11 @@ class EngineServer:
         await self._shutdown_event.wait()
 
     async def close(self) -> None:
+        await asyncio.to_thread(self.data_transfer.close)
+        await asyncio.to_thread(self.mt5_logs.close)
         await asyncio.to_thread(self.backtest_jobs.close)
         await asyncio.to_thread(self.history_jobs.close)
+        await asyncio.to_thread(self.broker_history_jobs.close)
         optimizer_stopped = await asyncio.to_thread(
             self.optimizer_jobs.shutdown,
             5.0,
@@ -167,6 +200,7 @@ class EngineServer:
             )
 
         if self._server is None:
+            self.execution.close()
             return
 
         self._log(
@@ -217,6 +251,8 @@ class EngineServer:
                 "CONNECTION",
                 "Timed out waiting for IPC server close",
             )
+
+        self.execution.close()
 
     async def _handle_client(
         self,
@@ -316,8 +352,17 @@ class EngineServer:
                 elif request.type == "backtest_dataset_inspect":
                     response = await asyncio.to_thread(self._backtest_dataset_inspect_response, request, self._common())
                     should_shutdown = False
+                elif request.type in {'optimizer_start','research_start','walk_forward_start'}:
+                    handler=self._walk_forward_start_response if request.type=='walk_forward_start' else self._optimizer_start_response
+                    response=await asyncio.to_thread(handler,request,self._common())
+                    should_shutdown=False
                 else:
-                    response, should_shutdown = self._dispatch(request, bridge_session_id=bridge_session_id)
+                    try:
+                        response, should_shutdown = self._dispatch(request, bridge_session_id=bridge_session_id)
+                    except (sqlite3.Error, OSError) as exc:
+                        self._disable_execution(exc)
+                        response = Envelope.response('error',request.request_id,{'code':'EXECUTION_STORAGE_UNAVAILABLE','message':str(exc)})
+                        should_shutdown = False
                 if candidate_session is not None and response.type == "bridge_hello_ack":
                     bridge_session_id = candidate_session
                     self._demo_bridge_writer = writer
@@ -329,6 +374,10 @@ class EngineServer:
         finally:
             if self._demo_bridge_writer is writer:
                 self._demo_bridge_writer = None
+                try:
+                    self.execution.disconnected()
+                except (sqlite3.Error, OSError) as exc:
+                    self._disable_execution(exc)
             self._client_writers.discard(writer)
             self._log(
                 "DEBUG",
@@ -344,6 +393,8 @@ class EngineServer:
                 pass
 
     def _demo_once_command(self, bridge_session_id: str | None) -> dict[str, Any] | None:
+        if self.execution.policy['mode'] != 'OFF':
+            return None
         snapshot = self.bridge.latest_fresh_snapshot() or {}
         if (bridge_session_id is None or snapshot.get("demo_once_capable") is not True
                 or str(snapshot.get("bridge_session_id", "")).lower() != bridge_session_id):
@@ -354,6 +405,11 @@ class EngineServer:
                       "One DEMO command durably dispatched; no automatic retry",
                       details=command, correlation_id=command.get("attempt_id"), symbol=command.get("symbol"))
         return command
+
+    def _on_strategy_observation(self):
+        if self._demo_bridge_writer is not None:
+            self.execution.manage_positions(self.active_profile)
+            self.execution.observe_signal(self.active_profile)
 
     def _demo_result_session_matches(self, payload: dict[str, Any], bridge_session_id: str | None) -> bool:
         if bridge_session_id is None:
@@ -376,23 +432,63 @@ class EngineServer:
                         for key in ("account_login", "account_server", "symbol", "magic")))
 
     def _common(self) -> dict[str, Any]:
+        self.execution.settings = self.settings_store.settings
+        try:
+            status = self.execution.status()
+        except (sqlite3.Error, OSError) as exc:
+            self._disable_execution(exc)
+            status = self.execution.status()
         return {
             "component": "python-engine",
             "engine_version": __version__,
             "protocol_version": PROTOCOL_VERSION,
             "state": "ready",
-            "trading_enabled": False,
-            "execution_enabled": False,
+            "trading_enabled": status['trading_enabled'],
+            "execution_enabled": status['execution_enabled'],
+            "execution_capable": True,
             "pid": os.getpid(),
             "engine_instance_id": self.instance_id,
         }
 
+    def _disable_execution(self, exc):
+        try:
+            self.execution.close()
+        except (sqlite3.Error,OSError):
+            pass
+        self.execution=UnavailableBrokerExecution(exc)
+        self._log('ERROR','Orders','EXECUTION_STORAGE','Execution evidence storage unavailable; existing files preserved',details={'error':str(exc)})
+
     def _dispatch(self, request: Envelope, *, bridge_session_id: str | None = None) -> tuple[Envelope, bool]:
         common = self._common()
 
+        if request.type in {'execution_status', 'execution_history', 'execution_mode_set', 'execution_action', 'bridge_execution_result'}:
+            try:
+                if request.type == 'execution_mode_set':
+                    if request.payload.get('mode') != 'OFF' and self.demo_once.status().get('state') in {'ARMED','DISPATCHED','UNKNOWN'}:
+                        raise TradePlanError('LEGACY_DEMO_ATTEMPT_UNRESOLVED')
+                    result = {'accepted':True, **self.execution.set_mode(request.payload, self.active_profile)}
+                elif request.type == 'execution_action':
+                    result = self.execution.submit(request.payload, self.active_profile)
+                elif request.type == 'bridge_execution_result':
+                    if bridge_session_id is None:
+                        raise TradePlanError('BRIDGE_SESSION_REQUIRED')
+                    result = self.execution.record_result(request.payload, bridge_session_id)
+                elif request.type == 'execution_history':
+                    result = {'accepted':True, 'items':self.execution.history(request.payload.get('limit',100), request.payload.get('offset',0))}
+                else:
+                    result = {'accepted':True, **self.execution.status()}
+            except (TradePlanError, ValueError, TypeError) as exc:
+                result = {'accepted':False,'code':str(exc)}
+            if request.type not in {'execution_status','execution_history'}:
+                self._log('INFO' if result.get('accepted') else 'WARN', 'Orders', 'EXECUTION', request.type,
+                          details={'request':request.payload,'result':result}, correlation_id=request.request_id)
+            return Envelope.response(request.type+'_ack', request.request_id, {**self._common(), **result}), False
+
         if request.type in {"demo_once_arm", "demo_once_status", "demo_once_cancel", "bridge_demo_once_result"}:
             if request.type == "demo_once_arm":
-                if self._demo_bridge_writer is None:
+                if self.execution.policy['mode'] != 'OFF':
+                    result = {**self.demo_once.status(), "accepted": False, "code": "GENERAL_EXECUTION_ACTIVE"}
+                elif self._demo_bridge_writer is None:
                     result = {**self.demo_once.status(), "accepted": False, "code": "BRIDGE_SESSION_REQUIRED"}
                 else:
                     result = self.demo_once.arm(request.payload, self.active_profile)
@@ -405,7 +501,19 @@ class EngineServer:
                     result = self.demo_once.record_result(request.payload)
             else:
                 result = self.demo_once.status()
-            if request.type != "demo_once_status":
+            log_result = request.type != "demo_once_status"
+            if request.type == "bridge_demo_once_result":
+                # A retained EA result may belong to a different local runtime.
+                # Still validate and reply on every replay, but do not flood
+                # the journal/toasts with the same refusal on every timer tick.
+                signature = json.dumps([request.payload, result.get('state'), result.get('code'),
+                                        result.get('accepted', False)], sort_keys=True)
+                now = time.monotonic()
+                previous = self._last_demo_result_log
+                log_result = previous is None or previous[0] != signature or now-previous[1] >= 60
+                if log_result:
+                    self._last_demo_result_log = (signature, now)
+            if log_result:
                 self._log("INFO" if result.get("accepted", False) else "WARN", "Orders", "DEMO_ONCE",
                           f"Demo one-shot {request.type}: {result.get('state', '?')} / {result.get('code', '')}",
                           details=result, correlation_id=request.request_id)
@@ -419,7 +527,11 @@ class EngineServer:
                                       "demo_once": result, "demo_once_context": context}), False
 
         if request.type in {"diagnostics_get", "settings_get", "settings_defaults_get", "settings_set",
-                            "backup_create", "backup_restore", "history_download_start", "history_download_status"}:
+                            "backup_create", "backup_restore", "history_download_start", "history_download_status",
+                            "broker_history_start", "broker_history_status", "broker_history_query",
+                            "history_catalog", "library_profile_list", "library_profile_save", "library_profile_get",
+                            "calendar_import", "calendar_validate", "calendar_get", "startup_profile_set", "startup_profile_clear", "optimizer_candidate_prepare",
+                            "data_transfer_start", "data_transfer_status", "data_transfer_cancel"}:
             return self._maintenance_response(request, common), False
 
         if request.type == "hello":
@@ -450,6 +562,7 @@ class EngineServer:
                 "bridge": bridge_status.to_payload(),
                 "tick_transport": self.tick_transport.payload(),
                 "demo_once": self.demo_once.status(),
+                "execution": self.execution.status(),
                 "overview": self.bridge.overview_payload(include_history=full),
                 "orders_positions": self.bridge.orders_positions_payload(),
                 "strategy": self.strategy.status_payload(
@@ -471,6 +584,7 @@ class EngineServer:
                                             for tf, bar in display.get("current_bars", {}).items()}
                 overview["forming_bars_partial"] = True
             if full:
+                payload['monitoring'] = self.monitoring.payload(self)
                 payload["journal_summary"] = self.journal.summary(date_scope="TODAY")
                 payload["optimizer_status"] = self.optimizer_jobs.status()
             return Envelope.response(request.type + "_ack", request.request_id, payload), False
@@ -673,7 +787,7 @@ class EngineServer:
                         **common,
                         "bridge_protocol": 1,
                         "task": "XAUPY-003",
-                        "guardian_reason": "TASK003_EXECUTION_LOCKED",
+                        "guardian_reason": "USER_CONTROLLED",
                     },
                 ),
                 False,
@@ -738,15 +852,20 @@ class EngineServer:
                 ),
                 strategy_status=strategy_status,
             )
+            self.execution.on_snapshot()
+            if bridge_session_id is not None:
+                self.execution.manage_positions(self.active_profile)
+                self.execution.observe_signal(self.active_profile)
 
             return (
                 Envelope.response(
                     "bridge_snapshot_ack",
                     request.request_id,
                     {
-                        **common,
+                        **self._common(),
                         "accepted": True,
                         "command": None,
+                        "execution_command": self.execution.next_command(self.active_profile, bridge_session_id) if bridge_session_id else None,
                         "demo_once_command": self._demo_once_command(bridge_session_id),
                         "bridge": bridge_status.to_payload(),
                         "strategy": strategy_status,
@@ -773,8 +892,11 @@ class EngineServer:
                     self.strategy.reset_setup("INVALID_TICK_BATCH")
                     return self._bridge_error(request, str(exc)), False
                 self.tick_transport.record_accepted(request.payload)
+                if bridge_session_id is not None:
+                    self.execution.observe_signal(self.active_profile)
             return Envelope.response("bridge_ticks_ack", request.request_id,
-                                     {**common, "accepted": fresh and matching, "command": None,
+                                     {**self._common(), "accepted": fresh and matching, "command": None,
+                                      "execution_command": self.execution.next_command(self.active_profile, bridge_session_id) if bridge_session_id and fresh and matching else None,
                                       "demo_once_command": self._demo_once_command(bridge_session_id) if fresh and matching else None,
                                       "tick_transport": self.tick_transport.payload(), "strategy": status}), False
 
@@ -858,7 +980,7 @@ class EngineServer:
         if request.type == "backtest_result_delete":
             return self._backtest_result_delete_response(request, common), False
 
-        if request.type == "optimizer_start":
+        if request.type in {"optimizer_start", "research_start"}:
             return self._optimizer_start_response(request, common), False
 
         if request.type == "walk_forward_start":
@@ -970,6 +1092,12 @@ class EngineServer:
                 "journal": result,
                 "summary": summary,
             }
+            # Page by transport size as well as row count. Native MT5 messages
+            # can be much longer than application messages; a smaller complete
+            # page keeps the next sequence cursor usable without data loss.
+            while len(result['events'])>1 and len(Envelope.response('journal_query_ack',request.request_id,payload).to_json().encode('utf-8'))>=MAX_LINE_BYTES-1024:
+                result['events']=result['events'][:max(1,len(result['events'])//2)]
+                result['transport_page_limited']=True
         except (JournalSchemaError, TypeError, ValueError) as exc:
             payload = {
                 **common,
@@ -1220,7 +1348,8 @@ class EngineServer:
         common: dict[str, Any],
     ) -> Envelope:
         try:
-            status = self.optimizer_jobs.start_sweep(
+            start = self.optimizer_jobs.start_research if request.type=='research_start' else self.optimizer_jobs.start_sweep
+            status = start(
                 dict(request.payload),
                 deepcopy(self.active_profile),
             )
@@ -1236,7 +1365,7 @@ class EngineServer:
                 "errors": [str(exc)],
             }
         return Envelope.response(
-            "optimizer_start_ack",
+            request.type + "_ack",
             request.request_id,
             payload,
         )
@@ -1776,9 +1905,58 @@ class EngineServer:
             extra: dict[str, Any] = {}
             if request.type == "diagnostics_get":
                 extra["diagnostics"] = collect_diagnostics(self)
+            elif request.type == 'history_catalog':
+                extra['datasets'] = self.library.history_catalog()
+            elif request.type == 'library_profile_list':
+                extra['profiles'] = self.library.profile_list()
+            elif request.type == 'library_profile_save':
+                extra['saved'] = self.library.save_profile(request.payload.get('id'),request.payload.get('profile'))
+            elif request.type == 'startup_profile_set':
+                extra['saved'] = self.library.save_startup_profile(request.payload.get('profile'))
+            elif request.type == 'startup_profile_clear':
+                extra['saved'] = self.library.clear_startup_profile()
+            elif request.type == 'data_transfer_start':
+                extra['transfer']=self.data_transfer.start(request.payload.get('mode'),request.payload.get('path'))
+            elif request.type == 'data_transfer_status':
+                extra['transfer']=self.data_transfer.status()
+            elif request.type == 'data_transfer_cancel':
+                extra['transfer']=self.data_transfer.cancel()
+            elif request.type == 'optimizer_candidate_prepare':
+                from .optimizer import prepare_candidate
+                extra['candidate']=prepare_candidate(self.optimizers.get(request.payload.get('run_id')),
+                    self.active_profile,request.payload.get('index'))
+            elif request.type == 'library_profile_get':
+                extra['profile'] = self.library.profile_get(request.payload.get('id'),request.payload.get('revision'))
+            elif request.type == 'calendar_get':
+                extra['calendar'] = self.library.calendar
+            elif request.type == 'calendar_validate':
+                extra['calendar'] = self.library.validate_calendar(request.payload.get('calendar'))
+            elif request.type == 'calendar_import':
+                extra['calendar'] = self.library.save_calendar(request.payload.get('calendar'))
+                self._log('INFO','Alerts','NEWS','User calendar imported',details=extra['calendar'])
+            elif request.type.startswith('broker_history_'):
+                snapshot = self.bridge.latest_fresh_snapshot() or {}
+                identity = {key: snapshot.get(key) for key in ('account_login','account_server','magic')}
+                if request.type == 'broker_history_start':
+                    terminal = self.settings_store.settings['connection']['mt5_path']
+                    if not terminal:
+                        terminal = str(Path(snapshot.get('terminal_path',''))/'terminal64.exe') if snapshot.get('terminal_path') else ''
+                    extra['history'] = self.broker_history_jobs.start(terminal, identity)
+                elif request.type == 'broker_history_status':
+                    extra['history'] = self.broker_history_jobs.status()
+                else:
+                    extra['history'] = self.broker_history_jobs.query(identity, report_id=request.payload.get('report_id'),
+                        page=request.payload.get('page',0),limit=request.payload.get('limit',100),symbol=request.payload.get('symbol'))
             elif request.type == "history_download_start":
+                snapshot=self.bridge.latest_fresh_snapshot() or {}
+                context={'reference_as_of':snapshot.get('server_time'),
+                    'assumption':'Current broker UTC offset and Friday schedule held constant; historical DST/session changes must be reviewed'}
+                if 'server_utc_offset_seconds' in snapshot:context['server_utc_offset_seconds']=snapshot['server_utc_offset_seconds']
+                if snapshot.get('weekend_session_end'):context['friday_session_end_seconds']=snapshot['weekend_session_end']%86400 or 86400
                 extra["history_download"] = self.history_jobs.start(
-                    request.payload.get("terminal", ""), request.payload.get("symbol", "XAUUSD"))
+                    request.payload.get("terminal", ""), request.payload.get("symbol", "XAUUSD"),
+                    model=request.payload.get('model','M1_OHLC'),from_date=request.payload.get('from_date',''),
+                    to_date=request.payload.get('to_date',''),context=context)
             elif request.type == "history_download_status":
                 extra["history_download"] = self.history_jobs.status()
             elif request.type == "settings_defaults_get":
@@ -1788,7 +1966,15 @@ class EngineServer:
                     settings = request.payload.get("settings")
                     if not isinstance(settings, dict):
                         raise ValueError("settings must be an object")
-                    self.settings_store.save(settings=settings)
+                    profile = deepcopy(self.active_profile)
+                    if settings.get('safety',{}).get('allow_real_account') != self.settings_store.settings['safety']['allow_real_account']:
+                        allow_real = settings['safety']['allow_real_account']
+                        profile['execution'].update(allow_real_account=allow_real, demo_only=not allow_real)
+                    self.settings_store.save(settings=settings, profile=profile)
+                    if profile != self.active_profile:
+                        self.active_profile = profile
+                        self.strategy.set_profile(profile)
+                    self.execution.settings = self.settings_store.settings
                     self._log("INFO", "Python Engine", "SETTINGS", "System settings persisted")
                 elif request.type == "backup_create":
                     extra["backup"] = self.settings_store.create_backup()
@@ -1798,10 +1984,11 @@ class EngineServer:
                     self.active_profile = deepcopy(self.settings_store.profile)
                     self.strategy.set_profile(self.active_profile)
                     self.strategy.reset_setup("BACKUP_RESTORED")
-                    self._log("WARN", "Python Engine", "RECOVERY", "Backup restored; strategy reset; execution locked")
+                    self.execution.settings = self.settings_store.settings
+                    self._log("WARN", "Python Engine", "RECOVERY", "Backup restored; strategy reset; execution permissions rechecked against restored settings")
                 extra.update(self.settings_store.payload())
             return Envelope.response(request.type + "_ack", request.request_id, {**common, "ok": True, **extra})
-        except (OSError, ValueError, TypeError, KeyError) as exc:
+        except (OSError, ValueError, TypeError, KeyError, sqlite3.Error) as exc:
             return Envelope.response(request.type + "_ack", request.request_id,
                                      {**common, "ok": False, "errors": [str(exc)]})
 

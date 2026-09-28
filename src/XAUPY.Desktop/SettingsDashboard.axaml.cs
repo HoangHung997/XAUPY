@@ -5,7 +5,6 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
-using Microsoft.Win32;
 using XAUPY.Ipc;
 
 namespace XAUPY.Desktop;
@@ -18,8 +17,7 @@ public partial class SettingsDashboard : UserControl
     private bool _loaded;
     public SettingsDashboard() => InitializeComponent();
     public void AttachSupervisor(EngineProcessSupervisor supervisor) => _supervisor = supervisor;
-    public void ApplyDemoStatus(DemoOnceSnapshot status) => ExecutionModeSummary.Text =
-        status.HasReport ? DemoOncePresentation.Summary(status) : "Chưa bắt đầu";
+    public void ApplyExecutionStatus(ExecutionSnapshot status) => ExecutionModeSummary.Text = status.Label;
     public async Task EnsureLoadedAsync(bool force = false)
     {
         if (_busy || (_loaded && !force) || _supervisor?.State != EngineConnectionState.Ready) return;
@@ -37,12 +35,19 @@ public partial class SettingsDashboard : UserControl
         AutoEngine.IsChecked = Bool("startup", "auto_start_engine");
         AutoRestart.IsChecked = Bool("startup", "auto_restart_engine");
         WindowsStartup.IsChecked = Bool("startup", "start_with_windows");
+        AutoTrading.IsChecked = Bool("safety", "auto_start_trading");
+        RequireStartupSync.IsChecked = Bool("safety", "require_reconciliation");
+        AllowRealAccount.IsChecked = Bool("safety", "allow_real_account");
         WindowsStartup.IsEnabled = OperatingSystem.IsWindows();
         ErrorNotifications.IsChecked = Bool("notifications", "system_errors");
         ConnectionNotifications.IsChecked = Bool("notifications", "connection_changes");
         AutoBackup.IsChecked = Bool("backup", "auto_backup");
         BackupCount.Value = _settings["backup"]!["keep_count"]!.GetValue<int>();
         Mt5Path.Text = _settings["connection"]!["mt5_path"]!.GetValue<string>();
+        BridgePort.Value = _settings["connection"]!["port"]!.GetValue<int>();
+        ThemeChoice.SelectedIndex=_settings["appearance"]!["theme"]!.GetValue<string>()=="N30 Contrast"?1:0;
+        FontScaleChoice.Value=_settings["appearance"]!["font_scale"]!.GetValue<int>();
+        LanguageChoice.SelectedIndex=_settings["appearance"]!["language"]!.GetValue<string>()=="English"?1:0;
         if (payload.TryGetProperty("backup_path", out var path)) BackupPath.Text = path.GetString();
         if (payload.TryGetProperty("state_path", out path)) StatePath.Text = Path.GetDirectoryName(path.GetString());
         if (payload.TryGetProperty("recovery_message", out var recovery)) RecoveryInfo.Text = recovery.GetString();
@@ -73,7 +78,7 @@ public partial class SettingsDashboard : UserControl
         LogPath.Text = paths.GetProperty("logs").GetString();
         BacktestPath.Text = paths.GetProperty("backtests").GetString();
         HistoryPath.Text = Path.Combine(StatePath.Text ?? "", "market-history");
-        SystemInfo.Text = $"Phiên bản: {diag.GetProperty("engine_version").GetString()}\nPython: {diag.GetProperty("python_version").GetString()}\nUptime: {diag.GetProperty("uptime_seconds")} giây\nEA Bridge: {(connected ? "Đã kết nối" : "Đang chờ")}\nExecution: LOCKED";
+        SystemInfo.Text = $"Phiên bản: {diag.GetProperty("engine_version").GetString()}\nPython: {diag.GetProperty("python_version").GetString()}\nUptime: {diag.GetProperty("uptime_seconds")} giây\nEA Bridge: {(connected ? "Đã kết nối" : "Đang chờ")}\nExecution: {_supervisor.Execution.Label}";
         var profile = await _supervisor.GetActiveConfigAsync();
         var risk = profile.GetProperty("risk");
         RiskMaxLot.Text = Risk("max_lot");
@@ -102,13 +107,22 @@ public partial class SettingsDashboard : UserControl
         next["backup"]!["auto_backup"] = AutoBackup.IsChecked == true;
         next["backup"]!["keep_count"] = (int)(BackupCount.Value ?? 30);
         next["connection"]!["mt5_path"] = Mt5Path.Text ?? "";
+        next["connection"]!["port"] = (int)(BridgePort.Value ?? 39421);
+        next["appearance"]!["theme"] = ThemeChoice.SelectedIndex==1?"N30 Contrast":"N30 Dark";
+        next["appearance"]!["font_scale"] = (int)(FontScaleChoice.Value ?? 100);
+        next["appearance"]!["language"] = LanguageChoice.SelectedIndex==1?"English":"Tiếng Việt";
+        next["safety"]!["auto_start_trading"] = AutoTrading.IsChecked == true;
+        next["safety"]!["require_reconciliation"] = RequireStartupSync.IsChecked == true;
+        next["safety"]!["allow_real_account"] = AllowRealAccount.IsChecked == true;
         var wasStartup = _settings["startup"]!["start_with_windows"]!.GetValue<bool>();
         var newStartup = WindowsStartup.IsChecked == true;
         if (newStartup != wasStartup) ApplyWindowsStartup(newStartup);
         try
         {
             var result = await _supervisor.SaveSettingsAsync(JsonSerializer.SerializeToElement(next)); EnsureOk(result); Apply(result);
-            Status("Đã lưu cài đặt. Tùy chọn khởi động áp dụng từ lần mở tiếp theo.", true);
+            AppearanceService.Apply(next["appearance"]!["theme"]!.GetValue<string>(),next["appearance"]!["font_scale"]!.GetValue<int>());
+            LocalizationService.Apply(next["appearance"]!["language"]!.GetValue<string>());
+            Status("Đã lưu cài đặt. Cổng và tùy chọn khởi động áp dụng từ lần mở app tiếp theo; đặt InpPort của EA cùng cổng đã chọn.", true);
         }
         catch { if (newStartup != wasStartup) ApplyWindowsStartup(wasStartup); throw; }
     });
@@ -124,7 +138,7 @@ public partial class SettingsDashboard : UserControl
         var result = await _supervisor.RestoreBackupAsync(id); EnsureOk(result); Apply(result);
         ApplyWindowsStartup(WindowsStartup.IsChecked == true);
         await ProbeAsync();
-        Status("Đã khôi phục, sao lưu trạng thái trước đó và reset chiến lược. Execution vẫn khóa.", true);
+        Status("Đã khôi phục, sao lưu trạng thái trước đó và đặt lại chiến lược. Quyền tài khoản được kiểm tra theo cài đặt vừa khôi phục.", true);
     });
     private async void BrowseMt5_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
     {
@@ -132,6 +146,18 @@ public partial class SettingsDashboard : UserControl
         var chosen = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Chọn terminal64.exe", AllowMultiple = false, FileTypeFilter = new[] { new FilePickerFileType("MT5 Terminal") { Patterns = new[] { "terminal64.exe" } } } });
         if (chosen.Count > 0) Mt5Path.Text = chosen[0].TryGetLocalPath();
     });
+    private void LaunchMt5_OnClick(object? sender,RoutedEventArgs e)
+    {
+        try
+        {
+            string path=Mt5Path.Text ?? "";
+            if(!Path.IsPathFullyQualified(path) || !File.Exists(path) || !Path.GetFileName(path).Equals("terminal64.exe",StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("Chọn đường dẫn terminal64.exe hợp lệ.");
+            Process.Start(new ProcessStartInfo {FileName=path,UseShellExecute=true});
+            Status("Đã mở MT5 theo đường dẫn đã chọn.",true);
+        }
+        catch(Exception ex){Status(ex.Message,false);}
+    }
     private void OpenFolder_OnClick(object? sender, RoutedEventArgs e)
     {
         var path = (sender as Button)?.Tag?.ToString() switch
@@ -148,15 +174,7 @@ public partial class SettingsDashboard : UserControl
     }
     private static void ApplyWindowsStartup(bool enabled)
     {
-        if (!OperatingSystem.IsWindows()) { if (enabled) throw new PlatformNotSupportedException("Windows startup chỉ hỗ trợ Windows."); return; }
-        using var run = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
-        if (enabled)
-        {
-            var executable = Environment.ProcessPath ?? throw new InvalidOperationException("Không xác định được đường dẫn Desktop.");
-            if (!string.Equals(Path.GetFileName(executable), "XAUPY.Desktop.exe", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Mở XAUPY.Desktop.exe để đăng ký khởi động cùng Windows.");
-            run.SetValue("XAUPY", $"\"{executable}\"", RegistryValueKind.String);
-        }
-        else run.DeleteValue("XAUPY", false);
+        WindowsStartupRegistration.Update(enabled, Environment.ProcessPath);
     }
     private async Task RunAsync(Func<Task> action)
     {

@@ -28,6 +28,36 @@ runtime.SetEnvironment("XAUPY_ENGINE_PATH", enginePath);
 AppBuilder.Configure<App>().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false }).UseSkia().SetupWithoutStarting();
 int assertions = 0, failures = 0;
 void Assert(bool valid, string message) { assertions++; if (!valid) failures++; Console.WriteLine((valid ? "PASS " : "FAIL ") + message); }
+Assert((string?)typeof(OrdersPositionsDashboard).GetMethod("Epoch",BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,[1790574477L])=="2026.09.28 05:47",
+    "Trade timestamps match the observed MT5 history wall clock on a UTC+7 Windows host");
+var reportFixture = BacktestApiParser.ParseRunOrGet(JsonSerializer.SerializeToElement(new {
+    ok=true, result=new { model="OBSERVED_BID_ASK_NEXT_TICK_V1",metrics=new {},
+        engine_profile_hash="profile-evidence", dataset_metadata=new { timezone_offset_minutes=120 },
+        profile=new { name="<script>unsafe</script>",pullback=new { rsi_period=20 } },
+        execution_assumptions=new { slippage_price_units=.03 }, trades=Array.Empty<object>() }
+}));
+var reportDashboard = new BacktestDashboard();
+typeof(BacktestDashboard).GetField("_current",BindingFlags.Instance|BindingFlags.NonPublic)!.SetValue(reportDashboard,reportFixture);
+Assert((string?)typeof(BacktestDashboard).GetMethod("Epoch",BindingFlags.Instance|BindingFlags.NonPublic)!.Invoke(reportDashboard,[1790574477L])=="2026.09.28 07:47",
+    "Replay trade time uses dataset offset instead of Windows timezone");
+var reportHtml=(string)typeof(BacktestDashboard).GetMethod("BuildHtmlReport",BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,[reportFixture,Array.Empty<BacktestTradeSnapshot>()])!;
+Assert(reportHtml.Contains("profile-evidence") && reportHtml.Contains("rsi_period") && reportHtml.Contains("slippage_price_units") && !reportHtml.Contains("<script>"),
+    "HTML report retains configuration and cost evidence while escaping user content");
+if (OperatingSystem.IsWindows())
+{
+    string startupBefore = WindowsStartupRegistration.Read() ?? "";
+    string probeName = "XAUPY.Acceptance." + Guid.NewGuid().ToString("N");
+    string desktopExe = Path.Combine(AppContext.BaseDirectory, "XAUPY.Desktop.exe");
+    try
+    {
+        WindowsStartupRegistration.Update(true, desktopExe, probeName);
+        Assert(WindowsStartupRegistration.Read(probeName)==$"\"{desktopExe}\"", "Windows HKCU startup registration reads back the quoted real app path");
+        WindowsStartupRegistration.Update(false, desktopExe, probeName);
+        Assert(WindowsStartupRegistration.Read(probeName) is null, "Disabling startup removes only the owned acceptance value");
+    }
+    finally { WindowsStartupRegistration.Update(false, desktopExe, probeName); }
+    Assert((WindowsStartupRegistration.Read() ?? "")==startupBefore, "Windows startup acceptance preserves the user's XAUPY registration");
+}
 void PumpUntil(Func<bool> predicate, int seconds = 25) {
     var deadline = DateTime.UtcNow.AddSeconds(seconds);
     while (!predicate()) { Dispatcher.UIThread.RunJobs(); if (DateTime.UtcNow > deadline) throw new TimeoutException("Test condition timed out"); Thread.Sleep(10); }
@@ -86,49 +116,32 @@ try {
     orderStatus.ApplyDemoOnceStatus(DemoOnceSnapshot.Disabled with { HasReport = true, IsFresh = true, State = "SUSPENDED", Reason = "PROFILE_CHANGED", LastBlocker = "SESSION_TIME_BLOCKED" });
     Assert(orderStatus.FindControl<TextBlock>("DemoOnceMessage")!.Text == "PROFILE_CHANGED", "suspension reason replaces stale waiting blocker");
     orderStatus.Apply(OrdersPositionsSnapshot.Empty, OverviewSnapshot.Empty, Mt5BridgeStatus.Offline, ConfigurationSummary.Default);
-    Assert(orderStatus.FindControl<TextBlock>("ActionStatusText")!.Text!.StartsWith("SIMULATION BLOCKED"),
-        "orders show an automatic blocked message while MT5 data is unavailable");
-    orderStatus.Apply(OrdersPositionsSnapshot.Empty with { Available = true, TerminalConnected = true, AccountTradeMode = "DEMO" },
-        OverviewSnapshot.Empty, Mt5BridgeStatus.Offline, ConfigurationSummary.Default);
-    Assert(!orderStatus.FindControl<TextBlock>("ActionStatusText")!.Text!.StartsWith("SIMULATION BLOCKED"),
-        "fresh connected demo snapshot clears only the obsolete automatic blocked message");
-    Assert(orderStatus.FindControl<Border>("DemoOnceStatusPanel")!.IsVisible && !orderStatus.FindControl<Button>("DemoOnceStart")!.IsEnabled,
-        "native demo controls are visible but cannot start without verified engine context");
-    var demoReport = DemoOnceSnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new
-    {
-        demo_once = new { state = "ARMED", attempt_id = "6db89d49-7333-43b0-b656-9a5c04bc1c68", volume = .01 }
-    }));
-    orderStatus.ApplyDemoOnceStatus(demoReport);
-    var orderStatusWindow = new Window { Content = orderStatus, Width = 1644, Height = 794 };
-    orderStatusWindow.Show(); Dispatcher.UIThread.RunJobs();
-    try {
-        var demoPanel = orderStatus.FindControl<Border>("DemoOnceStatusPanel")!;
-        var demoText = orderStatus.FindControl<TextBlock>("DemoOnceStatusText")!;
-        var statusOrigin = demoText.TranslatePoint(default, orderStatusWindow)!.Value;
-        Assert(demoPanel.IsVisible && demoText.Text!.Contains("CHỜ TÍN HIỆU") &&
-            demoText.Bounds.Width > 0 && statusOrigin.Y >= 0 && statusOrigin.Y + demoText.Bounds.Height <= orderStatusWindow.Bounds.Height,
-            "armed one-shot status is arranged visibly in its separate Orders panel");
-        Assert(orderStatus.FindControl<TextBlock>("ActionStatusText")!.Text!.Contains("mô phỏng") &&
-            orderStatus.FindControl<CheckBox>("ManualConfirmCheck")!.IsChecked != true,
-            "one-shot status does not replace manual simulation notice or grant manual confirmation");
-        var manualConfirm = orderStatus.FindControl<CheckBox>("ManualConfirmCheck")!;
-        var confirmOrigin = manualConfirm.TranslatePoint(default, orderStatusWindow)!.Value;
-        Assert(confirmOrigin.Y >= 0 && confirmOrigin.Y + manualConfirm.Bounds.Height <= orderStatusWindow.Bounds.Height + .1,
-            "one-shot status panel preserves visibility of manual confirmation in the independent right rail");
-        orderStatus.ApplyDemoOnceStatus(demoReport with { State = "UNKNOWN", Reason = "RECONCILIATION_REQUIRED" });
-        Assert(demoText.Text!.Contains("CẦN KIỂM TRA") && !demoText.Text.Contains("ĐÃ KHỚP"),
-            "uncertain one-shot result never presents a confirmed fill");
-        orderStatus.ApplyDemoOnceStatus(demoReport.AsStale());
-        Assert(demoText.Text!.Contains("MẤT KẾT NỐI") && ToolTip.GetTip(demoPanel)!.ToString()!.Contains("ARMED"),
-            "lost IPC makes one-shot freshness explicit while retaining last reported state");
-        Invoke(main, "ApplyDemoOnceStatus", demoReport);
-        Assert(main.FindControl<TextBlock>("GuardianReasonValue")!.Text!.StartsWith("LOCKED", StringComparison.Ordinal),
-            "sidebar one-shot status retains the general execution lock");
-        orderStatus.ApplyDemoOnceStatus(DemoOnceSnapshot.Disabled);
-        Assert(demoPanel.IsVisible && demoText.Text!.Contains("CHƯA BẮT ĐẦU"), "disabled report leaves native start controls available for an explicit user action");
-    }
-    finally { orderStatusWindow.Close(); }
+    Assert(!orderStatus.FindControl<Button>("MarketBuyButton")!.IsEnabled,
+        "stale/offline execution cannot enable manual entry");
+    orderStatus.Apply(OrdersPositionsSnapshot.Empty with { Available=true,TerminalConnected=true,AccountTradeMode="DEMO" },
+        OverviewSnapshot.Empty,Mt5BridgeStatus.Offline,ConfigurationSummary.Default);
+    orderStatus.ApplyExecutionStatus(new ExecutionSnapshot("MANUAL","",true,true,null));
+    Assert(orderStatus.FindControl<Button>("MarketBuyButton")!.IsEnabled && orderStatus.FindControl<Button>("MarketSellButton")!.IsEnabled,
+        "explicit connected manual mode enables broker controls");
+    orderStatus.ApplyExecutionStatus(new ExecutionSnapshot("OFF","USER_STOPPED",false,true,null));
+    Assert(!orderStatus.FindControl<Button>("MarketBuyButton")!.IsEnabled,
+        "user stop immediately disables new manual entry");
+    Assert(!orderStatus.FindControl<Border>("DemoOnceStatusPanel")!.IsVisible,
+        "legacy spent one-shot permission is not presented as the main execution control");
+    Assert(orderStatus.FindControl<CheckBox>("ManualConfirmCheck")!.IsChecked!=true,
+        "mode changes do not silently check manual confirmation");
+    var chart=new MarketChartControl();
+    var metrics=typeof(MarketChartControl).GetMethod("ChartMetrics",BindingFlags.Static|BindingFlags.NonPublic)!;
+    var rising=Enumerable.Range(0,30).Select(i=>new MarketBar(1800000000+i*60,100+i,101+i,99+i,100+i,1)).ToArray();
+    var values=((double? Rsi,double? Z))metrics.Invoke(null,new object[]{rising,14,20})!;
+    Assert(values.Rsi==100 && values.Z>1.6 && values.Z<1.7,"chart RSI/Z calculated from actual bars");
     var statusStrategy = new StrategyDashboard();
+    statusStrategy.ApplyExecution(new ExecutionSnapshot("AUTO", "", true, true, null));
+    Assert(statusStrategy.FindControl<TextBlock>("StopsExecutionText")!.Text == "Tự động" &&
+        statusStrategy.FindControl<TextBlock>("ConditionExecutionText")!.Text == "Tự động",
+        "all strategy execution badges follow the actual user-selected mode");
+    Assert(!orderStatus.FindControl<TextBlock>("ActionStatusText")!.Text?.Contains("SIMULATION", StringComparison.Ordinal) ?? true,
+        "broker action status does not retain a prototype simulation disclaimer");
     statusStrategy.Apply(StrategySnapshot.Empty with { Available = true, Ready = true, State = "WAIT_PULLBACK_SELL" }, ConfigurationSummary.Default);
     Assert(statusStrategy.FindControl<TextBlock>("AllConditionText")!.Text == "ĐANG CHỜ",
         "warm indicators while waiting for pullback do not imply entry conditions passed");
@@ -143,6 +156,12 @@ try {
         Filters = new StrategyFilterSnapshot(28, 1.8, null)
     };
     monitor.Apply(observedStrategy, OverviewSnapshot.Empty, Mt5BridgeStatus.Offline, ConfigurationSummary.Default);
+    monitor.ApplyServices(null, new ExecutionSnapshot("OFF", "", false, true, null));
+    Assert(monitor.FindControl<TextBlock>("MonitorSnapshotCountText")!.Text == "Đang chạy",
+        "Python connection remains available while broker market data is offline");
+    monitor.ApplyServices(null, ExecutionSnapshot.Offline);
+    Assert(monitor.FindControl<TextBlock>("MonitorSnapshotCountText")!.Text == "Mất kết nối",
+        "Python connection loss is reflected independently of cached market data");
     var matrix = monitor.FindControl<Grid>("MonitorConditionMatrix")!;
     string Cell(int row, int column) => ((TextBlock)((Border)matrix.Children.Single(c => Grid.GetRow(c) == row && Grid.GetColumn(c) == column)).Child!).Text!;
     Assert(matrix.RowDefinitions.Count == 8 && Cell(7, 0) == "D1" && Enumerable.Range(1, 3).All(column => Cell(7, column) == "—"),
@@ -187,7 +206,7 @@ try {
     var shortcutDuringLoad = editor.OpenShortcutAsync("timeframes");
     Assert(ReferenceEquals(initialLoad, simultaneousLoad), "parallel navigation and shortcut share one load Task");
     Complete(Task.WhenAll(initialLoad, simultaneousLoad, shortcutDuringLoad));
-    Assert(((IList)Field(editor, "_fields")!).Count == 133, "actual isolated IPC loads all 133 schema controls");
+    Assert(((IList)Field(editor, "_fields")!).Count == 136, "actual isolated IPC loads all 136 schema controls including MTF confirmations");
     Assert(!editor.HasUnsavedChanges, "initial actual schema/profile load is clean after queued UI events");
     var name = (TextBox)EditorControl(editor, "profile.name");
     name.Text = "TEST ONLY UNSAVED DRAFT"; Dispatcher.UIThread.RunJobs();
@@ -375,6 +394,15 @@ try {
             "line-number gutter covers every real JSON line");
         var info = toolsView.FindControl<TextBlock>("EditorFileInfo")!;
         Assert(info.Bounds.Height > 0 && info.Bounds.Width > 0, "Tools file information remains arranged beside the real editor");
+        var exportTool = toolsView.FindControl<StackPanel>("ToolMenu")!.Children.OfType<Button>().Single(b => (string?)b.Tag == "export");
+        exportTool.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        PumpUntil(() => !(bool)Field(toolsView,"_busy")!);
+        toolsView.UpdateLayout();
+        Assert(toolsView.FindControl<StackPanel>("HistoryInputs")!.IsVisible && toolsView.FindControl<TextBlock>("SelectedToolCapabilities")!.Text!.Contains("ZIP"),
+            "Data-transfer tool exposes history inputs and matching help");
+        var actionScroll = toolsView.FindControl<Button>("ApplyToolButton")!.GetVisualAncestors().OfType<ScrollViewer>().First();
+        Assert(actionScroll.Extent.Height > actionScroll.Viewport.Height && actionScroll.Viewport.Height > 100,
+            "Extra history controls leave an accessible scrolling action pane instead of overlapping file information");
     }
     finally { toolsWindow.Close(); }
     var beforeToolsAudit = ActiveProfile(supervisor);
@@ -398,6 +426,10 @@ try {
     Invoke(draftTools, "Apply_OnClick", draftTools, new RoutedEventArgs()); PumpUntil(() => !(bool)Field(draftTools, "_busy")!);
     Assert(draftTools.HasUnsavedChanges && draftTools.FindControl<TextBlock>("ToolResult")!.Text!.Contains("đã thay đổi"), "Tools detects concurrent active-profile changes and preserves draft");
     var rangeOptimizer = new OptimizerDashboard();
+    rangeOptimizer.ApplyResources(JsonSerializer.SerializeToElement(new { resources=new { available=true,cpu_percent=12.5,ram_percent=40.0,disk_percent=50.0,process_rss_bytes=104857600 } }));
+    Assert(rangeOptimizer.FindControl<TextBlock>("SystemResourcesText")!.Text!.Contains("100 MB"), "Optimizer displays measured engine memory from monitoring payload");
+    rangeOptimizer.ApplyResources(null);
+    Assert(rangeOptimizer.FindControl<TextBlock>("SystemResourcesText")!.Text == "Chưa có số đo", "Missing resource sample clears previous telemetry");
     var rangesProfile = (JsonObject)beforeToolsAudit.DeepClone(); rangesProfile["stop_loss"]!["mode"] = "ATR"; rangesProfile["take_profit"]!["mode"] = "ZRSI_DYNAMIC";
     rangesProfile["pullback"]!["rsi_enabled"] = true; rangesProfile["pullback"]!["z_enabled"] = true;
     rangesProfile["trigger"]!["rsi_enabled"] = true; rangesProfile["trigger"]!["z_enabled"] = true;
@@ -414,6 +446,41 @@ try {
     var settingsWindow = new Window { Content = settingsView, Width = 1342, Height = 794 };
     settingsWindow.Show(); Dispatcher.UIThread.RunJobs();
     try {
+        var codeLabel = new TextBlock { [AppearanceService.BaseFontSizeProperty]=14d, [LocalizationService.TextProperty]="Áp dụng" };
+        var profileName = new TextBlock { Text="Áp dụng" };
+        AppearanceService.Apply("N30 Contrast",125);Dispatcher.UIThread.RunJobs();
+        Assert(settingsWindow.Content is WorkspaceScale { Zoom:1.25 },"Font preference zooms the complete layout so fixed rows cannot clip large text");
+        var zoomScroll=settingsWindow.GetVisualDescendants().OfType<ScrollViewer>().First();
+        Assert(zoomScroll.Extent.Width>zoomScroll.Viewport.Width && zoomScroll.Extent.Height>zoomScroll.Viewport.Height,"Larger interface remains accessible through both scroll axes");
+        Assert(codeLabel.FontSize==14 && settingsView.FindControl<TextBlock>("SettingsStatus")!.FontSize==14,"Labels retain their logical font size inside the scaled workspace");
+        AppearanceService.Apply("N30 Dark",100);Dispatcher.UIThread.RunJobs();
+        var insetPanel = new StackPanel { Margin=new Thickness(16), Children={new TextBox {Text="Full width"},new Button {Content="Apply"}} };
+        var insetWindow = new Window {Content=insetPanel,Width=432,Height=400};
+        insetWindow.Show();Dispatcher.UIThread.RunJobs();
+        var insetScroll=insetWindow.GetVisualDescendants().OfType<ScrollViewer>().First();
+        Assert(insetScroll.Extent.Width<=insetScroll.Viewport.Width+.1 && insetScroll.Extent.Height<=insetScroll.Viewport.Height+.1,
+            "Default zoom accounts for dialog margins without introducing clipping or scrollbars");
+        insetWindow.Close();
+        Assert(settingsView.FindControl<TextBlock>("SettingsStatus")!.FontSize==14,"Default reference font size is restored exactly");
+        settingsView.FindControl<TextBlock>("SystemInfo")!.Text="Runtime value 42";
+        LocalizationService.Apply("English");Dispatcher.UIThread.RunJobs();
+        Assert(settingsView.FindControl<TextBlock>("SystemInfo")!.Text=="Runtime value 42","Changing language cannot restore a placeholder over runtime data");
+        Assert(codeLabel.Text=="Apply" && profileName.Text=="Áp dụng","Only tagged labels translate; user text is preserved");
+        Assert(((CheckBox)StrategyControl(strategy,"trigger.confirm_closed_bar")).Content?.ToString()=="Confirm only after bar close",
+            "Generated strategy controls change language without changing canonical values");
+        var configRows=((IEnumerable)Field(editor,"_fields")!).Cast<object>();
+        var riskBinding=configRows.First(binding=>((Control)binding.GetType().GetProperty("Editor")!.GetValue(binding)!)==EditorControl(editor,"risk.fixed_lot"));
+        var riskRow=(Border)riskBinding.GetType().GetProperty("Row")!.GetValue(riskBinding)!;
+        Assert(((Grid)riskRow.Child!).Children.OfType<TextBlock>().First().Text=="Fixed lot",
+            "Generated configuration labels participate in runtime language changes");
+        Assert(settingsView.FindControl<CheckBox>("RequireStartupSync")!.Content?.ToString()=="Sync before restoring trading","English resources update the attached settings control");
+        LocalizationService.Apply("Tiếng Việt");Dispatcher.UIThread.RunJobs();
+        Assert(codeLabel.Text=="Áp dụng" && codeLabel.FontSize==14,"Programmatic text and font restore without reconstructing controls");
+        codeLabel.Text="Broker error 10030";
+        LocalizationService.Apply("English");Dispatcher.UIThread.RunJobs();
+        Assert(codeLabel.Text=="Broker error 10030","An updated runtime message replaces the tagged prompt permanently");
+        LocalizationService.Apply("Tiếng Việt");Dispatcher.UIThread.RunJobs();
+        Assert(settingsView.FindControl<CheckBox>("RequireStartupSync")!.Content?.ToString()=="Đồng bộ trước khôi phục giao dịch","Switching language restores the exact Vietnamese label");
         var autoEngine = settingsView.FindControl<ToggleSwitch>("AutoEngine")!;
         var autoRestart = settingsView.FindControl<ToggleSwitch>("AutoRestart")!;
         var autoBackup = settingsView.FindControl<ToggleSwitch>("AutoBackup")!;

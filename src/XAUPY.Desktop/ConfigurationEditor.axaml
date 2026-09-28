@@ -4,63 +4,63 @@
              x:Class="XAUPY.Desktop.ConfigurationEditor">
   <UserControl.Styles>
     <Style Selector="Button.navTab"><Setter Property="Margin" Value="0"/><Setter Property="Height" Value="53"/><Setter Property="Padding" Value="12,6"/><Setter Property="BorderThickness" Value="0,0,0,1"/></Style>
-    <Style Selector="Button.configToolbar"><Setter Property="Padding" Value="12,5"/><Setter Property="FontSize" Value="14"/><Setter Property="MinHeight" Value="30"/></Style>
+    <Style Selector="Button.configToolbar"><Setter Property="Padding" Value="12,5"/><Setter Property="FontSize" Value="{DynamicResource Font_14}"/><Setter Property="MinHeight" Value="30"/></Style>
   </UserControl.Styles>
   <Grid ColumnDefinitions="274,*" ColumnSpacing="10">
     <!-- Approved configuration category rail -->
     <Border Grid.Column="0" Classes="panel">
       <Grid RowDefinitions="Auto,*,Auto">
-        <Border Grid.Row="0" Background="#082038" Padding="12,8">
-          <TextBlock Text="Danh mục cấu hình" Classes="panelTitle"/>
+        <Border Grid.Row="0" Background="{DynamicResource Brush_082038}" Padding="12,8">
+          <TextBlock Text="{DynamicResource Text_8e008b5c07d79765}" Classes="panelTitle"/>
         </Border>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
           <StackPanel Margin="8" Spacing="0">
             <Button Classes="navTab active" HorizontalContentAlignment="Left" Tag="risk" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="shield" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="Khởi tạo &amp; an toàn" FontWeight="SemiBold"/><TextBlock Text="Tài khoản, lot, rủi ro, giới hạn" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="shield" Width="26" Height="26" Tint="{DynamicResource Brush_82C4FF}"/><StackPanel><TextBlock Text="{DynamicResource Text_3ae7be0c5d751e1a}" FontWeight="SemiBold"/><TextBlock Text="{DynamicResource Text_4baa11bc78273b13}" Classes="dim" FontSize="{DynamicResource Font_12}"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="direction" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="compare" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="Hướng giao dịch" FontWeight="SemiBold"/><TextBlock Text="Chỉ buy/sell hoặc 2 chiều" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="compare" Width="26" Height="26" Tint="{DynamicResource Brush_82C4FF}"/><StackPanel><TextBlock Text="{DynamicResource Text_92c12c35f7e2244c}" FontWeight="SemiBold"/><TextBlock Text="{DynamicResource Text_a9804d9f6393d089}" Classes="dim" FontSize="{DynamicResource Font_12}"/></StackPanel></StackPanel>
             </Button>
-            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="pullback" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="pulse" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="Nhận diện nhịp hồi" FontWeight="SemiBold"/><TextBlock Text="Pullback &amp; điều kiện hồi" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="mtf" Click="Category_OnClick">
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="pulse" Width="26" Height="26" Tint="{DynamicResource Brush_82C4FF}"/><StackPanel><TextBlock Text="{DynamicResource Text_2607ec7b3dea343f}" FontWeight="SemiBold"/><TextBlock Text="{DynamicResource Text_41d789978d3b1406}" Classes="dim" FontSize="{DynamicResource Font_12}"/></StackPanel></StackPanel>
             </Button>
-            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="trigger" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="12"><TextBlock Text="✓" Width="26" TextAlignment="Center" VerticalAlignment="Center" FontSize="24" Foreground="#00DCC0"/><StackPanel><TextBlock Text="Xác nhận vào lệnh" FontWeight="SemiBold"/><TextBlock Text="Chỉ báo &amp; tín hiệu trigger" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+            <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="mtf" Click="Category_OnClick">
+              <StackPanel Orientation="Horizontal" Spacing="12"><TextBlock Text="✓" Width="26" TextAlignment="Center" VerticalAlignment="Center" FontSize="{DynamicResource Font_24}" Foreground="{DynamicResource Brush_00DCC0}"/><StackPanel><TextBlock Text="{DynamicResource Text_6b7f7814e00fd267}" FontWeight="SemiBold"/><TextBlock Text="{DynamicResource Text_373f12612c54ee73}" Classes="dim" FontSize="{DynamicResource Font_12}"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="stop_loss" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="shield" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="Stop loss" FontWeight="SemiBold"/><TextBlock Text="SL structure / fixed / ATR" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="shield" Width="26" Height="26" Tint="{DynamicResource Brush_82C4FF}"/><StackPanel><TextBlock Text="Stop loss" FontWeight="SemiBold"/><TextBlock Text="SL structure / fixed / ATR" Classes="dim" FontSize="{DynamicResource Font_12}"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="take_profit" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="12"><TextBlock Text="◎" Width="26" TextAlignment="Center" VerticalAlignment="Center" FontSize="26" Foreground="#82C4FF"/><StackPanel><TextBlock Text="Take profit" FontWeight="SemiBold"/><TextBlock Text="TP fixed / dynamic" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><TextBlock Text="◎" Width="26" TextAlignment="Center" VerticalAlignment="Center" FontSize="{DynamicResource Font_26}" Foreground="{DynamicResource Brush_82C4FF}"/><StackPanel><TextBlock Text="Take profit" FontWeight="SemiBold"/><TextBlock Text="TP fixed / dynamic" Classes="dim" FontSize="{DynamicResource Font_12}"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="management" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="12"><TextBlock Text="⚙" Width="26" TextAlignment="Center" VerticalAlignment="Center" FontSize="26" Foreground="#82C4FF"/><StackPanel><TextBlock Text="Quản lý sau vào" FontWeight="SemiBold"/><TextBlock Text="BE, trailing, scale out" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><TextBlock Text="⚙" Width="26" TextAlignment="Center" VerticalAlignment="Center" FontSize="{DynamicResource Font_26}" Foreground="{DynamicResource Brush_82C4FF}"/><StackPanel><TextBlock Text="{DynamicResource Text_f9f6d24ac95e0a5d}" FontWeight="SemiBold"/><TextBlock Text="BE, trailing, scale out" Classes="dim" FontSize="{DynamicResource Font_12}"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="sessions" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="12"><TextBlock Text="◷" Width="26" TextAlignment="Center" VerticalAlignment="Center" FontSize="26" Foreground="#82C4FF"/><StackPanel><TextBlock Text="Phiên giao dịch" FontWeight="SemiBold"/><TextBlock Text="Khung giờ, bộ lọc phiên" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><TextBlock Text="◷" Width="26" TextAlignment="Center" VerticalAlignment="Center" FontSize="{DynamicResource Font_26}" Foreground="{DynamicResource Brush_82C4FF}"/><StackPanel><TextBlock Text="{DynamicResource Text_487b844fbcf41b9a}" FontWeight="SemiBold"/><TextBlock Text="{DynamicResource Text_912bece9b1a0258f}" Classes="dim" FontSize="{DynamicResource Font_12}"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="news" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="document" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="Lọc tin" FontWeight="SemiBold"/><TextBlock Text="Tin tức, thời gian tránh giao dịch" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="document" Width="26" Height="26" Tint="{DynamicResource Brush_82C4FF}"/><StackPanel><TextBlock Text="{DynamicResource Text_b5c8af5385a3682d}" FontWeight="SemiBold"/><TextBlock Text="{DynamicResource Text_749f45b173a7a71c}" Classes="dim" FontSize="{DynamicResource Font_12}"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="pullback" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="bars" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="MTF Pullback" FontWeight="SemiBold"/><TextBlock Text="Đa khung thời gian - Pullback" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="bars" Width="26" Height="26" Tint="{DynamicResource Brush_82C4FF}"/><StackPanel><TextBlock Text="MTF Pullback" FontWeight="SemiBold"/><TextBlock Text="{DynamicResource Text_6644db70136a08f6}" Classes="dim" FontSize="{DynamicResource Font_12}"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="trigger" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="bars" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="MTF Trigger" FontWeight="SemiBold"/><TextBlock Text="Đa khung thời gian - Trigger" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="bars" Width="26" Height="26" Tint="{DynamicResource Brush_82C4FF}"/><StackPanel><TextBlock Text="MTF Trigger" FontWeight="SemiBold"/><TextBlock Text="{DynamicResource Text_1bd6791ec61edf31}" Classes="dim" FontSize="{DynamicResource Font_12}"/></StackPanel></StackPanel>
             </Button>
           </StackPanel>
         </ScrollViewer>
 
         <Border Grid.Row="2" Classes="panelSoft" Margin="8" Padding="10">
           <StackPanel Spacing="5">
-            <TextBlock Text="Cấu hình hiện tại" FontWeight="SemiBold"/>
+            <TextBlock Text="{DynamicResource Text_65c9bd82979d214d}" FontWeight="SemiBold"/>
             <Grid ColumnDefinitions="Auto,*">
-              <TextBlock Text="Profile:" Classes="dim"/><TextBlock x:Name="ProfileNameText" Grid.Column="1" Text="—" Foreground="#18E58B" Margin="8,0,0,0"/>
+              <TextBlock Text="Profile:" Classes="dim"/><TextBlock x:Name="ProfileNameText" Grid.Column="1" Text="—" Foreground="{DynamicResource Brush_18E58B}" Margin="8,0,0,0"/>
             </Grid>
-            <TextBlock x:Name="DirtyStateText" Text="UNCHANGED" Foreground="#18E58B" FontSize="12"/>
-            <TextBlock x:Name="ValidationStateText" Text="NOT VALIDATED" Foreground="#FFD34D" FontSize="12"/>
-            <TextBlock x:Name="FieldCountText" Text="0 tham số" Classes="dim" FontSize="12"/>
+            <TextBlock x:Name="DirtyStateText" Text="UNCHANGED" Foreground="{DynamicResource Brush_18E58B}" FontSize="{DynamicResource Font_12}"/>
+            <TextBlock x:Name="ValidationStateText" Text="NOT VALIDATED" Foreground="{DynamicResource Brush_FFD34D}" FontSize="{DynamicResource Font_12}"/>
+            <TextBlock x:Name="FieldCountText" Text="{local:InitialText 55b9d642c2eda358}" Classes="dim" FontSize="{DynamicResource Font_12}"/>
           </StackPanel>
         </Border>
       </Grid>
@@ -71,27 +71,27 @@
       <Border Grid.Row="0" Classes="panel">
         <Grid ColumnDefinitions="*,230,420" Margin="12,8" ColumnSpacing="10">
           <Grid ColumnDefinitions="30,*" ColumnSpacing="10">
-            <local:ReferenceIcon Kind="document" Width="30" Height="34" Tint="#239CFF" VerticalAlignment="Top" Margin="0,3,0,0"/>
+            <local:ReferenceIcon Kind="document" Width="30" Height="34" Tint="{DynamicResource Brush_239CFF}" VerticalAlignment="Top" Margin="0,3,0,0"/>
           <StackPanel Grid.Column="1">
-            <TextBlock Text="Cấu hình chiến lược giao dịch" FontSize="21" FontWeight="SemiBold"/>
-            <TextBlock Text="Thiết lập đầy đủ thông số cho hệ thống giao dịch tự động - XAUUSD" Classes="dim" FontSize="13"/><TextBox x:Name="SearchBox" PlaceholderText="Tìm tham số…" FontSize="12" Width="280" HorizontalAlignment="Left" Margin="0,3,0,0" Height="24" MinHeight="24" Padding="7,2" TextChanged="SearchBox_OnTextChanged"/>
+            <TextBlock Text="{DynamicResource Text_d84ba864098f634c}" FontSize="{DynamicResource Font_21}" FontWeight="SemiBold"/>
+            <TextBlock Text="{DynamicResource Text_9e38c64004e8bda8}" Classes="dim" FontSize="{DynamicResource Font_13}"/><TextBox x:Name="SearchBox" PlaceholderText="{DynamicResource Text_19d9435a27ba9bfe}" FontSize="{DynamicResource Font_12}" Width="280" HorizontalAlignment="Left" Margin="0,3,0,0" Height="24" MinHeight="24" Padding="7,2" TextChanged="SearchBox_OnTextChanged"/>
           </StackPanel>
           </Grid>
 
           <StackPanel Grid.Column="1">
-            <TextBlock Text="Chọn profile" Classes="dim" FontSize="12"/>
+            <TextBlock Text="{DynamicResource Text_23078a36dcbe86d3}" Classes="dim" FontSize="{DynamicResource Font_12}"/>
             <Border Classes="panelSoft" Padding="10,7">
-              <TextBlock x:Name="ProfileHeaderText" Text="Active profile từ Python Engine"/>
+              <TextBlock x:Name="ProfileHeaderText" Text="{local:InitialText 89a8e2c21c38f636}"/>
             </Border>
           </StackPanel>
 
           <Grid Grid.Column="2" Width="420" ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
-            <Button Grid.Column="0" Classes="primary configToolbar" Content="💾  Lưu JSON" Click="SaveJson_OnClick"/>
-            <Button Grid.Column="1" Classes="secondary configToolbar" Content="💾  Lưu thành..." Click="SaveJson_OnClick"/>
-            <Button Grid.Column="2" Classes="secondary configToolbar" Content="🗑  Mặc định" Click="Defaults_OnClick"/>
-            <Button Grid.Row="1" Grid.Column="0" Classes="secondary configToolbar" Content="⬆  Nhập JSON" Click="LoadJson_OnClick"/>
-            <Button Grid.Row="1" Grid.Column="1" Classes="secondary configToolbar" Content="⬇  Xuất .set" Click="ExportSet_OnClick"/>
-            <Button Grid.Row="1" Grid.Column="2" Classes="secondary configToolbar" Content="⬆  Nhập .set" Click="ImportSet_OnClick"/>
+            <Button Grid.Column="0" Classes="primary configToolbar" Content="{DynamicResource Text_6ab1e9857f32274e}" Click="SaveJson_OnClick"/>
+            <Button Grid.Column="1" Classes="secondary configToolbar" Content="{DynamicResource Text_f230d4bd477b6c87}" Tag="save-as" Click="SaveJson_OnClick"/>
+            <Button Grid.Column="2" Classes="secondary configToolbar" Content="{DynamicResource Text_86b0369dec271dc4}" Click="Defaults_OnClick"/>
+            <Button Grid.Row="1" Grid.Column="0" Classes="secondary configToolbar" Content="{DynamicResource Text_52e388a578baa175}" Click="LoadJson_OnClick"/>
+            <Button Grid.Row="1" Grid.Column="1" Classes="secondary configToolbar" Content="{DynamicResource Text_b0fdfad3e822de32}" Click="ExportSet_OnClick"/>
+            <Button Grid.Row="1" Grid.Column="2" Classes="secondary configToolbar" Content="{DynamicResource Text_95f4c7f6d65b29ca}" Click="ImportSet_OnClick"/>
           </Grid>
         </Grid>
       </Border>
@@ -100,9 +100,9 @@
         <Grid x:Name="FieldsHost" ColumnDefinitions="*,*,*,*,*,*,*,*,*,*,*,*" ColumnSpacing="8" RowSpacing="8" Margin="0,0,4,8">
           <Border x:Name="ValidationCard" Grid.Row="3" Grid.Column="8" Grid.ColumnSpan="4" Classes="panel" Padding="10,8">
             <Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
-              <Grid ColumnDefinitions="*,Auto"><TextBlock Text="✓  Kiểm tra &amp; Xác thực cấu hình" FontSize="16" FontWeight="SemiBold" Foreground="#00DCB6"/><TextBlock Grid.Column="1" x:Name="VisibleCountText" Text="0 / 0" FontSize="11" Classes="dim"/></Grid>
-              <StackPanel Grid.Row="1" Spacing="7"><TextBlock x:Name="StatusText" Text="Đang chờ Python Engine..." FontSize="13" Foreground="#C9DDEF" TextWrapping="Wrap"/><TextBlock Text="TÀI KHOẢN THẬT ĐANG KHÓA" Foreground="#FFD34D" FontSize="12"/><StackPanel IsVisible="False"><TextBlock x:Name="DirectionQuickValue"/><TextBlock x:Name="PullbackQuickValue"/><TextBlock x:Name="TriggerQuickValue"/></StackPanel></StackPanel>
-              <Grid Grid.Row="2" ColumnDefinitions="1.3*,1*,0.65*" ColumnSpacing="6"><Button Classes="primary" Content="▶ Áp dụng cấu hình" Click="Apply_OnClick" Padding="8,6"/><Button Grid.Column="1" Classes="secondary" Content="↻ Kiểm tra lại" Click="Validate_OnClick" Padding="8,6"/><Button Grid.Column="2" Classes="secondary" Content="Hoàn tác" Click="ReloadActive_OnClick" FontSize="12" Padding="4,6"/></Grid>
+              <Grid ColumnDefinitions="*,Auto"><TextBlock Text="{DynamicResource Text_f31df443ae928d37}" FontSize="{DynamicResource Font_16}" FontWeight="SemiBold" Foreground="{DynamicResource Brush_00DCB6}"/><TextBlock Grid.Column="1" x:Name="VisibleCountText" Text="0 / 0" FontSize="{DynamicResource Font_11}" Classes="dim"/></Grid>
+              <StackPanel Grid.Row="1" Spacing="7"><TextBlock x:Name="StatusText" Text="{local:InitialText 257f6625e3f82dc2}" FontSize="{DynamicResource Font_13}" Foreground="{DynamicResource Brush_C9DDEF}" TextWrapping="Wrap"/><TextBlock Text="{DynamicResource Text_e22e751168504ca9}" Foreground="{DynamicResource Brush_FFD34D}" FontSize="{DynamicResource Font_12}"/><StackPanel IsVisible="False"><TextBlock x:Name="DirectionQuickValue"/><TextBlock x:Name="PullbackQuickValue"/><TextBlock x:Name="TriggerQuickValue"/></StackPanel></StackPanel>
+              <Grid Grid.Row="2" ColumnDefinitions="1.3*,1*,0.65*" ColumnSpacing="6"><Button Classes="primary" Content="{DynamicResource Text_7bed9701de5f81da}" Click="Apply_OnClick" Padding="8,6"/><Button Grid.Column="1" Classes="secondary" Content="{DynamicResource Text_1e4b96175ac072cd}" Click="Validate_OnClick" Padding="8,6"/><Button Grid.Column="2" Classes="secondary" Content="{DynamicResource Text_e72ff675217efc5e}" Click="ReloadActive_OnClick" FontSize="{DynamicResource Font_12}" Padding="4,6"/></Grid>
             </Grid>
           </Border>
         </Grid>

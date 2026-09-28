@@ -83,14 +83,14 @@ public partial class OrdersPositionsDashboard
         bool confirmed = false;
         var dialog = new Window { Title = "Bắt đầu DEMO một lệnh", Width = 540, Height = 275, CanResize = false,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, Background = new SolidColorBrush(Color.Parse("#031426")) };
-        var cancel = new Button { Content = "Quay lại", Classes = { "secondary" } };
-        var start = new Button { Content = "Bắt đầu chờ tín hiệu DEMO", Classes = { "primary" } };
+        var cancel = new Button { [LocalizationService.TextProperty] = "Quay lại", Classes = { "secondary" } };
+        var start = new Button { [LocalizationService.TextProperty] = "Bắt đầu chờ tín hiệu DEMO", Classes = { "primary" } };
         cancel.Click += (_, _) => dialog.Close();
         start.Click += (_, _) => { confirmed = true; dialog.Close(); };
         dialog.Content = new StackPanel { Margin = new Thickness(18), Spacing = 12, Children =
         {
-            new TextBlock { Text = $"DEMO {context.AccountLogin} · {context.AccountServer}\n{context.Symbol} · tối đa {volume:0.###} lot · chờ {seconds / 60} phút", FontSize = 17, TextWrapping = TextWrapping.Wrap },
-            new TextBlock { Text = "Ứng dụng sẽ gửi tối đa một lệnh khi có tín hiệu mới theo cấu hình đang áp dụng, kèm SL/TP. Không tự gửi lại. Nút Dừng chờ chỉ hủy thời gian chờ, không đóng vị thế đã gửi.", TextWrapping = TextWrapping.Wrap, Foreground = Brushes.Gold },
+            new TextBlock { Text = $"DEMO {context.AccountLogin} · {context.AccountServer}\n{context.Symbol} · tối đa {volume:0.###} lot · chờ {seconds / 60} phút", [AppearanceService.BaseFontSizeProperty] = 17d, TextWrapping = TextWrapping.Wrap },
+            new TextBlock { [LocalizationService.TextProperty] = "Ứng dụng sẽ gửi tối đa một lệnh khi có tín hiệu mới theo cấu hình đang áp dụng, kèm SL/TP. Không tự gửi lại. Nút Dừng chờ chỉ hủy thời gian chờ, không đóng vị thế đã gửi.", TextWrapping = TextWrapping.Wrap, Foreground = Brushes.Gold },
             new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8, Children = { cancel, start } }
         } };
         await dialog.ShowDialog(owner); return confirmed;

@@ -564,6 +564,7 @@ var backtestResultObject = new
     dataset_file_name = "xau.json",
     dataset_fingerprint = new string('a', 64),
     engine_profile_hash = new string('c', 64),
+    profile = new { pullback = new { rsi_period = 20 } },
     dataset_metadata = new
     {
         symbol = "XAUUSD",
@@ -660,6 +661,8 @@ Check(backtestResult.EquityCurve.Count == 2 && backtestResult.DrawdownCurve.Coun
 Check(backtestResult.TradeTotal == 20 && backtestResult.Trades.Count == 1, "backtest trade paging parser");
 Check(backtestResult.Trades[0].SignalTime < backtestResult.Trades[0].EntryTime, "backtest next-bar trade parser");
 Check(backtestResult.SkippedSignals["COOLDOWN"] == 2, "backtest skipped signal parser");
+Check(backtestResult.RawResult.GetProperty("profile").GetProperty("pullback").GetProperty("rsi_period").GetInt32()==20,
+    "backtest export keeps exact profile and unprojected model evidence");
 
 var backtestHistoryPayload = JsonSerializer.SerializeToElement(new
 {
@@ -1055,8 +1058,11 @@ Check(ExecutionGuardRejects("RejectUnexpectedStrategyExecutionEnable", StrategyS
       ExecutionGuardRejects("RejectUnexpectedStrategyExecutionEnable", StrategySnapshot.Empty with { ExecutionEnabled = true }),
     "demo-once integration retains both strategy execution guards");
 Check(ExecutionGuardRejects("RejectUnexpectedOrdersExecutionEnable", OrdersPositionsSnapshot.Empty with { BrokerExecutionLocked = false }) &&
-      ExecutionGuardRejects("RejectUnexpectedOrdersExecutionEnable", OrdersPositionsSnapshot.Empty with { SimulationOnly = false }),
-    "demo-once integration retains broker lock and manual simulation guards");
+      !ExecutionGuardRejects("RejectUnexpectedOrdersExecutionEnable", OrdersPositionsSnapshot.Empty with { SimulationOnly = false }),
+    "simulation cannot unlock broker; general execution can report its actual mode");
+Check(!ExecutionGuardRejects("RejectUnexpectedExecutionEnable", ProtocolEnvelope.Create("heartbeat_ack", new
+    { trading_enabled = true, execution_enabled = true, execution_capable = true })),
+    "versioned general execution capability supports user-selected auto mode");
 
 using (var demoSupervisor = new EngineProcessSupervisor())
 {
@@ -1099,4 +1105,8 @@ Check(OverviewSnapshot.FromMarketUpdate(JsonSerializer.SerializeToElement(new { 
 var demoContext = new DemoOnceContext(123, "Demo-Server", "DEMO", "XAUUSD", 991188, new string('a',64), true);
 Check(demoContext.CanArm && !(demoContext with { AccountMode = "REAL" }).CanArm,
     "native demo start requires a capable verified demo context");
+var historicalStops = JsonSerializer.SerializeToElement(new { ticket=1678504331L, order_ticket=2100456259L, magic=991188,
+    volume=.01, price_in=4205.97, price_out=4204.90, time=1790574477L, sl=4204.90, tp=4212.69 });
+Check(OrdersPositionsSnapshot.TryReadDeal(historicalStops,out var closedTrade) && closedTrade.Sl==4204.90 && closedTrade.Tp==4212.69,
+    "MT5 closing-deal protective levels survive the Desktop projection");
 Console.WriteLine($"XAUPY IPC contract self-test complete: {passed} checks passed.");

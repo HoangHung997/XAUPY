@@ -131,6 +131,26 @@ async def exchange(reader, writer, message_type, payload=None):
 
 
 class Task012OptimizerProtocolTests(unittest.IsolatedAsyncioTestCase):
+    async def test_research_saved_evidence_and_candidate_prepare_leave_active_profile_unchanged(self):
+        write_dataset(self.dataset_path,days=15)
+        reader,writer=await self.connect()
+        try:
+            baseline=deepcopy(self.server.active_profile)
+            request=self.sweep_request();request['to_date']='2024-01-15'
+            started=await exchange(reader,writer,'research_start',request)
+            self.assertTrue(started.payload['ok'],started.payload)
+            terminal=await self.wait_for_terminal(reader,writer,started.payload['status']['job_id'])
+            self.assertEqual('COMPLETED',terminal['status'],terminal)
+            run_id=terminal['result_run_id']
+            report=await exchange(reader,writer,'optimizer_result_get',dict(run_id=run_id))
+            result=report.payload['result'];self.assertEqual('RESEARCH',result['mode'])
+            selected=result['research']['selected_index']
+            prepared=await exchange(reader,writer,'optimizer_candidate_prepare',dict(run_id=run_id,index=selected))
+            self.assertTrue(prepared.payload['ok'],prepared.payload)
+            self.assertEqual(baseline,self.server.active_profile)
+            self.assertEqual(baseline['execution'],prepared.payload['candidate']['profile']['execution'])
+            self.assertEqual('OFF',self.server.execution.policy['mode'])
+        finally:writer.close();await writer.wait_closed()
     async def asyncSetUp(self):
         self.temp = tempfile.TemporaryDirectory()
         root = pathlib.Path(self.temp.name)

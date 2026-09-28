@@ -1,7 +1,7 @@
 """XAUPY Python Engine.
 
-Desktop completion release: dynamic management research, diagnostics, persisted
-settings and recovery. Broker execution remains hard-locked.
+Development toward first complete release: user-controlled broker execution,
+observed-tick research, persisted settings and recovery.
 """
 
-__version__ = "0.17.2-remediation"
+__version__ = "1.0.0-dev"

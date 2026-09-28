@@ -30,7 +30,7 @@ public partial class OptimizerDashboard
             ("pullback", "z_sell_level", "Z bán ≥", "z_enabled", .1d),
             ("trigger", "z_reversal_delta", "Z hồi từ đỉnh/đáy", "z_enabled", .1d),
         };
-        host.Children.Add(new TextBlock { Text = "Tham số                           Min           Max          Bước", FontSize = 12 });
+        host.Children.Add(new TextBlock { [LocalizationService.TextProperty] = "Tham số                           Min           Max          Bước", [AppearanceService.BaseFontSizeProperty] = 12d });
         foreach (var (section, key, label, enabledKey, step) in fields)
         {
             string path = section + "." + key;

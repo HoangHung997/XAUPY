@@ -1,3 +1,4 @@
+from ui_source_support import read_xaml
 import pathlib
 import unittest
 
@@ -14,9 +15,9 @@ REFERENCE = ROOT / "docs" / "ui-reference" / "Tab Lệnh & Vị thế.png"
 class Task009OrdersUiSourceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.main_xaml = MAIN_XAML.read_text(encoding="utf-8")
+        cls.main_xaml = read_xaml(MAIN_XAML)
         cls.main_code = MAIN_CODE.read_text(encoding="utf-8")
-        cls.xaml = ORDERS_XAML.read_text(encoding="utf-8")
+        cls.xaml = read_xaml(ORDERS_XAML)
         cls.code = ORDERS_CODE.read_text(encoding="utf-8")
         cls.supervisor = SUPERVISOR.read_text(encoding="utf-8")
         cls.model = MODEL.read_text(encoding="utf-8")
@@ -79,12 +80,10 @@ class Task009OrdersUiSourceTests(unittest.TestCase):
         self.assertIn('x:Name="OrdersMarketChart"', self.xaml)
         self.assertIn('.SetSnapshot(overview, config.PullbackTimeframe)', self.code)
 
-    def test_manual_controls_are_simulation_only_and_confirmed(self):
-        self.assertIn("CHẾ ĐỘ MÔ PHỎNG", self.xaml)
-        self.assertIn("GIAO DỊCH ĐANG KHÓA", self.xaml)
+    def test_manual_controls_use_broker_adapter_and_user_confirmation(self):
         self.assertIn('x:Name="ConfirmCloseCheck"', self.xaml)
         self.assertIn('x:Name="ManualConfirmCheck"', self.xaml)
-        self.assertIn("SimulateManualActionAsync", self.code)
+        self.assertIn("ExecuteManualActionAsync", self.code)
         self.assertNotIn("OrderSend", self.code)
         self.assertNotIn("CTrade", self.code)
 
@@ -93,7 +92,7 @@ class Task009OrdersUiSourceTests(unittest.TestCase):
         self.assertIn("RejectUnexpectedOrdersExecutionEnable", self.supervisor)
         self.assertIn("BrokerExecutionLocked", self.model)
         self.assertIn("SimulationOnly", self.model)
-        self.assertIn('desktop_version = "0.17.2-remediation"', self.supervisor)
+        self.assertIn('desktop_version = "1.0.0-dev"', self.supervisor)
 
     def test_no_old_task009_placeholder_wording_remains(self):
         self.assertNotIn("Execution và màn hình quản lý lệnh thuộc Task 009", self.main_code)

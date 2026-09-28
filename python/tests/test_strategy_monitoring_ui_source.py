@@ -1,3 +1,4 @@
+from ui_source_support import read_xaml
 import pathlib
 import unittest
 
@@ -22,12 +23,12 @@ REFERENCES = (
 class StrategyMonitoringUiSourceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.main_xaml = MAIN_XAML.read_text(encoding="utf-8")
+        cls.main_xaml = read_xaml(MAIN_XAML)
         cls.main_code = MAIN_CODE.read_text(encoding="utf-8")
-        cls.config_xaml = CONFIG_XAML.read_text(encoding="utf-8")
-        cls.strategy_xaml = STRATEGY_XAML.read_text(encoding="utf-8")
+        cls.config_xaml = read_xaml(CONFIG_XAML)
+        cls.strategy_xaml = read_xaml(STRATEGY_XAML)
         cls.strategy_code = STRATEGY_CODE.read_text(encoding="utf-8")
-        cls.monitor_xaml = MONITOR_XAML.read_text(encoding="utf-8")
+        cls.monitor_xaml = read_xaml(MONITOR_XAML)
         cls.monitor_code = MONITOR_CODE.read_text(encoding="utf-8")
         cls.supervisor = SUPERVISOR.read_text(encoding="utf-8")
         cls.model = MODEL.read_text(encoding="utf-8")
@@ -99,7 +100,7 @@ class StrategyMonitoringUiSourceTests(unittest.TestCase):
             "Trạng thái điều kiện (Realtime)",
             "Warm-up / dữ liệu",
             "Tín hiệu gần nhất",
-            "EXECUTION LOCKED",
+            "StrategyExecutionText",
         ):
             with self.subTest(value=value):
                 self.assertIn(value, self.strategy_xaml)
@@ -140,23 +141,22 @@ class StrategyMonitoringUiSourceTests(unittest.TestCase):
         self.assertIn("overview.Bars.TryGetValue", self.monitor_code)
         self.assertNotIn("mock", self.monitor_code.lower())
 
-    def test_unimplemented_monitoring_backends_are_explicit_not_faked(self):
-        self.assertIn("Chưa có lịch tin tức được tải.", self.monitor_xaml)
-        self.assertIn("Chưa có dữ liệu tài nguyên hệ thống.", self.monitor_xaml)
-        self.assertIn("Giao dịch đang khóa an toàn.", self.monitor_xaml)
+    def test_monitoring_exposes_runtime_backed_controls(self):
+        for name in ('CalendarEventsText','CpuPercent','RamPercent','DiskPercent','ExecutionMode','ExecutionPending'):
+            self.assertIn('x:Name="'+name+'"',self.monitor_xaml)
 
     def test_strategy_projection_is_parsed_and_guarded_by_supervisor(self):
         self.assertIn("StrategySnapshot.FromHeartbeatPayload", self.supervisor)
         self.assertIn("RejectUnexpectedStrategyExecutionEnable", self.supervisor)
         self.assertIn("TradingEnabled", self.model)
         self.assertIn("ExecutionEnabled", self.model)
-        self.assertIn('desktop_version = "0.17.2-remediation"', self.supervisor)
+        self.assertIn('desktop_version = "1.0.0-dev"', self.supervisor)
 
     def test_main_overview_now_uses_real_strategy_state(self):
         self.assertIn('x:Name="StrategyStateValue"', self.main_xaml)
         self.assertIn("ApplyStrategySnapshot", self.main_code)
         self.assertIn("strategy.State", self.main_code)
-        self.assertIn("broker execution hiện đang khóa", self.main_code)
+        self.assertIn('e.Execution.Label', self.main_code)
 
     def test_tools_and_settings_are_hosted_and_load_real_data(self):
         self.assertIn('x:Name="ToolsView"', self.main_xaml)

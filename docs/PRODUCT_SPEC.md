@@ -1,10 +1,17 @@
 # XAUPY — Master Product & Implementation Specification
 
-Version: 0.1  
-Status: Approved foundation specification  
+Version: 1.0 development scope (2026-09-28)
+Status: Foundation plus user-authorized full-release completion
 Primary market: XAUUSD  
 Primary OS: Windows desktop  
 Implementation rule: one task at a time, CI evidence before moving forward.
+
+The user's full-release instruction supersedes prototype-only hard execution
+locks and simulation-only acceptance. [Release completion scope](RELEASE_V1_COMPLETION.md)
+defines user-controlled DEMO/REAL and automatic/manual execution, broker
+reconciliation, complete visible functions and release acceptance. Historical
+task acceptance documents retain their original scoped evidence; they are not
+proof that the full 1.0 product has passed acceptance.
 
 ## 1. Product goal
 

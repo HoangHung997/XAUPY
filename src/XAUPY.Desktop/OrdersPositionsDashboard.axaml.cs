@@ -55,6 +55,8 @@ public partial class OrdersPositionsDashboard : UserControl
     {
         this.FindControl<MarketChartControl>("OrdersMarketChart")!.SetSnapshot(overview, config.PullbackTimeframe);
         Text("OrdersConnectionDot").Foreground = book.Available && book.TerminalConnected ? Brushes.MediumSpringGreen : Brushes.Gold;
+        if (_book.AccountLogin != book.AccountLogin || _book.AccountServer != book.AccountServer || _book.Magic != book.Magic)
+            ClearBrokerHistory();
         _book = book;
         _config = config;
 
@@ -77,20 +79,7 @@ public partial class OrdersPositionsDashboard : UserControl
         RenderAll();
         RenderQuoteChart();
 
-        bool simulationReady =
-            book.Available &&
-            book.TerminalConnected &&
-            string.Equals(book.AccountTradeMode, "DEMO", StringComparison.OrdinalIgnoreCase);
-
-        Button("MarketBuyButton").IsEnabled = simulationReady;
-        Button("MarketSellButton").IsEnabled = simulationReady;
-
-        if (!book.Available)
-            SetActionStatus("SIMULATION BLOCKED • chờ snapshot MT5 tươi.", Brushes.Gold);
-        else if (!simulationReady)
-            SetActionStatus("SIMULATION BLOCKED • Task 009 yêu cầu tài khoản DEMO + terminal online.", Brushes.Gold);
-        else if (Text("ActionStatusText").Text?.StartsWith("SIMULATION BLOCKED", StringComparison.Ordinal) == true)
-            SetActionStatus("Chế độ mô phỏng • Giao dịch đang khóa", Brushes.Gold);
+        ApplyExecutionStatus(_supervisor?.Execution ?? ExecutionSnapshot.Offline);
     }
 
     public void ApplyDemoOnceStatus(DemoOnceSnapshot report)
@@ -190,6 +179,7 @@ public partial class OrdersPositionsDashboard : UserControl
         actions.Children.Add(ActionButton("1/2", position.Ticket, "PARTIAL_CLOSE"));
         actions.Children.Add(ActionButton("BE", position.Ticket, "MOVE_SL_BE"));
         actions.Children.Add(ActionButton("TS", position.Ticket, "START_TRAILING"));
+        actions.Children.Add(ActionButton("SL/TP", position.Ticket, "MODIFY_POSITION"));
         actions.IsEnabled = IsCurrentSymbol(position.Symbol);
         if (!actions.IsEnabled) ToolTip.SetTip(actions, "Chỉ quan sát symbol khác; thao tác dùng thông số của symbol đang kết nối.");
         Grid.SetColumn(actions, 13);
@@ -248,7 +238,7 @@ public partial class OrdersPositionsDashboard : UserControl
         var host = Panel("DealsRowsHost");
         host.Children.Clear();
 
-        var deals = _book.Deals.Where(d => Check("CurrentSymbolHistoryCheck").IsChecked != true || IsCurrentSymbol(d.Symbol)).ToArray();
+        var deals = (_brokerHistoryRows ?? _book.Deals).Where(d => Check("CurrentSymbolHistoryCheck").IsChecked != true || IsCurrentSymbol(d.Symbol)).ToArray();
         if (!_book.Available || deals.Length == 0)
         {
             host.Children.Add(EmptyRow(_book.Available ? "Chưa có giao dịch đã đóng của chiến lược này." : "Đang chờ lịch sử giao dịch từ MT5."));
@@ -260,7 +250,11 @@ public partial class OrdersPositionsDashboard : UserControl
     }
 
     private bool IsCurrentSymbol(string symbol) => string.Equals(symbol, _book.Symbol ?? _config.Symbol, StringComparison.Ordinal);
-    private void SymbolFilter_OnClick(object? sender, RoutedEventArgs e) => RenderAll();
+    private async void SymbolFilter_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_brokerHistoryReportId is not null && !_brokerHistoryBusy) await LoadBrokerHistoryAsync(0);
+        RenderAll();
+    }
 
     private Border DealRow(DealSnapshot deal, int index)
     {
@@ -291,6 +285,7 @@ public partial class OrdersPositionsDashboard : UserControl
             await ModifyPendingAsync(tag.Ticket);
             return;
         }
+        if(tag.Action=="MODIFY_POSITION") {await ModifyPositionAsync(tag.Ticket);return;}
 
         double? percent = tag.Action == "PARTIAL_CLOSE" ? 50.0 : null;
         await SendActionAsync(
@@ -332,7 +327,7 @@ public partial class OrdersPositionsDashboard : UserControl
         var positions = _book.Positions.Where(p => IsCurrentSymbol(p.Symbol)).ToArray();
         if (positions.Length == 0)
         {
-            SetActionStatus("REJECTED • không có position để mô phỏng.", Brushes.IndianRed);
+            SetActionStatus("Không có vị thế của chiến lược để xử lý.", Brushes.IndianRed);
             return;
         }
 
@@ -354,7 +349,7 @@ public partial class OrdersPositionsDashboard : UserControl
         }
 
         SetActionStatus(
-            $"SIMULATED • {action}: {accepted}/{positions.Length} accepted • {lastCode}",
+            $"{action}: {accepted}/{positions.Length} thao tác được tiếp nhận • {lastCode}",
             accepted == positions.Length ? Brushes.LightGreen : Brushes.Gold);
     }
 
@@ -408,10 +403,10 @@ public partial class OrdersPositionsDashboard : UserControl
         var priceBox = new TextBox { Text = Price(order.PriceOpen), PlaceholderText = "Giá đặt" };
         var slBox = new TextBox { Text = PriceOrDash(order.Sl).Replace("—", ""), PlaceholderText = "SL" };
         var tpBox = new TextBox { Text = PriceOrDash(order.Tp).Replace("—", ""), PlaceholderText = "TP" };
-        var confirm = new CheckBox { Content = "Xác nhận mô phỏng sửa pending order" };
+        var confirm = new CheckBox { Content = $"Xác nhận sửa lệnh trên {_book.AccountTradeMode} {_book.AccountLogin}" };
         var status = new TextBlock { Foreground = Brushes.Gold, TextWrapping = TextWrapping.Wrap };
-        var ok = new Button { Content = "Mô phỏng sửa", Classes = { "primary" } };
-        var cancel = new Button { Content = "Hủy", Classes = { "secondary" } };
+        var ok = new Button { [LocalizationService.TextProperty] = "Gửi thay đổi", Classes = { "primary" } };
+        var cancel = new Button { [LocalizationService.TextProperty] = "Hủy", Classes = { "secondary" } };
 
         var buttons = new StackPanel
         {
@@ -423,8 +418,8 @@ public partial class OrdersPositionsDashboard : UserControl
         buttons.Children.Add(ok);
 
         var content = new StackPanel { Margin = new Thickness(16), Spacing = 8 };
-        content.Children.Add(new TextBlock { Text = $"Pending #{ticket}", FontSize = 18, FontWeight = FontWeight.SemiBold });
-        content.Children.Add(new TextBlock { Text = "Giá đặt", Foreground = Brushes.LightGray });
+        content.Children.Add(new TextBlock { Text = $"Pending #{ticket}", [AppearanceService.BaseFontSizeProperty] = 18d, FontWeight = FontWeight.SemiBold });
+        content.Children.Add(new TextBlock { [LocalizationService.TextProperty] = "Giá đặt", Foreground = Brushes.LightGray });
         content.Children.Add(priceBox);
         content.Children.Add(new TextBlock { Text = "SL", Foreground = Brushes.LightGray });
         content.Children.Add(slBox);
@@ -440,7 +435,7 @@ public partial class OrdersPositionsDashboard : UserControl
             Height = 390,
             MinWidth = 430,
             MinHeight = 390,
-            Title = "XAUPY • Mô phỏng sửa lệnh chờ",
+            Title = "XAUPY • Sửa lệnh chờ",
             Background = new SolidColorBrush(Color.Parse("#031426")),
             Content = content,
             CanResize = false
@@ -492,6 +487,7 @@ public partial class OrdersPositionsDashboard : UserControl
         double? tp = null,
         bool updateStatus = true)
     {
+        if (_executionBusy) return null;
         if (_supervisor is null)
         {
             if (updateStatus)
@@ -501,7 +497,9 @@ public partial class OrdersPositionsDashboard : UserControl
 
         try
         {
-            var result = await _supervisor.SimulateManualActionAsync(
+            _executionBusy = true;
+            ApplyExecutionStatus(_supervisor.Execution);
+            var result = await _supervisor.ExecuteManualActionAsync(
                 action,
                 confirmed,
                 ticket,
@@ -515,7 +513,7 @@ public partial class OrdersPositionsDashboard : UserControl
 
             if (updateStatus)
             {
-                string prefix = result.Accepted ? "SIMULATED" : "REJECTED";
+                string prefix = result.Code == "CONFIRMED" ? "BROKER ĐÃ XÁC NHẬN" : result.Code == "APPLIED_LOCAL" ? "ĐÃ BẬT QUẢN LÝ" : result.Accepted ? "ĐANG XỬ LÝ" : "CHƯA THỰC HIỆN";
                 SetActionStatus(
                     $"{prefix} • {result.Code} • {result.Message}",
                     result.Accepted ? Brushes.LightGreen : Brushes.IndianRed);
@@ -529,6 +527,7 @@ public partial class OrdersPositionsDashboard : UserControl
                 SetActionStatus($"ERROR • {ex.Message}", Brushes.IndianRed);
             return null;
         }
+        finally { _executionBusy = false; ApplyExecutionStatus(_supervisor.Execution); }
     }
 
     private void RenderQuoteChart()
@@ -613,7 +612,7 @@ public partial class OrdersPositionsDashboard : UserControl
         var cell = new TextBlock
         {
             Text = value,
-            FontSize = 14,
+            [AppearanceService.BaseFontSizeProperty] = 14d,
             Foreground = foreground ?? new SolidColorBrush(Color.Parse("#D7E4F2")),
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis
@@ -687,7 +686,7 @@ public partial class OrdersPositionsDashboard : UserControl
         if (!current.HasValue)
             return "—";
 
-        return $"{Math.Abs(order.PriceOpen - current.Value) / _book.Point.Value:0.0} pips";
+        return $"{Math.Abs(order.PriceOpen - current.Value) / _book.Point.Value:0.0} points";
     }
 
     private static string PendingTypeSummary(IReadOnlyList<PendingOrderSnapshot> orders)
@@ -708,7 +707,6 @@ public partial class OrdersPositionsDashboard : UserControl
         try
         {
             return DateTimeOffset.FromUnixTimeSeconds(value)
-                .ToLocalTime()
                 .ToString("yyyy.MM.dd HH:mm");
         }
         catch (ArgumentOutOfRangeException)

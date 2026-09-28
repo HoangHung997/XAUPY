@@ -29,6 +29,18 @@ from .backtest import (
 from .config_schema import FIELD_BY_PATH, ConfigField, normalized_profile, validate_profile
 from .journal import default_journal_directory
 from .strategy_engine import StrategyEngine
+from .tick_backtest import TickDataset, TickBacktestEngine, TICK_BACKTEST_MODEL
+
+
+def replay_engine(dataset):
+    return TickBacktestEngine if isinstance(dataset, TickDataset) else BacktestEngine
+
+
+def observation_times(dataset):
+    from .tick_tape import TickTape
+    if isinstance(dataset,TickDataset):
+        return (stamp//1000 for stamp in dataset.ticks.timestamps()) if isinstance(dataset.ticks,TickTape) else (tick['time_msc']//1000 for tick in dataset.ticks)
+    return (bar.time for bar in dataset.bars)
 
 
 OPTIMIZER_SCHEMA_VERSION = 1
@@ -515,6 +527,37 @@ def apply_parameters(
     return profile
 
 
+def prepare_candidate(result,current_profile,index):
+    """Prepare a reviewed patch; never applies settings or enables execution."""
+    if type(index) is not int or result.get('mode') not in ('SWEEP','RESEARCH'):raise OptimizerError('Select a saved optimizer candidate')
+    hashed={k:v for k,v in result.items() if k not in ('optimizer_hash','workers_used','run_id','created_at_utc')}
+    if result.get('optimizer_hash')!=_optimizer_hash(hashed):raise OptimizerError('Optimizer result integrity mismatch')
+    candidate=next((c for c in result['candidates'] if c['index']==index),None)
+    if candidate is None or candidate.get('rejection_reason'):raise OptimizerError('Candidate is unavailable or failed replay')
+    parameters=candidate.get('parameters',{})
+    if not parameters or set(parameters)-OPTIMIZABLE_PATHS:raise OptimizerError('Candidate contains unsupported parameter fields')
+    baseline=normalized_profile(current_profile)
+    profile=apply_parameters(baseline,parameters)
+    analyzed=apply_parameters(result['base_profile'],parameters)
+    ignored={'profile.name','profile.notes','execution.allow_real_account','execution.demo_only',
+        'logging.csv_enabled','logging.decision_trace_enabled'}
+    context_changes=[]
+    def compare(left,right,path=''):
+        if isinstance(left,dict):
+            for key,value in left.items():compare(value,right[key],f'{path}.{key}' if path else key)
+        elif path not in ignored and left!=right:
+            context_changes.append(dict(path=path,analyzed=left,current=right))
+    compare(analyzed,profile)
+    return dict(profile=profile,expected_profile=baseline,
+        changes=[dict(path=path,before=_get_path(baseline,path),after=value) for path,value in sorted(parameters.items()) if _get_path(baseline,path)!=value],
+        metrics=candidate['metrics'],eligible=candidate.get('eligible',False),
+        research_only=True,qualified=candidate.get('qualified',False) and not context_changes,
+        analysis_context_matches=not context_changes,context_changes=context_changes,
+        research=result.get('research'),run_id=result.get('run_id'),result_hash=candidate.get('result_hash'),
+        baseline_changed=result.get('base_profile_hash')!=_profile_hash(baseline),
+        note='Sweep ranking uses this sample only. Inspect walk-forward/holdout before deployment; applying requires the user action and a current-profile match.')
+
+
 def trade_sample_sharpe(result: dict[str, Any]) -> float:
     trades = result.get("trades")
     if not isinstance(trades, list) or len(trades) < 2:
@@ -652,20 +695,16 @@ class OptimizerEngine:
         if not 1 <= self.min_trades <= 100_000:
             raise OptimizerError("min_trades must be 1..100000")
 
-        # Preflight Task 011 support before scheduling thousands of candidates.
-        BacktestEngine(
-            self.base_profile,
-            initial_balance=self.initial_balance,
-            spread_pips=self.spread_pips,
-            commission_per_lot=self.commission_per_lot,
-        )
-
     def _validate_dataset_range(
         self,
         dataset: HistoricalDataset,
         from_date: str,
         to_date: str,
     ) -> tuple[date, date]:
+        # The input model determines support; never silently replay intrabar
+        # settings against an invented path through OHLC.
+        replay_engine(dataset)(self.base_profile, initial_balance=self.initial_balance,
+            spread_pips=self.spread_pips, commission_per_lot=self.commission_per_lot)
         if dataset.metadata.symbol != self.base_profile["strategy"]["symbol"]:
             raise OptimizerError(
                 f"dataset symbol {dataset.metadata.symbol} does not match "
@@ -684,8 +723,8 @@ class OptimizerEngine:
             raise OptimizerError("to_date must be >= from_date")
 
         if not any(
-            start <= dataset.local_date(bar.time) <= end
-            for bar in dataset.bars
+            start <= dataset.local_date(stamp) <= end
+            for stamp in observation_times(dataset)
         ):
             raise OptimizerError(
                 "requested optimizer date range contains no M1 bars"
@@ -792,7 +831,7 @@ class OptimizerEngine:
             "mode": "SWEEP",
             "model": SWEEP_MODEL,
             "objective": OBJECTIVE_ID,
-            "backtest_model": BACKTEST_MODEL,
+            "backtest_model": TICK_BACKTEST_MODEL if isinstance(dataset,TickDataset) else BACKTEST_MODEL,
             "base_profile_hash": self.base_profile_hash,
             "base_profile": deepcopy(self.base_profile),
             "dataset_file_name": dataset.path.name,
@@ -830,7 +869,7 @@ class OptimizerEngine:
     ) -> dict[str, Any]:
         try:
             profile = apply_parameters(self.base_profile, parameters)
-            result = BacktestEngine(
+            result = replay_engine(dataset)(
                 profile,
                 initial_balance=self.initial_balance,
                 spread_pips=self.spread_pips,
@@ -953,7 +992,7 @@ class OptimizerEngine:
                 best["parameters"],
             )
             try:
-                test_result = BacktestEngine(
+                test_result = replay_engine(dataset)(
                     test_profile,
                     initial_balance=self.initial_balance,
                     spread_pips=self.spread_pips,
@@ -1009,7 +1048,7 @@ class OptimizerEngine:
             "mode": "WALK_FORWARD",
             "model": WALK_FORWARD_MODEL,
             "objective": OBJECTIVE_ID,
-            "backtest_model": BACKTEST_MODEL,
+            "backtest_model": TICK_BACKTEST_MODEL if isinstance(dataset,TickDataset) else BACKTEST_MODEL,
             "base_profile_hash": self.base_profile_hash,
             "base_profile": deepcopy(self.base_profile),
             "dataset_file_name": dataset.path.name,
@@ -1066,9 +1105,9 @@ def build_walk_forward_plan(
 
     dates = sorted(
         {
-            dataset.local_date(bar.time)
-            for bar in dataset.bars
-            if start <= dataset.local_date(bar.time) <= end
+            dataset.local_date(stamp)
+            for stamp in observation_times(dataset)
+            if start <= dataset.local_date(stamp) <= end
         }
     )
     if len(dates) < 4:
@@ -1234,11 +1273,11 @@ class OptimizerRepository:
             if not isinstance(payload, dict):
                 continue
             mode = payload.get("mode")
-            if mode not in {"SWEEP", "WALK_FORWARD"}:
+            if mode not in {"SWEEP", "WALK_FORWARD", "RESEARCH"}:
                 continue
 
             summary: dict[str, Any]
-            if mode == "SWEEP":
+            if mode in {"SWEEP", "RESEARCH"}:
                 candidates = payload.get("candidates")
                 top = (
                     next(
@@ -1450,6 +1489,9 @@ class OptimizerJobManager:
             base_profile=base_profile,
         )
 
+    def start_research(self, request, base_profile):
+        return self._start(mode='RESEARCH',request=request,base_profile=base_profile)
+
     def start_walk_forward(
         self,
         request: dict[str, Any],
@@ -1482,11 +1524,14 @@ class OptimizerJobManager:
         if not isinstance(path, str) or not path.strip():
             raise OptimizerError("path is required")
         dataset = load_historical_dataset(path)
-        ranges = parse_parameter_ranges(
-            request.get("parameter_ranges"),
-            base_profile,
-        )
-        combos = combination_count(ranges)
+        if mode == 'RESEARCH':
+            from .parameter_research import research_candidates, research_segments
+            ranges=()
+            combos=len(research_candidates(base_profile))
+            research_segments(dataset,str(request.get('from_date','')),str(request.get('to_date','')))
+        else:
+            ranges = parse_parameter_ranges(request.get("parameter_ranges"),base_profile)
+            combos = combination_count(ranges)
 
         initial_balance = float(request.get("initial_balance", 10_000.0))
         spread_pips = float(request.get("spread_pips", 20.0))
@@ -1512,7 +1557,7 @@ class OptimizerJobManager:
         engine._validate_dataset_range(dataset, from_date, to_date)
 
         plan: list[dict[str, Any]] | None = None
-        total_work = combos
+        total_work = combos + 5 if mode == 'RESEARCH' else combos
         folds = None
         train_ratio = None
         rolling = None
@@ -1697,6 +1742,10 @@ class OptimizerJobManager:
                     cancel_event=cancel_event,
                     progress=sweep_progress,
                 )
+            elif mode == 'RESEARCH':
+                from .parameter_research import run_research
+                result=run_research(engine,dataset,from_date=from_date,to_date=to_date,
+                    cancel_event=cancel_event,progress=wf_progress)
             else:
                 assert folds is not None
                 assert train_ratio is not None

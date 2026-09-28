@@ -96,7 +96,7 @@ public sealed record OverviewSnapshot(
                 if (item.Value.ValueKind == JsonValueKind.Object && TryReadBar(item.Value, out var current) &&
                     (!bars.TryGetValue(item.Name, out var closed) || current.Time > closed.Time))
                     forming[item.Name] = current;
-        string[] supportedTimeframes = ["M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4"];
+        string[] supportedTimeframes = ["M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4", "D1"];
         if (overview.TryGetProperty("bar_history", out var historyElement) &&
             historyElement.ValueKind == JsonValueKind.Object)
         {

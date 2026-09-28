@@ -54,6 +54,7 @@ class TickProtocolTests(unittest.TestCase):
                     response, _ = server._dispatch(request)
                     self.assertFalse(response.payload["accepted"])
                     self.assertEqual(1, ingest.call_count)
+            server.execution.close()
 
     def test_transport_reports_real_receipt_even_when_closed_bar_mode_is_default(self):
         with tempfile.TemporaryDirectory() as root:
@@ -74,6 +75,7 @@ class TickProtocolTests(unittest.TestCase):
             self.assertEqual("test-stream", heartbeat.payload["tick_transport"]["last_stream_id"])
             self.assertIsNotNone(heartbeat.payload["tick_transport"]["age_ms"])
             self.assertFalse(heartbeat.payload["execution_enabled"])
+            server.execution.close()
 
 
 if __name__ == "__main__": unittest.main()

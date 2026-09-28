@@ -7,98 +7,100 @@
         MinWidth="1360"
         MinHeight="780"
         WindowStartupLocation="CenterScreen"
-        Background="#031426"
+        Background="{DynamicResource Brush_031426}"
         WindowDecorations="None"
         Title="N30 Control Center v1.0 (Python) - XAUUSD">
 
-  <Grid RowDefinitions="42,82,*,24">
+  <Grid RowDefinitions="42,*">
     <!-- Custom title bar: mirrors the approved N30 mockup -->
     <Border Grid.Row="0"
-            Background="#03162A"
-            BorderBrush="#124467"
+            Background="{DynamicResource Brush_03162A}"
+            BorderBrush="{DynamicResource Brush_124467}"
             BorderThickness="0,0,0,1"
             PointerPressed="TitleBar_OnPointerPressed">
       <Grid ColumnDefinitions="*,Auto,Auto" Margin="14,0,6,0">
         <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-          <Border Width="22" Height="22" CornerRadius="11" Background="#0877FF">
-            <TextBlock Text="N30" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          <Border Width="22" Height="22" CornerRadius="11" Background="{DynamicResource Brush_0877FF}">
+            <TextBlock Text="N30" FontSize="{DynamicResource Font_11}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
           </Border>
-          <TextBlock Text="N30 Control Center" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
-          <TextBlock Text="v1.0 (Python)  -  XAUUSD" FontSize="18" FontWeight="SemiBold" Foreground="#D8E6F7" VerticalAlignment="Center"/>
+          <TextBlock Text="N30 Control Center" FontSize="{DynamicResource Font_20}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+          <TextBlock Text="v1.0 (Python)  -  XAUUSD" FontSize="{DynamicResource Font_18}" FontWeight="SemiBold" Foreground="{DynamicResource Brush_D8E6F7}" VerticalAlignment="Center"/>
         </StackPanel>
 
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,18,0">
           <Ellipse Width="17" Height="17" Fill="{Binding #HeaderBridgePillText.Foreground}" VerticalAlignment="Center"/>
-          <Border ClipToBounds="True"><TextBlock x:Name="HeaderBridgePillText" Text="●  Waiting for MT5" Foreground="#FFD34D" FontSize="17" Margin="-16,0,0,0" VerticalAlignment="Center"/></Border>
+          <Border ClipToBounds="True"><TextBlock x:Name="HeaderBridgePillText" Text="●  Waiting for MT5" Foreground="{DynamicResource Brush_FFD34D}" FontSize="{DynamicResource Font_17}" Margin="-16,0,0,0" VerticalAlignment="Center"/></Border>
         </StackPanel>
 
         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Stretch">
-          <Button Width="56" Background="Transparent" BorderThickness="0" Foreground="#C9D9EA" Content="—" Click="Minimize_OnClick"/>
-          <Button Width="56" Background="Transparent" BorderThickness="0" Foreground="#C9D9EA" Content="□" Click="Maximize_OnClick"/>
-          <Button Width="56" Background="Transparent" BorderThickness="0" Foreground="#C9D9EA" Content="✕" Click="Close_OnClick"/>
+          <Button Width="56" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource Brush_C9D9EA}" Content="—" Click="Minimize_OnClick"/>
+          <Button Width="56" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource Brush_C9D9EA}" Content="□" Click="Maximize_OnClick"/>
+          <Button Width="56" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource Brush_C9D9EA}" Content="✕" Click="Close_OnClick"/>
         </StackPanel>
       </Grid>
     </Border>
 
+    <local:WorkspaceScale x:Name="WorkspaceZoom" Grid.Row="1"><local:WorkspaceScale.Workspace>
+    <Grid RowDefinitions="82,*,24">
     <!-- Approved horizontal navigation -->
-    <Border Grid.Row="1" Background="#04172A" BorderBrush="#14517A" BorderThickness="1" Margin="14,2,14,8" CornerRadius="6">
+    <Border Grid.Row="0" Background="{DynamicResource Brush_04172A}" BorderBrush="{DynamicResource Brush_14517A}" BorderThickness="1" Margin="14,2,14,8" CornerRadius="6">
       <Grid ColumnDefinitions="*,*,*,*,*,*,*,*,*,*,175">
         <Button x:Name="NavOverview" Grid.Column="0" Classes="navTab active" Tag="overview" Click="NavButton_OnClick">
-          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="#E2EEFF" StrokeThickness="1.35" Data="M2 11 L12 2 L22 11 M5 9 V22 H10 V15 H14 V22 H19 V9" HorizontalAlignment="Center"/><TextBlock Text="Tổng quan" FontSize="16"/></StackPanel>
+          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="{DynamicResource Brush_E2EEFF}" StrokeThickness="1.35" Data="M2 11 L12 2 L22 11 M5 9 V22 H10 V15 H14 V22 H19 V9" HorizontalAlignment="Center"/><TextBlock Text="{DynamicResource Text_120adc28a8f81b02}" FontSize="{DynamicResource Font_16}"/></StackPanel>
         </Button>
         <Button x:Name="NavConfiguration" Grid.Column="1" Classes="navTab" Tag="configuration" Click="NavButton_OnClick">
-          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="#E2EEFF" StrokeThickness="1.35" Data="M9 2 H15 L16 6 L20 7 L22 12 L20 17 L16 18 L15 22 H9 L8 18 L4 17 L2 12 L4 7 L8 6 Z M12 8 A4 4 0 1 0 12 16 A4 4 0 1 0 12 8" HorizontalAlignment="Center"/><TextBlock Text="Cấu hình" FontSize="16"/></StackPanel>
+          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="{DynamicResource Brush_E2EEFF}" StrokeThickness="1.35" Data="M9 2 H15 L16 6 L20 7 L22 12 L20 17 L16 18 L15 22 H9 L8 18 L4 17 L2 12 L4 7 L8 6 Z M12 8 A4 4 0 1 0 12 16 A4 4 0 1 0 12 8" HorizontalAlignment="Center"/><TextBlock Text="{DynamicResource Text_f30b26e523e0162b}" FontSize="{DynamicResource Font_16}"/></StackPanel>
         </Button>
         <Button x:Name="NavStrategy" Grid.Column="2" Classes="navTab" Tag="strategy" Click="NavButton_OnClick">
-          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="#E2EEFF" StrokeThickness="1.35" Data="M3 22 V14 M8 22 V7 M13 22 V2 M18 22 V10 M23 22 V5" HorizontalAlignment="Center"/><TextBlock Text="Chiến lược" FontSize="16"/></StackPanel>
+          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="{DynamicResource Brush_E2EEFF}" StrokeThickness="1.35" Data="M3 22 V14 M8 22 V7 M13 22 V2 M18 22 V10 M23 22 V5" HorizontalAlignment="Center"/><TextBlock Text="{DynamicResource Text_d3c238c34b0943ab}" FontSize="{DynamicResource Font_16}"/></StackPanel>
         </Button>
         <Button x:Name="NavMonitoring" Grid.Column="3" Classes="navTab" Tag="monitoring" Click="NavButton_OnClick">
-          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="#E2EEFF" StrokeThickness="1.35" Data="M2 13 V10 A10 10 0 0 1 22 10 V13 M2 11 H5 V17 H2 Z M19 11 H22 V17 H19 Z M12 9 A3 3 0 1 0 12 15 A3 3 0 1 0 12 9 M7 22 L9 17 H15 L17 22 Z" HorizontalAlignment="Center"/><TextBlock Text="Giám sát" FontSize="16"/></StackPanel>
+          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="{DynamicResource Brush_E2EEFF}" StrokeThickness="1.35" Data="M2 13 V10 A10 10 0 0 1 22 10 V13 M2 11 H5 V17 H2 Z M19 11 H22 V17 H19 Z M12 9 A3 3 0 1 0 12 15 A3 3 0 1 0 12 9 M7 22 L9 17 H15 L17 22 Z" HorizontalAlignment="Center"/><TextBlock Text="{DynamicResource Text_8473daf9902b64a6}" FontSize="{DynamicResource Font_16}"/></StackPanel>
         </Button>
         <Button x:Name="NavOrders" Grid.Column="4" Classes="navTab" Tag="orders" Click="NavButton_OnClick">
-          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="#E2EEFF" StrokeThickness="1.35" Data="M5 4 H19 L21 6 V22 H3 V6 Z M8 4 V1 M16 4 V1 M3 9 H21 M8 13 L10 15 L15 11 M8 19 H16" HorizontalAlignment="Center"/><TextBlock Text="Lệnh &amp; Vị thế" FontSize="15"/></StackPanel>
+          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="{DynamicResource Brush_E2EEFF}" StrokeThickness="1.35" Data="M5 4 H19 L21 6 V22 H3 V6 Z M8 4 V1 M16 4 V1 M3 9 H21 M8 13 L10 15 L15 11 M8 19 H16" HorizontalAlignment="Center"/><TextBlock Text="{DynamicResource Text_59a57820373065b2}" FontSize="{DynamicResource Font_15}"/></StackPanel>
         </Button>
         <Button x:Name="NavBacktest" Grid.Column="5" Classes="navTab" Tag="backtest" Click="NavButton_OnClick">
-          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="#E2EEFF" StrokeThickness="1.35" Data="M1 5 H23 M1 12 H23 M1 19 H23 M7 2 V8 M17 9 V15 M10 16 V22" HorizontalAlignment="Center"/><TextBlock Text="Backtest" FontSize="16"/></StackPanel>
+          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="{DynamicResource Brush_E2EEFF}" StrokeThickness="1.35" Data="M1 5 H23 M1 12 H23 M1 19 H23 M7 2 V8 M17 9 V15 M10 16 V22" HorizontalAlignment="Center"/><TextBlock Text="Backtest" FontSize="{DynamicResource Font_16}"/></StackPanel>
         </Button>
         <Button x:Name="NavOptimization" Grid.Column="6" Classes="navTab" Tag="optimization" Click="NavButton_OnClick">
-          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="#E2EEFF" StrokeThickness="1.35" Data="M12 1 V23 M1 12 H23 M4 4 L20 20 M4 20 L20 4 M8 12 A4 4 0 1 0 16 12 A4 4 0 1 0 8 12" HorizontalAlignment="Center"/><TextBlock Text="Tối ưu" FontSize="16"/></StackPanel>
+          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="{DynamicResource Brush_E2EEFF}" StrokeThickness="1.35" Data="M12 1 V23 M1 12 H23 M4 4 L20 20 M4 20 L20 4 M8 12 A4 4 0 1 0 16 12 A4 4 0 1 0 8 12" HorizontalAlignment="Center"/><TextBlock Text="{DynamicResource Text_ef7b6c69c6e5769b}" FontSize="{DynamicResource Font_16}"/></StackPanel>
         </Button>
         <Button x:Name="NavLogs" Grid.Column="7" Classes="navTab" Tag="logs" Click="NavButton_OnClick">
-          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="#E2EEFF" StrokeThickness="1.35" Data="M5 1 H15 L21 7 V23 H5 Z M15 1 V7 H21 M9 11 H17 M9 15 H17 M9 19 H15" HorizontalAlignment="Center"/><TextBlock Text="Nhật ký" FontSize="16"/></StackPanel>
+          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="{DynamicResource Brush_E2EEFF}" StrokeThickness="1.35" Data="M5 1 H15 L21 7 V23 H5 Z M15 1 V7 H21 M9 11 H17 M9 15 H17 M9 19 H15" HorizontalAlignment="Center"/><TextBlock Text="{DynamicResource Text_1e6c3c1079ec26d8}" FontSize="{DynamicResource Font_16}"/></StackPanel>
         </Button>
         <Button x:Name="NavTools" Grid.Column="8" Classes="navTab" Tag="tools" Click="NavButton_OnClick">
-          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="#E2EEFF" StrokeThickness="1.35" Data="M4 2 L8 6 L6 8 L2 4 L2 9 L6 12 L9 11 L19 22 L22 19 L11 9 L12 6 L9 2 Z M19 2 L22 5 L17 10 M10 17 L5 22 L2 19 L7 14" HorizontalAlignment="Center"/><TextBlock Text="Công cụ" FontSize="16"/></StackPanel>
+          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="{DynamicResource Brush_E2EEFF}" StrokeThickness="1.35" Data="M4 2 L8 6 L6 8 L2 4 L2 9 L6 12 L9 11 L19 22 L22 19 L11 9 L12 6 L9 2 Z M19 2 L22 5 L17 10 M10 17 L5 22 L2 19 L7 14" HorizontalAlignment="Center"/><TextBlock Text="{DynamicResource Text_5cacd09f0694a84d}" FontSize="{DynamicResource Font_16}"/></StackPanel>
         </Button>
         <Button x:Name="NavSettings" Grid.Column="9" Classes="navTab" Tag="settings" Click="NavButton_OnClick">
-          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="#E2EEFF" StrokeThickness="1.35" Data="M9 2 H15 L16 6 L20 7 L22 12 L20 17 L16 18 L15 22 H9 L8 18 L4 17 L2 12 L4 7 L8 6 Z M12 8 A4 4 0 1 0 12 16 A4 4 0 1 0 12 8" HorizontalAlignment="Center"/><TextBlock Text="Cài đặt" FontSize="16"/></StackPanel>
+          <StackPanel Spacing="7"><Path Width="23" Height="23" Stretch="Uniform" Stroke="{DynamicResource Brush_E2EEFF}" StrokeThickness="1.35" Data="M9 2 H15 L16 6 L20 7 L22 12 L20 17 L16 18 L15 22 H9 L8 18 L4 17 L2 12 L4 7 L8 6 Z M12 8 A4 4 0 1 0 12 16 A4 4 0 1 0 12 8" HorizontalAlignment="Center"/><TextBlock Text="{DynamicResource Text_202e0e9b0b8556f6}" FontSize="{DynamicResource Font_16}"/></StackPanel>
         </Button>
         <StackPanel Grid.Column="10" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0">
-          <TextBlock x:Name="HeaderClockText" Text="--:--:--" FontSize="17" HorizontalAlignment="Right"/>
-          <TextBlock x:Name="HeaderDateText" Text="--/--/----" Foreground="#91AAC2" FontSize="14" HorizontalAlignment="Right"/>
+          <TextBlock x:Name="HeaderClockText" Text="--:--:--" FontSize="{DynamicResource Font_17}" HorizontalAlignment="Right"/>
+          <TextBlock x:Name="HeaderDateText" Text="--/--/----" Foreground="{DynamicResource Brush_91AAC2}" FontSize="{DynamicResource Font_14}" HorizontalAlignment="Right"/>
         </StackPanel>
       </Grid>
     </Border>
 
-    <Grid x:Name="DashboardGrid" Grid.Row="2" ColumnDefinitions="288,*" RowDefinitions="*,Auto" ColumnSpacing="14" Margin="14,0,14,0">
+    <Grid x:Name="DashboardGrid" Grid.Row="1" ColumnDefinitions="288,*" RowDefinitions="*,Auto" ColumnSpacing="14" Margin="14,0,14,0">
       <!-- Reused left status column shown in approved Overview / Strategy / Monitoring mockups -->
       <ScrollViewer x:Name="LiveSidebar" Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="8">
           <Border x:Name="SidebarQuoteCard" Classes="panel" Padding="17,10" MinHeight="166">
             <StackPanel x:Name="SidebarQuoteContent" Spacing="3">
               <StackPanel Orientation="Horizontal" Spacing="9">
-                <TextBlock x:Name="SymbolValue" Text="XAUUSD" FontSize="26" FontWeight="Bold" Foreground="#B9D5F0"/>
-                <Grid Width="17" Height="17" VerticalAlignment="Center"><Ellipse Fill="{Binding #SymbolConnectionDot.Foreground}"/><TextBlock x:Name="SymbolConnectionDot" Text="●" Foreground="#8092A6" FontSize="18" VerticalAlignment="Center" IsVisible="False"/></Grid>
+                <TextBlock x:Name="SymbolValue" Text="XAUUSD" FontSize="{DynamicResource Font_26}" FontWeight="Bold" Foreground="{DynamicResource Brush_B9D5F0}"/>
+                <Grid Width="17" Height="17" VerticalAlignment="Center"><Ellipse Fill="{Binding #SymbolConnectionDot.Foreground}"/><TextBlock x:Name="SymbolConnectionDot" Text="●" Foreground="{DynamicResource Brush_8092A6}" FontSize="{DynamicResource Font_18}" VerticalAlignment="Center" IsVisible="False"/></Grid>
               </StackPanel>
-              <TextBlock x:Name="BidValue" Text="—" FontSize="40" FontWeight="Bold" Foreground="#17E58B"/>
+              <TextBlock x:Name="BidValue" Text="—" FontSize="{DynamicResource Font_40}" FontWeight="Bold" Foreground="{DynamicResource Brush_17E58B}"/>
               <Grid ColumnDefinitions="*,Auto">
-                <TextBlock x:Name="SpreadValue" Text="Spread: —" FontSize="18" Foreground="#FF415C"/>
-                <TextBlock x:Name="QuoteFreshnessText" Grid.Column="1" Text="Chờ giá" FontSize="11" Foreground="#FFD34D" VerticalAlignment="Center"/>
+                <TextBlock x:Name="SpreadValue" Text="Spread: —" FontSize="{DynamicResource Font_18}" Foreground="{DynamicResource Brush_FF415C}"/>
+                <TextBlock x:Name="QuoteFreshnessText" Grid.Column="1" Text="{local:InitialText cd4fa58ddf6342d3}" FontSize="{DynamicResource Font_11}" Foreground="{DynamicResource Brush_FFD34D}" VerticalAlignment="Center"/>
               </Grid>
               <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,5,0,0">
-                <TextBlock Text="Bid" Foreground="#17E58B"/>
+                <TextBlock Text="Bid" Foreground="{DynamicResource Brush_17E58B}"/>
                 <TextBlock x:Name="SidebarBidText" Grid.Column="1" Text="—" Margin="10,0,0,0"/>
-                <TextBlock Grid.Column="2" Text="Ask" Foreground="#17E58B" Margin="0,0,8,0"/>
+                <TextBlock Grid.Column="2" Text="Ask" Foreground="{DynamicResource Brush_17E58B}" Margin="0,0,8,0"/>
                 <TextBlock x:Name="AskValue" Grid.Column="3" Text="—"/>
               </Grid>
             </StackPanel>
@@ -106,17 +108,17 @@
 
           <Border x:Name="SidebarEaCard" Classes="panel" MinHeight="116">
             <StackPanel>
-              <Border Background="#082038" Padding="12,7">
-                <TextBlock Text="Trạng thái EA" Classes="panelTitle"/>
+              <Border Background="{DynamicResource Brush_082038}" Padding="12,7">
+                <TextBlock Text="{DynamicResource Text_c315843d2c9efa67}" Classes="panelTitle"/>
               </Border>
-              <Border Margin="0,0,0,0" Background="#063928" Padding="12,10">
+              <Border Margin="0,0,0,0" Background="{DynamicResource Brush_063928}" Padding="12,10">
                 <Grid ColumnDefinitions="Auto,*,Auto">
-                  <Button Grid.Column="0" Width="36" Height="36" Padding="0" CornerRadius="18" Background="Transparent" BorderBrush="#00E58A" BorderThickness="2" Foreground="#00E58A" FontSize="21" Content="▶" Click="StartEngine_OnClick" ToolTip.Tip="Khởi động Python Engine"/>
+                  <Button Grid.Column="0" Width="36" Height="36" Padding="0" CornerRadius="18" Background="Transparent" BorderBrush="{DynamicResource Brush_00E58A}" BorderThickness="2" Foreground="{DynamicResource Brush_00E58A}" FontSize="{DynamicResource Font_21}" Content="▶" Click="StartEngine_OnClick" ToolTip.Tip="{DynamicResource Text_b38f9c317c08c5de}"/>
                   <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                    <TextBlock x:Name="EaRunStateText" Text="CHỜ KẾT NỐI" Foreground="#FFD34D" FontWeight="Bold" FontSize="16"/>
-                    <TextBlock x:Name="HeaderEnginePillText" Text="ENGINE STARTING" Foreground="#A8C2DA" FontSize="13"/>
+                    <TextBlock x:Name="EaRunStateText" Text="{local:InitialText 07c912214164e4bc}" Foreground="{DynamicResource Brush_FFD34D}" FontWeight="Bold" FontSize="{DynamicResource Font_16}"/>
+                    <TextBlock x:Name="HeaderEnginePillText" Text="ENGINE STARTING" Foreground="{DynamicResource Brush_A8C2DA}" FontSize="{DynamicResource Font_13}"/>
                   </StackPanel>
-                  <Button Grid.Column="2" Width="40" Height="25" Padding="0" CornerRadius="13" Background="#00CB78" BorderBrush="#13F49A" BorderThickness="1" Foreground="White" FontSize="16" Click="StopEngine_OnClick" ToolTip.Tip="Dừng Python Engine"><Ellipse Width="19" Height="19" Fill="White" HorizontalAlignment="Right" Margin="15,0,2,0"/></Button>
+                  <Button Grid.Column="2" Width="40" Height="25" Padding="0" CornerRadius="13" Background="{DynamicResource Brush_00CB78}" BorderBrush="{DynamicResource Brush_13F49A}" BorderThickness="1" Foreground="White" FontSize="{DynamicResource Font_16}" Click="StopEngine_OnClick" ToolTip.Tip="{DynamicResource Text_0f68dd400e646441}"><Ellipse Width="19" Height="19" Fill="White" HorizontalAlignment="Right" Margin="15,0,2,0"/></Button>
                 </Grid>
               </Border>
             </StackPanel>
@@ -124,14 +126,14 @@
 
           <Border x:Name="SidebarAccountCard" Classes="panel" MinHeight="250">
             <StackPanel>
-              <Border Background="#082038" Padding="12,7"><TextBlock Text="Tài khoản giao dịch" Classes="panelTitle"/></Border>
-              <Grid x:Name="SidebarAccountRows" Margin="15,9" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="11"><Border Grid.Row="5" Grid.ColumnSpan="2" BorderBrush="#102F48" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="4" Grid.ColumnSpan="2" BorderBrush="#102F48" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="3" Grid.ColumnSpan="2" BorderBrush="#102F48" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="#102F48" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="1" Grid.ColumnSpan="2" BorderBrush="#102F48" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="0" Grid.ColumnSpan="2" BorderBrush="#102F48" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/>
+              <Border Background="{DynamicResource Brush_082038}" Padding="12,7"><TextBlock Text="{DynamicResource Text_33ea5c3e67976be0}" Classes="panelTitle"/></Border>
+              <Grid x:Name="SidebarAccountRows" Margin="15,9" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="11"><Border Grid.Row="5" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_102F48}" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="4" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_102F48}" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="3" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_102F48}" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_102F48}" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="1" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_102F48}" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="0" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_102F48}" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/>
                 <TextBlock Grid.Row="0" Text="Balance" Classes="label"/><TextBlock x:Name="BalanceValue" Grid.Row="0" Grid.Column="1" Text="—" FontWeight="SemiBold"/>
                 <TextBlock Grid.Row="1" Text="Equity" Classes="label"/><TextBlock x:Name="EquityValue" Grid.Row="1" Grid.Column="1" Text="—" FontWeight="SemiBold"/>
-                <TextBlock Grid.Row="2" Text="Lợi nhuận hôm nay" Classes="label"/><TextBlock x:Name="DailyProfitValue" Grid.Row="2" Grid.Column="1" Text="—" Foreground="#18E58B"/>
-                <TextBlock Grid.Row="3" Text="Lệnh hôm nay" Classes="label"/><TextBlock x:Name="DailyTradeCountValue" Grid.Row="3" Grid.Column="1" Text="—"/>
-                <TextBlock Grid.Row="4" Text="Lệnh đang mở" Classes="label"/><TextBlock x:Name="SidebarPositionsText" Grid.Row="4" Grid.Column="1" Text="—"/>
-                <TextBlock Grid.Row="5" Text="Max DD hôm nay" Classes="label"/><TextBlock x:Name="DailyDrawdownValue" Grid.Row="5" Grid.Column="1" Text="—" Foreground="#FF415C"/>
+                <TextBlock Grid.Row="2" Text="{DynamicResource Text_217cc8e2899fcf87}" Classes="label"/><TextBlock x:Name="DailyProfitValue" Grid.Row="2" Grid.Column="1" Text="—" Foreground="{DynamicResource Brush_18E58B}"/>
+                <TextBlock Grid.Row="3" Text="{DynamicResource Text_d5af83e12a32743f}" Classes="label"/><TextBlock x:Name="DailyTradeCountValue" Grid.Row="3" Grid.Column="1" Text="—"/>
+                <TextBlock Grid.Row="4" Text="{DynamicResource Text_08a0be11fd80e042}" Classes="label"/><TextBlock x:Name="SidebarPositionsText" Grid.Row="4" Grid.Column="1" Text="—"/>
+                <TextBlock Grid.Row="5" Text="{DynamicResource Text_6b1661727a31d84e}" Classes="label"/><TextBlock x:Name="DailyDrawdownValue" Grid.Row="5" Grid.Column="1" Text="—" Foreground="{DynamicResource Brush_FF415C}"/>
               </Grid>
               <StackPanel IsVisible="False"><TextBlock x:Name="MarginFreeValue"/><TextBlock x:Name="AccountModeValue"/><TextBlock x:Name="CurrencyValue"/></StackPanel>
             </StackPanel>
@@ -139,23 +141,23 @@
 
           <Border x:Name="SidebarConnectionCard" Classes="panel" MinHeight="232">
             <StackPanel>
-              <Border Background="#082038" Padding="12,7"><TextBlock Text="Kết nối &amp; Hệ thống" Classes="panelTitle"/></Border>
+              <Border Background="{DynamicResource Brush_082038}" Padding="12,7"><TextBlock Text="{DynamicResource Text_214371fd84c5a741}" Classes="panelTitle"/></Border>
               <Grid x:Name="SidebarConnectionRows" Margin="12,8" ColumnDefinitions="27,*,74" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
-                <Grid Grid.Row="0" Width="16" Height="16" VerticalAlignment="Center"><Ellipse Fill="{Binding #TerminalConnectionDot.Foreground}"/><TextBlock x:Name="TerminalConnectionDot" Grid.Row="0" Text="●" Foreground="#8092A6" Margin="0,0,8,0" IsVisible="False"/></Grid><TextBlock Grid.Row="0" Grid.Column="1" Text="MT5 Terminal" Classes="label" FontSize="14"/><TextBlock x:Name="BridgeStateText" Grid.Row="0" Grid.Column="2" Text="WAITING" Foreground="#FFD34D" FontSize="12" HorizontalAlignment="Right"/>
-                <Grid Grid.Row="1" Width="16" Height="16" VerticalAlignment="Center"><Ellipse Fill="{Binding #BridgeConnectionDot.Foreground}"/><TextBlock x:Name="BridgeConnectionDot" Grid.Row="1" Text="●" Foreground="#8092A6" Margin="0,0,8,0" IsVisible="False"/></Grid><TextBlock Grid.Row="1" Grid.Column="1" Text="EA Bridge" Classes="label" FontSize="14"/><TextBlock x:Name="BridgeAgeText" Grid.Row="1" Grid.Column="2" Text="—" Foreground="#9AB5CF" FontSize="12" HorizontalAlignment="Right"/>
-                <Grid Grid.Row="2" Width="16" Height="16" VerticalAlignment="Center"><Ellipse Fill="{Binding #EngineConnectionDot.Foreground}"/><TextBlock x:Name="EngineConnectionDot" Grid.Row="2" Text="●" Foreground="#8092A6" Margin="0,0,8,0" IsVisible="False"/></Grid><TextBlock Grid.Row="2" Grid.Column="1" Text="Python Engine" Classes="label" FontSize="14"/><TextBlock x:Name="EngineStateText" Grid.Row="2" Grid.Column="2" Text="STARTING" Foreground="#FFD34D" FontSize="12" HorizontalAlignment="Right"/>
-                <Grid Grid.Row="3" Width="16" Height="16" VerticalAlignment="Center"><Ellipse Fill="{Binding #MarketConnectionDot.Foreground}"/><TextBlock x:Name="MarketConnectionDot" Grid.Row="3" Text="●" Foreground="#8092A6" Margin="0,0,8,0" IsVisible="False"/></Grid><TextBlock Grid.Row="3" Grid.Column="1" Text="Dữ liệu thị trường" Classes="label" FontSize="14"/><TextBlock x:Name="LastHeartbeatText" Grid.Row="3" Grid.Column="2" Text="—" Foreground="#9AB5CF" FontSize="12" HorizontalAlignment="Right"/>
+                <Grid Grid.Row="0" Width="16" Height="16" VerticalAlignment="Center"><Ellipse Fill="{Binding #TerminalConnectionDot.Foreground}"/><TextBlock x:Name="TerminalConnectionDot" Grid.Row="0" Text="●" Foreground="{DynamicResource Brush_8092A6}" Margin="0,0,8,0" IsVisible="False"/></Grid><TextBlock Grid.Row="0" Grid.Column="1" Text="MT5 Terminal" Classes="label" FontSize="{DynamicResource Font_14}"/><TextBlock x:Name="BridgeStateText" Grid.Row="0" Grid.Column="2" Text="WAITING" Foreground="{DynamicResource Brush_FFD34D}" FontSize="{DynamicResource Font_12}" HorizontalAlignment="Right"/>
+                <Grid Grid.Row="1" Width="16" Height="16" VerticalAlignment="Center"><Ellipse Fill="{Binding #BridgeConnectionDot.Foreground}"/><TextBlock x:Name="BridgeConnectionDot" Grid.Row="1" Text="●" Foreground="{DynamicResource Brush_8092A6}" Margin="0,0,8,0" IsVisible="False"/></Grid><TextBlock Grid.Row="1" Grid.Column="1" Text="EA Bridge" Classes="label" FontSize="{DynamicResource Font_14}"/><TextBlock x:Name="BridgeAgeText" Grid.Row="1" Grid.Column="2" Text="—" Foreground="{DynamicResource Brush_9AB5CF}" FontSize="{DynamicResource Font_12}" HorizontalAlignment="Right"/>
+                <Grid Grid.Row="2" Width="16" Height="16" VerticalAlignment="Center"><Ellipse Fill="{Binding #EngineConnectionDot.Foreground}"/><TextBlock x:Name="EngineConnectionDot" Grid.Row="2" Text="●" Foreground="{DynamicResource Brush_8092A6}" Margin="0,0,8,0" IsVisible="False"/></Grid><TextBlock Grid.Row="2" Grid.Column="1" Text="Python Engine" Classes="label" FontSize="{DynamicResource Font_14}"/><TextBlock x:Name="EngineStateText" Grid.Row="2" Grid.Column="2" Text="STARTING" Foreground="{DynamicResource Brush_FFD34D}" FontSize="{DynamicResource Font_12}" HorizontalAlignment="Right"/>
+                <Grid Grid.Row="3" Width="16" Height="16" VerticalAlignment="Center"><Ellipse Fill="{Binding #MarketConnectionDot.Foreground}"/><TextBlock x:Name="MarketConnectionDot" Grid.Row="3" Text="●" Foreground="{DynamicResource Brush_8092A6}" Margin="0,0,8,0" IsVisible="False"/></Grid><TextBlock Grid.Row="3" Grid.Column="1" Text="{DynamicResource Text_ed70da7e3b80d964}" Classes="label" FontSize="{DynamicResource Font_14}"/><TextBlock x:Name="LastHeartbeatText" Grid.Row="3" Grid.Column="2" Text="—" Foreground="{DynamicResource Brush_9AB5CF}" FontSize="{DynamicResource Font_12}" HorizontalAlignment="Right"/>
               </Grid>
-              <Grid ColumnDefinitions="Auto,*" Margin="12,0,12,6"><TextBlock Text="An toàn" FontSize="13" Classes="label"/><TextBlock x:Name="GuardianReasonValue" Grid.Column="1" Text="LOCKED" FontSize="11" Foreground="#FFD34D" HorizontalAlignment="Right"/></Grid>
-              <TextBlock x:Name="EngineDetailText" Text="Đang chuẩn bị Engine..." Classes="dim" FontSize="10" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="12,0,12,4"/>
-              <TextBlock x:Name="BridgeDetailText" Text="Chưa nhận snapshot MT5." Classes="dim" FontSize="10" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="12,0,12,4"/>
+              <Grid ColumnDefinitions="Auto,*" Margin="12,0,12,6"><TextBlock Text="{DynamicResource Text_22474724a7626156}" FontSize="{DynamicResource Font_13}" Classes="label"/><TextBlock x:Name="GuardianReasonValue" Grid.Column="1" Text="—" FontSize="{DynamicResource Font_11}" Foreground="{DynamicResource Brush_FFD34D}" HorizontalAlignment="Right"/></Grid>
+              <TextBlock x:Name="EngineDetailText" Text="{local:InitialText d722745443ae3781}" Classes="dim" FontSize="{DynamicResource Font_10}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="12,0,12,4"/>
+              <TextBlock x:Name="BridgeDetailText" Text="{local:InitialText a1ee871580eb3b2e}" Classes="dim" FontSize="{DynamicResource Font_10}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="12,0,12,4"/>
             </StackPanel>
           </Border>
         </StackPanel>
       </ScrollViewer>
 
       <StackPanel IsVisible="False">
-        <TextBlock x:Name="PageTitle" Text="Tổng quan"/>
+        <TextBlock x:Name="PageTitle" Text="{local:InitialText 120adc28a8f81b02}"/>
         <TextBlock x:Name="PageSubtitle" Text=""/>
       </StackPanel>
 
@@ -165,24 +167,27 @@
           <Grid ColumnDefinitions="3.18*,1*" ColumnSpacing="8">
             <Border Grid.Column="0" Classes="panel" Height="344">
               <Grid RowDefinitions="42,*,27">
-                <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="Auto,*,Auto" Margin="12,0">
+                <Grid Grid.Row="0" Background="{DynamicResource Brush_082038}" ColumnDefinitions="Auto,*,Auto" Margin="12,0">
                   <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <TextBlock Text="XAUUSD" FontSize="17" FontWeight="Bold"/>
-                    <TextBlock Text="M5" FontSize="17" FontWeight="Bold"/>
+                    <TextBlock Text="XAUUSD" FontSize="{DynamicResource Font_17}" FontWeight="Bold"/>
+                    <TextBlock Text="M5" FontSize="{DynamicResource Font_17}" FontWeight="Bold"/>
                   </StackPanel>
                   <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left" Margin="30,0,0,0" Spacing="5" VerticalAlignment="Center">
                     <Border Classes="panelSoft" Padding="9,4"><TextBlock Text="M1"/></Border>
                     <Border Classes="panelSoft" Padding="9,4"><TextBlock Text="M3"/></Border>
-                    <Border Background="#0866F4" BorderBrush="#2A8EFF" BorderThickness="1" CornerRadius="4" Padding="9,4"><TextBlock Text="M5"/></Border>
+                    <Border Background="{DynamicResource Brush_0866F4}" BorderBrush="{DynamicResource Brush_2A8EFF}" BorderThickness="1" CornerRadius="4" Padding="9,4"><TextBlock Text="M5"/></Border>
                     <Border Classes="panelSoft" Padding="9,4"><TextBlock Text="M15"/></Border>
                     <Border Classes="panelSoft" Padding="9,4"><TextBlock Text="M30"/></Border>
                     <Border Classes="panelSoft" Padding="9,4"><TextBlock Text="H1"/></Border>
                     <Border Classes="panelSoft" Padding="9,4"><TextBlock Text="H4"/></Border>
+                <Border Classes="panelSoft" Padding="9,4"><TextBlock Text="D1"/></Border>
                   </StackPanel>
-                  <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
-                    <TextBlock Text="+ So sánh" Classes="label"/>
-                    <TextBlock Text="ƒ  Chỉ báo" Classes="label"/>
-                    <TextBlock Text="Nến Nhật" Classes="label"/>
+                  <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
+                    <TextBlock x:Name="ChartCompareAction" Text="{local:InitialText d9f83df1218e6d0d}" Classes="label"/>
+                    <TextBlock x:Name="ChartIndicatorsAction" Text="{local:InitialText fa69ae37bae25532}" Classes="label"/>
+                    <TextBlock x:Name="ChartStyleAction" Text="{local:InitialText 54929e087d480e99}" Classes="label"/>
+                    <Border x:Name="ChartSaveAction" Background="Transparent" Padding="4" ToolTip.Tip="Lưu biểu đồ PNG"><local:ReferenceIcon Kind="camera" Width="20" Height="20" Tint="{DynamicResource Brush_B7CBE0}"/></Border>
+                    <Border x:Name="ChartFullScreenAction" Background="Transparent" Padding="4" ToolTip.Tip="{DynamicResource Text_ebe2ccb4a480f518}"><local:ReferenceIcon Kind="expand" Width="20" Height="20" Tint="{DynamicResource Brush_B7CBE0}"/></Border>
                   </StackPanel>
                 </Grid>
 
@@ -193,17 +198,17 @@
 
             <Border Grid.Column="1" Classes="panel" Height="344">
               <StackPanel>
-                <Border Background="#082038" Padding="12,8"><TextBlock Text="Thông tin chiến lược (Realtime)" Classes="panelTitle"/></Border>
-                <Grid Margin="12,8" ColumnDefinitions="1.2*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="9"><Border Grid.Row="0" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="1" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="3" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="4" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="5" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="6" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="7" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="8" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/>
-                  <TextBlock Grid.Row="0" Text="Direction" Classes="label"/><TextBlock x:Name="OverviewDirectionState" Grid.Row="0" Grid.Column="1" Text="—" Foreground="#FF415C" FontWeight="Bold"/>
-                  <TextBlock Grid.Row="1" Text="Pullback" Classes="label"/><TextBlock x:Name="OverviewPullbackState" Grid.Row="1" Grid.Column="1" Text="—" Foreground="#FFD34D"/>
+                <Border Background="{DynamicResource Brush_082038}" Padding="12,8"><TextBlock Text="{DynamicResource Text_dec304f22e1b807d}" Classes="panelTitle"/></Border>
+                <Grid Margin="12,8" ColumnDefinitions="1.2*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="9"><Border Grid.Row="0" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_10334F}" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="1" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_10334F}" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_10334F}" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="3" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_10334F}" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="4" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_10334F}" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="5" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_10334F}" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="6" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_10334F}" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="7" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_10334F}" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="8" Grid.ColumnSpan="2" BorderBrush="{DynamicResource Brush_10334F}" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/>
+                  <TextBlock Grid.Row="0" Text="Direction" Classes="label"/><TextBlock x:Name="OverviewDirectionState" Grid.Row="0" Grid.Column="1" Text="—" Foreground="{DynamicResource Brush_FF415C}" FontWeight="Bold"/>
+                  <TextBlock Grid.Row="1" Text="Pullback" Classes="label"/><TextBlock x:Name="OverviewPullbackState" Grid.Row="1" Grid.Column="1" Text="—" Foreground="{DynamicResource Brush_FFD34D}"/>
                   <TextBlock Grid.Row="2" Text="Trigger" Classes="label"/><TextBlock x:Name="OverviewTriggerState" Grid.Row="2" Grid.Column="1" Text="—"/>
                   <TextBlock Grid.Row="3" Text="Z-Score (Trigger)" Classes="label"/><TextBlock x:Name="OverviewZTrigger" Grid.Row="3" Grid.Column="1" Text="—"/>
                   <TextBlock Grid.Row="4" Text="RSI (Trigger)" Classes="label"/><TextBlock x:Name="OverviewRsiTrigger" Grid.Row="4" Grid.Column="1" Text="—"/>
                   <TextBlock Grid.Row="5" Text="Z-Score (Pullback)" Classes="label"/><TextBlock x:Name="OverviewZPullback" Grid.Row="5" Grid.Column="1" Text="—"/>
                   <TextBlock Grid.Row="6" Text="RSI (Pullback)" Classes="label"/><TextBlock x:Name="OverviewRsiPullback" Grid.Row="6" Grid.Column="1" Text="—"/>
                   <TextBlock Grid.Row="7" Text="Direction MA" Classes="label"/><TextBlock x:Name="OverviewMaValue" Grid.Row="7" Grid.Column="1" Text="—"/>
-                  <TextBlock Grid.Row="8" Text="Trạng thái" Classes="label"/><TextBlock x:Name="StrategyStateValue" Grid.Row="8" Grid.Column="1" Text="STALE" Foreground="#FFD34D" TextWrapping="Wrap" FontSize="13"/>
+                  <TextBlock Grid.Row="8" Text="{DynamicResource Text_cb31de8160c9d623}" Classes="label"/><TextBlock x:Name="StrategyStateValue" Grid.Row="8" Grid.Column="1" Text="STALE" Foreground="{DynamicResource Brush_FFD34D}" TextWrapping="Wrap" FontSize="{DynamicResource Font_13}"/>
                 </Grid>
               </StackPanel>
             </Border>
@@ -211,16 +216,16 @@
 
           <Border Classes="panel" MinHeight="250">
             <StackPanel>
-              <Grid Background="#082038" ColumnDefinitions="*,Auto" Margin="12,7">
+              <Grid Background="{DynamicResource Brush_082038}" ColumnDefinitions="*,Auto" Margin="12,7">
                 <StackPanel Orientation="Horizontal" Spacing="9">
-                  <local:ReferenceIcon Kind="document" Width="23" Height="23" Tint="#74B7FF"/>
-                  <TextBlock Text="Công cụ &amp; Tham số đầy đủ (Trung tâm cấu hình)" FontSize="16" Classes="panelTitle"/>
+                  <local:ReferenceIcon Kind="document" Width="23" Height="23" Tint="{DynamicResource Brush_74B7FF}"/>
+                  <TextBlock Text="{DynamicResource Text_effd54601a2162af}" FontSize="{DynamicResource Font_16}" Classes="panelTitle"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                  <Button Classes="secondary" Tag="timeframes" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="lightning" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Cài đặt nhanh" VerticalAlignment="Center"/></StackPanel></Button>
-                  <Button Classes="secondary" Tag="load" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="folder" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Preset" VerticalAlignment="Center"/></StackPanel></Button>
-                  <Button Classes="secondary" Tag="profile" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="save" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Quản lý set" VerticalAlignment="Center"/></StackPanel></Button>
-                  <Button Classes="secondary" Click="QuickHelp_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="book" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Hướng dẫn" VerticalAlignment="Center"/></StackPanel></Button>
+                  <Button Classes="secondary" Tag="timeframes" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="lightning" Width="19" Height="19" Tint="{DynamicResource Brush_85BCFF}"/><TextBlock Text="{DynamicResource Text_498f23b16ca5d60c}" VerticalAlignment="Center"/></StackPanel></Button>
+                  <Button Classes="secondary" Tag="load" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="folder" Width="19" Height="19" Tint="{DynamicResource Brush_85BCFF}"/><TextBlock Text="Preset" VerticalAlignment="Center"/></StackPanel></Button>
+                  <Button Classes="secondary" Tag="profile" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="save" Width="19" Height="19" Tint="{DynamicResource Brush_85BCFF}"/><TextBlock Text="{DynamicResource Text_4cb6c9b94424c640}" VerticalAlignment="Center"/></StackPanel></Button>
+                  <Button Classes="secondary" Click="QuickHelp_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="book" Width="19" Height="19" Tint="{DynamicResource Brush_85BCFF}"/><TextBlock Text="{DynamicResource Text_986946214dd5bb9e}" VerticalAlignment="Center"/></StackPanel></Button>
                 </StackPanel>
               </Grid>
               <WrapPanel Margin="6,5,6,5">
@@ -233,38 +238,38 @@
                 <Button Classes="secondary" Margin="2" Padding="8,6" Content="07. Entry" Tag="entry" Click="ConfigurationShortcut_OnClick"/>
                 <Button Classes="secondary" Margin="2" Padding="8,6" Content="08. SL/TP" Tag="stop_loss" Click="ConfigurationShortcut_OnClick"/>
                 <Button Classes="secondary" Margin="2" Padding="8,6" Content="09. Risk" Tag="risk" Click="ConfigurationShortcut_OnClick"/>
-                <Button Classes="secondary" Margin="2" Padding="8,6" Content="10. Bộ lọc" Tag="filters.adx" Click="ConfigurationShortcut_OnClick"/>
-                <Button Classes="secondary" Margin="2" Padding="8,6" Content="11. Thời gian" Tag="sessions" Click="ConfigurationShortcut_OnClick"/>
-                <Button Classes="secondary" Margin="2" Padding="8,6" Content="12. Khác" Tag="profile" Click="ConfigurationShortcut_OnClick"/>
+                <Button Classes="secondary" Margin="2" Padding="8,6" Content="{DynamicResource Text_c0c4958f3db4aaf6}" Tag="filters.adx" Click="ConfigurationShortcut_OnClick"/>
+                <Button Classes="secondary" Margin="2" Padding="8,6" Content="{DynamicResource Text_be7d97001597475d}" Tag="sessions" Click="ConfigurationShortcut_OnClick"/>
+                <Button Classes="secondary" Margin="2" Padding="8,6" Content="{DynamicResource Text_1e57b401e99417aa}" Tag="profile" Click="ConfigurationShortcut_OnClick"/>
               </WrapPanel>
               <Grid ColumnDefinitions="1.02*,1*,1.3*" Margin="10,2,10,6" ColumnSpacing="0">
-                <Border Grid.Column="0" Padding="10,0,22,0" BorderBrush="#16405D" BorderThickness="0,0,1,0"><StackPanel Spacing="5">
-                  <TextBlock Text="Khung thời gian chính" FontWeight="SemiBold"/>
+                <Border Grid.Column="0" Padding="10,0,22,0" BorderBrush="{DynamicResource Brush_16405D}" BorderThickness="0,0,1,0"><StackPanel Spacing="5">
+                  <TextBlock Text="{DynamicResource Text_ebf73e08599c9527}" FontWeight="SemiBold"/>
                   <Grid ColumnDefinitions="*,195"><TextBlock Text="Direction TF" Classes="label" VerticalAlignment="Center"/><ComboBox x:Name="QuickDirection" Grid.Column="1" HorizontalAlignment="Stretch" MinHeight="30"/></Grid>
                   <Grid ColumnDefinitions="*,195"><TextBlock Text="Pullback TF" Classes="label" VerticalAlignment="Center"/><ComboBox x:Name="QuickPullback" Grid.Column="1" HorizontalAlignment="Stretch" MinHeight="30"/></Grid>
                   <Grid ColumnDefinitions="*,195"><TextBlock Text="Trigger TF" Classes="label" VerticalAlignment="Center"/><ComboBox x:Name="QuickTrigger" Grid.Column="1" HorizontalAlignment="Stretch" MinHeight="30"/></Grid>
                   <StackPanel IsVisible="False"><TextBlock x:Name="DirectionTfValue"/><TextBlock x:Name="PullbackTfValue"/><TextBlock x:Name="TriggerTfValue"/></StackPanel>
                 </StackPanel></Border>
-                <Border Grid.Column="1" Padding="22,0,22,0" BorderBrush="#16405D" BorderThickness="0,0,1,0"><StackPanel Spacing="3">
-                  <TextBlock Text="Logic kết hợp" FontWeight="SemiBold"/>
-                  <Grid ColumnDefinitions="*,195"><TextBlock Text="Điều kiện Pullback" Classes="label" VerticalAlignment="Center"/><ComboBox x:Name="QuickLogic" Grid.Column="1" MinHeight="30" IsEnabled="False" ToolTip.Tip="Logic kết hợp bộ lọc Pullback; logic Trigger được chỉnh ở tab Cấu hình."/></Grid>
-                  <CheckBox x:Name="QuickAllowBuy" Content="Cho phép BUY" MinHeight="24"/>
-                  <CheckBox x:Name="QuickAllowSell" Content="Cho phép SELL" MinHeight="24"/>
-                  <Button x:Name="QuickApply" Classes="primary" Padding="10,4" Height="28" Content="Áp dụng cấu hình nhanh" Click="QuickApply_OnClick"/>
+                <Border Grid.Column="1" Padding="22,0,22,0" BorderBrush="{DynamicResource Brush_16405D}" BorderThickness="0,0,1,0"><StackPanel Spacing="3">
+                  <TextBlock Text="{DynamicResource Text_7cac44bc4d55fec9}" FontWeight="SemiBold"/>
+                  <Grid ColumnDefinitions="*,195"><TextBlock Text="{DynamicResource Text_32fee1a7ff5feb2b}" Classes="label" VerticalAlignment="Center"/><ComboBox x:Name="QuickLogic" Grid.Column="1" MinHeight="30" IsEnabled="False" ToolTip.Tip="{DynamicResource Text_9598f50952a88cea}"/></Grid>
+                  <CheckBox x:Name="QuickAllowBuy" Content="{DynamicResource Text_50127e10748a6c56}" MinHeight="24"/>
+                  <CheckBox x:Name="QuickAllowSell" Content="{DynamicResource Text_9c7f58d54d2c2806}" MinHeight="24"/>
+                  <Button x:Name="QuickApply" Classes="primary" Padding="10,4" Height="28" Content="{DynamicResource Text_b372436adab61fc6}" Click="QuickApply_OnClick"/>
                   <StackPanel IsVisible="False"><TextBlock x:Name="DirectionRuleValue"/><TextBlock x:Name="TpSlValue"/><TextBlock x:Name="TradePermissionsText"/></StackPanel>
                 </StackPanel></Border>
                 <Border Grid.Column="2" Padding="20,0,4,0"><StackPanel Spacing="4">
-                  <TextBlock Text="Preset cấu hình" FontWeight="SemiBold"/>
+                  <TextBlock Text="{DynamicResource Text_87e34bc5906ff4a1}" FontWeight="SemiBold"/>
                   <Border Classes="panelSoft" Padding="10,4"><TextBlock x:Name="ProfileValue" Text="Profile: Baseline"/></Border>
                   <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                    <Button Classes="secondary" Content="Lưu preset" Padding="10,4" HorizontalAlignment="Stretch" Tag="save" Click="ConfigurationShortcut_OnClick"/>
-                    <Button Grid.Column="1" Classes="secondary" Content="Mở preset" Padding="10,4" HorizontalAlignment="Stretch" Tag="load" Click="ConfigurationShortcut_OnClick"/>
+                    <Button Classes="secondary" Content="{DynamicResource Text_960fe6721786988d}" Padding="10,4" HorizontalAlignment="Stretch" Tag="save" Click="ConfigurationShortcut_OnClick"/>
+                    <Button Grid.Column="1" Classes="secondary" Content="{DynamicResource Text_e4ad521cc47a8da2}" Padding="10,4" HorizontalAlignment="Stretch" Tag="load" Click="ConfigurationShortcut_OnClick"/>
                   </Grid>
-                  <TextBlock Text="Tải / Lưu file .set" FontWeight="SemiBold"/><Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="6">
-                    <Button Classes="secondary" HorizontalAlignment="Stretch" Padding="7,5" Tag="import-set" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="folder" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Mở .set" VerticalAlignment="Center"/></StackPanel></Button>
-                    <Button Grid.Column="1" Classes="secondary" HorizontalAlignment="Stretch" Padding="7,5" Tag="export-set" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="save" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Lưu .set" VerticalAlignment="Center"/></StackPanel></Button>
-                    <Button Grid.Column="2" Classes="secondary" HorizontalAlignment="Stretch" Padding="7,5" Tag="save" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="upload" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Xuất JSON" VerticalAlignment="Center"/></StackPanel></Button>
-                    <Button Grid.Column="3" Classes="secondary" HorizontalAlignment="Stretch" Padding="7,5" Tag="load" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="download" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Nhập JSON" VerticalAlignment="Center"/></StackPanel></Button>
+                  <TextBlock Text="{DynamicResource Text_3ead156489fb3b4a}" FontWeight="SemiBold"/><Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="6">
+                    <Button Classes="secondary" HorizontalAlignment="Stretch" Padding="7,5" Tag="import-set" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="folder" Width="19" Height="19" Tint="{DynamicResource Brush_85BCFF}"/><TextBlock Text="{DynamicResource Text_f8d8d35d3d717b4e}" VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Grid.Column="1" Classes="secondary" HorizontalAlignment="Stretch" Padding="7,5" Tag="export-set" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="save" Width="19" Height="19" Tint="{DynamicResource Brush_85BCFF}"/><TextBlock Text="{DynamicResource Text_3393d00821d77b97}" VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Grid.Column="2" Classes="secondary" HorizontalAlignment="Stretch" Padding="7,5" Tag="save" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="upload" Width="19" Height="19" Tint="{DynamicResource Brush_85BCFF}"/><TextBlock Text="{DynamicResource Text_9fbf128d64b2619f}" VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Grid.Column="3" Classes="secondary" HorizontalAlignment="Stretch" Padding="7,5" Tag="load" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="download" Width="19" Height="19" Tint="{DynamicResource Brush_85BCFF}"/><TextBlock Text="{DynamicResource Text_446c3523e11b5d6f}" VerticalAlignment="Center"/></StackPanel></Button>
                   </Grid>
                 </StackPanel></Border>
               </Grid>
@@ -274,8 +279,8 @@
           <Grid ColumnDefinitions="1.55*,1*" ColumnSpacing="8">
             <Border Grid.Column="0" Classes="panel" MinHeight="177">
               <StackPanel>
-                <Border Background="#082038" Padding="12,7">
-                  <Grid ColumnDefinitions="*,Auto"><TextBlock Text="Lệnh gần đây" Classes="panelTitle"/>
+                <Border Background="{DynamicResource Brush_082038}" Padding="12,7">
+                  <Grid ColumnDefinitions="*,Auto"><TextBlock Text="{DynamicResource Text_923710bccc47026c}" Classes="panelTitle"/>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                       <TextBlock Text="Positions:" Classes="dim"/><TextBlock x:Name="PositionsCountValue" Text="0"/>
                       <TextBlock Text="Orders:" Classes="dim"/><TextBlock x:Name="OrdersCountValue" Text="0"/>
@@ -283,16 +288,17 @@
                   </Grid>
                 </Border>
                 <Grid Margin="12,7" ColumnDefinitions="0.5*,1.3*,0.8*,0.7*,1*,1*,0.8*,0.8*,0.8*">
-                  <TextBlock Text="#" Classes="dim"/><TextBlock Grid.Column="1" Text="Thời gian" Classes="dim"/><TextBlock Grid.Column="2" Text="Loại" Classes="dim"/><TextBlock Grid.Column="3" Text="Lot" Classes="dim"/><TextBlock Grid.Column="4" Text="Giá vào" Classes="dim"/><TextBlock Grid.Column="5" Text="Giá đóng" Classes="dim"/><TextBlock Grid.Column="6" Text="Lãi/Lỗ" Classes="dim"/><TextBlock Grid.Column="7" Text="TP" Classes="dim"/><TextBlock Grid.Column="8" Text="SL" Classes="dim"/>
+                  <TextBlock Text="#" Classes="dim"/><TextBlock Grid.Column="1" Text="{DynamicResource Text_b295fd620d82e277}" Classes="dim"/><TextBlock Grid.Column="2" Text="{DynamicResource Text_3bfbf92340103cf7}" Classes="dim"/><TextBlock Grid.Column="3" Text="Lot" Classes="dim"/><TextBlock Grid.Column="4" Text="{DynamicResource Text_dd9aa148e58dcd46}" Classes="dim"/><TextBlock Grid.Column="5" Text="{DynamicResource Text_69834280e10579f0}" Classes="dim"/><TextBlock Grid.Column="6" Text="{DynamicResource Text_c22768166a888374}" Classes="dim"/><TextBlock Grid.Column="7" Text="TP" Classes="dim"/><TextBlock Grid.Column="8" Text="SL" Classes="dim"/>
                 </Grid>
-                <TextBlock x:Name="RecentOrdersEmptyText" Text="Chưa có dữ liệu lệnh chi tiết." Classes="dim" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+                <TextBlock x:Name="RecentOrdersEmptyText" Text="{local:InitialText 5e9cb695bb028b25}" Classes="dim" HorizontalAlignment="Center" Margin="0,20,0,0"/>
+                <ScrollViewer MaxHeight="92"><StackPanel x:Name="RecentOrdersRows"/></ScrollViewer>
               </StackPanel>
             </Border>
             <Border Grid.Column="1" Classes="panel" MinHeight="177">
               <StackPanel>
-                <Border Background="#082038" Padding="12,7"><TextBlock Text="Nhật ký hệ thống" Classes="panelTitle"/></Border>
-                <Grid Margin="12,6" ColumnDefinitions="90,80,*"><TextBlock Text="Thời gian" Classes="dim"/><TextBlock Grid.Column="1" Text="Mức" Classes="dim"/><TextBlock Grid.Column="2" Text="Thông tin" Classes="dim"/></Grid>
-                <TextBlock x:Name="QuickLogText" Text="Đang khởi tạo Control Center..." FontFamily="Consolas" FontSize="12" Foreground="#9FC2DE" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="12,2,12,8"/>
+                <Border Background="{DynamicResource Brush_082038}" Padding="12,7"><TextBlock Text="{DynamicResource Text_860e5baefe84af19}" Classes="panelTitle"/></Border>
+                <Grid Margin="12,6" ColumnDefinitions="90,80,*"><TextBlock Text="{DynamicResource Text_b295fd620d82e277}" Classes="dim"/><TextBlock Grid.Column="1" Text="{DynamicResource Text_10267bc5184ddeec}" Classes="dim"/><TextBlock Grid.Column="2" Text="{DynamicResource Text_4aa16c9282a68669}" Classes="dim"/></Grid>
+                <TextBlock x:Name="QuickLogText" Text="{local:InitialText 4306c056103fad99}" FontFamily="Consolas" FontSize="{DynamicResource Font_12}" Foreground="{DynamicResource Brush_9FC2DE}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="12,2,12,8"/>
               </StackPanel>
             </Border>
           </Grid>
@@ -333,38 +339,39 @@
 
       <Border x:Name="PlaceholderContent" Grid.ColumnSpan="2" Classes="panel" IsVisible="False">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" MaxWidth="650">
-          <TextBlock x:Name="PlaceholderTitle" Text="Tab chưa triển khai" FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-          <TextBlock x:Name="PlaceholderDetail" Text="Chức năng backend chưa được triển khai." Classes="dim" TextWrapping="Wrap" TextAlignment="Center"/>
-          <TextBlock Text="Bố cục sẽ bám đúng ảnh UI reference; không hiển thị dữ liệu giao dịch giả." Foreground="#FFD34D" TextAlignment="Center"/>
+          <TextBlock x:Name="PlaceholderTitle" Text="{local:InitialText d9a0d7f42b2b7d58}" FontSize="{DynamicResource Font_28}" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+          <TextBlock x:Name="PlaceholderDetail" Text="{local:InitialText 61d73063a032f5aa}" Classes="dim" TextWrapping="Wrap" TextAlignment="Center"/>
+          <TextBlock Text="{DynamicResource Text_1e76effadfcbc0f4}" Foreground="{DynamicResource Brush_FFD34D}" TextAlignment="Center"/>
         </StackPanel>
       </Border>
     </Grid>
 
     <!-- Approved narrow status footer -->
-    <Border Grid.Row="3" Background="#03162A" BorderBrush="#124467" BorderThickness="0,1,0,0">
+    <Border Grid.Row="2" Background="{DynamicResource Brush_03162A}" BorderBrush="{DynamicResource Brush_124467}" BorderThickness="0,1,0,0">
       <Grid ColumnDefinitions="*,Auto" Margin="20,0">
         <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-          <TextBlock Text="●" Foreground="#18E58B" FontSize="13"/>
-          <TextBlock Text="Python Engine:" Classes="dim" FontSize="13"/>
-          <TextBlock x:Name="FooterEngineStateText" Text="Starting" FontSize="13"/>
-          <TextBlock Text="|" Classes="dim" FontSize="13"/>
-          <TextBlock Text="Model: Rule-based (Z + RSI)" Classes="dim" FontSize="13"/>
-          <TextBlock Text="|" Classes="dim" FontSize="13"/>
-          <TextBlock Text="Log: ON" Classes="dim" FontSize="13"/>
+          <TextBlock Text="●" Foreground="{DynamicResource Brush_18E58B}" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock Text="Python Engine:" Classes="dim" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock x:Name="FooterEngineStateText" Text="Starting" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock Text="|" Classes="dim" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock Text="Model: Rule-based (Z + RSI)" Classes="dim" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock Text="|" Classes="dim" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock Text="Log: ON" Classes="dim" FontSize="{DynamicResource Font_13}"/>
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-          <TextBlock Text="Giờ máy:" Classes="dim" FontSize="13"/>
-          <TextBlock x:Name="FooterServerTimeText" Text="—" FontSize="13"/>
-          <TextBlock Text="|" Classes="dim" FontSize="13"/>
-          <TextBlock Text="Spread:" Classes="dim" FontSize="13"/>
-          <TextBlock x:Name="FooterSpreadText" Text="—" FontSize="13"/>
-          <TextBlock Text="|" Classes="dim" FontSize="13"/>
-          <TextBlock Text="Account:" Classes="dim" FontSize="13"/>
-          <TextBlock x:Name="FooterAccountText" Text="—" FontSize="13"/>
-          <TextBlock Text="Leverage:" Classes="dim" FontSize="13"/>
-          <TextBlock x:Name="FooterLeverageText" Text="—" FontSize="13"/>
+          <TextBlock Text="{DynamicResource Text_2efabd57a97e0131}" Classes="dim" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock x:Name="FooterServerTimeText" Text="—" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock Text="|" Classes="dim" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock Text="Spread:" Classes="dim" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock x:Name="FooterSpreadText" Text="—" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock Text="|" Classes="dim" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock Text="Account:" Classes="dim" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock x:Name="FooterAccountText" Text="—" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock Text="Leverage:" Classes="dim" FontSize="{DynamicResource Font_13}"/>
+          <TextBlock x:Name="FooterLeverageText" Text="—" FontSize="{DynamicResource Font_13}"/>
         </StackPanel>
       </Grid>
     </Border>
+    </Grid></local:WorkspaceScale.Workspace></local:WorkspaceScale>
   </Grid>
 </Window>

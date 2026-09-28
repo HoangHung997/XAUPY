@@ -43,6 +43,7 @@ public partial class ConfigurationEditor : UserControl
             ["profile"] = (11, "11. Hồ sơ cấu hình"),
             ["strategy"] = (12, "12. Quyền giao dịch"),
             ["timeframes"] = (5, "5. Khung thời gian (Timeframe)"),
+            ["mtf"] = (6, "Xác nhận đa khung thời gian bổ sung"),
             ["direction"] = (2, "2. Hướng giao dịch"),
             ["pullback"] = (3, "3. Nhận diện nhịp hồi (Pullback)"),
             ["trigger"] = (4, "4. Xác nhận vào lệnh (Trigger)"),
@@ -87,6 +88,7 @@ public partial class ConfigurationEditor : UserControl
     public Func<bool>? HasConflictingDraft { get; set; }
     private EngineConnectionState _lastEngineState = EngineConnectionState.Stopped;
     private string? _lastSetTemplatePath;
+    private IStorageFile? _currentJsonFile;
 
     public ConfigurationEditor()
     {
@@ -158,7 +160,7 @@ public partial class ConfigurationEditor : UserControl
 
         try
         {
-            SetStatus("Đang tải schema 133 tham số và active profile...", Brushes.LightBlue);
+            SetStatus(LocalizationService.T("Đang tải tham số và cấu hình đang dùng…"), Brushes.LightBlue);
 
             var schema = await _supervisor.GetConfigSchemaAsync();
             var active = await _supervisor.GetActiveConfigAsync();
@@ -254,7 +256,7 @@ public partial class ConfigurationEditor : UserControl
             foreach (var field in values) remaining.Remove(field.Path);
             var groupFields = new List<FieldBinding>();
             var content = new Grid { RowDefinitions = new RowDefinitions("31,*") };
-            var title = new TextBlock { Text = titleText, FontSize = span <= 2 ? 13 : 15, FontWeight = FontWeight.SemiBold,
+            var title = new TextBlock { [LocalizationService.TextProperty] = titleText, [AppearanceService.BaseFontSizeProperty] = span <= 2 ? 13d : 15d, FontWeight = FontWeight.SemiBold,
                 Foreground = new SolidColorBrush(Color.Parse("#C5DEFA")), Margin = new Avalonia.Thickness(10, 5) };
             content.Children.Add(new Border { Background = new SolidColorBrush(Color.Parse("#082038")),
                 BorderBrush = new SolidColorBrush(Color.Parse("#14517A")), BorderThickness = new Avalonia.Thickness(0,0,0,1), Child = title });
@@ -281,7 +283,7 @@ public partial class ConfigurationEditor : UserControl
                     var chips = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Margin = new Avalonia.Thickness(8,0,0,0) };
                     foreach (var tf in values[i].EnumValues)
                     {
-                        var chip = new Button { Content = tf, Padding = new Avalonia.Thickness(5,2), FontSize = 11,
+                        var chip = new Button { Content = tf, Padding = new Avalonia.Thickness(5,2), [AppearanceService.BaseFontSizeProperty] = 11d,
                             MinWidth = 34, Height = 25, Classes = { "secondary" }, Tag = tf };
                         chip.Click += (_, _) => combo.SelectedItem = tf;
                         combo.SelectionChanged += (_, _) => chip.Background = new SolidColorBrush(Color.Parse(combo.SelectedItem?.ToString() == tf ? "#0866F4" : "#0A2946"));
@@ -339,8 +341,8 @@ public partial class ConfigurationEditor : UserControl
         };
         var label = new TextBlock
         {
-            Text = FieldLabel(descriptor),
-            FontSize = groupKey is "stop_loss" or "take_profit" or "management" or "news" ? 13 : 14,
+            [LocalizationService.TextProperty] = FieldLabel(descriptor),
+            [AppearanceService.BaseFontSizeProperty] = groupKey is "stop_loss" or "take_profit" or "management" or "news" ? 13d : 14d,
             Foreground = new SolidColorBrush(Color.Parse("#C0D5EB")),
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center
@@ -350,7 +352,7 @@ public partial class ConfigurationEditor : UserControl
         Control editor = CreateEditor(descriptor);
         editor.MinHeight = 25;
         editor.Height = 25;
-        if (editor is Avalonia.Controls.Primitives.TemplatedControl input) { input.FontSize = groupKey is "stop_loss" or "take_profit" or "management" or "news" ? 12 : 13; input.Padding = new Avalonia.Thickness(6,2); }
+        if (editor is Avalonia.Controls.Primitives.TemplatedControl input) { input.SetValue(AppearanceService.BaseFontSizeProperty, groupKey is "stop_loss" or "take_profit" or "management" or "news" ? 12d : 13d); input.Padding = new Avalonia.Thickness(6,2); }
         editor.VerticalAlignment = VerticalAlignment.Center;
         editor.HorizontalAlignment = HorizontalAlignment.Stretch;
         Grid.SetColumn(editor, 1);
@@ -392,6 +394,9 @@ public partial class ConfigurationEditor : UserControl
 
     private static readonly IReadOnlyDictionary<string, string> FieldLabels = new Dictionary<string, string>
     {
+        ["mtf.pullback_timeframes"] = "Pullback bổ sung (VD: M3,M5)",
+        ["mtf.trigger_timeframes"] = "Trigger bổ sung (VD: M1,M3)",
+        ["mtf.logic"] = "Kết hợp xác nhận thêm",
         ["risk.sizing_mode"] = "Cách tính khối lượng", ["risk.risk_percent"] = "Risk mỗi lệnh (%)",
         ["risk.fixed_lot"] = "Lot cố định", ["risk.max_lot"] = "Max lot", ["risk.max_daily_loss_pct"] = "Lỗ tối đa ngày (%)",
         ["risk.max_trades_per_day"] = "Số lệnh / ngày", ["risk.max_open_positions"] = "Số vị thế tối đa",
@@ -427,7 +432,7 @@ public partial class ConfigurationEditor : UserControl
         {
             var check = new CheckBox
             {
-                Content = "Bật",
+                [LocalizationService.TextProperty] = "Bật",
                 Foreground = new SolidColorBrush(Color.Parse("#DCE8F4"))
             };
             check.Click += (_, _) => EditorValueChanged(descriptor, check);
@@ -444,8 +449,8 @@ public partial class ConfigurationEditor : UserControl
             if (descriptor.Path is "stop_loss.mode" or "take_profit.mode")
                 combo.ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<string>((value, _) => new TextBlock
                 {
-                    Text = value switch { "STRUCTURE" => "Cấu trúc", "FIXED" => "Cố định", "DYNAMIC" => "Động", "RR" => "R:R", _ => value },
-                    FontSize = 12,
+                    [LocalizationService.TextProperty] = value switch { "STRUCTURE" => "Cấu trúc", "FIXED" => "Cố định", "ZRSI_DYNAMIC" => "Động RSI/Z", "RR" => "R:R", _ => value },
+                    [AppearanceService.BaseFontSizeProperty] = 12d,
                     VerticalAlignment = VerticalAlignment.Center
                 });
             combo.SelectionChanged += (_, _) => EditorValueChanged(descriptor, combo);
@@ -625,7 +630,7 @@ public partial class ConfigurationEditor : UserControl
             LoadDraft(apply.Profile.Value, dirty: false);
             this.FindControl<TextBlock>("ValidationStateText")!.Text = "VALID + ACTIVE";
             this.FindControl<TextBlock>("ValidationStateText")!.Foreground = Brushes.LightGreen;
-            SetStatus("Active profile đã được Python Engine xác thực và áp dụng. Execution vẫn khóa.", Brushes.LightGreen);
+            SetStatus("Đã xác thực và áp dụng profile. Quyền giao dịch giữ theo lựa chọn tại tab Lệnh & Vị thế.", Brushes.LightGreen);
         });
     }
 
@@ -659,6 +664,7 @@ public partial class ConfigurationEditor : UserControl
             }
 
             LoadDraft(validation.Profile.Value, dirty: true);
+            _currentJsonFile = file;
             _lastSetTemplatePath = null;
             SetStatus($"Đã mở JSON: {file.Name}. Draft chưa được Apply.", Brushes.LightGreen);
         });
@@ -676,7 +682,8 @@ public partial class ConfigurationEditor : UserControl
             }
 
             var storage = RequireStorageProvider();
-            var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+            var file = (sender as Button)?.Tag as string != "save-as" ? _currentJsonFile : null;
+            file ??= await storage.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Lưu XAUPY profile JSON",
                 SuggestedFileName = SuggestedProfileFileName(),
@@ -696,6 +703,7 @@ public partial class ConfigurationEditor : UserControl
                 validation.Profile.Value,
                 new JsonSerializerOptions { WriteIndented = true });
             await stream.FlushAsync();
+            _currentJsonFile = file;
 
             SetStatus($"Đã lưu profile JSON: {file.Name}.", Brushes.LightGreen);
         });

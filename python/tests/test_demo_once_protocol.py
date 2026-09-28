@@ -46,6 +46,22 @@ class DemoOnceProtocolTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("BRIDGE_SESSION_REQUIRED", reply.payload["demo_once"]["code"])
         self.server.demo_once.arm.assert_not_called()
 
+    async def test_repeated_foreign_result_is_rejected_without_journal_flood(self):
+        reader, writer = await self.connect()
+        self.server.demo_once.record_result = Mock()
+        self.server._log = Mock()
+        payload = {'bridge_session_id': self.session, 'attempt_id': str(uuid4()), 'status':'FILLED'}
+        for _ in range(20):
+            reply = await exchange(reader, writer, 'bridge_demo_once_result', payload)
+            self.assertFalse(reply.payload['accepted'])
+            self.assertEqual('BRIDGE_SESSION_REQUIRED', reply.payload['demo_once']['code'])
+        events = [c for c in self.server._log.call_args_list if len(c.args)>2 and c.args[2]=='DEMO_ONCE']
+        self.assertEqual(1,len(events))
+        await exchange(reader, writer, 'bridge_demo_once_result', {**payload,'attempt_id':str(uuid4())})
+        events = [c for c in self.server._log.call_args_list if len(c.args)>2 and c.args[2]=='DEMO_ONCE']
+        self.assertEqual(2,len(events))
+        self.server.demo_once.record_result.assert_not_called()
+
     async def test_real_strategy_signal_drives_only_one_isolated_demo_command(self):
         reader, writer = await self.connect()
         async def request(kind, payload=None):

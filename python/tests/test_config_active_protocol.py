@@ -78,7 +78,7 @@ class ActiveConfigProtocolTests(unittest.IsolatedAsyncioTestCase):
     async def test_invalid_apply_does_not_replace_active(self):
         original = await exchange(self.reader, self.writer, "config_active_get")
         invalid = copy.deepcopy(original.payload["profile"])
-        invalid["execution"]["allow_real_account"] = True
+        invalid["execution"]["allow_real_account"] = "invalid_boolean"
 
         result = await exchange(
             self.reader,

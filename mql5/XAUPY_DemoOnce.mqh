@@ -144,9 +144,10 @@ bool OnceValidateEnvelope(string text,string request_id,string expected_type,COn
       !reply.Long(0,"schema_version",version) || version!=1) return false;
    payload=reply.Find(0,"payload");
    if(payload<0 || reply.nodes[payload].type!=ONCE_OBJECT) return false;
-   bool execution=false,trading=false;
-   if((reply.Find(payload,"execution_enabled")>=0 && (!reply.Bool(payload,"execution_enabled",execution) || execution)) ||
-      (reply.Find(payload,"trading_enabled")>=0 && (!reply.Bool(payload,"trading_enabled",trading) || trading))) return false;
+   bool execution=false,trading=false,capable=false;
+   if((reply.Find(payload,"execution_enabled")>=0 && !reply.Bool(payload,"execution_enabled",execution)) ||
+      (reply.Find(payload,"trading_enabled")>=0 && !reply.Bool(payload,"trading_enabled",trading))) return false;
+   if((execution || trading) && (!reply.Bool(payload,"execution_capable",capable) || !capable)) return false;
    return true;
 }
 bool OnceTestCommand(string text)

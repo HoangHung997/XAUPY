@@ -4,9 +4,9 @@
              x:Class="XAUPY.Desktop.JournalDashboard">
   <UserControl.Styles>
     <Style Selector="Button.sourceFilter">
-      <Setter Property="Background" Value="#081C32"/>
-      <Setter Property="Foreground" Value="#D9E7F5"/>
-      <Setter Property="BorderBrush" Value="#14517A"/>
+      <Setter Property="Background" Value="{DynamicResource Brush_081C32}"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_D9E7F5}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush_14517A}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="5"/>
       <Setter Property="Padding" Value="12,8"/>
@@ -14,12 +14,12 @@
       <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
     </Style>
     <Style Selector="Button.sourceFilter:pointerover">
-      <Setter Property="Background" Value="#0B2A49"/>
-      <Setter Property="BorderBrush" Value="#2374AD"/>
+      <Setter Property="Background" Value="{DynamicResource Brush_0B2A49}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush_2374AD}"/>
     </Style>
     <Style Selector="Button.sourceFilter.activeSource">
-      <Setter Property="Background" Value="#0866F4"/>
-      <Setter Property="BorderBrush" Value="#2D8BFF"/>
+      <Setter Property="Background" Value="{DynamicResource Brush_0866F4}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush_2D8BFF}"/>
       <Setter Property="Foreground" Value="White"/>
     </Style>
     <Style Selector="Button.journalRow">
@@ -30,14 +30,14 @@
       <Setter Property="CornerRadius" Value="0"/>
     </Style>
     <Style Selector="Button.journalRow:pointerover">
-      <Setter Property="Background" Value="#0A2844"/>
+      <Setter Property="Background" Value="{DynamicResource Brush_0A2844}"/>
     </Style>
     <Style Selector="Button.journalRow.selectedRow">
-      <Setter Property="Background" Value="#0759C7"/>
+      <Setter Property="Background" Value="{DynamicResource Brush_0759C7}"/>
     </Style>
     <Style Selector="TextBlock.journalHeader">
-      <Setter Property="Foreground" Value="#B8CCE1"/>
-      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="Foreground" Value="{DynamicResource Brush_B8CCE1}"/>
+      <Setter Property="FontSize" Value="{DynamicResource Font_14}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
   </UserControl.Styles>
@@ -51,17 +51,17 @@
                   CornerRadius="4"
                   BorderBrush="Transparent"
                   BorderThickness="0"
-                  Background="#06243E">
-            <local:ReferenceIcon Kind="document" Tint="#24B6FF" Width="31" Height="31"/>
+                  Background="{DynamicResource Brush_06243E}">
+            <local:ReferenceIcon Kind="document" Tint="{DynamicResource Brush_24B6FF}" Width="31" Height="31"/>
           </Border>
           <StackPanel Grid.Column="1" Margin="12,0,0,0">
-            <TextBlock Text="Nhật ký hệ thống"
-                       FontSize="22"
+            <TextBlock Text="{DynamicResource Text_860e5baefe84af19}"
+                       FontSize="{DynamicResource Font_22}"
                        FontWeight="Bold"
-                       Foreground="#DCEBFA"/>
-            <TextBlock Text="Theo dõi hoạt động chi tiết của hệ thống, EA và các thành phần giao dịch"
+                       Foreground="{DynamicResource Brush_DCEBFA}"/>
+            <TextBlock Text="{DynamicResource Text_665549f12fdee2a3}"
                        Classes="dim"
-                       FontSize="14"/>
+                       FontSize="{DynamicResource Font_14}"/>
           </StackPanel>
         </Grid>
       </Border>
@@ -74,10 +74,10 @@
                 Tag="ALL"
                 Click="SourceFilter_OnClick">
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <local:ReferenceIcon Kind="bars" Tint="#8FD0FF" Width="23" Height="23"/>
-            <TextBlock Grid.Column="1" Text="Tất cả" Margin="8,0,0,0" VerticalAlignment="Center"/>
-            <Border Grid.Column="2" Background="#154D99" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourceAllCountText" Text="0" FontSize="13"/>
+            <local:ReferenceIcon Kind="bars" Tint="{DynamicResource Brush_8FD0FF}" Width="23" Height="23"/>
+            <TextBlock Grid.Column="1" Text="{DynamicResource Text_49c73a3150d77038}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            <Border Grid.Column="2" Background="{DynamicResource Brush_154D99}" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourceAllCountText" Text="0" FontSize="{DynamicResource Font_13}"/>
             </Border>
           </Grid>
         </Button>
@@ -88,10 +88,10 @@
                 Tag="MT5"
                 Click="SourceFilter_OnClick">
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <local:ReferenceIcon Kind="monitor" Tint="#20E08B" Width="23" Height="23"/>
+            <local:ReferenceIcon Kind="monitor" Tint="{DynamicResource Brush_20E08B}" Width="23" Height="23"/>
             <TextBlock Grid.Column="1" Text="MT5" Margin="8,0,0,0" VerticalAlignment="Center"/>
-            <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourceMt5CountText" Text="0" FontSize="13"/>
+            <Border Grid.Column="2" Background="{DynamicResource Brush_102C50}" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourceMt5CountText" Text="0" FontSize="{DynamicResource Font_13}"/>
             </Border>
           </Grid>
         </Button>
@@ -102,10 +102,10 @@
                 Tag="EA Bridge"
                 Click="SourceFilter_OnClick">
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <local:ReferenceIcon Kind="link" Tint="#52C7FF" Width="23" Height="23"/>
+            <local:ReferenceIcon Kind="link" Tint="{DynamicResource Brush_52C7FF}" Width="23" Height="23"/>
             <TextBlock Grid.Column="1" Text="EA Bridge" Margin="8,0,0,0" VerticalAlignment="Center"/>
-            <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourceBridgeCountText" Text="0" FontSize="13"/>
+            <Border Grid.Column="2" Background="{DynamicResource Brush_102C50}" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourceBridgeCountText" Text="0" FontSize="{DynamicResource Font_13}"/>
             </Border>
           </Grid>
         </Button>
@@ -116,10 +116,10 @@
                 Tag="Python Engine"
                 Click="SourceFilter_OnClick">
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <TextBlock Text="●" Foreground="#FFD34D" FontSize="16" VerticalAlignment="Center"/>
+            <TextBlock Text="●" Foreground="{DynamicResource Brush_FFD34D}" FontSize="{DynamicResource Font_16}" VerticalAlignment="Center"/>
             <TextBlock Grid.Column="1" Text="Python Engine" Margin="8,0,6,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-            <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourcePythonCountText" Text="0" FontSize="13"/>
+            <Border Grid.Column="2" Background="{DynamicResource Brush_102C50}" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourcePythonCountText" Text="0" FontSize="{DynamicResource Font_13}"/>
             </Border>
           </Grid>
         </Button>
@@ -130,10 +130,10 @@
                 Tag="Strategy"
                 Click="SourceFilter_OnClick">
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <local:ReferenceIcon Kind="bars" Tint="#1FE090" Width="23" Height="23"/>
+            <local:ReferenceIcon Kind="bars" Tint="{DynamicResource Brush_1FE090}" Width="23" Height="23"/>
             <TextBlock Grid.Column="1" Text="Strategy" Margin="8,0,0,0" VerticalAlignment="Center"/>
-            <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourceStrategyCountText" Text="0" FontSize="13"/>
+            <Border Grid.Column="2" Background="{DynamicResource Brush_102C50}" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourceStrategyCountText" Text="0" FontSize="{DynamicResource Font_13}"/>
             </Border>
           </Grid>
         </Button>
@@ -144,10 +144,10 @@
                 Tag="Orders"
                 Click="SourceFilter_OnClick">
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <local:ReferenceIcon Kind="document" Tint="#9FD0FF" Width="23" Height="23"/>
+            <local:ReferenceIcon Kind="document" Tint="{DynamicResource Brush_9FD0FF}" Width="23" Height="23"/>
             <TextBlock Grid.Column="1" Text="Orders" Margin="8,0,0,0" VerticalAlignment="Center"/>
-            <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourceOrdersCountText" Text="0" FontSize="13"/>
+            <Border Grid.Column="2" Background="{DynamicResource Brush_102C50}" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourceOrdersCountText" Text="0" FontSize="{DynamicResource Font_13}"/>
             </Border>
           </Grid>
         </Button>
@@ -158,10 +158,10 @@
                 Tag="Alerts"
                 Click="SourceFilter_OnClick">
           <Grid ColumnDefinitions="Auto,*,Auto">
-            <local:ReferenceIcon Kind="bell" Tint="#FF5577" Width="23" Height="23"/>
+            <local:ReferenceIcon Kind="bell" Tint="{DynamicResource Brush_FF5577}" Width="23" Height="23"/>
             <TextBlock Grid.Column="1" Text="Alerts" Margin="8,0,0,0" VerticalAlignment="Center"/>
-            <Border Grid.Column="2" Background="#102C50" CornerRadius="5" Padding="7,3">
-              <TextBlock x:Name="SourceAlertsCountText" Text="0" FontSize="13"/>
+            <Border Grid.Column="2" Background="{DynamicResource Brush_102C50}" CornerRadius="5" Padding="7,3">
+              <TextBlock x:Name="SourceAlertsCountText" Text="0" FontSize="{DynamicResource Font_13}"/>
             </Border>
           </Grid>
         </Button>
@@ -173,7 +173,7 @@
               ColumnSpacing="10"
               Margin="12,8">
           <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="9" VerticalAlignment="Center">
-            <TextBlock Text="Mức độ:" Classes="label" VerticalAlignment="Center"/>
+            <TextBlock Text="{DynamicResource Text_d0a91ab6e983a5b7}" Classes="label" VerticalAlignment="Center"/>
             <CheckBox x:Name="InfoLevelCheck" Content="INFO" IsChecked="True" Click="LevelFilter_OnClick"/>
             <CheckBox x:Name="WarnLevelCheck" Content="WARN" IsChecked="True" Click="LevelFilter_OnClick"/>
             <CheckBox x:Name="ErrorLevelCheck" Content="ERROR" IsChecked="True" Click="LevelFilter_OnClick"/>
@@ -182,7 +182,7 @@
 
           <TextBox x:Name="JournalSearchBox"
                    Grid.Column="1"
-                   PlaceholderText="🔎  Tìm kiếm trong nhật ký..."
+                   PlaceholderText="{DynamicResource Text_5a59e2ddb4940135}"
                    TextChanged="JournalSearchBox_OnTextChanged"/>
 
           <ComboBox x:Name="DateScopeCombo"
@@ -190,24 +190,24 @@
                     Width="150"
                     SelectedIndex="0"
                     SelectionChanged="DateScope_OnSelectionChanged">
-            <ComboBoxItem Content="Hôm nay" Tag="TODAY"/>
-            <ComboBoxItem Content="Tất cả thời gian" Tag="ALL"/>
+            <ComboBoxItem Content="{DynamicResource Text_e6747a82b6ddc4b2}" Tag="TODAY"/>
+            <ComboBoxItem Content="{DynamicResource Text_4ab123688afec6b5}" Tag="ALL"/>
           </ComboBox>
 
           <Button x:Name="BookmarksOnlyButton"
                   Grid.Column="3"
                   Classes="secondary"
-                  Content="🔖  Dấu trang"
+                  Content="{DynamicResource Text_ce1c0168d7fffd42}"
                   Click="BookmarksOnly_OnClick"/>
 
           <Button Grid.Column="4"
                   Classes="secondary"
-                  Content="⬇  Xuất log"
+                  Content="{DynamicResource Text_f0d492dc1b08ba13}"
                   Click="ExportLog_OnClick"/>
 
           <Button Grid.Column="5"
                   Classes="secondary"
-                  Content="↻  Làm mới"
+                  Content="{DynamicResource Text_d6fafb3017013271}"
                   Click="Refresh_OnClick"/>
         </Grid>
       </Border>
@@ -216,14 +216,14 @@
       <Border Grid.Row="3" Classes="panel">
         <Grid RowDefinitions="Auto,*">
           <Grid Grid.Row="0"
-                Background="#082038"
+                Background="{DynamicResource Brush_082038}"
                 ColumnDefinitions="0.68*,1.64*,1.28*,1.40*,6.18*,1.55*"
                 Margin="0">
             <TextBlock Text="#" Classes="journalHeader" Margin="12,8"/>
-            <TextBlock Grid.Column="1" Text="Thời gian" Classes="journalHeader" Margin="10,8"/>
-            <TextBlock Grid.Column="2" Text="Mức độ" Classes="journalHeader" Margin="10,8"/>
-            <TextBlock Grid.Column="3" Text="Nguồn" Classes="journalHeader" Margin="10,8"/>
-            <TextBlock Grid.Column="4" Text="Thông điệp" Classes="journalHeader" Margin="10,8"/>
+            <TextBlock Grid.Column="1" Text="{DynamicResource Text_b295fd620d82e277}" Classes="journalHeader" Margin="10,8"/>
+            <TextBlock Grid.Column="2" Text="{DynamicResource Text_9709dbacb492ef03}" Classes="journalHeader" Margin="10,8"/>
+            <TextBlock Grid.Column="3" Text="{DynamicResource Text_c76d57b348bd2310}" Classes="journalHeader" Margin="10,8"/>
+            <TextBlock Grid.Column="4" Text="{DynamicResource Text_15b3cf5bb57c06a9}" Classes="journalHeader" Margin="10,8"/>
             <TextBlock Grid.Column="5" Text="Tag" Classes="journalHeader" Margin="10,8"/>
           </Grid>
 
@@ -238,14 +238,14 @@
       <!-- Selected detail -->
       <Border Grid.Row="4" Classes="panel" Height="160">
         <Grid RowDefinitions="Auto,*">
-          <Grid Grid.Row="0" Background="#082038" ColumnDefinitions="*,Auto">
+          <Grid Grid.Row="0" Background="{DynamicResource Brush_082038}" ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,7">
-              <TextBlock Text="▤" Foreground="#86C8FF"/>
-              <TextBlock Text="Chi tiết nhật ký" Classes="panelTitle"/>
+              <TextBlock Text="▤" Foreground="{DynamicResource Brush_86C8FF}"/>
+              <TextBlock Text="{DynamicResource Text_d6bd61f37175b6ec}" Classes="panelTitle"/>
             </StackPanel>
             <TextBlock x:Name="DetailBookmarkText"
                        Grid.Column="1"
-                       Text="Chưa chọn dòng"
+                       Text="{local:InitialText 4e290379f702e813}"
                        Classes="dim"
                        VerticalAlignment="Center"
                        Margin="0,0,12,0"/>
@@ -259,43 +259,43 @@
                   ColumnDefinitions="137,*"
                   RowDefinitions="Auto,Auto,Auto,Auto,Auto"
                   RowSpacing="2">
-              <TextBlock Grid.Row="0" Text="Thời gian:" Classes="label"/>
+              <TextBlock Grid.Row="0" Text="{DynamicResource Text_fbe0ffb4ddd272cd}" Classes="label"/>
               <TextBlock x:Name="DetailTimeText" Grid.Row="0" Grid.Column="1" Text="—"/>
 
-              <TextBlock Grid.Row="1" Text="Mức độ:" Classes="label"/>
+              <TextBlock Grid.Row="1" Text="{DynamicResource Text_d0a91ab6e983a5b7}" Classes="label"/>
               <TextBlock x:Name="DetailLevelText" Grid.Row="1" Grid.Column="1" Text="—"/>
 
-              <TextBlock Grid.Row="2" Text="Nguồn:" Classes="label"/>
+              <TextBlock Grid.Row="2" Text="{DynamicResource Text_dcfd8415efc0567b}" Classes="label"/>
               <TextBlock x:Name="DetailSourceText" Grid.Row="2" Grid.Column="1" Text="—"/>
 
               <TextBlock Grid.Row="3" Text="Tag:" Classes="label"/>
               <TextBlock x:Name="DetailTagText" Grid.Row="3" Grid.Column="1" Text="—"/>
 
-              <TextBlock Grid.Row="4" Text="ID dòng:" Classes="label"/>
+              <TextBlock Grid.Row="4" Text="{DynamicResource Text_44c1cbec2bc3e50b}" Classes="label"/>
               <TextBlock x:Name="DetailSequenceText" Grid.Row="4" Grid.Column="1" Text="—"/>
             </Grid>
 
-            <Border Grid.Column="1" Width="1" Background="#24506F"/>
+            <Border Grid.Column="1" Width="1" Background="{DynamicResource Brush_24506F}"/>
 
             <Grid Grid.Column="2" RowDefinitions="Auto,*">
               <Grid ColumnDefinitions="142,*">
-                <TextBlock Text="Thông điệp:" Classes="label"/>
+                <TextBlock Text="{DynamicResource Text_30898118d6cd55e4}" Classes="label"/>
                 <TextBlock x:Name="DetailMessageText"
                            Grid.Column="1"
-                           Text="Chọn một dòng để xem chi tiết."
+                           Text="{local:InitialText 3a386b30b0a25cee}"
                            TextWrapping="Wrap"/>
               </Grid>
 
               <Grid Grid.Row="1" ColumnDefinitions="142,*" Margin="0,8,0,0">
-                <TextBlock Text="Chi tiết đầy đủ:" Classes="label"/>
+                <TextBlock Text="{DynamicResource Text_362f1e204484b264}" Classes="label"/>
                 <Border Grid.Column="1"
                         Classes="panelSoft"
                         Padding="10,7">
                   <TextBlock x:Name="DetailJsonText"
                              Text="—"
                              FontFamily="Consolas"
-                             FontSize="13"
-                             Foreground="#B6CBE0"
+                             FontSize="{DynamicResource Font_13}"
+                             Foreground="{DynamicResource Brush_B6CBE0}"
                              TextWrapping="Wrap"/>
                 </Border>
               </Grid>
@@ -309,14 +309,14 @@
     <Grid Grid.Column="1" RowDefinitions="188,313,*" RowSpacing="8">
       <Border Grid.Row="0" Classes="panel">
         <StackPanel>
-          <Grid Background="#082038" ColumnDefinitions="*,Auto">
+          <Grid Background="{DynamicResource Brush_082038}" ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,8">
-              <TextBlock Text="▣" Foreground="#55B8FF"/>
-              <TextBlock Text="Tổng quan nhật ký" Classes="panelTitle"/>
+              <TextBlock Text="▣" Foreground="{DynamicResource Brush_55B8FF}"/>
+              <TextBlock Text="{DynamicResource Text_e70626eaf8c57ef8}" Classes="panelTitle"/>
             </StackPanel>
             <TextBlock x:Name="SummaryScopeText"
                        Grid.Column="1"
-                       Text="Hôm nay"
+                       Text="{local:InitialText e6747a82b6ddc4b2}"
                        Classes="dim"
                        VerticalAlignment="Center"
                        Margin="0,0,12,0"/>
@@ -325,48 +325,48 @@
           <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="6" RowSpacing="6" Margin="10">
             <Border Grid.Row="0" Grid.Column="0" Classes="panelSoft" Padding="5,7">
               <Grid ColumnDefinitions="Auto,*">
-                <Border Width="35" Height="35" CornerRadius="18" Background="#0A7BE9">
-                  <TextBlock Text="i" FontSize="27" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border Width="35" Height="35" CornerRadius="18" Background="{DynamicResource Brush_0A7BE9}">
+                  <TextBlock Text="i" FontSize="{DynamicResource Font_27}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
                   <TextBlock Text="INFO" Classes="label"/>
-                  <TextBlock x:Name="InfoCountText" Text="0" FontSize="22" FontWeight="Bold" Foreground="#3DA5FF"/>
+                  <TextBlock x:Name="InfoCountText" Text="0" FontSize="{DynamicResource Font_22}" FontWeight="Bold" Foreground="{DynamicResource Brush_3DA5FF}"/>
                 </StackPanel>
               </Grid>
             </Border>
 
             <Border Grid.Row="0" Grid.Column="1" Classes="panelSoft" Padding="5,7">
               <Grid ColumnDefinitions="Auto,*">
-                <Border Width="35" Height="35" CornerRadius="18" Background="#594A07">
-                  <TextBlock Text="!" FontSize="25" FontWeight="Bold" Foreground="#FFD34D" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border Width="35" Height="35" CornerRadius="18" Background="{DynamicResource Brush_594A07}">
+                  <TextBlock Text="!" FontSize="{DynamicResource Font_25}" FontWeight="Bold" Foreground="{DynamicResource Brush_FFD34D}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
                   <TextBlock Text="WARN" Classes="label"/>
-                  <TextBlock x:Name="WarnCountText" Text="0" FontSize="22" FontWeight="Bold" Foreground="#FFD34D"/>
+                  <TextBlock x:Name="WarnCountText" Text="0" FontSize="{DynamicResource Font_22}" FontWeight="Bold" Foreground="{DynamicResource Brush_FFD34D}"/>
                 </StackPanel>
               </Grid>
             </Border>
 
             <Border Grid.Row="1" Grid.Column="0" Classes="panelSoft" Padding="5,7">
               <Grid ColumnDefinitions="Auto,*">
-                <Border Width="35" Height="35" CornerRadius="18" Background="#5B1A27">
-                  <TextBlock Text="×" FontSize="30" FontWeight="Bold" Foreground="#FF5B72" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border Width="35" Height="35" CornerRadius="18" Background="{DynamicResource Brush_5B1A27}">
+                  <TextBlock Text="{DynamicResource Text_8db71ed28b0f2f14}" FontSize="{DynamicResource Font_30}" FontWeight="Bold" Foreground="{DynamicResource Brush_FF5B72}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
                   <TextBlock Text="ERROR" Classes="label"/>
-                  <TextBlock x:Name="ErrorCountText" Text="0" FontSize="22" FontWeight="Bold" Foreground="#FF5B72"/>
+                  <TextBlock x:Name="ErrorCountText" Text="0" FontSize="{DynamicResource Font_22}" FontWeight="Bold" Foreground="{DynamicResource Brush_FF5B72}"/>
                 </StackPanel>
               </Grid>
             </Border>
 
             <Border Grid.Row="1" Grid.Column="1" Classes="panelSoft" Padding="5,7">
               <Grid ColumnDefinitions="Auto,*">
-                <Border Width="35" Height="35" CornerRadius="18" Background="#16476E">
-                  <TextBlock Text="⚙" FontSize="24" Foreground="#7DC7FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border Width="35" Height="35" CornerRadius="18" Background="{DynamicResource Brush_16476E}">
+                  <TextBlock Text="⚙" FontSize="{DynamicResource Font_24}" Foreground="{DynamicResource Brush_7DC7FF}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
                   <TextBlock Text="DEBUG" Classes="label"/>
-                  <TextBlock x:Name="DebugCountText" Text="0" FontSize="22" FontWeight="Bold" Foreground="#75BFFF"/>
+                  <TextBlock x:Name="DebugCountText" Text="0" FontSize="{DynamicResource Font_22}" FontWeight="Bold" Foreground="{DynamicResource Brush_75BFFF}"/>
                 </StackPanel>
               </Grid>
             </Border>
@@ -376,14 +376,14 @@
 
       <Border Grid.Row="1" Classes="panel">
         <Grid RowDefinitions="42,*">
-          <Grid Background="#082038" ColumnDefinitions="*,Auto">
+          <Grid Background="{DynamicResource Brush_082038}" ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,8">
-              <local:ReferenceIcon Kind="bell" Tint="#FFD34D" Width="22" Height="22"/>
-              <TextBlock Text="Cảnh báo gần đây" Classes="panelTitle"/>
+              <local:ReferenceIcon Kind="bell" Tint="{DynamicResource Brush_FFD34D}" Width="22" Height="22"/>
+              <TextBlock Text="{DynamicResource Text_db81f810e768745f}" Classes="panelTitle"/>
             </StackPanel>
             <Button Grid.Column="1"
                     Classes="secondary"
-                    Content="Xem tất cả"
+                    Content="{DynamicResource Text_44aeb8cb93acb03d}"
                     Click="ShowAlerts_OnClick"
                     Margin="0,4,8,4"/>
           </Grid>
@@ -393,35 +393,36 @@
 
       <Border Grid.Row="2" Classes="panel">
         <Grid RowDefinitions="42,*,Auto,Auto">
-          <Grid Background="#082038" ColumnDefinitions="*,Auto">
+          <Grid Background="{DynamicResource Brush_082038}" ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,8">
-              <TextBlock Text="🔖" Foreground="#FFD34D"/>
-              <TextBlock Text="Dấu trang (Bookmarks)" Classes="panelTitle"/>
+              <TextBlock Text="🔖" Foreground="{DynamicResource Brush_FFD34D}"/>
+              <TextBlock Text="{DynamicResource Text_76c62fa1a35fe03f}" Classes="panelTitle"/>
             </StackPanel>
             <Button Grid.Column="1"
                     Classes="secondary"
-                    Content="Xem tất cả"
+                    Content="{DynamicResource Text_44aeb8cb93acb03d}"
                     Click="ShowBookmarks_OnClick"
                     Margin="0,4,8,4"/>
           </Grid>
 
           <ScrollViewer Grid.Row="1"><StackPanel x:Name="BookmarksHost" Margin="8,4,8,6"/></ScrollViewer>
 
-          <Button Grid.Row="2" Content="+  Thêm dấu trang hiện tại"
+          <Button Grid.Row="2" Content="{DynamicResource Text_6b406456ff21d279}"
                   Classes="secondary"
                   Margin="8,0,8,8"
                   Click="ToggleSelectedBookmark_OnClick"/>
-          <Expander Grid.Row="3" Header="Tình trạng nhật ký" FontSize="12" Margin="8,0,8,5" HorizontalAlignment="Stretch">
+          <Expander Grid.Row="3" Header="{DynamicResource Text_6fbf55b89486c2c8}" FontSize="{DynamicResource Font_12}" Margin="8,0,8,5" HorizontalAlignment="Stretch">
             <StackPanel Spacing="4">
-          <TextBlock Text="Tính toàn vẹn replay" Classes="label"/>
+          <StackPanel Orientation="Horizontal" Spacing="6"><Button Content="{DynamicResource Text_af12581b2fc87874}" Classes="secondary" Click="NewerPage_OnClick"/><Button Content="{DynamicResource Text_689c71f4b5e1fe49}" Classes="secondary" Click="OlderPage_OnClick"/></StackPanel>
+          <TextBlock Text="{DynamicResource Text_4b6735949861dba2}" Classes="label"/>
           <TextBlock x:Name="ReplayIntegrityText"
                      Text="Invalid: 0 • Duplicate: 0"
-                     FontSize="13"
-                     Foreground="#86A0BA"/>
+                     FontSize="{DynamicResource Font_13}"
+                     Foreground="{DynamicResource Brush_86A0BA}"/>
           <TextBlock x:Name="JournalStatusText"
-                     Text="Đang chờ Engine..."
-                     FontSize="13"
-                     Foreground="#FFD34D"
+                     Text="{local:InitialText 71fa287879b7912a}"
+                     FontSize="{DynamicResource Font_13}"
+                     Foreground="{DynamicResource Brush_FFD34D}"
                      TextWrapping="Wrap"/>
             </StackPanel>
           </Expander>

@@ -1,3 +1,4 @@
+from ui_source_support import read_xaml
 import pathlib
 import unittest
 
@@ -16,9 +17,9 @@ REFERENCE = ROOT / "docs" / "ui-reference" / "Tab BackTest.png"
 class Task011BacktestUiSourceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.main_xaml = MAIN_XAML.read_text(encoding="utf-8")
+        cls.main_xaml = read_xaml(MAIN_XAML)
         cls.main_code = MAIN_CODE.read_text(encoding="utf-8")
-        cls.xaml = BACKTEST_XAML.read_text(encoding="utf-8")
+        cls.xaml = read_xaml(BACKTEST_XAML)
         cls.code = BACKTEST_CODE.read_text(encoding="utf-8")
         cls.chart = CHART_CODE.read_text(encoding="utf-8")
         cls.supervisor = SUPERVISOR.read_text(encoding="utf-8")
@@ -137,7 +138,7 @@ class Task011BacktestUiSourceTests(unittest.TestCase):
         self.assertNotIn("Every tick (chính xác nhất)", self.xaml)
 
     def test_task011_version_and_safety_guards_remain(self):
-        self.assertIn('desktop_version = "0.17.2-remediation"', self.supervisor)
+        self.assertIn('desktop_version = "1.0.0-dev"', self.supervisor)
         self.assertIn("RejectUnexpectedExecutionEnable", self.supervisor)
         self.assertIn("RejectUnexpectedOrdersExecutionEnable", self.supervisor)
         self.assertIn("Task 012 manual action response violated simulation-only safety", self.supervisor)

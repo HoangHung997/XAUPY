@@ -9,7 +9,7 @@ using XAUPY.Ipc;
 namespace XAUPY.Desktop;
 
 /// <summary>A price chart of closed bars actually received from the MT5 bridge.</summary>
-public sealed class MarketChartControl : Control
+public sealed partial class MarketChartControl : Control
 {
     private readonly Dictionary<string, SortedDictionary<long, MarketBar>> _history = new(StringComparer.OrdinalIgnoreCase);
     private string? _symbol;
@@ -24,7 +24,7 @@ public sealed class MarketChartControl : Control
     private TextBlock? _timeframeTitle;
     private readonly List<(Border Chip, string Timeframe)> _timeframeChips = new();
     private readonly Dictionary<Border, IBrush?> _chipBackgrounds = new();
-    private static readonly string[] Timeframes = ["M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4"];
+    private static readonly string[] Timeframes = ["M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4", "D1"];
 
     public string SelectedTimeframe => _timeframe;
     public string? ComparisonTimeframe => _comparisonTimeframe;
@@ -34,6 +34,7 @@ public sealed class MarketChartControl : Control
     {
         if (!Timeframes.Contains(timeframe, StringComparer.OrdinalIgnoreCase)) return;
         _timeframe = timeframe.ToUpperInvariant();
+        _panBars=0;
         _userSelectedTimeframe = true;
         if (_comparisonTimeframe == _timeframe) _comparisonTimeframe = null;
         UpdateToolbar();
@@ -64,31 +65,31 @@ public sealed class MarketChartControl : Control
         foreach (var label in panel.GetVisualDescendants().OfType<TextBlock>())
         {
             if (label.GetVisualParent() is StackPanel && Timeframes.Contains(label.Text)) _timeframeTitle = label;
-            if (label.Text?.Contains("So sánh", StringComparison.Ordinal) == true)
+            if (label.Name=="ChartCompareAction" || label.Text?.Contains("So sánh", StringComparison.Ordinal) == true)
             {
-                ToolTip.SetTip(label, "So sánh biến động cùng symbol ở khung khác; đường so sánh chuẩn hóa về giá đầu khoảng hiển thị.");
+                ToolTip.SetTip(label, "So sánh khung thời gian hoặc tải lịch sử tài sản khác; chuẩn hóa theo giá đầu khoảng hiển thị.");
                 Activate(label, () => OpenComparisonMenu(label));
             }
-            else if (label.Text?.Contains("Chỉ báo", StringComparison.Ordinal) == true)
+            else if (label.Name=="ChartIndicatorsAction" || label.Text?.Contains("Chỉ báo", StringComparison.Ordinal) == true)
             {
-                ToolTip.SetTip(label, "Bật / tắt EMA 10, EMA 20 và EMA 50 tính từ nến đã đóng.");
-                Activate(label, () =>
-                {
-                    _showIndicators = !_showIndicators;
-                    label.Foreground = _showIndicators ? Brush("#4BCBFF") : MutedBrush;
-                    InvalidateVisual();
-                });
+                ToolTip.SetTip(label, "Cài chu kỳ EMA, RSI, Z và bật/tắt chỉ báo.");
+                Activate(label, () => _=RunChartActionAsync(ConfigureIndicatorsAsync));
             }
-            else if (label.Text == "Nến Nhật")
+            else if (label.Name=="ChartStyleAction" || label.Text == "Nến Nhật")
             {
                 ToolTip.SetTip(label, "Chuyển giữa nến OHLC và đường giá đóng cửa.");
                 Activate(label, () =>
                 {
                     _lineMode = !_lineMode;
-                    label.Text = _lineMode ? "Đường giá" : "Nến Nhật";
+                    label.Text = LocalizationService.T(_lineMode ? "Đường giá" : "Nến Nhật");
                     InvalidateVisual();
                 });
             }
+        }
+        foreach (var action in panel.GetVisualDescendants().OfType<Control>())
+        {
+            if (action.Name == "ChartSaveAction") Activate(action,()=>_=RunChartActionAsync(SaveChartAsync));
+            else if (action.Name == "ChartFullScreenAction") Activate(action,()=>_=RunChartActionAsync(ShowFullScreenAsync));
         }
         UpdateToolbar();
     }
@@ -115,8 +116,10 @@ public sealed class MarketChartControl : Control
     {
         var menu = new ContextMenu();
         var clear = new MenuItem { Header = "Tắt so sánh" };
-        clear.Click += (_, _) => SetComparisonTimeframe(null);
+        clear.Click += (_, _) => { _comparisonBars=null; SetComparisonTimeframe(null); };
         menu.Items.Add(clear);
+        var file=new MenuItem { Header="Tải lịch sử tài sản khác…" };
+        file.Click+=async (_,_)=>await RunChartActionAsync(()=>LoadHistoryFileAsync(comparison:true)); menu.Items.Add(file);
         foreach (var tf in Timeframes.Where(tf => tf != _timeframe))
         {
             var item = new MenuItem
@@ -124,7 +127,7 @@ public sealed class MarketChartControl : Control
                 Header = $"{(_comparisonTimeframe == tf ? "✓ " : "")}{_symbol ?? "Symbol"} {tf} (chuẩn hóa)",
                 IsEnabled = _history.TryGetValue(tf, out var bars) && bars.Count > 1
             };
-            item.Click += (_, _) => SetComparisonTimeframe(tf);
+            item.Click += (_, _) => { _comparisonBars=null; SetComparisonTimeframe(tf); };
             menu.Items.Add(item);
         }
         menu.Open(owner);
@@ -149,6 +152,9 @@ public sealed class MarketChartControl : Control
     private IReadOnlyDictionary<string, MarketBar> _formingBars = new Dictionary<string, MarketBar>();
     public void SetSnapshot(OverviewSnapshot snapshot, string? timeframe = null)
     {
+        _latestSnapshot=snapshot;
+        _fullScreenChart?.SetSnapshot(snapshot,timeframe);
+        if (_archiveMode) return;
         if (!string.Equals(_symbol, snapshot.Symbol, StringComparison.OrdinalIgnoreCase) && snapshot.Available)
         {
             _history.Clear();
@@ -166,14 +172,12 @@ public sealed class MarketChartControl : Control
                 if (!_history.TryGetValue(tf, out var bars)) _history[tf] = bars = new();
                 foreach (var bar in history)
                     if (Valid(bar)) bars[bar.Time] = bar;
-                while (bars.Count > 180) bars.Remove(bars.Keys.First());
             }
             foreach (var (tf, bar) in snapshot.Bars)
             {
                 if (!Valid(bar)) continue;
                 if (!_history.TryGetValue(tf, out var bars)) _history[tf] = bars = new();
                 bars[bar.Time] = bar;
-                while (bars.Count > 180) bars.Remove(bars.Keys.First());
             }
         }
         UpdateToolbar();
@@ -201,7 +205,9 @@ public sealed class MarketChartControl : Control
         if (_formingBars.TryGetValue(_timeframe, out var forming) && Valid(forming) &&
             (allBars.Length == 0 || forming.Time > allBars[^1].Time))
             allBars = [..allBars, forming];
-        var bars = allBars.TakeLast(64).ToArray();
+        _panBars=Math.Clamp(_panBars,0,Math.Max(0,allBars.Length-10));
+        allBars=allBars.Take(allBars.Length-_panBars).ToArray();
+        var bars = allBars.TakeLast(_visibleBars).ToArray();
         double captionSize = Bounds.Width >= 550 ? 14 : 11;
         if (bars.Length == 0)
         {
@@ -215,7 +221,7 @@ public sealed class MarketChartControl : Control
         var last = bars[^1];
         DrawText(context, FormattableString.Invariant($"O {last.Open:N2}    H {last.High:N2}    L {last.Low:N2}    C {last.Close:N2}"), captionSize, 8, 6, Brushes.White);
         double min = bars.Min(b => b.Low), max = bars.Max(b => b.High);
-        if (_bid.HasValue) { min = Math.Min(min, _bid.Value); max = Math.Max(max, _bid.Value); }
+        if (_panBars==0 && _bid.HasValue) { min = Math.Min(min, _bid.Value); max = Math.Max(max, _bid.Value); }
         var padding = Math.Max((max - min) * .15, .15);
         min -= padding;
         max += padding;
@@ -223,7 +229,7 @@ public sealed class MarketChartControl : Control
         for (int i = 0; i <= 6; i++)
             DrawText(context, (max - (max - min) * i / 6).ToString("N2", CultureInfo.InvariantCulture), 10, plot.Right + 7, pricePlot.Y + pricePlot.Height * i / 6 - 6, MutedBrush);
 
-        var slot = plot.Width / 66;
+        var slot = plot.Width / (_visibleBars+2);
         var bodyWidth = Math.Max(2, slot * .68);
         var start = plot.Right - slot * (bars.Length + 1);
         var maxVolume = Math.Max(1, bars.Max(b => b.TickVolume));
@@ -246,7 +252,7 @@ public sealed class MarketChartControl : Control
         if (_showIndicators)
         {
             int row = 0;
-            foreach (var (period, color) in new[] { (50, "#F000E8"), (20, "#FFAD00"), (10, "#00B9FF") })
+            foreach (var (period, color) in _emaPeriods.Select((p,i)=>(p,new[]{"#F000E8","#FFAD00","#00B9FF"}[i%3])))
             {
                 double? value;
                 using (context.PushClip(pricePlot))
@@ -254,18 +260,23 @@ public sealed class MarketChartControl : Control
                 var legend = $"EMA {period}   {value?.ToString("N2", CultureInfo.InvariantCulture) ?? "—"}";
                 DrawText(context, legend, captionSize, 8, 37 + row++ * (captionSize + 8), Brush(color));
             }
+            var metrics=ChartMetrics(allBars,_rsiPeriod,_zPeriod);
+            DrawText(context,$"RSI {_rsiPeriod}: {metrics.Rsi?.ToString("0.00") ?? "—"}  •  Z {_zPeriod}: {metrics.Z?.ToString("0.00") ?? "—"}",11,8,pricePlot.Bottom-34,Brush("#86DCE5"));
         }
         DrawComparison(context, bars, start, slot, pricePlot, Y);
 
-        if (_bid is { } bid)
+        if (_panBars==0 && _bid is { } bid)
         {
             var y = Y(bid);
             context.DrawLine(new Pen(DownBrush, .8), new Point(plot.X, y), new Point(plot.Right, y));
             context.DrawRectangle(DownBrush, null, new Rect(plot.Right, y - 11, 72, 22));
             DrawText(context, bid.ToString("N2", CultureInfo.InvariantCulture), 11, plot.Right + 5, y - 8, Brushes.White);
         }
-        if (!_connected) DrawText(context, "Mất kết nối • dữ liệu gần nhất", 11, 8, pricePlot.Bottom - 34, Brush("#FFD34D"));
-        else if (bars.Length < 10) DrawText(context, $"{_timeframe} • {bars.Length} nến đã nhận", 10, 8, pricePlot.Bottom - 34, MutedBrush);
+        // Keep status, oscillator values and comparison caption on separate
+        // baselines, including when the chart is displaying imported history.
+        if (_archiveMode) DrawText(context, "Lịch sử từ file • chọn Về giá hiện tại để tiếp tục tick", 11, 8, pricePlot.Bottom - 51, Brush("#FFD34D"));
+        else if (!_connected) DrawText(context, "Mất kết nối • dữ liệu gần nhất", 11, 8, pricePlot.Bottom - 51, Brush("#FFD34D"));
+        else if (bars.Length < 10) DrawText(context, $"{_timeframe} • {bars.Length} nến đã nhận", 10, 8, pricePlot.Bottom - 51, MutedBrush);
     }
 
     private static void DrawTimeLabels(DrawingContext context, MarketBar[] bars, double start, double slot, Rect plot)
@@ -286,10 +297,13 @@ public sealed class MarketChartControl : Control
 
     private void DrawComparison(DrawingContext context, MarketBar[] selected, double start, double slot, Rect clip, Func<double, double> y)
     {
-        if (_comparisonTimeframe is null || !_history.TryGetValue(_comparisonTimeframe, out var history)) return;
-        var comparison = history.Values.Where(b => b.Time >= selected[0].Time && b.Time <= selected[^1].Time).ToArray();
+        IEnumerable<MarketBar>? source=_comparisonBars;
+        if(source is null && _comparisonTimeframe is not null && _history.TryGetValue(_comparisonTimeframe,out var history)) source=history.Values;
+        if(source is null) return;
+        var comparison = source.Where(b => b.Time >= selected[0].Time && b.Time <= selected[^1].Time).ToArray();
+        string name=_comparisonBars is null ? _comparisonTimeframe! : _comparisonSymbol ?? "Tài sản";
         var color = Brush("#FFD55A");
-        DrawText(context, comparison.Length < 2 ? $"{_comparisonTimeframe}: chưa đủ nến trong khoảng này" : $"{_comparisonTimeframe} chuẩn hóa • EMA {(_showIndicators ? "bật" : "tắt")}", 11, 8, clip.Bottom - 17, color);
+        DrawText(context, comparison.Length < 2 ? $"{name}: chưa đủ nến trong khoảng này" : $"{name} chuẩn hóa • EMA {(_showIndicators ? "bật" : "tắt")}", 11, 8, clip.Bottom - 17, color);
         if (comparison.Length < 2 || comparison[0].Close == 0 || selected.Length < 2) return;
         double scale = selected[0].Close / comparison[0].Close;
         double timeSpan = selected[^1].Time - selected[0].Time;
@@ -320,6 +334,6 @@ public sealed class MarketChartControl : Control
         double.IsFinite(bar.Open) && double.IsFinite(bar.Close) && double.IsFinite(bar.High) && double.IsFinite(bar.Low) &&
         bar.Low <= Math.Min(bar.Open, bar.Close) && bar.High >= Math.Max(bar.Open, bar.Close);
     private static IBrush Brush(string color) => new SolidColorBrush(Color.Parse(color));
-    private static FormattedText Text(string value, double size, IBrush brush) => new(value, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface("Segoe UI"), size, brush);
+    private static FormattedText Text(string value, double size, IBrush brush) => new(value, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface("Segoe UI"), AppearanceService.Scale(size), brush);
     private static void DrawText(DrawingContext context, string value, double size, double x, double y, IBrush brush) => context.DrawText(Text(value, size, brush), new Point(x, y));
 }

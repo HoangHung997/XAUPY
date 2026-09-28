@@ -1,5 +1,10 @@
 # Windows release and local acceptance
 
+> Historical 0.16 acceptance below. The active 1.0 implementation and outstanding
+> acceptance are tracked in [RELEASE_V1_COMPLETION.md](RELEASE_V1_COMPLETION.md)
+> and [the 172-feature matrix](RELEASE_V1_FEATURE_MATRIX.csv). Prototype execution
+> locks in this historical evidence do not define current user-controlled modes.
+
 Version: 0.16.0-rc1. Build, installer and live connection verified. Task 016 stays
 ACTIVE because strict 100% UI parity has not been met.
 

@@ -55,18 +55,22 @@ def validate_settings(value: object) -> list[str]:
             item = actual[key]
             if type(item) is not type(baseline):
                 errors.append(f"{group}.{key} has invalid type")
-            elif group == "safety" and item != baseline:
+            elif group == "safety" and key not in {"allow_real_account", "auto_start_trading", "require_reconciliation"} and item != baseline:
                 errors.append(f"{group}.{key} is safety locked")
     connection = value.get("connection", {})
     if isinstance(connection, dict):
-        if connection.get("host") != "127.0.0.1" or connection.get("port") != 39421:
-            errors.append("Bridge endpoint is locked to 127.0.0.1:39421")
+        if connection.get("host") != "127.0.0.1":
+            errors.append("Bridge host must be loopback 127.0.0.1")
+        if type(connection.get('port')) is not int or not 1024<=connection['port']<=65535:
+            errors.append('Bridge port must be 1024..65535')
         path = connection.get("mt5_path")
         if isinstance(path, str) and (len(path) > 1024 or any(c in path for c in "\r\n\0")):
             errors.append("MT5 path is invalid")
     appearance = value.get("appearance", {})
-    if appearance != defaults["appearance"]:
-        errors.append("Only N30 Dark / Tiếng Việt / 100% appearance is currently supported")
+    if isinstance(appearance,dict):
+        if appearance.get('theme') not in ('N30 Dark','N30 Contrast'):errors.append('Unknown appearance theme')
+        if appearance.get('language') not in ('Tiếng Việt','English'):errors.append('Unknown appearance language')
+        if type(appearance.get('font_scale')) is not int or not 90<=appearance['font_scale']<=150:errors.append('Font scale must be 90..150')
     backup = value.get("backup", {})
     if isinstance(backup, dict) and (type(backup.get("keep_count")) is not int or not 1 <= backup["keep_count"] <= 100):
         errors.append("backup.keep_count must be 1..100")
@@ -96,7 +100,7 @@ class SettingsStore:
         self.settings = default_settings()
         self.profile = default_profile()
         self.retention_warning = ""
-        self.recovery_message = "Fresh startup; execution remains locked"
+        self.recovery_message = "Cài đặt mới; chưa chọn chế độ giao dịch"
         if self.path.exists():
             try:
                 settings, profile = self._validate_document(self._read(self.path))
@@ -178,7 +182,7 @@ class SettingsStore:
         _atomic_json(self.path, {"schema_version": 1, "settings": settings, "profile": profile})
         self.settings, self.profile = settings, profile
         self._prune()
-        self.recovery_message = "Backup restored; strategy reset; execution remains locked"
+        self.recovery_message = "Đã khôi phục và đặt lại chiến lược; quyền giao dịch theo cài đặt đã lưu"
 
     def payload(self) -> dict[str, Any]:
         return {"settings": deepcopy(self.settings), "state_path": str(self.path),

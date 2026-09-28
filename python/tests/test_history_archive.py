@@ -61,7 +61,7 @@ class ArchiveTests(unittest.TestCase):
             available = len(rows) - offset
             if available <= 0 or count > available: return None
             return rows[available-count:available]
-        fields = {name: 1 for name in ("digits", "point", "trade_tick_size", "trade_tick_value", "volume_min", "volume_max", "volume_step", "trade_contract_size")}
+        fields = {name: 1 for name in ("digits", "point", "trade_tick_size", "trade_tick_value", "volume_min", "volume_max", "volume_step", "trade_contract_size", "trade_stops_level", "trade_freeze_level")}
         return SimpleNamespace(initialize=lambda *a, **kw: True, shutdown=lambda: None,
             terminal_info=lambda: SimpleNamespace(maxbars=maxbars, connected=True),
             symbol_info=lambda s: SimpleNamespace(**fields),

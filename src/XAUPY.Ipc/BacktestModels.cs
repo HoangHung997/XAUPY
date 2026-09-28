@@ -137,7 +137,14 @@ public sealed record BacktestResultSnapshot(
     int TradeTotal,
     int TradeOffset,
     int TradeLimit,
-    IReadOnlyList<BacktestTradeSnapshot> Trades);
+    IReadOnlyList<BacktestTradeSnapshot> Trades)
+{
+    // Keep source evidence for exports, including model-specific assumptions and events.
+    public JsonElement RawResult { get; init; }
+    public int TimezoneOffsetMinutes => RawResult.ValueKind == JsonValueKind.Object &&
+        RawResult.TryGetProperty("dataset_metadata", out var metadata)
+        ? OverviewSnapshot.ReadInt(metadata, "timezone_offset_minutes") ?? 0 : 0;
+}
 
 public sealed record BacktestHistoryItem(
     string RunId,
@@ -336,7 +343,7 @@ public static class BacktestApiParser
             OverviewSnapshot.ReadInt(result, "trade_total") ?? trades.Count,
             OverviewSnapshot.ReadInt(result, "trade_offset") ?? 0,
             OverviewSnapshot.ReadInt(result, "trade_limit") ?? trades.Count,
-            trades);
+            trades) { RawResult = result.Clone() };
     }
 
     private static BacktestMetrics ParseMetrics(JsonElement metrics)

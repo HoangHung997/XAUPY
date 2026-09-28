@@ -18,7 +18,7 @@ class HistoryJobs:
         self.job_dir: Path | None = None
         self.output: Any = None
 
-    def start(self, terminal: str, symbol: str) -> dict:
+    def start(self, terminal: str, symbol: str, *, model='M1_OHLC', from_date='', to_date='', context=None) -> dict:
         if self.process is not None and self.process.poll() is None:
             raise ValueError("A history download is already running")
         path = Path(terminal)
@@ -26,12 +26,20 @@ class HistoryJobs:
             raise ValueError("Choose the installed MT5 terminal64.exe")
         if not symbol or len(symbol) > 80 or any(c not in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-" for c in symbol):
             raise ValueError("Invalid symbol")
+        if model not in ('M1_OHLC','REAL_TICKS'):raise ValueError('Unknown history model')
+        if model=='REAL_TICKS':
+            from .tick_collect import parse_range
+            parse_range(from_date,to_date)
         self.job_dir = self.root / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "-" + uuid.uuid4().hex[:8])
         self.job_dir.mkdir(parents=True)
         command = [sys.executable]
         if not getattr(sys, "frozen", False):
             command += ["-m", "xaupy_engine.main"]
-        command += ["--collect-history", "--terminal", str(path), "--symbol", symbol, "--output", str(self.job_dir)]
+        command += ["--collect-ticks" if model=='REAL_TICKS' else "--collect-history", "--terminal", str(path), "--symbol", symbol, "--output", str(self.job_dir)]
+        if model=='REAL_TICKS':
+            context_path=self.job_dir/'tick-context.json'
+            context_path.write_text(json.dumps(context or {},ensure_ascii=False),encoding='utf-8')
+            command += ['--from-date',from_date,'--to-date',to_date,'--context-file',str(context_path)]
         env = dict(os.environ)
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
         # A frozen onefile child must not share its parent's temporary extraction.

@@ -43,6 +43,17 @@ async def run_server(host: str, port: int) -> int:
 
 
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] == '--collect-ticks':
+        from .tick_collect import main as collect_ticks
+        collect_ticks(sys.argv[2:])
+        return 0
+    if len(sys.argv) > 1 and sys.argv[1] == "--collect-broker-history":
+        from pathlib import Path
+        from .broker_history import collect
+        path = Path(sys.argv[2])
+        request = json.loads(path.read_text(encoding='utf-8'))
+        collect(request['terminal'], path.parent, request['identity'])
+        return 0
     if len(sys.argv) > 1 and sys.argv[1] == "--history-provider-check":
         # MetaTrader5's native extension imports NumPy dynamically. Keep this
         # explicit so frozen builds include its runtime and native libraries.

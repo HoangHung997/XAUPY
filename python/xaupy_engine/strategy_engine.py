@@ -54,7 +54,7 @@ class Bar:
 HISTORY_LIMIT = 256
 HISTORY_TIMEFRAME_SECONDS = {
     "M1": 60, "M3": 180, "M5": 300, "M15": 900,
-    "M30": 1800, "H1": 3600, "H2": 7200, "H4": 14400,
+    "M30": 1800, "H1": 3600, "H2": 7200, "H4": 14400, "D1": 86400,
 }
 
 
@@ -340,8 +340,11 @@ class StrategyEngine:
 
         if changed:
             self.reset_setup("PROFILE_CHANGED")
+            from .multi_timeframe import MultiTimeframeConfirmation
+            self.mtf=MultiTimeframeConfirmation(self)
 
     def reset_setup(self, reason: str) -> None:
+        if hasattr(self,'mtf'):self.mtf.reset(reason)
         self.state = "WARMUP"
         self.direction = "NEUTRAL"
         self.armed_side = None
@@ -445,6 +448,7 @@ class StrategyEngine:
             # state machine non-deterministic.
 
         self.last_data_error = "; ".join(errors) if errors else None
+        if self.mtf.engines:self.mtf.snapshot(payload)
         if new_timeframes and self.profile["trigger"]["confirm_closed_bar"]:
             self._evaluate(new_timeframes)
         elif new_timeframes and self._tick_last_time_msc is None:
@@ -514,6 +518,7 @@ class StrategyEngine:
                 self._tick_bar_times = self._tick_times(ticks[-1][0])
             for timestamp, bid, ask in ticks:
                 if bid is not None:
+                    if self.mtf.engines:self.mtf.tick(timestamp,bid,ask,False)
                     self._update_tick_display(timestamp, bid, ask, continuous=False, reason=reason)
             if not closed_confirmation:
                 self.last_metrics, self.warmup_reasons = self._metrics()
@@ -543,9 +548,12 @@ class StrategyEngine:
                 self._tick_bar_extremes.clear()
                 self._tick_required_closed_times.clear()
                 self._tick_reason = "TICK_BAR_GAP"
+                if self.mtf.engines:
+                    self.mtf.reset('TICK_BAR_GAP');self.mtf.tick(timestamp,bid,ask,False)
                 self._display_bars.clear()
                 self._update_tick_display(timestamp, bid, ask, continuous=False, reason="TICK_BAR_GAP")
             else:
+                if self.mtf.engines:self.mtf.tick(timestamp,bid,ask,True)
                 for tf, current_time in bar_times.items():
                     previous_time = self._tick_bar_times.get(tf)
                     if previous_time is not None and current_time > previous_time:
@@ -557,6 +565,9 @@ class StrategyEngine:
                 self._observed_ticks_total += 1
             self._tick_last_time_msc = timestamp
             self._tick_bar_times = bar_times
+            observer = getattr(self, 'observation_callback', None)
+            if observer is not None and self._display_continuous:
+                observer()
         return self.status_payload(market_connected=True)
 
     def _update_tick_display(self, timestamp: int, bid: float, ask: float, *, continuous: bool, reason: str,
@@ -776,6 +787,10 @@ class StrategyEngine:
         if not passed:
             self.state, self.blocked_reason = f"ARMED_{self.armed_side}", "WAIT_TRIGGER_REVERSAL"
             return
+        if not self.mtf.permits(self.armed_side,timestamp/1000):
+            self.state,self.blocked_reason=f'ARMED_{self.armed_side}','WAIT_MTF_CONFIRMATION'
+            self.last_conditions['mtf']=self.mtf.status();return
+        self.mtf.consume()
         self.signal_sequence += 1
         self.state, self.blocked_reason = f"TRIGGERED_{self.armed_side}", None
         self._tick_reason = "OBSERVED_REVERSAL_CONFIRMED"
@@ -880,6 +895,10 @@ class StrategyEngine:
             self._last_evaluated_trigger_time = trigger_bar.time
             return
 
+        if not self.mtf.permits(self.armed_side,trigger_bar.time+HISTORY_TIMEFRAME_SECONDS[trigger_tf]):
+            self.state,self.blocked_reason=f'ARMED_{self.armed_side}','WAIT_MTF_CONFIRMATION'
+            self.last_conditions['mtf']=self.mtf.status();return
+        self.mtf.consume()
         self.signal_sequence += 1
         self.state = f"TRIGGERED_{self.armed_side}"
         self.blocked_reason = None
@@ -1283,6 +1302,7 @@ class StrategyEngine:
                 "current_bars": deepcopy(self._display_bars) if market_connected else {},
             },
             "conditions": deepcopy(self.last_conditions),
+            "multi_timeframe": self.mtf.status(),
             "last_data_error": self.last_data_error,
             "last_reset_reason": self.last_reset_reason,
             "last_evaluated_trigger_time": self._last_evaluated_trigger_time,

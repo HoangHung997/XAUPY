@@ -22,12 +22,12 @@ public partial class StrategyDashboard
 
     private void InitializeStrategyEditor()
     {
-        string[] frames = ["M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4"];
+        string[] frames = ["M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4", "D1"];
         foreach (var role in new[] { "Direction", "Pullback", "Trigger" })
         {
             var selector = Choice("timeframes." + role.ToLowerInvariant(), frames);
             selector.Height = 36;
-            ((ComboBox)selector).FontSize = 16;
+            ((ComboBox)selector).SetValue(AppearanceService.BaseFontSizeProperty, 16d);
             Host(role + "Editor").Children.Add(selector);
         }
         Host("ZEditor").Children.Add(Toggles(("pullback.z_enabled", "Pullback"), ("trigger.z_enabled", "Trigger")));
@@ -66,7 +66,7 @@ public partial class StrategyDashboard
                                                      "Chu kỳ Z Trigger", Number("trigger.z_period", 2, 500, true)));
         Host("SupplementalEditor").Children.Add(Toggles(("strategy.allow_buy", "Cho phép BUY"), ("strategy.allow_sell", "Cho phép SELL")));
         var ageRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,110"), ColumnSpacing = 8 };
-        ageRow.Children.Add(new TextBlock { Text = "Hạn tín hiệu (nến)", FontSize = 12, VerticalAlignment = VerticalAlignment.Center });
+        ageRow.Children.Add(new TextBlock { [LocalizationService.TextProperty] = "Hạn tín hiệu (nến)", [AppearanceService.BaseFontSizeProperty] = 12d, VerticalAlignment = VerticalAlignment.Center });
         var age = Number("entry.max_signal_age_bars", 1, 100, true); Grid.SetColumn(age, 1); ageRow.Children.Add(age);
         Host("AdvancedEditor").Children.Add(ageRow);
     }
@@ -84,14 +84,14 @@ public partial class StrategyDashboard
     }
     private Control Choice(string path, string[] options)
     {
-        var control = new ComboBox { ItemsSource = options, FontSize = 13, Padding = new Thickness(7, 2) };
+        var control = new ComboBox { ItemsSource = options, [AppearanceService.BaseFontSizeProperty] = 13d, Padding = new Thickness(7, 2) };
         control.SelectionChanged += (_, _) => StrategyEdited();
         return Register(path, control);
     }
     private Control Number(string path, decimal min, decimal max, bool integer = false)
     {
         var control = new NumericUpDown { Minimum = min, Maximum = max, Increment = integer ? 1 : .1m,
-            FormatString = integer ? "0" : "0.##", FontSize = 13, Padding = new Thickness(5, 1),
+            FormatString = integer ? "0" : "0.##", [AppearanceService.BaseFontSizeProperty] = 13d, Padding = new Thickness(5, 1),
             Background = new SolidColorBrush(Color.Parse("#0C2942")), BorderBrush = new SolidColorBrush(Color.Parse("#285573")),
             AllowSpin = true, ShowButtonSpinner = false };
         control.ValueChanged += (_, _) => StrategyEdited();
@@ -99,13 +99,13 @@ public partial class StrategyDashboard
     }
     private Control Input(string path)
     {
-        var control = new TextBox { FontSize = 13, Padding = new Thickness(7, 3) };
+        var control = new TextBox { [AppearanceService.BaseFontSizeProperty] = 13d, Padding = new Thickness(7, 3) };
         control.TextChanged += (_, _) => StrategyEdited();
         return Register(path, control);
     }
     private Control Toggle(string path, string label)
     {
-        var control = new CheckBox { Content = label, FontSize = 13, Padding = new Thickness(5, 0) };
+        var control = new CheckBox { [LocalizationService.TextProperty] = label, [AppearanceService.BaseFontSizeProperty] = 13d, Padding = new Thickness(5, 0) };
         control.IsCheckedChanged += (_, _) => StrategyEdited();
         return Register(path, control);
     }
@@ -118,8 +118,8 @@ public partial class StrategyDashboard
     private static Control Pair(string leftLabel, Control left, string rightLabel, Control right)
     {
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
-        var a = new StackPanel { Spacing = 0, Children = { new TextBlock { Text = leftLabel, FontSize = 12, Foreground = Brushes.LightSteelBlue }, left } };
-        var b = new StackPanel { Spacing = 0, Children = { new TextBlock { Text = rightLabel, FontSize = 12, Foreground = Brushes.LightSteelBlue }, right } };
+        var a = new StackPanel { Spacing = 0, Children = { new TextBlock { [LocalizationService.TextProperty] = leftLabel, [AppearanceService.BaseFontSizeProperty] = 12d, Foreground = Brushes.LightSteelBlue }, left } };
+        var b = new StackPanel { Spacing = 0, Children = { new TextBlock { [LocalizationService.TextProperty] = rightLabel, [AppearanceService.BaseFontSizeProperty] = 12d, Foreground = Brushes.LightSteelBlue }, right } };
         Grid.SetColumn(b, 1); row.Children.Add(a); row.Children.Add(b);
         return row;
     }
@@ -148,7 +148,7 @@ public partial class StrategyDashboard
     {
         if (_strategySync || _strategyBaseline is null) return;
         HasUnsavedChanges = _strategyFields.Any(field => !JsonNode.DeepEquals(ReadControl(field.Value), ValueAt(_strategyBaseline, field.Key)));
-        this.FindControl<Button>("ApplyStrategyButton")!.Content = HasUnsavedChanges ? "Áp dụng thay đổi" : "Áp dụng cấu hình";
+        this.FindControl<Button>("ApplyStrategyButton")!.SetValue(LocalizationService.TextProperty, HasUnsavedChanges ? "Áp dụng thay đổi" : "Áp dụng cấu hình");
     }
     private void SetStrategyControls(JsonObject profile, bool newBaseline)
     {
@@ -188,8 +188,8 @@ public partial class StrategyDashboard
             ("Logic Pullback / Trigger", $"{Read("pullback.logic")} / {Read("trigger.logic")}") })
         {
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("1.4*,1*") };
-            row.Children.Add(new Border { Padding = new Thickness(8,4), BorderBrush = new SolidColorBrush(Color.Parse("#123751")), BorderThickness = new Thickness(0,0,1,0), Child = new TextBlock { Text = label, FontSize = 13, Foreground = Brushes.LightSteelBlue } });
-            var valueCell = new Border { Padding = new Thickness(8,4), Child = new TextBlock { Text = value, FontSize = 13, TextWrapping = TextWrapping.Wrap } };
+            row.Children.Add(new Border { Padding = new Thickness(8,4), BorderBrush = new SolidColorBrush(Color.Parse("#123751")), BorderThickness = new Thickness(0,0,1,0), Child = new TextBlock { [LocalizationService.TextProperty] = label, [AppearanceService.BaseFontSizeProperty] = 13d, Foreground = Brushes.LightSteelBlue } });
+            var valueCell = new Border { Padding = new Thickness(8,4), Child = new TextBlock { Text = value, [AppearanceService.BaseFontSizeProperty] = 13d, TextWrapping = TextWrapping.Wrap } };
             Grid.SetColumn(valueCell, 1); row.Children.Add(valueCell);
             rules.Children.Add(new Border { BorderBrush = new SolidColorBrush(Color.Parse("#123751")), BorderThickness = new Thickness(0,0,0,1), Child = row });
         }
@@ -230,7 +230,7 @@ public partial class StrategyDashboard
             var applied = await supervisor.ApplyActiveConfigAsync(JsonSerializer.SerializeToElement(active));
             if (!applied.Applied) throw new InvalidDataException(string.Join(" • ", applied.Errors));
             SetStrategyControls(active, true);
-            ShowAction("Đã áp dụng các tham số chiến lược. Giao dịch vẫn khóa.", Brushes.LightGreen);
+            ShowAction("Đã áp dụng các tham số chiến lược. Quyền giao dịch giữ theo lựa chọn người dùng.", Brushes.LightGreen);
         });
     }
     private async void ResetStrategyDraft_OnClick(object? sender, RoutedEventArgs e)
@@ -239,6 +239,22 @@ public partial class StrategyDashboard
         {
             SetStrategyControls(JsonNode.Parse((await supervisor.GetActiveConfigAsync()).GetRawText())!.AsObject(), true);
             ShowAction("Đã tải lại cấu hình đang chạy.", Brushes.LightGray);
+        });
+    }
+    private JsonElement BuildStrategyDraft()
+    {
+        if(_strategyBaseline is null)throw new InvalidOperationException("Đang tải cấu hình chiến lược.");
+        var draft=_strategyBaseline.DeepClone().AsObject();
+        foreach(var (path,control) in _strategyFields)Put(draft,path,ReadControl(control));
+        return JsonSerializer.SerializeToElement(draft);
+    }
+    private async void SetStartupStrategy_OnClick(object? sender,RoutedEventArgs e)
+    {
+        await RunActionAsync(async supervisor=>
+        {
+            var result=await supervisor.SaveStartupProfileAsync(BuildStrategyDraft());
+            if(!result.GetProperty("ok").GetBoolean())throw new InvalidDataException(result.GetProperty("errors").ToString());
+            ShowAction("Đã lưu bản nháp làm hồ sơ khởi động mặc định. Có hiệu lực ở lần khởi động Engine tiếp theo.",Brushes.LightGreen);
         });
     }
 }

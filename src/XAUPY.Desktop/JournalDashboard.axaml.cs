@@ -28,6 +28,9 @@ public partial class JournalDashboard : UserControl
     private bool _loading;
     private bool _initialized;
     private long _lastLoadedSequence = -1;
+    private long? _beforeSequence;
+    private string _pageFilter = "";
+    private readonly Stack<long?> _pageHistory = new();
 
     public JournalDashboard()
     {
@@ -62,7 +65,7 @@ public partial class JournalDashboard : UserControl
         if (!_initialized ||
             !IsVisible ||
             _loading ||
-            summary.LatestSequence == _lastLoadedSequence)
+            summary.LatestSequence == _lastLoadedSequence || _beforeSequence.HasValue)
         {
             return;
         }
@@ -85,6 +88,8 @@ public partial class JournalDashboard : UserControl
             return;
 
         var levels = SelectedLevels();
+        string filter = string.Join('|',string.Join(',',levels),_selectedSource,Box("JournalSearchBox").Text,CurrentDateScope(),_bookmarksOnly);
+        if (filter != _pageFilter) { _beforeSequence = null; _pageHistory.Clear(); _pageFilter = filter; }
         if (levels.Count == 0)
         {
             _events.Clear();
@@ -109,7 +114,7 @@ public partial class JournalDashboard : UserControl
                 Box("JournalSearchBox").Text,
                 CurrentDateScope(),
                 _bookmarksOnly,
-                limit: 500);
+                limit: 500, beforeSequence: _beforeSequence);
 
             if (!result.Ok)
             {
@@ -193,8 +198,11 @@ public partial class JournalDashboard : UserControl
         _ = EnsureLoadedAsync(force: true);
     }
 
-    private void Refresh_OnClick(object? sender, RoutedEventArgs e) =>
+    private void Refresh_OnClick(object? sender, RoutedEventArgs e)
+    {
+        _beforeSequence=null; _pageHistory.Clear();
         _ = EnsureLoadedAsync(force: true);
+    }
 
     private void ShowAlerts_OnClick(object? sender, RoutedEventArgs e)
     {
@@ -324,19 +332,31 @@ public partial class JournalDashboard : UserControl
         if (file is null)
             return;
 
+        if (_supervisor is null || _loading) return;
+        _loading = true;
+        string temporary = Path.GetTempFileName();
+        int exported = 0;
         try
         {
-            await using var stream = await file.OpenWriteAsync();
-            if (stream.CanSeek)
-                stream.SetLength(0);
-
+            await using var stream = new FileStream(temporary,FileMode.Create,FileAccess.ReadWrite,FileShare.None);
             await using var writer = new StreamWriter(
                 stream,
                 new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
                 leaveOpen: true);
 
-            foreach (var item in _events.OrderBy(item => item.Sequence))
+            long? cursor = _summary.LatestSequence + 1;
+            var levels = SelectedLevels();
+            IReadOnlyCollection<string>? sources = _selectedSource == "ALL" ? null : new[] { _selectedSource };
+            string? search = Box("JournalSearchBox").Text;
+            string dateScope = CurrentDateScope();
+            bool bookmarks = _bookmarksOnly;
+            while (true)
             {
+              var page = await _supervisor.QueryJournalAsync(levels,sources,search,dateScope,bookmarks,1000,cursor);
+              if (!page.Ok) throw new InvalidDataException(string.Join("; ",page.Errors));
+              if (page.Events.Count == 0) break;
+              foreach (var item in page.Events.OrderByDescending(item => item.Sequence))
+              {
                 var record = new
                 {
                     schema_version = 1,
@@ -354,18 +374,44 @@ public partial class JournalDashboard : UserControl
                     bookmarked = item.Bookmarked
                 };
                 await writer.WriteLineAsync(JsonSerializer.Serialize(record));
+                exported++;
+              }
+              long next = page.Events.Min(item => item.Sequence);
+              if (next >= cursor) throw new InvalidDataException("Journal pagination did not advance.");
+              cursor = next;
+              SetStatus($"Đang xuất toàn bộ bộ lọc: {exported} dòng…",Brushes.LightBlue);
             }
 
             await writer.FlushAsync();
             await stream.FlushAsync();
+            stream.Position=0;
+            await using var destination = await file.OpenWriteAsync();
+            if(destination.CanSeek) destination.SetLength(0);
+            await stream.CopyToAsync(destination);
+            await destination.FlushAsync();
             SetStatus(
-                $"Đã xuất {_events.Count} dòng journal: {file.Name}",
+                $"Đã xuất {exported} dòng phù hợp bộ lọc: {file.Name}",
                 Brushes.LightGreen);
         }
         catch (Exception ex)
         {
             SetStatus($"Xuất journal lỗi: {ex.Message}", Brushes.IndianRed);
         }
+        finally { _loading = false; try { File.Delete(temporary); } catch(IOException) { } }
+    }
+
+    private async void OlderPage_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_loading || _events.Count < 500) return;
+        _pageHistory.Push(_beforeSequence);
+        _beforeSequence = _events.Min(item => item.Sequence);
+        await EnsureLoadedAsync(true);
+    }
+    private async void NewerPage_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_loading || _pageHistory.Count == 0) return;
+        _beforeSequence = _pageHistory.Pop();
+        await EnsureLoadedAsync(true);
     }
 
     private void RenderRows()
@@ -382,7 +428,7 @@ public partial class JournalDashboard : UserControl
                     Padding = new Thickness(14, 18),
                     Child = new TextBlock
                     {
-                        Text = "Không có bản ghi phù hợp với bộ lọc hiện tại.",
+                        [LocalizationService.TextProperty] = "Không có bản ghi phù hợp với bộ lọc hiện tại.",
                         Foreground = new SolidColorBrush(Color.Parse("#8099B2")),
                         HorizontalAlignment = HorizontalAlignment.Center
                     }
@@ -476,7 +522,7 @@ public partial class JournalDashboard : UserControl
                 {
                     Text = emptyMessage,
                     Foreground = new SolidColorBrush(Color.Parse("#8099B2")),
-                    FontSize = 13,
+                    [AppearanceService.BaseFontSizeProperty] = 13d,
                     Margin = new Thickness(4, 8)
                 });
             return;
@@ -628,7 +674,7 @@ public partial class JournalDashboard : UserControl
         {
             Text = value,
             Foreground = brush,
-            FontSize = 14,
+            [AppearanceService.BaseFontSizeProperty] = 14d,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(10, 3),
             TextTrimming = TextTrimming.CharacterEllipsis

@@ -1,3 +1,4 @@
+from ui_source_support import read_xaml
 import pathlib
 import unittest
 
@@ -14,9 +15,9 @@ REFERENCE = ROOT / "docs" / "ui-reference" / "Tab Nhật Kí.png"
 class Task010JournalUiSourceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.main_xaml = MAIN_XAML.read_text(encoding="utf-8")
+        cls.main_xaml = read_xaml(MAIN_XAML)
         cls.main_code = MAIN_CODE.read_text(encoding="utf-8")
-        cls.xaml = JOURNAL_XAML.read_text(encoding="utf-8")
+        cls.xaml = read_xaml(JOURNAL_XAML)
         cls.code = JOURNAL_CODE.read_text(encoding="utf-8")
         cls.supervisor = SUPERVISOR.read_text(encoding="utf-8")
         cls.model = MODEL.read_text(encoding="utf-8")
@@ -98,10 +99,11 @@ class Task010JournalUiSourceTests(unittest.TestCase):
         self.assertIn("item.CorrelationId", self.code)
         self.assertIn("item.ProfileHash", self.code)
         self.assertIn("JsonSerializer.Serialize", self.code)
-        self.assertIn("_events.OrderBy", self.code)
+        self.assertIn("QueryJournalAsync", self.code)
+        self.assertIn("beforeSequence", self.code)
 
     def test_task010_desktop_version_and_previous_execution_guards_remain(self):
-        self.assertIn('desktop_version = "0.17.2-remediation"', self.supervisor)
+        self.assertIn('desktop_version = "1.0.0-dev"', self.supervisor)
         self.assertIn("RejectUnexpectedExecutionEnable", self.supervisor)
         self.assertIn("RejectUnexpectedOrdersExecutionEnable", self.supervisor)
         self.assertIn("Task 012 manual action response violated simulation-only safety", self.supervisor)

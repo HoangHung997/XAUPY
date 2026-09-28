@@ -96,7 +96,7 @@ public partial class MonitoringDashboard : UserControl
         Text("MonitorTriggerStateText").Text = strategy.State.StartsWith("TRIGGERED_", StringComparison.Ordinal)
             ? strategy.State
             : strategy.ArmedSide is not null ? "WAIT REVERSAL" : "WAIT";
-        UpdateConditionMatrix(strategy);
+        if (!_servicesSeen) UpdateConditionMatrix(strategy);
 
         Text("MonitorTerminalText").Text =
             bridge.TerminalConnected ? "Đã kết nối" : "Chưa kết nối";
@@ -152,7 +152,7 @@ public partial class MonitoringDashboard : UserControl
                 Background = header ? new SolidColorBrush(Color.Parse("#082039")) : null,
                 Padding = new Thickness(6, 2), Child = new TextBlock
                 {
-                    Text = value, FontSize = 13, Foreground = foreground, TextWrapping = TextWrapping.Wrap,
+                    Text = value, [AppearanceService.BaseFontSizeProperty] = 13d, Foreground = foreground, TextWrapping = TextWrapping.Wrap,
                     VerticalAlignment = VerticalAlignment.Center, FontWeight = header ? FontWeight.Medium : FontWeight.Normal
                 }
             };
@@ -288,7 +288,7 @@ public partial class MonitoringDashboard : UserControl
             return $"Alert: WARMUP • {strategy.WarmupReasons[0]}";
         if (!string.IsNullOrWhiteSpace(strategy.LastDataError))
             return $"Alert: strategy data error • {strategy.LastDataError}";
-        return "Alert: realtime data path đang healthy; execution vẫn locked.";
+        return "Dữ liệu thời gian thực đang được cập nhật.";
     }
 
     private static string Price(double? value) => value.HasValue ? value.Value.ToString("0.00") : "—";

@@ -16,7 +16,7 @@ public partial class OptimizerDashboard : UserControl
 {
     private static readonly string[] Timeframes =
     {
-        "M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4"
+        "M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4", "D1"
     };
 
     private static readonly FilePickerFileType HistoricalDataType = new("XAUPY Historical Data")
@@ -111,6 +111,14 @@ public partial class OptimizerDashboard : UserControl
         Text("BacktestResourceText").Foreground = ready ? Brushes.LightGreen : Brushes.Gold;
     }
 
+    public void ApplyResources(JsonElement? monitoring)
+    {
+        if(monitoring is not {} data || !data.TryGetProperty("resources",out var resources) ||
+            !resources.TryGetProperty("available",out var available) || !available.GetBoolean())
+        { Text("SystemResourcesText").Text="Chưa có số đo";return; }
+        Text("SystemResourcesText").Text=$"CPU {resources.GetProperty("cpu_percent").GetDouble():0}% • RAM {resources.GetProperty("ram_percent").GetDouble():0}% • Disk {resources.GetProperty("disk_percent").GetDouble():0}%\nEngine RAM {resources.GetProperty("process_rss_bytes").GetDouble()/1048576:0} MB";
+    }
+
     public void ApplyStatus(OptimizerStatusSnapshot status)
     {
         _status = status;
@@ -171,10 +179,7 @@ public partial class OptimizerDashboard : UserControl
                         {
                             latestSweepRunId = history.Items
                                 .FirstOrDefault(item =>
-                                    string.Equals(
-                                        item.Mode,
-                                        "SWEEP",
-                                        StringComparison.Ordinal))
+                                    item.Mode is "SWEEP" or "RESEARCH")
                                 ?.RunId;
                         }
 
@@ -406,21 +411,11 @@ public partial class OptimizerDashboard : UserControl
             return false;
         }
 
-        var files = await storage.OpenFilePickerAsync(
-            new FilePickerOpenOptions
-            {
-                Title = "Chọn dữ liệu lịch sử M1 cho Optimizer",
-                AllowMultiple = false,
-                FileTypeFilter = new[] { HistoricalDataType }
-            });
-
-        var file = files.FirstOrDefault();
-        if (file is null)
-            return false;
-
         try
         {
-            var info = await _supervisor.InspectBacktestDatasetAsync(file.Path.LocalPath);
+            var path = await HistoryDatasetPicker.PickAsync(this,_supervisor);
+            if (path is null) return false;
+            var info = await _supervisor.InspectBacktestDatasetAsync(path);
             _dataset = info;
             Box("OptimizeFromDateBox").Text = info.FirstDate;
             Box("OptimizeToDateBox").Text = info.LastDate;
@@ -452,7 +447,9 @@ public partial class OptimizerDashboard : UserControl
         await StartJobAsync(walkForward: true);
     }
 
-    private async Task StartJobAsync(bool walkForward)
+    private async void Research_OnClick(object? sender,RoutedEventArgs e) => await StartJobAsync(false,true);
+
+    private async Task StartJobAsync(bool walkForward,bool research=false)
     {
         if (_supervisor is null || _supervisor.State != EngineConnectionState.Ready)
         {
@@ -464,12 +461,10 @@ public partial class OptimizerDashboard : UserControl
             SetStateMessage("Đã có một optimizer job đang chạy.", Brushes.Gold);
             return;
         }
-        if (_dataset is null && !await SelectDatasetAsync())
-            return;
-
         try
         {
-            var ranges = BuildParameterRanges();
+            if (_dataset is null && !await SelectDatasetAsync()) return;
+            var ranges = research ? new List<Dictionary<string,object>>() : BuildParameterRanges();
             var rangeJson = JsonSerializer.SerializeToElement(ranges);
             if (!TryContextValues(
                     out var fromDate,
@@ -484,7 +479,11 @@ public partial class OptimizerDashboard : UserControl
             }
 
             OptimizerStatusSnapshot status;
-            if (walkForward)
+            if(research)
+            {
+                status=await _supervisor.StartParameterResearchAsync(_dataset!.Path,fromDate,toDate,balance,spread,commission,minTrades,workers);
+            }
+            else if (walkForward)
             {
                 if (!int.TryParse(
                         Box("WalkForwardFoldsBox").Text,
@@ -565,12 +564,13 @@ public partial class OptimizerDashboard : UserControl
                 candidateOffset: 0,
                 candidateLimit: 10);
 
-            if (result.Mode == "SWEEP")
+            if (result.Mode is "SWEEP" or "RESEARCH")
             {
                 _currentSweep = result;
                 RenderTopSetups();
-                ConfigureHeatmapAxes(result);
-                await RefreshHeatmapAsync();
+                if(result.Mode=="SWEEP") {ConfigureHeatmapAxes(result);await RefreshHeatmapAsync();}
+                else ClearHeatmap("Nghiên cứu theo 3 giai đoạn. Mở báo cáo để xem điều kiện đạt và kiểm chi phí.");
+                this.FindControl<Button>("ResearchReportButton")!.IsEnabled=result.Mode=="RESEARCH";
             }
             else if (result.Mode == "WALK_FORWARD")
             {
@@ -631,6 +631,11 @@ public partial class OptimizerDashboard : UserControl
             status == "FAILED" && !string.IsNullOrWhiteSpace(_status.Error)
                 ? _status.Error!
                 : PhaseLabel(_status);
+        if (status == "IDLE" && _currentSweep is not null)
+        {
+            Text("OptimizerStateText").Text = "ĐÃ TẢI KẾT QUẢ";
+            Text("OptimizerPhaseText").Text = $"{_currentSweep.Mode} • {_currentSweep.FromDate} – {_currentSweep.ToDate} • không có tác vụ đang chạy";
+        }
         Text("OptimizerElapsedText").Text = FormatDuration(_status.ElapsedSeconds);
 
         Progress("OptimizerProgressBar").Value = Math.Clamp(_status.ProgressPct, 0, 100);
@@ -692,7 +697,7 @@ public partial class OptimizerDashboard : UserControl
         }
 
         foreach (var candidate in _currentSweep.Candidates
-                     .Where(item => item.Eligible)
+                     .Where(item => item.Eligible || _currentSweep.Mode=="RESEARCH")
                      .OrderBy(item => item.Rank ?? int.MaxValue)
                      .Take(10))
         {
@@ -720,7 +725,7 @@ public partial class OptimizerDashboard : UserControl
                 Tag = candidate,
                 Classes = { "secondary" },
                 Padding = new Thickness(8, 3),
-                FontSize = 10,
+                [AppearanceService.BaseFontSizeProperty] = 10d,
                 HorizontalAlignment = HorizontalAlignment.Center
             };
             action.Click += ViewCandidate_OnClick;
@@ -732,46 +737,9 @@ public partial class OptimizerDashboard : UserControl
 
     private async void ViewCandidate_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Button { Tag: OptimizerCandidateSnapshot candidate })
-            return;
-
-        var owner = TopLevel.GetTopLevel(this) as Window;
-        if (owner is null)
-            return;
-
-        string body = JsonSerializer.Serialize(
-            new
-            {
-                rank = candidate.Rank,
-                score = candidate.Score,
-                trade_sharpe = candidate.TradeSharpe,
-                parameters = candidate.Parameters,
-                metrics = candidate.Metrics,
-                result_hash = candidate.ResultHash
-            },
-            new JsonSerializerOptions { WriteIndented = true });
-
-        var dialog = new Window
-        {
-            Width = 650,
-            Height = 560,
-            MinWidth = 650,
-            MinHeight = 560,
-            Title = $"XAUPY • Optimizer candidate #{candidate.Rank}",
-            Background = new SolidColorBrush(Color.Parse("#031426")),
-            Content = new ScrollViewer
-            {
-                Content = new TextBlock
-                {
-                    Text = body,
-                    FontFamily = "Consolas",
-                    FontSize = 12,
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(16)
-                }
-            }
-        };
-        await dialog.ShowDialog(owner);
+        if(sender is not Button {Tag:OptimizerCandidateSnapshot candidate})return;
+        try {await ShowCandidateAsync(candidate);}
+        catch(Exception ex){SetStateMessage(ex.Message,Brushes.IndianRed);}
     }
 
     private void ConfigureHeatmapAxes(OptimizerResultSnapshot result)
@@ -884,7 +852,7 @@ public partial class OptimizerDashboard : UserControl
                 Child = new TextBlock
                 {
                     Text = cell.Value.HasValue ? Compact(cell.Value.Value) : "—",
-                    FontSize = 9,
+                    [AppearanceService.BaseFontSizeProperty] = 9d,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
                     Foreground = Brushes.White
@@ -964,7 +932,7 @@ public partial class OptimizerDashboard : UserControl
                         $"F{fold.Fold}: Train {fold.TrainFrom}→{fold.TrainTo} • " +
                         $"Test {fold.TestFrom}→{fold.TestTo} • " +
                         $"OOS P/L {fold.TestMetrics.NetProfit:+0.00;-0.00;0.00}",
-                    FontSize = 9.5,
+                    [AppearanceService.BaseFontSizeProperty] = 9.5d,
                     Foreground = fold.LeakageGuardPassed
                         ? Brushes.LightGray
                         : Brushes.IndianRed,
@@ -1479,7 +1447,7 @@ public partial class OptimizerDashboard : UserControl
         var label = new TextBlock
         {
             Text = value,
-            FontSize = 9,
+            [AppearanceService.BaseFontSizeProperty] = 9d,
             Foreground = new SolidColorBrush(Color.Parse("#A8C1D9")),
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
@@ -1668,7 +1636,7 @@ public partial class OptimizerDashboard : UserControl
         {
             Text = value,
             Foreground = brush ?? new SolidColorBrush(Color.Parse("#D9E5F2")),
-            FontSize = 12,
+            [AppearanceService.BaseFontSizeProperty] = 12d,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(6, 5),
             TextTrimming = TextTrimming.CharacterEllipsis

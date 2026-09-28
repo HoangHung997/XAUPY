@@ -25,6 +25,8 @@ public partial class ToolsDashboard : UserControl
     private int _searchNext;
     private string _loadedText = "";
     private JsonElement? _baselineProfile;
+    private WindowState _previousWindowState;
+    private IStorageFile? _currentFile;
     public bool HasUnsavedChanges => _loaded && !ToolEditor.IsReadOnly && (ToolEditor.Text ?? "") != _loadedText;
     public Func<bool>? HasConflictingDraft { get; set; }
     private readonly List<string> _history = new();
@@ -49,15 +51,19 @@ public partial class ToolsDashboard : UserControl
         foreach (var button in ToolMenu.Children.OfType<Button>())
         {
             if (button.Content is not StackPanel content) continue;
-            var lines = content.Children.OfType<TextBlock>().Select(t => t.Text ?? "").ToArray();
+            var lines = content.Children.OfType<TextBlock>().ToArray();
+            content.Children.Clear();
             button.Height = 65;
             button.Padding = new Avalonia.Thickness(7, 5);
             var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("46,*,15"), ColumnSpacing = 10 };
             var icon = new Border { Background = Brush.Parse("#092B49"), CornerRadius = new Avalonia.CornerRadius(6), Child = new ReferenceIcon { Kind = icons[index], Width = 34, Height = 34, Tint = Brush.Parse(colors[index]), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } };
             var label = new StackPanel { Spacing = 5, VerticalAlignment = VerticalAlignment.Center };
-            label.Children.Add(new TextBlock { Text = lines[0].Length > 4 ? lines[0][4..] : lines[0], FontSize = 15, FontWeight = FontWeight.SemiBold });
-            label.Children.Add(new TextBlock { Text = lines.Length > 1 ? lines[1].Trim() : "", FontSize = 13, Foreground = Brush.Parse("#B3D3EF") });
-            var arrow = new TextBlock { Text = "›", FontSize = 24, VerticalAlignment = VerticalAlignment.Center };
+            lines[0].SetValue(AppearanceService.BaseFontSizeProperty, 15d);
+            lines[0].FontWeight = FontWeight.SemiBold;
+            lines[1].SetValue(AppearanceService.BaseFontSizeProperty, 13d);
+            lines[1].Foreground = Brush.Parse("#B3D3EF");
+            label.Children.Add(lines[0]); label.Children.Add(lines[1]);
+            var arrow = new TextBlock { Text = "›", [AppearanceService.BaseFontSizeProperty] = 24d, VerticalAlignment = VerticalAlignment.Center };
             Grid.SetColumn(label, 1); Grid.SetColumn(arrow, 2);
             grid.Children.Add(icon); grid.Children.Add(label); grid.Children.Add(arrow);
             button.Content = grid;
@@ -76,6 +82,8 @@ public partial class ToolsDashboard : UserControl
             ToolSymbol.Text = active.GetProperty("strategy").GetProperty("symbol").GetString();
             _baselineProfile = active.Clone();
             object display = active;
+            string message = "Đã tải dữ liệu thực từ Python Engine.";
+            bool checksPassed = true;
             if (_mode == "compare")
             {
                 var defaults = await _supervisor.GetDefaultConfigAsync();
@@ -91,18 +99,33 @@ public partial class ToolsDashboard : UserControl
                 display = _mode switch
                 {
                     "bridge" => diagnostics.GetProperty("bridge"),
-                    "indicators" => diagnostics.GetProperty("strategy"),
-                    "symbol" => new { market = diagnostics.GetProperty("overview"), sessions = active.GetProperty("sessions") },
+                    "indicators" => diagnostics.GetProperty("indicator_comparison"),
+                    "symbol" => new { broker = diagnostics.GetProperty("broker_metadata"), configured_sessions = active.GetProperty("sessions") },
                     _ => diagnostics
                 };
+                if (_mode == "indicators")
+                {
+                    var comparison = diagnostics.GetProperty("indicator_comparison");
+                    var rows = comparison.GetProperty("rows").EnumerateArray().ToArray();
+                    int passed = rows.Count(row => row.GetProperty("status").GetString() == "PASS");
+                    checksPassed = rows.Length > 0 && passed == rows.Length;
+                    message = $"Đối chiếu MT5 / Python: {passed}/{rows.Length} đạt sai số cho phép. Chi tiết từng khung ở bảng dữ liệu.";
+                }
             }
-            else if (_mode == "news") display = new { format = "JSON array: timestamp_utc (ISO 8601 + timezone), currency, impact, title", active_filter = active.GetProperty("news"), status = "Mở file lịch tin để kiểm tra; chưa có nguồn lịch tin trực tiếp." };
-            else if (_mode == "risk") display = new { status = "Nhập risk budget, khoảng SL, tick size và tick value rồi nhấn Tính lot.", note = "Ví dụ nhập tay; chưa dùng để đặt lệnh. Không bao gồm spread, commission hoặc slippage." };
+            else if (_mode == "news")
+            {
+                var calendar=await _supervisor.GetCalendarAsync(); EnsureOk(calendar);
+                display=calendar.GetProperty("calendar").ValueKind==JsonValueKind.Object ? calendar.GetProperty("calendar") : new {
+                    coverage_start_utc=DateTimeOffset.UtcNow.ToString("O"),coverage_end_utc=DateTimeOffset.UtcNow.AddDays(7).ToString("O"),
+                    events=Array.Empty<object>() };
+            }
+            else if (_mode == "risk") display = new { status = "Nhập ngân sách rủi ro, khoảng SL và đặc tả hợp đồng rồi nhấn Tính lot.", note = "Kết quả gồm spread hiện tại, phí và trượt giá đã cấu hình; dùng để tính tham khảo. Khối lượng khi đặt lệnh được kiểm lại theo dữ liệu broker mới nhất." };
             ToolEditor.Text = JsonSerializer.Serialize(display, Pretty);
+            ToolFileName.Text = _mode is "editor" or "profile" ? "active-profile.json" : $"{_mode}-report.json";
             _loadedText = ToolEditor.Text;
             RefreshEditorInfo();
             _loaded = true;
-            Result("Đã tải dữ liệu thực từ Python Engine.", true);
+            Result(message, checksPassed);
         });
     }
 
@@ -112,6 +135,7 @@ public partial class ToolsDashboard : UserControl
         if (_busy || !await ConfirmDiscardDraftAsync()) return;
         _loaded = false;
         _mode = mode;
+        _currentFile = null;
         foreach (var child in ToolMenu.Children.OfType<Button>()) SetMenuAppearance(child, child == button);
         var title = (button.Content as Grid)?.Children.OfType<StackPanel>().FirstOrDefault()?.Children.OfType<TextBlock>().FirstOrDefault()?.Text ?? mode;
         ToolTitle.Text = title;
@@ -123,7 +147,32 @@ public partial class ToolsDashboard : UserControl
         SaveProfileButton.IsEnabled = DefaultProfileButton.IsEnabled = ApplyToolButton.IsEnabled;
         RiskInputs.IsVisible = mode == "risk";
         HistoryInputs.IsVisible = mode == "export";
+        LibraryInputs.IsVisible = mode == "profile";
+        CompareInputs.IsVisible = mode == "compare";
+        ApplyToolButton.IsEnabled = mode is "editor" or "profile" or "news";
         ToolSubtitle.Text = mode is "editor" or "profile" ? "Chỉnh sửa cấu hình chuẩn; kiểm tra cú pháp và áp dụng nhanh." : "Kiểm tra dữ liệu thực, lưu báo cáo và đối chiếu trạng thái hệ thống.";
+        SelectedToolDescription.Text = mode switch
+        {
+            "compare" => "Đối chiếu cấu hình đang dùng với mặc định hoặc hai file đã chọn.",
+            "indicators" => "Đối chiếu RSI, EMA và Z-score giữa MT5 và Python trên cùng nến đóng.",
+            "risk" => "Tính lot từ ngân sách, khoảng SL, phí và đặc tả hợp đồng.",
+            "symbol" => "Xem đặc tả hợp đồng và lịch phiên broker đang trả về.",
+            "news" => "Kiểm tra và nhập lịch tin có thời gian, tiền tệ và mức ảnh hưởng.",
+            "diagnostics" => "Kiểm tra dữ liệu, kết nối và thư mục vận hành.",
+            "bridge" => "Đọc trạng thái EA Bridge và tuổi dữ liệu gần nhất.",
+            "profile" => "Lưu các phiên bản cấu hình, mở lại vào bản nháp và quản lý hồ sơ khởi động.",
+            "export" => "Chuyển dữ liệu phân tích bằng ZIP và tải lịch sử nến, tick từ MT5.",
+            _ => "Chỉnh sửa và kiểm tra cấu hình trước khi áp dụng."
+        };
+        SelectedToolCapabilities.Text = mode switch
+        {
+            "export" => "✓ Xuất / nhập ZIP có kiểm tra toàn vẹn\n✓ Tải nến của 9 khung\n✓ Tải tick Bid/Ask theo ngày\n✓ Xem tiến độ và hủy tác vụ\n✓ Giữ cấu hình hiện tại khi nhập",
+            "indicators" => "✓ RSI 7 / 14 / 20, EMA 20, Z 20\n✓ Đối chiếu 9 khung thời gian\n✓ Sai số và dữ liệu khởi tạo\n✓ Tải lại số đo mới\n✓ Lưu báo cáo JSON",
+            "profile" => "✓ Lưu từng phiên bản\n✓ Mở lại vào bản nháp\n✓ Kiểm tra cấu hình\n✓ Áp dụng khi người dùng chọn\n✓ Bỏ hồ sơ khởi động riêng",
+            "news" => "✓ Kiểm cú pháp và thời gian\n✓ Xác định phạm vi bao phủ\n✓ Kiểm tiền tệ và mức ảnh hưởng\n✓ Áp dụng vào bộ lọc tin\n✓ Lưu thành file JSON",
+            "editor" => "✓ Chỉnh sửa cấu hình\n✓ Kiểm JSON và schema\n✓ Lưu bản nháp ra file\n✓ Áp dụng vào hệ thống\n✓ Giữ bản nháp khi có xung đột",
+            _ => "✓ Đọc dữ liệu hiện tại\n✓ Xem chi tiết kết quả\n✓ Tải lại khi cần\n✓ Tìm trong báo cáo\n✓ Lưu thành file JSON"
+        };
         await EnsureLoadedAsync(true);
     }
 
@@ -139,12 +188,12 @@ public partial class ToolsDashboard : UserControl
         bool discard = false;
         var dialog = new Window { Title = "Bản nháp chưa áp dụng", Width = 510, Height = 195,
             CanResize = false, WindowStartupLocation = WindowStartupLocation.CenterOwner };
-        var keep = new Button { Content = "Giữ bản nháp" };
-        var replace = new Button { Content = "Bỏ thay đổi" };
+        var keep = new Button { [LocalizationService.TextProperty] = "Giữ bản nháp" };
+        var replace = new Button { [LocalizationService.TextProperty] = "Bỏ thay đổi" };
         keep.Click += (_, _) => dialog.Close();
         replace.Click += (_, _) => { discard = true; dialog.Close(); };
         dialog.Content = new StackPanel { Margin = new Thickness(18), Spacing = 18, Children = {
-            new TextBlock { Text = "Nội dung đang sửa sẽ bị thay thế. Bạn có thể giữ lại để lưu hoặc áp dụng trước.", TextWrapping = TextWrapping.Wrap },
+            new TextBlock { [LocalizationService.TextProperty] = "Nội dung đang sửa sẽ bị thay thế. Bạn có thể giữ lại để lưu hoặc áp dụng trước.", TextWrapping = TextWrapping.Wrap },
             new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { keep, replace } }
         } };
         await dialog.ShowDialog(owner);
@@ -213,6 +262,11 @@ public partial class ToolsDashboard : UserControl
         ToolNavigation.IsVisible = ToolHelpColumn.IsVisible = !_expanded;
         ToolsLayout.ColumnDefinitions = new ColumnDefinitions(_expanded ? "0,*,0" : "330,*,320");
         ExpandEditorButton.Content = _expanded ? "⛶  Thu gọn" : "⛶  Toàn màn hình";
+        if (TopLevel.GetTopLevel(this) is Window window)
+        {
+            if (_expanded) { _previousWindowState=window.WindowState; window.WindowState=WindowState.FullScreen; }
+            else window.WindowState=_previousWindowState;
+        }
     }
     private void Tools_OnKeyDown(object? sender, KeyEventArgs e)
     {
@@ -252,6 +306,16 @@ public partial class ToolsDashboard : UserControl
         ToolEditor.Text = JsonSerializer.Serialize(response.GetProperty("history_download"), Pretty);
         Result("Đã cập nhật số nến, độ phủ và giới hạn dữ liệu từ MT5.", true);
     });
+    private async void TickHistoryStart_OnClick(object? sender,RoutedEventArgs e) => await RunAsync(async () =>
+    {
+        if(_supervisor is null)return;
+        if(TickFromDate.SelectedDate is not {} from || TickToDate.SelectedDate is not {} to)
+            throw new InvalidDataException("Chọn ngày bắt đầu và kết thúc để tải tick.");
+        var response=await _supervisor.StartTickDownloadAsync(HistoryTerminal.Text ?? "",HistorySymbol.Text ?? "",from.ToString("yyyy-MM-dd"),to.ToString("yyyy-MM-dd"));
+        EnsureOk(response);
+        ToolEditor.Text=JsonSerializer.Serialize(response.GetProperty("history_download"),Pretty);
+        Result("Đang tải tick và nến khởi tạo chỉ báo. Dữ liệu hoàn tất sẽ xuất hiện trong kho của Backtest/Tối ưu.",true);
+    });
     private void Format_OnClick(object? sender, RoutedEventArgs e)
     {
         try { using var json = JsonDocument.Parse(ToolEditor.Text ?? ""); ToolEditor.Text = JsonSerializer.Serialize(json.RootElement, Pretty); Result("Đã định dạng JSON.", true); }
@@ -262,18 +326,9 @@ public partial class ToolsDashboard : UserControl
         using var json = JsonDocument.Parse(ToolEditor.Text ?? "");
         if (_mode == "news")
         {
-            if (json.RootElement.ValueKind != JsonValueKind.Array) throw new InvalidDataException("Lịch tin phải là mảng JSON.");
-            var count = 0;
-            foreach (var item in json.RootElement.EnumerateArray())
-            {
-                if (!item.TryGetProperty("timestamp_utc", out var time) || !DateTimeOffset.TryParse(time.GetString(), CultureInfo.InvariantCulture, DateTimeStyles.None, out _) ||
-                    !item.TryGetProperty("currency", out var currency) || currency.GetString()?.Length != 3 ||
-                    !item.TryGetProperty("impact", out var impact) || impact.GetString() is not ("HIGH" or "MEDIUM" or "LOW") ||
-                    !item.TryGetProperty("title", out var title) || string.IsNullOrWhiteSpace(title.GetString()))
-                    throw new InvalidDataException($"Tin số {count + 1}: cần timestamp_utc, currency (3 ký tự), impact HIGH/MEDIUM/LOW và title.");
-                count++;
-            }
-            Result($"Lịch tin JSON hợp lệ: {count} sự kiện. Chỉ kiểm tra file, chưa kích hoạt news feed.", true);
+            if (_supervisor is null) return;
+            EnsureOk(await _supervisor.ValidateCalendarAsync(json.RootElement));
+            Result("Lịch tin hợp lệ. Áp dụng để dùng trong phạm vi thời gian đã khai báo.",true);
         }
         else if (_mode is "editor" or "profile")
         {
@@ -287,7 +342,16 @@ public partial class ToolsDashboard : UserControl
     });
     private async void Apply_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
     {
-        if (_supervisor is null || _mode is not ("editor" or "profile")) return;
+        if (_supervisor is null) return;
+        if (_mode == "news")
+        {
+            using var calendar=JsonDocument.Parse(ToolEditor.Text ?? "");
+            EnsureOk(await _supervisor.ImportCalendarAsync(calendar.RootElement));
+            _loadedText=ToolEditor.Text ?? "";
+            Result("Đã lưu lịch tin và nối vào bộ lọc tin tức của cấu hình đang áp dụng.",true);
+            return;
+        }
+        if (_mode is not ("editor" or "profile")) return;
         if (HasConflictingDraft?.Invoke() == true)
             throw new InvalidOperationException("Một tab khác có bản nháp chưa áp dụng. Hãy áp dụng hoặc hoàn tác bản nháp đó trước.");
         using var json = JsonDocument.Parse(ToolEditor.Text ?? "");
@@ -315,6 +379,7 @@ public partial class ToolsDashboard : UserControl
         using var json = JsonDocument.Parse(text);
         ToolEditor.Text = JsonSerializer.Serialize(json.RootElement, Pretty);
         ToolFileName.Text = paths[0].Name;
+        _currentFile=paths[0];
         if (_mode != "news") { _mode = "profile"; ToolEditor.IsReadOnly = false; ApplyToolButton.IsEnabled = SaveProfileButton.IsEnabled = DefaultProfileButton.IsEnabled = true; }
         Result("Đã mở file. Nhấn Kiểm tra cú pháp trước khi áp dụng.", true);
     });
@@ -322,23 +387,41 @@ public partial class ToolsDashboard : UserControl
     {
         var top = TopLevel.GetTopLevel(this);
         if (top is null) return;
-        var target = await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions { Title = "Lưu JSON", SuggestedFileName = $"xaupy-{_mode}.json", DefaultExtension = "json", FileTypeChoices = new[] { JsonType } });
+        var target=(sender as Button)?.Tag as string != "save-as" ? _currentFile : null;
+        target ??= await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions { Title = "Lưu JSON", SuggestedFileName = $"xaupy-{_mode}.json", DefaultExtension = "json", FileTypeChoices = new[] { JsonType } });
         if (target is null) return;
         using var json = JsonDocument.Parse(ToolEditor.Text ?? "");
         await using var stream = await target.OpenWriteAsync();
         stream.SetLength(0);
         await JsonSerializer.SerializeAsync(stream, json.RootElement, Pretty);
+        _currentFile=target;
         Result($"Đã lưu {target.Name}.", true);
     });
-    private void CalculateRisk_OnClick(object? sender, RoutedEventArgs e)
+    private async void CalculateRisk_OnClick(object? sender, RoutedEventArgs e)
     {
         try
         {
             double Number(TextBox box) => double.TryParse(box.Text, NumberStyles.Float, CultureInfo.InvariantCulture, out var n) && double.IsFinite(n) && n > 0 ? n : throw new InvalidDataException("Các giá trị phải là số dương.");
             var budget = Number(RiskBudget); var distance = Number(RiskDistance); var size = Number(RiskTickSize); var value = Number(RiskTickValue);
-            var lossPerLot = distance / size * value;
-            ToolEditor.Text = JsonSerializer.Serialize(new { budget_usd = budget, sl_distance = distance, tick_size = size, tick_value_per_lot = value, risk_per_lot = lossPerLot, theoretical_lots = budget / lossPerLot, warning = "Làm tròn xuống theo volume_step của broker. Chưa bao gồm phí và slippage; đây là tính toán tham khảo." }, Pretty);
-            Result("Đã tính lot lý thuyết; kiểm tra thông số hợp đồng trước khi sử dụng.", true);
+            if (_supervisor is null) return;
+            var response=await _supervisor.QueryDiagnosticsAsync(); EnsureOk(response);
+            var meta=response.GetProperty("diagnostics").GetProperty("broker_metadata");
+            if (!meta.TryGetProperty("volume_step",out var stepValue)) throw new InvalidDataException("Cần kết nối MT5 để lấy bước lot và chi phí hiện tại.");
+            var active=await _supervisor.GetActiveConfigAsync(); var costs=active.GetProperty("costs");
+            double spread=meta.GetProperty("ask").GetDouble()-meta.GetProperty("bid").GetDouble();
+            double slippage=costs.GetProperty("max_slippage_points").GetDouble()*meta.GetProperty("point").GetDouble();
+            double commission=costs.GetProperty("max_commission_per_lot").GetDouble();
+            double lossPerLot=(distance+spread+slippage)/size*value+commission;
+            double step=stepValue.GetDouble(), minimum=meta.GetProperty("volume_min").GetDouble();
+            double maximum=Math.Min(meta.GetProperty("volume_max").GetDouble(),active.GetProperty("risk").GetProperty("max_lot").GetDouble());
+            if (step<=0 || maximum<minimum) throw new InvalidDataException("Thông số khối lượng broker chưa hợp lệ.");
+            double lots=Math.Floor((Math.Min(budget/lossPerLot,maximum)+1e-10)/step)*step;
+            if(lots<minimum) lots=0;
+            ToolEditor.Text=JsonSerializer.Serialize(new {budget_usd=budget,sl_distance=distance,tick_size=size,tick_value_per_lot=value,
+                spread_price=spread,slippage_price=slippage,commission_round_trip_per_lot=commission,risk_per_lot=lossPerLot,
+                broker_volume_step=step,broker_volume_min=minimum,maximum_lot=maximum,lots=Math.Round(lots,8),estimated_loss=lots*lossPerLot,
+                assumptions="Phí tối đa và trượt giá từ profile; chưa gồm swap giữ qua đêm. Không cấp quyền hoặc gửi lệnh."},Pretty);
+            Result(lots>0 ? "Đã tính lot sau chi phí và làm tròn theo broker." : "Ngân sách không đủ cho lot tối thiểu của broker.",lots>0);
         }
         catch (Exception ex) { Result(ex.Message, false); }
     }

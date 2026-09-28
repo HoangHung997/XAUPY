@@ -1,6 +1,6 @@
 #property strict
-#property version   "1.019"
-#property description "XAUPY data bridge. General execution locked; separate bounded DEMO one-shot capability."
+#property version   "1.020"
+#property description "XAUPY data and execution bridge. Account-bound user control with broker confirmation."
 
 input string InpHost               = "127.0.0.1";
 input uint   InpPort               = 39421;
@@ -13,8 +13,8 @@ input double InpMaxDailyLossPct    = 2.00;
 input int    InpMaxOpenPositions   = 1;
 
 #include "XAUPY_DemoOnce.mqh"
-
-const bool TASK003_EXECUTION_LOCKED = true;
+#include "XAUPY_Execution.mqh"
+#include "XAUPY_MarketServices.mqh"
 
 int  g_socket = INVALID_HANDLE;
 bool g_handshake_ok = false;
@@ -39,7 +39,7 @@ void LogNetworkError(string operation, int error)
    if(error == 4014)
       Print("XAUPY_BRIDGE permission denied (4014): run as an Expert Advisor and allow 127.0.0.1 in MT5 Tools > Options > Expert Advisors. Operation=", operation);
    else
-      Print("XAUPY_BRIDGE ", operation, " failed err=", error, "; reconnect is data-only, broker execution remains locked.");
+      Print("XAUPY_BRIDGE ", operation, " failed err=", error, "; reconnect requires fresh account data before user-authorized execution.");
 }
 
 string JsonEscape(string value)
@@ -244,13 +244,14 @@ double OwnDailyRealized()
       if((long)HistoryDealGetInteger(ticket, DEAL_MAGIC) != InpMagic)
          continue;
 
-      ENUM_DEAL_ENTRY entry = (ENUM_DEAL_ENTRY)HistoryDealGetInteger(ticket, DEAL_ENTRY);
-      if(entry != DEAL_ENTRY_OUT && entry != DEAL_ENTRY_OUT_BY && entry != DEAL_ENTRY_INOUT)
+      long type=HistoryDealGetInteger(ticket,DEAL_TYPE);
+      if(type!=DEAL_TYPE_BUY && type!=DEAL_TYPE_SELL)
          continue;
 
       realized += HistoryDealGetDouble(ticket, DEAL_PROFIT);
       realized += HistoryDealGetDouble(ticket, DEAL_COMMISSION);
       realized += HistoryDealGetDouble(ticket, DEAL_SWAP);
+      realized += HistoryDealGetDouble(ticket, DEAL_FEE);
    }
    return realized;
 }
@@ -276,13 +277,37 @@ string JsonPositions(bool all_symbols=false)
       first = false;
 
       int digits = (int)SymbolInfoInteger(PositionGetString(POSITION_SYMBOL), SYMBOL_DIGITS);
+      long identifier=PositionGetInteger(POSITION_IDENTIFIER);
+      ulong entry_order=0;
+      double initial_sl=0,initial_tp=0;
+      if(HistorySelectByPosition(identifier))
+      {
+         for(int j=0;j<HistoryDealsTotal();j++)
+         {
+            ulong deal=HistoryDealGetTicket(j);
+            if(deal && HistoryDealGetInteger(deal,DEAL_ENTRY)==DEAL_ENTRY_IN)
+            {
+               entry_order=(ulong)HistoryDealGetInteger(deal,DEAL_ORDER);
+               if(HistoryOrderSelect(entry_order))
+               {
+                  initial_sl=HistoryOrderGetDouble(entry_order,ORDER_SL);
+                  initial_tp=HistoryOrderGetDouble(entry_order,ORDER_TP);
+               }
+               break;
+            }
+         }
+      }
 
       string item = "{";
       item += JsonKey("ticket") + StringFormat("%I64u", ticket) + ",";
+      item += JsonKey("position_identifier") + StringFormat("%I64d",identifier) + ",";
+      item += JsonKey("entry_order") + StringFormat("%I64u",entry_order) + ",";
+      item += JsonKey("initial_sl") + JsonNumber(initial_sl,digits) + ",";
+      item += JsonKey("initial_tp") + JsonNumber(initial_tp,digits) + ",";
       item += JsonKey("magic") + StringFormat("%I64d", (long)PositionGetInteger(POSITION_MAGIC)) + ",";
       item += JsonKey("symbol") + JsonString(PositionGetString(POSITION_SYMBOL)) + ",";
       item += JsonKey("side") + JsonString(PositionTypeText(PositionGetInteger(POSITION_TYPE))) + ",";
-      item += JsonKey("volume") + JsonNumber(PositionGetDouble(POSITION_VOLUME), 2) + ",";
+      item += JsonKey("volume") + JsonNumber(PositionGetDouble(POSITION_VOLUME), 8) + ",";
       item += JsonKey("price_open") + JsonNumber(PositionGetDouble(POSITION_PRICE_OPEN), digits) + ",";
       item += JsonKey("price_current") + JsonNumber(PositionGetDouble(POSITION_PRICE_CURRENT), digits) + ",";
       item += JsonKey("sl") + JsonNumber(PositionGetDouble(POSITION_SL), digits) + ",";
@@ -324,8 +349,9 @@ string JsonOrders()
       item += JsonKey("magic") + StringFormat("%I64d", (long)OrderGetInteger(ORDER_MAGIC)) + ",";
       item += JsonKey("symbol") + JsonString(OrderGetString(ORDER_SYMBOL)) + ",";
       item += JsonKey("type") + JsonString(OrderTypeText(OrderGetInteger(ORDER_TYPE))) + ",";
-      item += JsonKey("volume_initial") + JsonNumber(OrderGetDouble(ORDER_VOLUME_INITIAL), 2) + ",";
-      item += JsonKey("volume_current") + JsonNumber(OrderGetDouble(ORDER_VOLUME_CURRENT), 2) + ",";
+      item += JsonKey("volume_initial") + JsonNumber(OrderGetDouble(ORDER_VOLUME_INITIAL), 8) + ",";
+      item += JsonKey("volume_current") + JsonNumber(OrderGetDouble(ORDER_VOLUME_CURRENT), 8) + ",";
+      item += JsonKey("expiration") + StringFormat("%I64d",OrderGetInteger(ORDER_TIME_EXPIRATION)) + ",";
       item += JsonKey("price_open") + JsonNumber(OrderGetDouble(ORDER_PRICE_OPEN), _Digits) + ",";
       item += JsonKey("price_current") + JsonNumber(OrderGetDouble(ORDER_PRICE_CURRENT), _Digits) + ",";
       item += JsonKey("sl") + JsonNumber(OrderGetDouble(ORDER_SL), _Digits) + ",";
@@ -341,8 +367,11 @@ string JsonOrders()
    return json;
 }
 
-double HistoryPositionEntryPrice(long position_id, string symbol)
+double HistoryPositionEntryPrice(long position_id, string symbol, ulong exit_ticket, double &entry_cost)
 {
+   entry_cost=0;
+   if(!HistorySelectByPosition((ulong)position_id)) return 0;
+   double volume=0, average=0, costs=0;
    int total = HistoryDealsTotal();
    for(int i=0; i<total; i++)
    {
@@ -353,19 +382,40 @@ double HistoryPositionEntryPrice(long position_id, string symbol)
          continue;
       if(HistoryDealGetString(deal_ticket, DEAL_SYMBOL) != symbol)
          continue;
-      if((long)HistoryDealGetInteger(deal_ticket, DEAL_MAGIC) != InpMagic)
-         continue;
-
       long entry = HistoryDealGetInteger(deal_ticket, DEAL_ENTRY);
-      if(entry == DEAL_ENTRY_IN || entry == DEAL_ENTRY_INOUT)
-         return HistoryDealGetDouble(deal_ticket, DEAL_PRICE);
+      double lot=HistoryDealGetDouble(deal_ticket,DEAL_VOLUME);
+      double fee=HistoryDealGetDouble(deal_ticket,DEAL_COMMISSION)+HistoryDealGetDouble(deal_ticket,DEAL_FEE);
+      if(deal_ticket==exit_ticket)
+      {
+         entry_cost=volume>0 ? costs*MathMin(lot,volume)/volume : 0;
+         return volume>0 ? average : 0;
+      }
+      if(entry==DEAL_ENTRY_IN && lot>0)
+      {
+         average=(average*volume+HistoryDealGetDouble(deal_ticket,DEAL_PRICE)*lot)/(volume+lot);
+         volume+=lot; costs+=fee;
+      }
+      else if(entry==DEAL_ENTRY_OUT || entry==DEAL_ENTRY_OUT_BY || entry==DEAL_ENTRY_INOUT)
+      {
+         double closed=MathMin(lot,volume);
+         if(volume>0) costs*=1-closed/volume;
+         volume-=closed;
+         if(entry==DEAL_ENTRY_INOUT && lot>closed)
+         {
+            volume=lot-closed; average=HistoryDealGetDouble(deal_ticket,DEAL_PRICE);
+            costs=fee*volume/lot;
+         }
+      }
    }
    return 0.0;
 }
 
 string JsonDeals(bool all_symbols=false)
 {
+   static datetime cached_at=0;
+   static string cached_symbol="[]", cached_all="[]";
    datetime now = TimeCurrent();
+   if(cached_at && now-cached_at<10) return all_symbols ? cached_all : cached_symbol;
    datetime from = now - (datetime)(7 * 24 * 60 * 60);
    if(!HistorySelect(from, now))
       return "[]";
@@ -374,10 +424,20 @@ string JsonDeals(bool all_symbols=false)
    bool first = true;
    int emitted = 0;
    int total = HistoryDealsTotal();
-
-   for(int i=total-1; i>=0 && emitted<50; i--)
+   ulong selected[];
+   // Copy tickets before per-position lookups replace MT5's history selection.
+   for(int i=total-1;i>=0 && ArraySize(selected)<100;i--)
    {
-      ulong ticket = HistoryDealGetTicket(i);
+      ulong ticket=HistoryDealGetTicket(i);
+      long entry=HistoryDealGetInteger(ticket,DEAL_ENTRY);
+      if(HistoryDealGetInteger(ticket,DEAL_MAGIC)!=InpMagic || (entry!=DEAL_ENTRY_OUT && entry!=DEAL_ENTRY_OUT_BY && entry!=DEAL_ENTRY_INOUT)) continue;
+      int n=ArraySize(selected); ArrayResize(selected,n+1); selected[n]=ticket;
+   }
+
+   for(int i=0; i<ArraySize(selected) && emitted<50; i++)
+   {
+      ulong ticket = selected[i];
+      if(!HistoryDealSelect(ticket)) continue;
       if(ticket == 0)
          continue;
       if(!all_symbols && HistoryDealGetString(ticket, DEAL_SYMBOL) != _Symbol)
@@ -390,12 +450,14 @@ string JsonDeals(bool all_symbols=false)
          continue;
 
       double profit = HistoryDealGetDouble(ticket, DEAL_PROFIT);
-      double commission = HistoryDealGetDouble(ticket, DEAL_COMMISSION);
+      double commission = HistoryDealGetDouble(ticket, DEAL_COMMISSION)+HistoryDealGetDouble(ticket,DEAL_FEE);
       double swap = HistoryDealGetDouble(ticket, DEAL_SWAP);
       long position_id = HistoryDealGetInteger(ticket, DEAL_POSITION_ID);
       string symbol = HistoryDealGetString(ticket, DEAL_SYMBOL);
       int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
-      double price_in = HistoryPositionEntryPrice(position_id, symbol);
+      double entry_cost=0;
+      double price_in = HistoryPositionEntryPrice(position_id, symbol, ticket, entry_cost);
+      commission+=entry_cost;
       double price_out = HistoryDealGetDouble(ticket, DEAL_PRICE);
 
       if(!first)
@@ -407,11 +469,13 @@ string JsonDeals(bool all_symbols=false)
       item += JsonKey("order_ticket") + StringFormat("%I64u", (ulong)HistoryDealGetInteger(ticket, DEAL_ORDER)) + ",";
       item += JsonKey("magic") + StringFormat("%I64d", (long)HistoryDealGetInteger(ticket, DEAL_MAGIC)) + ",";
       item += JsonKey("symbol") + JsonString(HistoryDealGetString(ticket, DEAL_SYMBOL)) + ",";
-      item += JsonKey("side") + JsonString(DealTypeText(HistoryDealGetInteger(ticket, DEAL_TYPE))) + ",";
+      item += JsonKey("side") + JsonString(HistoryDealGetInteger(ticket, DEAL_TYPE)==DEAL_TYPE_SELL ? "BUY" : "SELL") + ",";
       item += JsonKey("entry") + JsonString(DealEntryText(entry)) + ",";
-      item += JsonKey("volume") + JsonNumber(HistoryDealGetDouble(ticket, DEAL_VOLUME), 2) + ",";
+      item += JsonKey("volume") + JsonNumber(HistoryDealGetDouble(ticket, DEAL_VOLUME), 8) + ",";
       item += JsonKey("price_in") + JsonNumber(price_in, digits) + ",";
       item += JsonKey("price_out") + JsonNumber(price_out, digits) + ",";
+      item += JsonKey("sl") + JsonNumber(HistoryDealGetDouble(ticket, DEAL_SL), digits) + ",";
+      item += JsonKey("tp") + JsonNumber(HistoryDealGetDouble(ticket, DEAL_TP), digits) + ",";
       item += JsonKey("profit") + JsonNumber(profit, 2) + ",";
       item += JsonKey("commission") + JsonNumber(commission, 2) + ",";
       item += JsonKey("swap") + JsonNumber(swap, 2) + ",";
@@ -425,6 +489,7 @@ string JsonDeals(bool all_symbols=false)
    }
 
    json += "]";
+   if(all_symbols) { cached_all=json; cached_at=now; } else cached_symbol=json;
    return json;
 }
 
@@ -460,8 +525,8 @@ double AccountDailyRealized()
 
 string GuardianReason()
 {
-   if(TASK003_EXECUTION_LOCKED)
-      return "TASK003_EXECUTION_LOCKED";
+   if(!g_full_enabled)
+      return "USER_STOPPED";
 
    if(!TerminalInfoInteger(TERMINAL_CONNECTED))
       return "TERMINAL_DISCONNECTED";
@@ -472,8 +537,8 @@ string GuardianReason()
    if(!MQLInfoInteger(MQL_TRADE_ALLOWED))
       return "MQL_TRADE_NOT_ALLOWED";
 
-   if((ENUM_ACCOUNT_TRADE_MODE)AccountInfoInteger(ACCOUNT_TRADE_MODE) != ACCOUNT_TRADE_MODE_DEMO)
-      return "DEMO_ONLY";
+   if(!AccountInfoInteger(ACCOUNT_TRADE_ALLOWED) || !AccountInfoInteger(ACCOUNT_TRADE_EXPERT))
+      return "ACCOUNT_TRADE_NOT_ALLOWED";
 
    if(OwnPositionsCount() >= InpMaxOpenPositions)
       return "MAX_OPEN_POSITIONS";
@@ -498,10 +563,10 @@ string JsonGuardian()
    double loss_limit = MathAbs(balance) * InpMaxDailyLossPct / 100.0;
 
    string json = "{";
-   json += JsonKey("execution_locked") + "true,";
-   json += JsonKey("execution_ready") + "false,";
+   json += JsonKey("execution_locked") + JsonBool(!g_full_enabled) + ",";
+   json += JsonKey("execution_ready") + JsonBool(GuardianReason()=="READY") + ",";
    json += JsonKey("reason") + JsonString(GuardianReason()) + ",";
-   json += JsonKey("demo_only") + "true,";
+   json += JsonKey("demo_only") + "false,";
    json += JsonKey("demo_account") + JsonBool(demo_account) + ",";
    json += JsonKey("terminal_connected") + JsonBool(terminal_connected) + ",";
    json += JsonKey("terminal_trade_allowed") + JsonBool(terminal_trade_allowed) + ",";
@@ -547,7 +612,8 @@ string JsonBars()
    json += JsonKey("M30") + JsonBar(PERIOD_M30) + ",";
    json += JsonKey("H1")  + JsonBar(PERIOD_H1)  + ",";
    json += JsonKey("H2")  + JsonBar(PERIOD_H2)  + ",";
-   json += JsonKey("H4")  + JsonBar(PERIOD_H4);
+   json += JsonKey("H4")  + JsonBar(PERIOD_H4) + ",";
+   json += JsonKey("D1") + JsonBar(PERIOD_D1);
    json += "}";
    return json;
 }
@@ -569,12 +635,12 @@ string JsonHistoricalRate(const MqlRates &rate)
 // unchanged; neither ticks nor missing candles are invented.
 string JsonBarsWithHistory(string &history_json)
 {
-   ENUM_TIMEFRAMES frames[8] = {PERIOD_M1, PERIOD_M3, PERIOD_M5, PERIOD_M15,
-                                PERIOD_M30, PERIOD_H1, PERIOD_H2, PERIOD_H4};
-   string labels[8] = {"M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4"};
+   ENUM_TIMEFRAMES frames[9] = {PERIOD_M1, PERIOD_M3, PERIOD_M5, PERIOD_M15,
+                                PERIOD_M30, PERIOD_H1, PERIOD_H2, PERIOD_H4, PERIOD_D1};
+   string labels[9] = {"M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4", "D1"};
    string latest_json = "{";
    history_json = "{";
-   for(int index = 0; index < 8; index++)
+   for(int index = 0; index < 9; index++)
    {
       if(index > 0) { latest_json += ","; history_json += ","; }
       MqlRates rates[];
@@ -597,7 +663,8 @@ string JsonBarsWithHistory(string &history_json)
 string BuildHelloPayload()
 {
    string json = "{";
-   json += JsonKey("bridge_version") + JsonString("1.019") + ",";
+   json += JsonKey("bridge_version") + JsonString("1.020") + ",";
+   json += JsonKey("execution_capable") + "true,";
    json += JsonKey("component") + JsonString("mt5-bridge") + ",";
    json += JsonKey("symbol") + JsonString(_Symbol) + ",";
    json += JsonKey("magic") + StringFormat("%I64d", InpMagic) + ",";
@@ -625,7 +692,8 @@ string BuildSnapshotPayload(bool include_history=false)
    string history_json = "";
    string latest_bars = include_history ? JsonBarsWithHistory(history_json) : JsonBars();
    string json = "{";
-   json += JsonKey("bridge_version") + JsonString("1.019") + ",";
+   json += JsonKey("bridge_version") + JsonString("1.020") + ",";
+   json += JsonKey("execution_capable") + "true,";
    json += JsonKey("symbol") + JsonString(_Symbol) + ",";
    json += JsonKey("magic") + StringFormat("%I64d", InpMagic) + ",";
    json += JsonKey("terminal_connected") + JsonBool((bool)TerminalInfoInteger(TERMINAL_CONNECTED)) + ",";
@@ -648,11 +716,12 @@ string BuildSnapshotPayload(bool include_history=false)
    json += JsonKey("spread_points") + JsonNumber(spread_points, 2) + ",";
    json += JsonKey("digits") + IntegerToString(_Digits) + ",";
    json += JsonKey("point") + JsonNumber(point, 10) + ",";
-   json += JsonKey("volume_min") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN), 2) + ",";
-   json += JsonKey("volume_max") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MAX), 2) + ",";
-   json += JsonKey("volume_step") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP), 2) + ",";
+   json += JsonKey("volume_min") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN), 8) + ",";
+   json += JsonKey("volume_max") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MAX), 8) + ",";
+   json += JsonKey("volume_step") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP), 8) + ",";
    json += JsonKey("tick_size") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE), 10) + ",";
    json += JsonKey("tick_value") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE), 8) + ",";
+   json += JsonKey("tick_value_loss") + JsonNumber(SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE_LOSS), 8) + ",";
    json += JsonKey("stops_level") + IntegerToString((int)SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL)) + ",";
    json += JsonKey("freeze_level") + IntegerToString((int)SymbolInfoInteger(_Symbol, SYMBOL_TRADE_FREEZE_LEVEL)) + ",";
    json += JsonKey("positions_count") + IntegerToString(OwnPositionsCount()) + ",";
@@ -665,6 +734,16 @@ string BuildSnapshotPayload(bool include_history=false)
    json += JsonKey("all_deals") + JsonDeals(true) + ",";
    json += JsonKey("guardian") + JsonGuardian() + ",";
    json += JsonKey("server_time") + StringFormat("%I64d", (long)TimeTradeServer()) + ",";
+   json += JsonKey("server_utc_offset_seconds") + StringFormat("%I64d", (long)MathRound((double)(TimeTradeServer()-TimeGMT())/60)*60) + ",";
+   json += JsonKey("weekend_session_end") + StringFormat("%I64d",WeekendSessionEnd()) + ",";
+   json += JsonKey("symbol_sessions") + JsonSymbolSessions() + ",";
+   json += JsonKey("calendar") + g_calendar_json + ",";
+   json += JsonKey("broker_ping_ms") + JsonNumber((double)TerminalInfoInteger(TERMINAL_PING_LAST)/1000.0,3) + ",";
+   json += JsonKey("terminal_path") + JsonString(TerminalInfoString(TERMINAL_PATH)) + ",";
+   json += JsonKey("terminal_data_path") + JsonString(TerminalInfoString(TERMINAL_DATA_PATH)) + ",";
+   json += JsonKey("currency_base") + JsonString(SymbolInfoString(_Symbol,SYMBOL_CURRENCY_BASE)) + ",";
+   json += JsonKey("currency_profit") + JsonString(SymbolInfoString(_Symbol,SYMBOL_CURRENCY_PROFIT)) + ",";
+   json += JsonKey("indicator_probes") + JsonIndicatorProbes() + ",";
    json += JsonKey("bars") + latest_bars;
    if(include_history)
       json += "," + JsonKey("bar_history") + history_json;
@@ -686,6 +765,7 @@ string BuildEnvelope(string message_type, string request_id, string payload_json
 
 void CloseSocket()
 {
+   g_full_enabled = false;
    if(g_socket != INVALID_HANDLE)
    {
       SocketClose(g_socket);
@@ -936,7 +1016,7 @@ bool EnsureHandshake()
    ulong now_ms = GetTickCount64();
    if(g_last_handshake_log_ms == 0 || now_ms - g_last_handshake_log_ms >= 10000)
    {
-      Print("XAUPY_BRIDGE handshake ready; execution remains locked.");
+      Print("XAUPY_BRIDGE handshake ready; trading follows the account-bound user mode in the app.");
       g_last_handshake_log_ms = now_ms;
    }
    return true;
@@ -945,12 +1025,13 @@ bool EnsureHandshake()
 int OnInit()
 {
    MathSrand((int)(GetTickCount() ^ (uint)TimeLocal()));
-   if(!DemoOnceParserSelfTest())
+   if(!DemoOnceParserSelfTest() || !FullParserSelfTest())
    {
       Print("XAUPY_DEMO_ONCE pure JSON self-test FAILED; EA initialization refused.");
       return INIT_FAILED;
    }
    DemoOnceInit();
+   FullInit();
 
    if(InpTimerMs < 250)
    {
@@ -970,12 +1051,13 @@ int OnInit()
       return INIT_FAILED;
    }
 
-   Print("XAUPY_BRIDGE Task 009 initialized. ORDER BOOK ACTIVE; BROKER EXECUTION LOCKED.");
+   Print("XAUPY_BRIDGE initialized. User execution mode is OFF until confirmed by the app.");
    return INIT_SUCCEEDED;
 }
 
 void OnDeinit(const int reason)
 {
+   ReleaseIndicatorProbes();
    EventKillTimer();
    CloseSocket();
    Print("XAUPY_BRIDGE stopped reason=", reason);
@@ -999,15 +1081,19 @@ void OnTimer()
    if(include_history)
       g_last_history_ms = GetTickCount64();
    DemoOnceHandleAck(response);
+   FullHandleAck(response);
    // Closed bars precede ticks so Python can replay each event without looking ahead.
    if(!SendRequest("bridge_ticks", TickBatchPayload(), "bridge_ticks_ack", response)) return;
    DemoOnceHandleAck(response);
+   FullHandleAck(response);
+   FullPoll();
    // Reconnect/restart reconciliation needs this connection's fresh identity snapshot first.
    // A rejected result stays pending and can never prevent the next snapshot/tick update.
    if(g_once_report_pending && SendRequest("bridge_demo_once_result",g_once_report,"bridge_demo_once_result_ack",response))
    {
       if(DemoOnceResultAckAccepted(response)) g_once_report_pending=false;
    }
+   RefreshCalendar();
 }
 
 void OnTick()

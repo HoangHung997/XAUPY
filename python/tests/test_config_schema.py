@@ -22,7 +22,7 @@ from xaupy_engine.config_schema import (
 class ConfigSchemaTests(unittest.TestCase):
     def test_timeframe_options_are_exact_product_requirement(self):
         self.assertEqual(
-            ("M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4"),
+            ("M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4", "D1"),
             TIMEFRAME_OPTIONS,
         )
 
@@ -45,10 +45,8 @@ class ConfigSchemaTests(unittest.TestCase):
         errors = validate_profile(profile)
         self.assertTrue(any("timeframes.trigger" in error for error in errors))
 
-    def test_task004_safety_values_cannot_be_unlocked(self):
+    def test_execution_integrity_rules_remain_enforced(self):
         cases = (
-            ("execution", "allow_real_account", True),
-            ("execution", "demo_only", False),
             ("execution", "max_retry_count", 1),
             ("safety", "never_widen_sl", False),
             ("safety", "require_server_sl", False),
@@ -59,6 +57,11 @@ class ConfigSchemaTests(unittest.TestCase):
                 profile = default_profile()
                 profile[section][key] = value
                 self.assertNotEqual([], validate_profile(profile))
+
+    def test_account_mode_is_user_configurable(self):
+        profile = default_profile()
+        profile['execution'].update(allow_real_account=True,demo_only=False)
+        self.assertEqual([],validate_profile(profile))
 
     def test_cross_field_ranges_are_checked(self):
         profile = default_profile()

@@ -18,6 +18,7 @@ public sealed class BacktestChartControl : Control
     private string _seriesMode = "Equity";
     private readonly List<(Border Chip, string Mode)> _chips = new();
     public string SeriesMode => _seriesMode;
+    public int TimezoneOffsetMinutes { get; set; }
     private static readonly IBrush EquityBrush = Brush("#1B8FFF");
     private static readonly IBrush BalanceBrush = Brush("#30D08A");
     private static readonly IBrush DrawdownBrush = Brush("#FF3C55");
@@ -107,7 +108,7 @@ public sealed class BacktestChartControl : Control
             if (hasData)
             {
                 var value = max - (max - min) * i / 5;
-                var label = _drawdownMode ? value.ToString("0.#", CultureInfo.InvariantCulture) + "%" : value.ToString("N0", CultureInfo.InvariantCulture);
+                var label = _drawdownMode ? value.ToString(Math.Abs(min) < 1 ? "0.000" : "0.0", CultureInfo.InvariantCulture) + "%" : value.ToString("N0", CultureInfo.InvariantCulture);
                 var text = Text(label, LabelBrush, 11);
                 context.DrawText(text, new Point(plot.Left - text.Width - 8, y - text.Height / 2));
             }
@@ -120,7 +121,7 @@ public sealed class BacktestChartControl : Control
             {
                 var epoch = firstTime + (long)((lastTime - firstTime) * (i / 5.0));
                 string label;
-                try { label = DateTimeOffset.FromUnixTimeSeconds(epoch).ToString(lastTime-firstTime >= 60*86400L ? "MM/yyyy" : "dd/MM", CultureInfo.InvariantCulture); }
+                try { label = DateTimeOffset.FromUnixTimeSeconds(epoch).AddMinutes(TimezoneOffsetMinutes).ToString(lastTime-firstTime >= 60*86400L ? "MM/yyyy" : lastTime-firstTime < 86400 ? "HH:mm" : "dd/MM", CultureInfo.InvariantCulture); }
                 catch (ArgumentOutOfRangeException) { label = "—"; }
                 var text = Text(label, LabelBrush, 11);
                 context.DrawText(text, new Point(Math.Clamp(x-text.Width/2, 0, Bounds.Width-text.Width), plot.Bottom+5));
@@ -174,5 +175,5 @@ public sealed class BacktestChartControl : Control
         context.DrawGeometry(null, new Pen(stroke, 1.7), line);
     }
     private static IBrush Brush(string color) => new SolidColorBrush(Color.Parse(color));
-    private static FormattedText Text(string value, IBrush brush, double size) => new(value, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface("Segoe UI"), size, brush);
+    private static FormattedText Text(string value, IBrush brush, double size) => new(value, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface("Segoe UI"), AppearanceService.Scale(size), brush);
 }

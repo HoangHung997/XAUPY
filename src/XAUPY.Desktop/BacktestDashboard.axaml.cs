@@ -95,30 +95,21 @@ public partial class BacktestDashboard : UserControl
             return false;
         }
 
-        var files = await storage.OpenFilePickerAsync(
-            new FilePickerOpenOptions
-            {
-                Title = "Chọn dữ liệu lịch sử M1 XAUPY (.json/.csv)",
-                AllowMultiple = false,
-                FileTypeFilter = new[] { BacktestDataFileType }
-            });
-
-        var file = files.FirstOrDefault();
-        if (file is null)
-            return false;
-
         try
         {
+            var path = await HistoryDatasetPicker.PickAsync(this,_supervisor);
+            if (path is null) return false;
             _loading = true;
             SetStatus("Đang kiểm tra dataset...", Brushes.LightBlue);
-            var info = await _supervisor.InspectBacktestDatasetAsync(file.Path.LocalPath);
+            var info = await _supervisor.InspectBacktestDatasetAsync(path);
             _dataset = info;
+            Text("BacktestTimeframeText").Text=info.Timeframe;
 
             Text("BacktestSymbolText").Text = info.Metadata.Symbol;
             Box("BacktestFromDateBox").Text = info.FirstDate;
             Box("BacktestToDateBox").Text = info.LastDate;
             Text("DatasetStatusText").Text =
-                $"Dữ liệu: {info.FileName} • {info.BarCount:N0} M1 bars • " +
+                $"Dữ liệu: {info.FileName} • {info.Timeframe} • {info.BarCount:N0} nến • " +
                 $"point {info.Metadata.PointSize:0.#####} • tick {info.Metadata.TickSize:0.#####}/{info.Metadata.TickValue:0.#####} • " +
                 $"SHA {ShortHash(info.DatasetFingerprint)}";
             SetStatus("Dataset hợp lệ, sẵn sàng Backtest.", Brushes.LightGreen);
@@ -195,8 +186,8 @@ public partial class BacktestDashboard : UserControl
                 commission, _runCancellation.Token,
                 new Progress<BacktestJobSnapshot>(job => {
                     if (_runCancellation is { IsCancellationRequested: false } && job.State is "QUEUED" or "RUNNING")
-                        SetStatus(job.TotalBars > 0 ? $"Backtest: {job.CompletedBars:N0}/{job.TotalBars:N0} nến • {job.State}" : "Đang đọc dữ liệu Backtest...", Brushes.LightBlue);
-                }));
+                        SetStatus(job.TotalBars > 0 ? $"Backtest: {job.CompletedBars:N0}/{job.TotalBars:N0} quan sát • {job.State}" : "Đang đọc dữ liệu Backtest...", Brushes.LightBlue);
+                }), model: this.FindControl<ComboBox>("BacktestModelCombo")!.SelectedIndex switch {1=>"M1_OHLC",2=>"REAL_TICKS",_=>"AUTO"});
 
             _tradePage = 0;
             await LoadRunAsync(result.RunId, page: 0);
@@ -403,29 +394,7 @@ public partial class BacktestDashboard : UserControl
 
         try
         {
-            var trades = await FetchAllTradesAsync(_current.RunId, _current.TradeTotal);
-            var export = new
-            {
-                schema_version = 1,
-                run_id = _current.RunId,
-                created_at_utc = _current.CreatedAtUtc,
-                result_hash = _current.ResultHash,
-                model = _current.Model,
-                dataset_file_name = _current.DatasetFileName,
-                dataset_fingerprint = _current.DatasetFingerprint,
-                profile_hash = _current.ProfileHash,
-                symbol = _current.Symbol,
-                from_date = _current.FromDate,
-                to_date = _current.ToDate,
-                initial_balance = _current.InitialBalance,
-                spread_pips = _current.SpreadPips,
-                commission_per_lot = _current.CommissionPerLot,
-                metrics = _current.Metrics,
-                skipped_signals = _current.SkippedSignals,
-                equity_curve = _current.EquityCurve,
-                drawdown_curve = _current.DrawdownCurve,
-                trades
-            };
+            var export = await FetchFullResultAsync(_current);
 
             await using var stream = await file.OpenWriteAsync();
             if (stream.CanSeek)
@@ -462,10 +431,10 @@ public partial class BacktestDashboard : UserControl
         var file = await storage.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
-                Title = "Xuất danh sách giao dịch Backtest",
-                SuggestedFileName = $"XAUPY-Backtest-Trades-{_current.FromDate}-{_current.ToDate}.csv",
-                DefaultExtension = "csv",
-                FileTypeChoices = new[] { CsvFileType }
+                Title = "Xuất báo cáo Backtest",
+                SuggestedFileName = $"XAUPY-Backtest-{_current.FromDate}-{_current.ToDate}.html",
+                DefaultExtension = "html",
+                FileTypeChoices = new[] { new FilePickerFileType("Báo cáo tổng hợp HTML") {Patterns=["*.html"]}, CsvFileType }
             });
 
         if (file is null)
@@ -473,7 +442,15 @@ public partial class BacktestDashboard : UserControl
 
         try
         {
-            var trades = await FetchAllTradesAsync(_current.RunId, _current.TradeTotal);
+            var report=_current;
+            var trades = await FetchAllTradesAsync(report.RunId, report.TradeTotal);
+            if(file.Name.EndsWith(".html",StringComparison.OrdinalIgnoreCase))
+            {
+                await using var htmlStream=await file.OpenWriteAsync();if(htmlStream.CanSeek)htmlStream.SetLength(0);
+                await using var htmlWriter=new StreamWriter(htmlStream,new UTF8Encoding(false));
+                await htmlWriter.WriteAsync(BuildHtmlReport(report,trades));
+                SetStatus($"Đã xuất báo cáo và {trades.Count} giao dịch: {file.Name}",Brushes.LightGreen);return;
+            }
             await using var stream = await file.OpenWriteAsync();
             if (stream.CanSeek)
                 stream.SetLength(0);
@@ -535,6 +512,28 @@ public partial class BacktestDashboard : UserControl
                 break;
             offset += page.Trades.Count;
         }
+        if(result.Count!=total)throw new InvalidDataException("Lịch sử trả về chưa đầy đủ; không xuất báo cáo thiếu giao dịch.");
+        return result;
+    }
+
+    private async Task<System.Text.Json.Nodes.JsonObject> FetchFullResultAsync(BacktestResultSnapshot report)
+    {
+        var result = System.Text.Json.Nodes.JsonNode.Parse(report.RawResult.GetRawText())!.AsObject();
+        var trades = new System.Text.Json.Nodes.JsonArray();
+        while (trades.Count < report.TradeTotal)
+        {
+            var page = await _supervisor!.GetBacktestResultAsync(report.RunId,
+                tradeOffset: trades.Count, tradeLimit: Math.Min(500, report.TradeTotal - trades.Count));
+            if (page.ResultHash != report.ResultHash || page.TradeTotal != report.TradeTotal)
+                throw new InvalidDataException("Kết quả đã thay đổi trong lúc xuất.");
+            var received = page.RawResult.GetProperty("trades");
+            if (received.GetArrayLength() == 0) throw new InvalidDataException("Lịch sử trả về chưa đầy đủ.");
+            foreach (var trade in received.EnumerateArray())
+                trades.Add(System.Text.Json.Nodes.JsonNode.Parse(trade.GetRawText()));
+        }
+        if (trades.Count != report.TradeTotal) throw new InvalidDataException("Số giao dịch không khớp.");
+        result["trades"] = trades;
+        result.Remove("trade_total"); result.Remove("trade_offset"); result.Remove("trade_limit");
         return result;
     }
 
@@ -542,7 +541,7 @@ public partial class BacktestDashboard : UserControl
     {
         var metrics = result.Metrics;
         Text("BacktestResultHeaderText").Text =
-            $"Kết quả Backtest - {result.Symbol} (M1)  {result.FromDate} - {result.ToDate}";
+            $"Kết quả Backtest - {result.Symbol} ({(result.Model.StartsWith("OBSERVED_", StringComparison.Ordinal) ? "Tick" : "M1 OHLC")})  {result.FromDate} - {result.ToDate}";
 
         Text("NetProfitText").Text = Money(metrics.NetProfit);
         Text("NetProfitText").Foreground = ProfitBrush(metrics.NetProfit);
@@ -569,6 +568,8 @@ public partial class BacktestDashboard : UserControl
             : metrics.AverageTrade / metrics.InitialBalance * 100.0;
         Text("AverageTradePctText").Text = $"{avgPct:0.00}% / lệnh";
 
+        Chart("EquityChart").TimezoneOffsetMinutes = result.TimezoneOffsetMinutes;
+        Chart("DrawdownChart").TimezoneOffsetMinutes = result.TimezoneOffsetMinutes;
         Chart("EquityChart").SetEquityData(result.EquityCurve);
         Chart("DrawdownChart").SetDrawdownData(result.DrawdownCurve);
 
@@ -630,7 +631,7 @@ public partial class BacktestDashboard : UserControl
             AddCell(grid, 0, (index + 1).ToString());
             AddCell(grid, 1, LocalTime(item.CreatedAtUtc));
             AddCell(grid, 2, item.Symbol);
-            AddCell(grid, 3, "M1");
+            AddCell(grid, 3, item.Model.StartsWith("OBSERVED_", StringComparison.Ordinal) ? "Tick" : "M1");
             AddCell(grid, 4, item.FromDate);
             AddCell(grid, 5, item.ToDate);
             AddCell(grid, 6, Money(item.Metrics.NetProfit), ProfitBrush(item.Metrics.NetProfit));
@@ -719,10 +720,10 @@ public partial class BacktestDashboard : UserControl
             Background = new SolidColorBrush(Color.Parse("#031426"))
         };
 
-        var cancel = new Button { Content = "Hủy", Classes = { "secondary" } };
+        var cancel = new Button { [LocalizationService.TextProperty] = "Hủy", Classes = { "secondary" } };
         var confirm = new Button
         {
-            Content = "Xóa kết quả",
+            [LocalizationService.TextProperty] = "Xóa kết quả",
             Background = new SolidColorBrush(Color.Parse("#B61C35")),
             Foreground = Brushes.White,
             BorderBrush = Brushes.IndianRed,
@@ -753,8 +754,8 @@ public partial class BacktestDashboard : UserControl
         content.Children.Add(
             new TextBlock
             {
-                Text = "Xóa kết quả Backtest đã lưu?",
-                FontSize = 20,
+                [LocalizationService.TextProperty] = "Xóa kết quả Backtest đã lưu?",
+                [AppearanceService.BaseFontSizeProperty] = 20d,
                 FontWeight = FontWeight.SemiBold
             });
         content.Children.Add(
@@ -787,7 +788,7 @@ public partial class BacktestDashboard : UserControl
         {
             Text = value,
             Foreground = brush ?? new SolidColorBrush(Color.Parse("#D8E5F2")),
-            FontSize = 12,
+            [AppearanceService.BaseFontSizeProperty] = 12d,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(7, 5),
             TextTrimming = TextTrimming.CharacterEllipsis
@@ -843,13 +844,13 @@ public partial class BacktestDashboard : UserControl
                 ? Brushes.IndianRed
                 : Brushes.LightGray;
 
-    private static string Epoch(long value)
+    private string Epoch(long value)
     {
         try
         {
             return DateTimeOffset
                 .FromUnixTimeSeconds(value)
-                .ToLocalTime()
+                .AddMinutes(_current?.TimezoneOffsetMinutes ?? 0)
                 .ToString("yyyy.MM.dd HH:mm");
         }
         catch (ArgumentOutOfRangeException)

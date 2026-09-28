@@ -41,7 +41,7 @@ class ConfigProtocolTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("config_schema_ack", response.type)
         schema = response.payload["config_schema"]
         self.assertEqual(
-            ["M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4"],
+            ["M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4", "D1"],
             schema["timeframe_options"],
         )
         self.assertGreaterEqual(schema["field_count"], 100)
@@ -67,7 +67,7 @@ class ConfigProtocolTests(unittest.IsolatedAsyncioTestCase):
         writer.close()
         await writer.wait_closed()
 
-    async def test_live_unlock_attempt_is_rejected(self):
+    async def test_real_profile_is_valid_but_cannot_enable_execution(self):
         reader, writer = await self.connect()
         defaults = await exchange(reader, writer, "config_defaults_get")
         profile = defaults.payload["profile"]
@@ -79,10 +79,7 @@ class ConfigProtocolTests(unittest.IsolatedAsyncioTestCase):
             "config_validate",
             {"profile": profile},
         )
-        self.assertFalse(validated.payload["valid"])
-        self.assertTrue(
-            any("allow_real_account" in error for error in validated.payload["errors"])
-        )
+        self.assertTrue(validated.payload["valid"])
         self.assertFalse(validated.payload["execution_enabled"])
         writer.close()
         await writer.wait_closed()

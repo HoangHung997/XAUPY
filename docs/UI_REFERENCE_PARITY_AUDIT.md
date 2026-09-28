@@ -1,5 +1,31 @@
 # UI reference audit — 2026-09-28
 
+## Current 1.0 development review — 16:40 local
+
+Reviewed all ten `artifacts/release-v1-ui-packaged` captures against all ten
+reference PNGs. This package is from the first full 1.0-dev build and predates
+the latest layout corrections. **Exact visual parity is still not certified.**
+
+The source now removes misleading permanent-lock/simulation messages, follows
+actual user execution mode, translates generated settings, and places research
+actions inside the Optimizer header. Chart PNG/fullscreen controls use vector
+icons, D1 is visible, and archive/RSI/Z legends occupy separate lines. The Orders
+tables reserve less empty height so the new execution row does not hide history.
+Dialog zoom accounts for margins, preventing horizontal clipping at 100%.
+
+Native package acceptance opened all 100,537 real M1 bars through the file picker,
+edited the chart RSI period, exported PNG, and opened/closed fullscreen. The PNG
+`artifacts/release-v1-native-packaged/chart-export-before-layout-fix.png` records
+the legend overlap found in this run. A fresh capture must verify the correction.
+
+Earlier missing-feature descriptions in this document are historical. The current
+code adds native telemetry, nine independent timeframe rows, broker calendar,
+full broker history, tick replay, profile defaults/versioning and data bundles.
+See [the feature matrix](RELEASE_V1_FEATURE_MATRIX.csv) for acceptance boundaries.
+Reference credentials, notifications and some illustrative preferences still
+differ from the implemented controls; account values and trade results remain
+actual data. A build or a mock result cannot establish visual or broker acceptance.
+
 ## Evidence and verification
 
 - Reviewed all ten approved PNGs in `docs/ui-reference/`.

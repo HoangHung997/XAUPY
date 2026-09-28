@@ -6,7 +6,12 @@ namespace XAUPY.Desktop;
 
 public partial class App : Application
 {
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
+        AppearanceService.ApplySaved();
+        LocalizationService.ApplySaved();
+    }
 
     public override void OnFrameworkInitializationCompleted()
     {

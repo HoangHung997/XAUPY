@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
     <ProjectReference Include="..\XAUPY.Ipc\XAUPY.Ipc.csproj" />
   </ItemGroup>
 

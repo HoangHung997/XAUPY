@@ -37,7 +37,7 @@ public partial class MainWindow : Window
                 "NavOverview"),
             ["configuration"] = (
                 "Cấu hình",
-                "Full schema-driven editor: 133 tham số, JSON profile, MT5 .set import/export, validation và active profile.",
+                "Full schema-driven editor: JSON profile, MT5 .set import/export, validation và active profile.",
                 "NavConfiguration"),
             ["strategy"] = (
                 "Chiến lược",
@@ -49,7 +49,7 @@ public partial class MainWindow : Window
                 "NavMonitoring"),
             ["orders"] = (
                 "Lệnh & Vị thế",
-                "Vị thế, pending orders, deals và manual-action simulation có guard; broker execution vẫn khóa.",
+                "Vị thế, lệnh chờ, lịch sử và điều khiển broker theo quyền người dùng.",
                 "NavOrders"),
             ["backtest"] = (
                 "Backtest",
@@ -104,6 +104,7 @@ public partial class MainWindow : Window
             ?? throw new InvalidOperationException("OptimizerDashboard missing.");
         _optimizerDashboard.AttachSupervisor(_engineSupervisor);
         _toolsDashboard = this.FindControl<ToolsDashboard>("ToolsView")!;
+        _optimizerDashboard.HasConflictingDraft=()=>_configurationEditor.HasUnsavedChanges || _strategyDashboard.HasUnsavedChanges || _quickConfigurationDirty || _toolsDashboard.HasUnsavedChanges;
         _toolsDashboard.AttachSupervisor(_engineSupervisor);
         _strategyDashboard.HasConflictingDraft = () => _configurationEditor.HasUnsavedChanges || _quickConfigurationDirty || _toolsDashboard.HasUnsavedChanges;
         _configurationEditor.HasConflictingDraft = () => _strategyDashboard.HasUnsavedChanges || _quickConfigurationDirty || _toolsDashboard.HasUnsavedChanges;
@@ -228,8 +229,8 @@ public partial class MainWindow : Window
         quote.MinHeight = monitoring ? 154 : 166;
         quote.Padding = new Avalonia.Thickness(17, monitoring ? 5 : 10);
         this.FindControl<StackPanel>("SidebarQuoteContent")!.Spacing = monitoring ? 2 : 3;
-        FindText("SymbolValue").FontSize = monitoring ? 24 : 26;
-        FindText("BidValue").FontSize = monitoring ? 36 : 40;
+        FindText("SymbolValue").SetValue(AppearanceService.BaseFontSizeProperty, monitoring ? 24d : 26d);
+        FindText("BidValue").SetValue(AppearanceService.BaseFontSizeProperty, monitoring ? 36d : 40d);
         this.FindControl<Border>("SidebarEaCard")!.MinHeight = monitoring ? 106 : 116;
         this.FindControl<Border>("SidebarAccountCard")!.MinHeight = monitoring ? 216 : 250;
         this.FindControl<Grid>("SidebarAccountRows")!.RowSpacing = monitoring ? 8 : 11;
@@ -290,6 +291,8 @@ public partial class MainWindow : Window
 
     private void ApplyEngineState(EngineStateChangedEventArgs e)
     {
+        NotifyEngineChange(e);
+        NotifySystemAlerts(e);
         var engineText = GetEngineStateLabel(e.State);
         var engineColor = EngineStateColor(e.State);
 
@@ -318,19 +321,25 @@ public partial class MainWindow : Window
         }
 
         ApplyBridgeStatus(e.Mt5Bridge);
-        ApplyDemoOnceStatus(e.DemoOnce);
+        FindText("GuardianReasonValue").Text = e.Execution.Label;
+        ToolTip.SetTip(FindText("GuardianReasonValue"), e.Execution.Reason);
         ApplyConfigurationSummary(e.Configuration);
         ApplyOverviewSnapshot(e.Overview);
+        ApplyLiveSummary(e.Monitoring, e.OrdersPositions);
         ApplyStrategySnapshot(e.Strategy);
         _strategyDashboard.Apply(e.Strategy, e.Configuration);
+        _strategyDashboard.ApplyExecution(e.Execution);
         _monitoringDashboard.Apply(e.Strategy, e.Overview, e.Mt5Bridge, e.Configuration);
+        _monitoringDashboard.ApplyServices(e.Monitoring, e.Execution);
         _ordersPositionsDashboard.Apply(e.OrdersPositions, e.Overview, e.Mt5Bridge, e.Configuration);
         _ordersPositionsDashboard.ApplyDemoOnceStatus(e.DemoOnce);
-        _settingsDashboard.ApplyDemoStatus(e.DemoOnce);
+        _settingsDashboard.ApplyExecutionStatus(e.Execution);
+        _ordersPositionsDashboard.ApplyExecutionStatus(e.Execution);
         _journalDashboard.ApplySummary(e.JournalSummary);
         _backtestDashboard.ApplyConfiguration(e.Configuration);
         _optimizerDashboard.ApplyStatus(e.OptimizerStatus);
         _optimizerDashboard.ApplyEngineState(e.State);
+        _optimizerDashboard.ApplyResources(e.Monitoring);
         ApplyOrdersFooter(e.OrdersPositions);
         _ = _configurationEditor.NotifyEngineStateAsync(e.State);
     }
@@ -356,12 +365,13 @@ public partial class MainWindow : Window
             ? $"{symbol} • {mode} • terminal={(bridge.TerminalConnected ? "online" : "offline")} • snapshots={bridge.SnapshotsTotal}"
             : "Chưa nhận snapshot hợp lệ hoặc Bridge đã stale.";
 
-        FindText("GuardianReasonValue").Text = bridge.ExecutionLocked ? "EXECUTION LOCKED" : bridge.GuardianReason;
         SetStatusDot("TerminalConnectionDot", bridge.Connected && bridge.TerminalConnected);
         SetStatusDot("BridgeConnectionDot", bridge.Connected);
 
         if (_lastBridgeConnected != bridge.Connected)
         {
+            if(_lastBridgeConnected is not null && _engineSupervisor.ShowConnectionChanges)
+                Notify("Kết nối MT5",bridge.Connected ? $"Đã kết nối {symbol} · {mode}" : "Mất kết nối MT5; chờ dữ liệu mới.",!bridge.Connected);
             if (_engineSupervisor.ShowConnectionChanges) AppendQuickLog(
                 bridge.Connected
                     ? $"MT5 Bridge → CONNECTED ({symbol}, {mode})."
@@ -369,17 +379,6 @@ public partial class MainWindow : Window
             _lastBridgeConnected = bridge.Connected;
 
         }
-    }
-
-    private void ApplyDemoOnceStatus(DemoOnceSnapshot report)
-    {
-        var safety = FindText("GuardianReasonValue");
-        safety.Foreground = Brushes.Gold;
-        ToolTip.SetTip(safety, null);
-        if (!DemoOncePresentation.IsVisible(report)) return;
-
-        safety.Text = $"LOCKED · DEMO 1: {DemoOncePresentation.StateLabel(report)}";
-        ToolTip.SetTip(safety, DemoOncePresentation.Detail(report));
     }
 
     private void ApplyConfigurationSummary(ConfigurationSummary config)
@@ -486,7 +485,7 @@ public partial class MainWindow : Window
 
         FindText("RecentOrdersEmptyText").Text =
             overview.PositionsCount == 0 && overview.OrdersCount == 0
-                ? "Không có position/pending order thuộc bridge snapshot hiện tại. Broker execution vẫn khóa."
+                ? "Không có vị thế hoặc lệnh chờ thuộc chiến lược trong bản tin MT5 hiện tại."
                 : $"Bridge báo {overview.PositionsCount} position và {overview.OrdersCount} order. Mở tab Lệnh & Vị thế để xem ticket thật.";
 
         if (!_hadMarketData)
@@ -514,7 +513,7 @@ public partial class MainWindow : Window
         FindText("SidebarPositionsText").Text = "0";
         FindText("FooterSpreadText").Text = "—";
         FindText("RecentOrdersEmptyText").Text =
-            "Chưa có dữ liệu lệnh. Task 009 chỉ hiển thị dữ liệu thật; broker execution hiện đang khóa.";
+            "Chưa có dữ liệu lệnh từ MT5. Quyền giao dịch được chọn tại tab Lệnh & Vị thế.";
     }
 
     private void ApplyOrdersFooter(OrdersPositionsSnapshot orders)

@@ -92,7 +92,11 @@ class DataTransferTests(unittest.TestCase):
             library=UserLibrary(target)
             self.assertEqual('saved',library.profile_list()[0]['id'])
             imported=Path(library.history_catalog()[0]['path'])
-            self.assertTrue(imported.is_relative_to(target));self.assertEqual(2,len(load_historical_dataset(imported).bars))
+            # Hosted Windows TEMP may contain an 8.3 alias (RUNNER~1).
+            # The catalogue publishes resolved paths, so compare canonical
+            # destinations on both sides rather than their spelling.
+            self.assertTrue(imported.resolve().is_relative_to(target.resolve()))
+            self.assertEqual(2,len(load_historical_dataset(imported).bars))
             self.assertFalse((target/'runtime-v1.json').exists());self.assertFalse((target/'demo-once-v1.json').exists())
             self.assertFalse((root/'target-logs'/'journal-v1.jsonl').exists())
             self.assertTrue((Path(result['import_directory'])/'logs'/'journal-v1.jsonl').exists())

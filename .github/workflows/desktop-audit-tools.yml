@@ -1,0 +1,41 @@
+name: Desktop audit toolchain
+on:
+  push:
+    branches: ['release/1.0-completion-20260929']
+    paths: ['.github/workflows/desktop-audit-tools.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore audit dependencies
+        run: |
+          dotnet restore tests/XAUPY.Desktop.InteractionTests/XAUPY.Desktop.InteractionTests.csproj
+          dotnet restore tests/XAUPY.Ipc.ContractTests/XAUPY.Ipc.ContractTests.csproj
+      - name: Archive compiler and restored dependencies for offline audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$(dirname "$(readlink -f "$(command -v dotnet)")")"
+          mkdir -p audit-tools/dotnet audit-tools/nuget
+          cd "$root"
+          tar cf - dotnet host/fxr/10.* sdk/10.* shared/Microsoft.NETCore.App/10.* packs/Microsoft.NETCore.App.Ref/10.* packs/Microsoft.NETCore.App.Host.linux-x64/10.* | tar xf - -C "$GITHUB_WORKSPACE/audit-tools/dotnet"
+          cp -a "$HOME/.nuget/packages/." "$GITHUB_WORKSPACE/audit-tools/nuget/"
+          cd "$GITHUB_WORKSPACE"
+          tar czf desktop-audit-tools.tgz -C audit-tools .
+          sha256sum desktop-audit-tools.tgz > desktop-audit-tools.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-audit-tools
+          path: |
+            desktop-audit-tools.tgz
+            desktop-audit-tools.sha256
+          retention-days: 1
+          if-no-files-found: error

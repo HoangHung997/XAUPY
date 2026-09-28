@@ -6,7 +6,7 @@ XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 2. Python Engine — chiến lược, cấu hình, nghiên cứu, backtest và tối ưu.
 3. MQL5 Bridge EA — dữ liệu MT5, execution và lớp an toàn broker-side.
 
-Trạng thái tiếp quản 28/09/2026: Task 013–015 hoàn thành trên bản Windows 0.16.0-rc1. Bản 0.16.0-rc2 bổ sung tải lịch sử MT5 vào ổ đĩa, phân tích RSI/Z theo tick quan sát được và chỉnh sửa cấu hình chiến lược; đã qua CI, kiểm tra bộ cài và kết nối MT5 thực trên cả bản build tại máy lẫn đúng bản CI tải về. Task 016 vẫn ACTIVE, chưa chứng nhận khớp UI 100%. Xem [nghiệm thu RC2](docs/TASK_016_UAT_AUDIT.md), [bằng chứng RC1](docs/TASK016_RELEASE_ACCEPTANCE.md) và [đối chiếu giao diện](docs/UI_REFERENCE_PARITY_AUDIT.md).
+Trạng thái tiếp quản 28/09/2026: Task 013–015 hoàn thành trên bản Windows 0.16.0-rc1. Bản 0.16.0-rc2 bổ sung tải lịch sử MT5 vào ổ đĩa, phân tích RSI/Z theo tick quan sát được và chỉnh sửa cấu hình chiến lược. RC2 tại `7f968266` đã qua CI, bộ cài và kết nối MT5 thực; bản chỉnh giao diện tiếp theo tại `5dc7a6e` cũng đã qua CI, xác minh gói độc lập và đạt 19/19 kiểm tra với MT5 thật trên đúng bản tải về. Task 016 vẫn ACTIVE, chưa chứng nhận khớp UI 100%. Xem [nghiệm thu RC2](docs/TASK_016_UAT_AUDIT.md), [bằng chứng RC1](docs/TASK016_RELEASE_ACCEPTANCE.md) và [đối chiếu giao diện](docs/UI_REFERENCE_PARITY_AUDIT.md).
 
 ## Tài liệu bắt buộc
 
@@ -295,3 +295,13 @@ RC2 từ commit `7f968266` đã qua [CI 36359181671](https://github.com/HoangHun
 Bản CI tải về đã được đối chiếu toàn bộ 282 tệp và 281 SHA-256 trong manifest. ZIP và bộ cài nằm riêng ở `dist/rc2-ci/`; ứng dụng giải nén đã xác minh ở `dist/XAUPY-verified-rc2-win-x64/`. Chính bản CI này đã chạy với MT5 thật: 19/19 kiểm tra đạt qua 21 mẫu trong 20 giây, số gói tick tăng 50→70 và số tick tăng 232→429; EA và Engine đang chạy có SHA-256 trùng manifest. Desktop hiển thị READY và cả 10 trang đã được chụp kiểm tra riêng. Bản build tại máy và RC1 được giữ nguyên.
 
 Build Windows RC2 cần .NET 10, MetaEditor, Python/PyInstaller và package chính thức `MetaTrader5==5.0.6231` cùng NumPy. `scripts/build_windows.ps1` kiểm tra dependency trong executable, chạy smoke intrabar và tạo tên mới `XAUPY-0.16.0-rc2-win-x64.zip`; Inno Setup tạo `XAUPY-0.16.0-rc2-Setup.exe` khi truyền `-Iscc`. Bản RC1 đã xác minh được giữ riêng.
+
+### Đợt chỉnh giao diện RC2 tại `5dc7a6e`
+
+Bản này bổ sung JSON tô màu và số dòng với trình nhập văn bản thật, tìm kiếm/định dạng/phím tắt, công tắc Cài Đặt có lưu trạng thái, ma trận Giám Sát có thêm khung đang sử dụng và đồng hồ chỉ báo theo dữ liệu thực. Các trang còn lại được căn lại bố cục, khoảng cách và kiểu điều khiển; trạng thái chờ tín hiệu không còn bị hiểu là mọi điều kiện đã đạt.
+
+[CI 36361798910](https://github.com/HoangHung997/XAUPY/actions/runs/36361798910) của commit `5dc7a6ea1f4cafe50e9316028a19c797830457b9` đạt **324 Python, 102 C# contract, 76 kiểm tra giao diện và 16 intrabar**, cùng toàn bộ packaged smoke và vòng cài/đối chiếu hash/gỡ bộ cài trên Windows CI. Sau tải về, 282 tệp và 281 hash manifest đều khớp; executable đọc được MetaTrader5 5.0.6231 và NumPy 2.5.3.
+
+Gói mới nằm riêng ở `dist/rc2-refined-ci/`, bản chạy đã xác minh ở `dist/XAUPY-verified-rc2-refined-win-x64/`; bằng chứng CI trong `artifacts/ci-rc2-refined-download/`. ZIP có SHA-256 `9216a86e2bbc82bca52a31b0d914f0f312483a7c04745e05605110df9e0ad5f5`; bộ cài có SHA-256 `18ccdd0f4a7f67bcf2eea4b85d1ec29ee26a755d41a0183f25be849a6307984d`. Bộ cài không chạy trên máy người dùng; các gói trước được giữ riêng.
+
+Chính bản CI mới đạt **19/19 kiểm tra MT5 qua 21 mẫu trong 20 giây**: gói tick tăng **32→53**, số tick tăng **321→614**. EA đã cài và Engine đang chạy trùng hash manifest; execution vẫn khóa. Kết quả trong `artifacts/live-bridge-rc2-refined-ci.json` và `artifacts/rc2-refined-ci-live-summary.json`. Cả 10 trang native của bản này được chụp tại `artifacts/ui-audit-rc2-refined-ci/`; ảnh và kiểm tra kết nối không phải chứng nhận khớp UI 100%.

@@ -962,3 +962,40 @@ are retained in the RC2 audit. No local installer execution is claimed.
 The original strict UI parity requirement remains
 unfulfilled unless a subsequent actual comparison certifies it. Broker execution
 and real-account permission stay disabled throughout this extension.
+
+## RC2 UI refinement — `5dc7a6e`, 2026-09-28
+
+The next revision improves reference-layout fidelity, adds syntax coloring and
+line numbers to the real editable JSON control, preserves Settings choices in
+the new switches, and displays Monitoring timeframe/indicator evidence without
+inventing conditions for unevaluated frames. Readiness is kept distinct from an
+actual triggered entry condition. No broker execution or live-profile opt-in is
+introduced by these presentation changes.
+
+[CI 36361798910](https://github.com/HoangHung997/XAUPY/actions/runs/36361798910)
+succeeds for `5dc7a6ea1f4cafe50e9316028a19c797830457b9`: **324 Python**, **102 C#
+contracts**, **76 desktop interaction assertions**, all nine packaged smoke
+categories including **16 intrabar checks**, bundled MT5/NumPy, EA compilation,
+and the Windows installer install/hash/uninstall round trip. Desktop tests cover
+native editing/selection/undo/search/format/scroll, Settings restart persistence,
+and nine-frame Monitoring scroll/gauge behavior using isolated state and ports.
+
+Downloaded artifact `10945744624` independently passes all **282 file / 281
+manifest hash** checks, clean commit identity, architecture, safety and extracted
+file checks. The pair is in `dist/rc2-refined-ci/`, the extracted app in
+`dist/XAUPY-verified-rc2-refined-win-x64/`, and metadata/logs/verification in
+`artifacts/ci-rc2-refined-download/`. ZIP SHA-256 is
+`9216a86e2bbc82bca52a31b0d914f0f312483a7c04745e05605110df9e0ad5f5`; installer
+SHA-256 is `18ccdd0f4a7f67bcf2eea4b85d1ec29ee26a755d41a0183f25be849a6307984d`.
+No installer runs locally. Prior RC1/RC2 packages and evidence are preserved.
+
+The exact new CI runtime now passes its own **19/19 read-only MT5 checks across
+21 samples in 20 seconds**: accepted tick frames advance **32→53**, received ticks
+**321→614**. Installed EA and running Engine match this CI manifest, with broker
+execution locked. Evidence is `artifacts/live-bridge-rc2-refined-ci.json` and
+`artifacts/rc2-refined-ci-live-summary.json`. Ten native pages of this exact
+Desktop were captured in `artifacts/ui-audit-rc2-refined-ci/` (07:33:26–07:33:38
+local time). These observations are separate from the preceding artifact's
+19/19 and Stop/Start results. Task 016 stays ACTIVE because strict 100% reference
+parity has not been certified. See [RC2 audit](TASK_016_UAT_AUDIT.md) for complete
+identity and evidence scopes, and the separate UI audit for visual assessment.

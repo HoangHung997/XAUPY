@@ -2,6 +2,10 @@
 
 Date: 2026-09-28. Candidate: **0.16.0-rc2**. Build/CI/installer and live acceptance of both the local build and the downloaded CI runtime: **PASS**. Task 016 remains **ACTIVE** because strict 100% UI parity has not been met.
 
+The acceptance sections below retain the RC2 baseline at `7f968266`. A subsequent
+UI refinement at `5dc7a6e` has its own CI/artifact, live-probe and native-capture
+evidence at the end of this document, independently of the baseline.
+
 This document records RC2 evidence separately from the accepted RC1 baseline. The original [RC1 release acceptance](TASK016_RELEASE_ACCEPTANCE.md), workflow run `36340716356`, artifact checksums, installer round trip and live MT5 captures remain historical evidence for source `a9137702661c810b301d388ce23230791dcd137c`. They do not certify the changed RC2 source or artifact. Strict 100% parity with the ten UI references is still unfulfilled; current visual evidence belongs in [UI_REFERENCE_PARITY_AUDIT.md](UI_REFERENCE_PARITY_AUDIT.md).
 
 ## Concrete changes from RC1
@@ -129,7 +133,7 @@ show Desktop READY and capture all ten pages in `artifacts/ui-audit-rc2-ci/`.
 Stop/Start recovery evidence above belongs to the clean local build; the CI
 probe and capture establish the final delivered runtime's connected operation.
 
-## Final CI and independently verified delivery
+## RC2 baseline CI and independently verified delivery — `7f968266`
 
 - [GitHub run 36359181671](https://github.com/HoangHung997/XAUPY/actions/runs/36359181671)
   succeeds on source `7f968266a288a33ff0f30ac2b215004644a9dd95` for both validation
@@ -167,3 +171,69 @@ Calibration findings belong in their separate research report and are not a
 profitability claim or an instruction to activate a candidate profile. Final
 documentation may be committed after the release source; the artifact's exact
 source remains the commit recorded in its manifest.
+
+## UI refinement CI and delivery — `5dc7a6e`
+
+The next RC2 revision keeps the prior release evidence and files separate. It
+adds a syntax-colored native JSON editor with line numbers, selection/undo,
+search/format/fullscreen shortcuts; persisted Settings switches; the Monitoring
+timeframe matrix and indicator gauges; and further layout/control corrections.
+Conditions being warmed up or ready do not imply all entry conditions passed.
+The JSON editor uses the TextBox's real text layout, not a screenshot overlay.
+
+- [GitHub run 36361798910](https://github.com/HoangHung997/XAUPY/actions/runs/36361798910)
+  succeeds on source `5dc7a6ea1f4cafe50e9316028a19c797830457b9` in validation
+  and Windows packaging. Its manifest records clean source, executed tests and
+  locked broker execution.
+- Linux and Windows each pass **324 Python tests / 102 C# contract checks**.
+  The Windows packaged runtime passes **76 desktop interaction assertions**,
+  all nine packaged smoke categories including **16 intrabar socket checks**,
+  the bundled provider check and EA compilation with zero errors/warnings.
+- The additional desktop assertions exercise native JSON editing, selected-text
+  replacement, undo, routed search/format/F11 shortcuts, synchronized gutter
+  scrolling, Settings persistence across an isolated Engine restart, profile
+  preservation and Monitoring matrix/gauge evidence. These tests use temporary
+  stores and ports without a live MT5 connection.
+- Windows CI installs the installer, verifies installed manifest hashes and
+  uninstalls it. The installer is downloaded but not run on the user's PC.
+- Artifact `10945744624` is **223,357,228 bytes**, expires
+  `2026-10-12T00:24:06Z`, and has outer SHA-256
+  `f001a440b12c089dc5abdf8de38211a9015aee778871a50175f4c2eb655e681c`.
+- Independent inspection verifies **282 portable files / 281 manifest hashes**,
+  source identity, x64 Desktop/Engine/config tools, self-contained runtime,
+  compile log, ten reference images and baseline safety locks. Archive traversal,
+  symlink and duplicate/case-collision checks pass; extracted/copied files are
+  hashed again. `confirm_closed_bar=true` remains the baseline.
+- Portable ZIP SHA-256:
+  `9216a86e2bbc82bca52a31b0d914f0f312483a7c04745e05605110df9e0ad5f5`.
+- Installer SHA-256:
+  `18ccdd0f4a7f67bcf2eea4b85d1ec29ee26a755d41a0183f25be849a6307984d`.
+- CI EA SHA-256:
+  `6d990c7f0a885e711aa5a911ea3ee9cef36e229aa0f10215a85ab31386b39434`.
+- CI Engine SHA-256:
+  `584e1d41c445bcfd8242d5479ed470474f180070cb0a0bafc6805e530840d3c3`.
+- CI Desktop SHA-256:
+  `9bf079eedb10e0c88bda5721dad4fbbbaf9d8eb19477bedc821e4b65dc4267c4`.
+- Verified pair and checksums: `dist/rc2-refined-ci/`. Verified extracted app:
+  `dist/XAUPY-verified-rc2-refined-win-x64/`. Metadata, complete CI log,
+  verification result and provider check: `artifacts/ci-rc2-refined-download/`.
+  The extracted executable reports MetaTrader5 **5.0.6231** / NumPy **2.5.3**.
+
+### Exact refined-CI live acceptance
+
+The exact new CI EA was deployed with unchanged inputs/security, and Desktop was
+launched from `dist/XAUPY-verified-rc2-refined-win-x64/` with the matching Engine.
+`artifacts/live-bridge-rc2-refined-ci.json` passes **19/19 read-only checks across
+21 samples in 20 seconds**. Accepted tick frames advance **32→53** and received
+ticks **321→614**. The running Engine and installed EA match the manifest hashes
+above; execution remains locked. The aggregate identity/counter evidence is
+`artifacts/rc2-refined-ci-live-summary.json`.
+
+All ten pages of this exact compiled Desktop were captured separately in
+`artifacts/ui-audit-rc2-refined-ci/`, with visible local clocks 07:33:26–07:33:38
+on 2026-09-28. Native visual assessment belongs to
+[UI_REFERENCE_PARITY_AUDIT.md](UI_REFERENCE_PARITY_AUDIT.md); the read-only probe
+does not itself prove rendering or pixel parity. These are new observations of
+the refined artifact, while earlier 19/19 probes, Stop/Start recovery and native
+captures retain their stated source/artifact scope. Strict 100% visual parity
+is not certified; Task 016 remains ACTIVE.

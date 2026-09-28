@@ -398,14 +398,14 @@ public partial class JournalDashboard : UserControl
     {
         var grid = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("0.64*,1.6*,1.1*,1.5*,6*,1.35*"),
+            ColumnDefinitions = new ColumnDefinitions("0.68*,1.64*,1.28*,1.40*,6.18*,1.55*"),
             MinHeight = 27
         };
 
         AddCell(grid, 0, item.Sequence.ToString(), Brushes.LightGray);
         AddCell(grid, 1, LocalTime(item.TimestampUtc), Brushes.LightGray);
         AddCell(grid, 2, $"{LevelIcon(item.Level)}  {item.Level}", LevelBrush(item.Level));
-        AddCell(grid, 3, item.Source, SourceBrush(item.Source));
+        AddCell(grid, 3, item.Source, new SolidColorBrush(Color.Parse("#D0DFEF")));
         AddCell(grid, 4, item.Message, Brushes.White);
         AddCell(grid, 5, item.Tag, new SolidColorBrush(Color.Parse("#A9C3DD")));
 

@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:XAUPY.Desktop"
              x:Class="XAUPY.Desktop.ConfigurationEditor">
   <UserControl.Styles>
     <Style Selector="Button.navTab"><Setter Property="Margin" Value="0"/><Setter Property="Height" Value="53"/><Setter Property="Padding" Value="12,6"/><Setter Property="BorderThickness" Value="0,0,0,1"/></Style>
@@ -16,37 +17,37 @@
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
           <StackPanel Margin="8" Spacing="0">
             <Button Classes="navTab active" HorizontalContentAlignment="Left" Tag="risk" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="🛡" FontSize="18"/><StackPanel><TextBlock Text="Khởi tạo &amp; an toàn" FontWeight="SemiBold"/><TextBlock Text="Tài khoản, lot, rủi ro, giới hạn" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="shield" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="Khởi tạo &amp; an toàn" FontWeight="SemiBold"/><TextBlock Text="Tài khoản, lot, rủi ro, giới hạn" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="direction" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="⇄" FontSize="18"/><StackPanel><TextBlock Text="Hướng giao dịch" FontWeight="SemiBold"/><TextBlock Text="Chỉ buy/sell hoặc 2 chiều" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="compare" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="Hướng giao dịch" FontWeight="SemiBold"/><TextBlock Text="Chỉ buy/sell hoặc 2 chiều" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="pullback" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="⌁" FontSize="18"/><StackPanel><TextBlock Text="Nhận diện nhịp hồi" FontWeight="SemiBold"/><TextBlock Text="Pullback &amp; điều kiện hồi" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="pulse" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="Nhận diện nhịp hồi" FontWeight="SemiBold"/><TextBlock Text="Pullback &amp; điều kiện hồi" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="trigger" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="✓" FontSize="18"/><StackPanel><TextBlock Text="Xác nhận vào lệnh" FontWeight="SemiBold"/><TextBlock Text="Chỉ báo &amp; tín hiệu trigger" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><TextBlock Text="✓" Width="26" TextAlignment="Center" VerticalAlignment="Center" FontSize="24" Foreground="#00DCC0"/><StackPanel><TextBlock Text="Xác nhận vào lệnh" FontWeight="SemiBold"/><TextBlock Text="Chỉ báo &amp; tín hiệu trigger" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="stop_loss" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="🛡" FontSize="18"/><StackPanel><TextBlock Text="Stop loss" FontWeight="SemiBold"/><TextBlock Text="SL structure / fixed / ATR" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="shield" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="Stop loss" FontWeight="SemiBold"/><TextBlock Text="SL structure / fixed / ATR" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="take_profit" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="◎" FontSize="18"/><StackPanel><TextBlock Text="Take profit" FontWeight="SemiBold"/><TextBlock Text="TP fixed / dynamic" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><TextBlock Text="◎" Width="26" TextAlignment="Center" VerticalAlignment="Center" FontSize="26" Foreground="#82C4FF"/><StackPanel><TextBlock Text="Take profit" FontWeight="SemiBold"/><TextBlock Text="TP fixed / dynamic" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="management" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="⚙" FontSize="18"/><StackPanel><TextBlock Text="Quản lý sau vào" FontWeight="SemiBold"/><TextBlock Text="BE, trailing, scale out" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><TextBlock Text="⚙" Width="26" TextAlignment="Center" VerticalAlignment="Center" FontSize="26" Foreground="#82C4FF"/><StackPanel><TextBlock Text="Quản lý sau vào" FontWeight="SemiBold"/><TextBlock Text="BE, trailing, scale out" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="sessions" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="◷" FontSize="18"/><StackPanel><TextBlock Text="Phiên giao dịch" FontWeight="SemiBold"/><TextBlock Text="Khung giờ, bộ lọc phiên" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><TextBlock Text="◷" Width="26" TextAlignment="Center" VerticalAlignment="Center" FontSize="26" Foreground="#82C4FF"/><StackPanel><TextBlock Text="Phiên giao dịch" FontWeight="SemiBold"/><TextBlock Text="Khung giờ, bộ lọc phiên" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="news" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="▤" FontSize="18"/><StackPanel><TextBlock Text="Lọc tin" FontWeight="SemiBold"/><TextBlock Text="Tin tức, thời gian tránh giao dịch" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="document" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="Lọc tin" FontWeight="SemiBold"/><TextBlock Text="Tin tức, thời gian tránh giao dịch" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="pullback" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="▱" FontSize="18"/><StackPanel><TextBlock Text="MTF Pullback" FontWeight="SemiBold"/><TextBlock Text="Đa khung thời gian - Pullback" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="bars" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="MTF Pullback" FontWeight="SemiBold"/><TextBlock Text="Đa khung thời gian - Pullback" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
             <Button Classes="navTab" HorizontalContentAlignment="Left" Tag="trigger" Click="Category_OnClick">
-              <StackPanel Orientation="Horizontal" Spacing="10"><TextBlock Text="▱" FontSize="18"/><StackPanel><TextBlock Text="MTF Trigger" FontWeight="SemiBold"/><TextBlock Text="Đa khung thời gian - Trigger" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
+              <StackPanel Orientation="Horizontal" Spacing="12"><local:ReferenceIcon Kind="bars" Width="26" Height="26" Tint="#82C4FF"/><StackPanel><TextBlock Text="MTF Trigger" FontWeight="SemiBold"/><TextBlock Text="Đa khung thời gian - Trigger" Classes="dim" FontSize="12"/></StackPanel></StackPanel>
             </Button>
           </StackPanel>
         </ScrollViewer>
@@ -68,11 +69,14 @@
     <Grid Grid.Column="1" RowDefinitions="86,*" RowSpacing="8">
       <!-- Approved profile/header toolbar -->
       <Border Grid.Row="0" Classes="panel">
-        <Grid ColumnDefinitions="1.35*,0.8*,Auto" Margin="12,8" ColumnSpacing="10">
-          <StackPanel>
+        <Grid ColumnDefinitions="*,230,420" Margin="12,8" ColumnSpacing="10">
+          <Grid ColumnDefinitions="30,*" ColumnSpacing="10">
+            <local:ReferenceIcon Kind="document" Width="30" Height="34" Tint="#239CFF" VerticalAlignment="Top" Margin="0,3,0,0"/>
+          <StackPanel Grid.Column="1">
             <TextBlock Text="Cấu hình chiến lược giao dịch" FontSize="21" FontWeight="SemiBold"/>
             <TextBlock Text="Thiết lập đầy đủ thông số cho hệ thống giao dịch tự động - XAUUSD" Classes="dim" FontSize="13"/><TextBox x:Name="SearchBox" PlaceholderText="Tìm tham số…" FontSize="12" Width="280" HorizontalAlignment="Left" Margin="0,3,0,0" Height="24" MinHeight="24" Padding="7,2" TextChanged="SearchBox_OnTextChanged"/>
           </StackPanel>
+          </Grid>
 
           <StackPanel Grid.Column="1">
             <TextBlock Text="Chọn profile" Classes="dim" FontSize="12"/>
@@ -81,14 +85,14 @@
             </Border>
           </StackPanel>
 
-          <WrapPanel Grid.Column="2" Width="420" HorizontalAlignment="Right" VerticalAlignment="Center">
-            <Button Classes="primary configToolbar" Content="💾  Lưu JSON" Click="SaveJson_OnClick" Margin="0,0,6,6"/>
-            <Button Classes="secondary configToolbar" Content="💾  Lưu thành..." Click="SaveJson_OnClick" Margin="0,0,6,6"/>
-            <Button Classes="secondary configToolbar" Content="🗑  Mặc định" Click="Defaults_OnClick" Margin="0,0,6,6"/>
-            <Button Classes="secondary configToolbar" Content="⬆  Nhập JSON" Click="LoadJson_OnClick" Margin="0,0,6,6"/>
-            <Button Classes="secondary configToolbar" Content="⬇  Xuất .set" Click="ExportSet_OnClick" Margin="0,0,6,6"/>
-            <Button Classes="secondary configToolbar" Content="⬆  Nhập .set" Click="ImportSet_OnClick" Margin="0,0,0,6"/>
-          </WrapPanel>
+          <Grid Grid.Column="2" Width="420" ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <Button Grid.Column="0" Classes="primary configToolbar" Content="💾  Lưu JSON" Click="SaveJson_OnClick"/>
+            <Button Grid.Column="1" Classes="secondary configToolbar" Content="💾  Lưu thành..." Click="SaveJson_OnClick"/>
+            <Button Grid.Column="2" Classes="secondary configToolbar" Content="🗑  Mặc định" Click="Defaults_OnClick"/>
+            <Button Grid.Row="1" Grid.Column="0" Classes="secondary configToolbar" Content="⬆  Nhập JSON" Click="LoadJson_OnClick"/>
+            <Button Grid.Row="1" Grid.Column="1" Classes="secondary configToolbar" Content="⬇  Xuất .set" Click="ExportSet_OnClick"/>
+            <Button Grid.Row="1" Grid.Column="2" Classes="secondary configToolbar" Content="⬆  Nhập .set" Click="ImportSet_OnClick"/>
+          </Grid>
         </Grid>
       </Border>
 

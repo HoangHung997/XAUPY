@@ -15,6 +15,17 @@ public sealed class ReferenceIcon : Control
     private static readonly Dictionary<string,string> Paths = new()
     {
         ["document"] = "M5,2 L14,2 20,8 20,22 5,22 Z M14,2 L14,8 20,8 M8,12 L17,12 M8,16 L17,16 M8,19 L15,19",
+        ["save"] = "M3,2 L18,2 22,6 22,22 2,22 2,2 Z M6,2 L6,9 17,9 17,2 M6,22 L6,14 18,14 18,22 M14,4 L14,7",
+        ["upload"] = "M12,17 L12,2 M7,7 L12,2 17,7 M3,15 L3,22 21,22 21,15",
+        ["download"] = "M12,2 L12,17 M7,12 L12,17 17,12 M3,15 L3,22 21,22 21,15",
+        ["book"] = "M12,4 C8,1 4,1 2,3 L2,21 C5,19 8,19 12,22 C16,19 19,19 22,21 L22,3 C20,1 16,1 12,4 Z M12,4 L12,22",
+        ["lightning"] = "M13,1 L4,14 11,14 9,23 21,9 14,9 17,1 Z",
+        ["search"] = "M17,9 A7,7 0 1 1 3,9 A7,7 0 1 1 17,9 M15,15 L22,22",
+        ["expand"] = "M2,9 L2,2 9,2 M15,2 L22,2 22,9 M22,15 L22,22 15,22 M9,22 L2,22 2,15",
+        ["check"] = "M3,12 L9,19 22,4",
+        ["refresh"] = "M21,8 C18,-1 4,0 2,10 C0,20 14,26 21,17 M21,2 L21,8 15,8",
+        ["gear"] = "M9,2 L15,2 16,6 20,7 22,12 20,17 16,18 15,22 9,22 8,18 4,17 2,12 4,7 8,6 Z M12,8 A4,4 0 1 0 12,16 A4,4 0 1 0 12,8",
+        ["copy"] = "M8,7 L22,7 22,22 8,22 Z M17,7 L17,2 2,2 2,17 8,17",
         ["compare"] = "M3,7 L20,7 M16,3 L20,7 16,11 M21,17 L4,17 M8,13 L4,17 8,21",
         ["bars"] = "M3,21 L3,12 7,12 7,21 Z M10,21 L10,4 14,4 14,21 Z M17,21 L17,8 21,8 21,21 Z",
         ["calculator"] = "M5,2 L19,2 19,22 5,22 Z M8,5 L16,5 16,9 8,9 Z M8,13 L9,13 M12,13 L13,13 M16,13 L17,13 M8,17 L9,17 M12,17 L13,17 M16,17 L17,17",
@@ -41,5 +52,44 @@ public sealed class ReferenceIcon : Control
         if (size <= 0) return;
         using (context.PushTransform(Matrix.CreateScale(size / 26, size / 26) * Matrix.CreateTranslation((Bounds.Width-size)/2 + size/26, (Bounds.Height-size)/2 + size/26)))
             context.DrawGeometry(null, new Pen(Tint, 1.8, lineCap:PenLineCap.Round, lineJoin:PenLineJoin.Round), Geometry.Parse(Paths.GetValueOrDefault(Kind,Paths["document"])));
+    }
+}
+
+/// <summary>Reference semicircle whose filled arc comes only from an available metric.</summary>
+public sealed class ReferenceGauge : Control
+{
+    public static readonly StyledProperty<double?> ValueProperty = AvaloniaProperty.Register<ReferenceGauge, double?>(nameof(Value));
+    public static readonly StyledProperty<double> MinimumProperty = AvaloniaProperty.Register<ReferenceGauge, double>(nameof(Minimum));
+    public static readonly StyledProperty<double> MaximumProperty = AvaloniaProperty.Register<ReferenceGauge, double>(nameof(Maximum), 100);
+    public static readonly StyledProperty<IBrush> TintProperty = AvaloniaProperty.Register<ReferenceGauge, IBrush>(nameof(Tint), Brushes.DodgerBlue);
+    public double? Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
+    public double Minimum { get => GetValue(MinimumProperty); set => SetValue(MinimumProperty, value); }
+    public double Maximum { get => GetValue(MaximumProperty); set => SetValue(MaximumProperty, value); }
+    public IBrush Tint { get => GetValue(TintProperty); set => SetValue(TintProperty, value); }
+    static ReferenceGauge() => AffectsRender<ReferenceGauge>(ValueProperty, MinimumProperty, MaximumProperty, TintProperty);
+
+    public override void Render(DrawingContext context)
+    {
+        base.Render(context);
+        double radius = Math.Max(0, Math.Min((Bounds.Width - 9) / 2, Bounds.Height - 9));
+        if (radius <= 0) return;
+        var center = new Point(Bounds.Width / 2, radius + 5);
+        void Arc(double fraction, IBrush brush)
+        {
+            if (fraction <= 0) return;
+            var geometry = new StreamGeometry();
+            using (var path = geometry.Open())
+            {
+                path.BeginFigure(new Point(center.X - radius, center.Y), false);
+                double angle = Math.PI * (1 - fraction);
+                path.ArcTo(new Point(center.X + radius * Math.Cos(angle), center.Y - radius * Math.Sin(angle)),
+                    new Size(radius, radius), 0, false, SweepDirection.Clockwise);
+                path.EndFigure(false);
+            }
+            context.DrawGeometry(null, new Pen(brush, 8), geometry);
+        }
+        Arc(1, new SolidColorBrush(Color.Parse("#244568")));
+        if (Value is double value && double.IsFinite(value) && Maximum > Minimum)
+            Arc(Math.Clamp((value - Minimum) / (Maximum - Minimum), 0, 1), Tint);
     }
 }

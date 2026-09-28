@@ -57,11 +57,57 @@ The UI is **not certified as a 100% pixel match**. Fonts, some spacing and some 
 | Orders | Empty strategy-owned positions/deals stay empty. The explicit guarded simulation controls and safety/status row add content that the demo lacks. Broker-order functionality is not implied by matching the visual buttons. |
 | Backtest / Optimization | Real dataset selection and M1 OHLC model semantics differ from the demo's Every Tick example. Charts/results remain empty until a real run completes. Data/cost controls use a supplementary expansion; unavailable utilization is not replaced with illustrative percentages. |
 | Journal | The revised card heights and larger log rows follow the reference more closely. Messages, counts and categories are real; source icons and some badge/detail styling still differ. The revised layout is visible in the polished native capture; the subsequent alert-cell padding fix is noted above. |
-| Tools | The three-column tool/editor/help structure, larger type and vector menu icons follow the reference. The editable JSON surface has single-color text rather than a syntax-highlighted editor, and canonical content replaces the illustrative sample. |
+| Tools | The three-column tool/editor/help structure, type and vector icons follow the reference. The subsequent native JSON presenter adds token colors, line numbers, search and expansion. Canonical content replaces the illustrative sample; small style differences remain. |
 | Settings | The card arrangement and icons follow the reference. Connection through the running MT5 terminal, actual recovery controls and available settings replace the demo's credential/login form and unsupported preferences. |
 | Global layout | Small border, gradient, icon, font and spacing differences remain; Monitoring now has its own compact sidebar proportions; small differences from other tab-specific reference dimensions remain. The reviewed canvas is 1672 × 941. Smaller viewports require additional scrolling. |
 
 The remaining feature and visual differences must stay visible in the handover; a successful build or source test is not evidence that the stricter user requirement of exact visual parity has been met.
+
+## Additional reference corrections after the first RC2 artifact
+
+The native review continued after `7f96826`. The subsequent implementation uses the
+reference's 272 px Strategy sidebar and 8 px gutter, larger stage selectors and
+gradient panels, vector filter icons and a divided current-configuration table.
+Order summary cards now use the reference's 106 px height and 48 px icons. All
+three order tables share proportional header/body columns; the former fixed body
+widths could diverge from the header on resizing. The obsolete reconnect warning
+is cleared when a fresh connected DEMO snapshot arrives. Strategy warm-up
+readiness no longer labels all entry conditions as passed.
+
+Overview quick configuration has three divided columns with consistent icons.
+Monitoring has divided timeframe rows and metric-driven native gauges; extra
+configured M3/H2 roles can scroll, and unevaluated roles retain unknown values.
+Global status dots are drawn circles. Configuration, Backtest, Optimizer and
+Journal received further corrections to toolbar proportions, column alignment,
+icons, progress styling and clipped labels.
+
+Tools now colors JSON in the native editable text presenter, with synchronized
+line numbers, search, formatting and editor expansion. Selection, caret, undo
+and IME remain owned by the native TextBox. Settings uses real persisted switches
+and folder actions, with all principal cards and the save row visible at the
+reviewed canvas. Thus the earlier remaining-differences entry about the
+single-color editor is superseded; the remaining unsupported demo capabilities
+and strict pixel-equivalence limitation still apply.
+
+The first actual ten-page capture of this follow-up is
+`artifacts/ui-audit-rc2-refined/` (07:02:21–07:02:33 local, 28 September), running
+the newly compiled Desktop against the already verified unchanged RC2 Engine and
+real MT5. It exposed three small final adjustments: Strategy footer clearance,
+the last Orders summary caption and the Settings retention-value spinner.
+These adjustments require a subsequent capture; this intermediate evidence is
+not a claim that the first RC2 ZIP contains the follow-up changes.
+
+The next ten-page native capture, `artifacts/ui-audit-rc2-refined-final/`
+(07:07:12–07:07:25 local), verifies the complete Strategy expiry field above the
+footer, the full Orders summary caption and the visible Settings retention value
+and actual connected account identifier. The Orders manual rail subsequently
+receives a small spacing correction so its simulation-confirmation checkbox fits
+at the same canvas. Local verification passes 324 Python tests, 102 C# contracts
+and 76 isolated Avalonia interaction checks. Newly added checks exercise native
+JSON editing, selection, undo, keyboard shortcuts, line-number scroll alignment,
+persisted Settings switches, nine-timeframe Monitoring scrolling and the two
+corrected state-label behaviors. No broker trade or production-profile change
+is made by these tests.
 
 ## Final local release review — source `7f96826`
 
@@ -70,5 +116,5 @@ Independently reviewed all ten native screens of the clean local Release build i
 - No critical clipping, overlapping content or hidden primary action was observed in these ten captured states. This finding is limited to the captured canvas and states; it does not establish every viewport or interaction state.
 - Monitoring's alert strip visibly spans below both the compact sidebar and the main panels, with all four sidebar cards visible. Strategy's expiry value `2` is readable after the final width correction, and its core lower panels fit. Journal alert rows show the full time and `WARN` level after the cell-padding correction. Tools shows the complete final file-information line. Configuration Apply, Backtest/Optimization actions and Settings footer buttons are visible.
 - These captures validate the post-polish Strategy and Journal corrections that were still pending screenshot confirmation in the earlier RC2 section. They are captures of the local clean Release build, not execution evidence from a downloaded CI artifact. Successful CI run `36359181671` for the same source is separate build evidence.
-- **Exact 100% visual parity is not certified.** The remaining-differences table above still applies: supplementary canonical configuration groups, the single-color Tools JSON editor, native control/icon/font/spacing differences and unsupported demo telemetry remain. Real account values, chart series, events and empty results correctly differ from the illustration. Successful checks and CI do not prove pixel equivalence.
+- **Exact 100% visual parity is not certified.** At source `7f96826`, supplementary canonical configuration groups, the then single-color Tools JSON editor, native control/icon/font/spacing differences and unsupported demo telemetry remained. The subsequent editor improvement is documented separately above. Real account values, chart series, events and empty results correctly differ from the illustration. Successful checks and CI do not prove pixel equivalence.
 - Final CI artifact verification: independently reviewed all ten actual compiled-artifact captures in `artifacts/ui-audit-rc2-ci/` from successful run `36359181671`, source `7f96826`, at 1672 × 941 on 2026-09-28 (visible application clocks 06:44:20–06:44:32, Asia/Saigon). No layout regression or new critical clipping was observed against the local Release captures; differences are live prices/indicators, clocks, latency, journal contents and the bundled Python version (3.13.15). The full-width Monitoring alerts, readable Strategy expiry and complete Journal alert cells remain intact. This confirms the running CI artifact's layout, not 100% equivalence to the demo.

@@ -5,6 +5,8 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Layout;
+using Avalonia;
+using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using XAUPY.Ipc;
 
@@ -16,6 +18,11 @@ public partial class ToolsDashboard : UserControl
     private string _mode = "editor";
     private bool _loaded;
     private bool _busy;
+    private bool _expanded;
+    private TextBlock? _lineNumbers;
+    private ScrollViewer? _editorScroll;
+    private ScrollViewer? _gutterScroll;
+    private int _searchNext;
     private readonly List<string> _history = new();
     private static readonly JsonSerializerOptions Pretty = new() { WriteIndented = true };
     private static readonly FilePickerFileType JsonType = new("JSON") { Patterns = new[] { "*.json" } };
@@ -23,6 +30,15 @@ public partial class ToolsDashboard : UserControl
     public ToolsDashboard()
     {
         InitializeComponent();
+        ToolEditor.TemplateApplied += (_, e) =>
+        {
+            if (_editorScroll is not null) _editorScroll.ScrollChanged -= EditorScroll_OnChanged;
+            _lineNumbers = e.NameScope.Find<TextBlock>("PART_LineNumbers");
+            _editorScroll = e.NameScope.Find<ScrollViewer>("PART_ScrollViewer");
+            _gutterScroll = e.NameScope.Find<ScrollViewer>("PART_GutterScroll");
+            if (_editorScroll is not null) _editorScroll.ScrollChanged += EditorScroll_OnChanged;
+            RefreshEditorInfo();
+        };
         var icons = new[] { "document", "compare", "bars", "calculator", "globe", "document", "pulse", "link", "user", "transfer" };
         var colors = new[] { "#119DF2", "#04E29C", "#23A1FF", "#FFA744", "#15BDF5", "#B690FB", "#00D9BD", "#6AF1D7", "#BE87ED", "#37ADFF" };
         var index = 0;
@@ -41,7 +57,7 @@ public partial class ToolsDashboard : UserControl
             Grid.SetColumn(label, 1); Grid.SetColumn(arrow, 2);
             grid.Children.Add(icon); grid.Children.Add(label); grid.Children.Add(arrow);
             button.Content = grid;
-            button.Background = Brush.Parse(index == 0 ? "#064592" : "#06223C");
+            SetMenuAppearance(button, index == 0);
             index++;
         }
     }
@@ -53,6 +69,7 @@ public partial class ToolsDashboard : UserControl
         {
             var active = await _supervisor.GetActiveConfigAsync();
             ToolProfileName.Text = active.GetProperty("profile").GetProperty("name").GetString();
+            ToolSymbol.Text = active.TryGetProperty("symbol", out var symbol) ? symbol.GetString() : "XAUUSD";
             object display = active;
             if (_mode == "compare")
             {
@@ -77,7 +94,7 @@ public partial class ToolsDashboard : UserControl
             else if (_mode == "news") display = new { format = "JSON array: timestamp_utc (ISO 8601 + timezone), currency, impact, title", active_filter = active.GetProperty("news"), status = "Mở file lịch tin để kiểm tra; chưa có nguồn lịch tin trực tiếp." };
             else if (_mode == "risk") display = new { status = "Nhập risk budget, khoảng SL, tick size và tick value rồi nhấn Tính lot.", note = "Ví dụ nhập tay; chưa dùng để đặt lệnh. Không bao gồm spread, commission hoặc slippage." };
             ToolEditor.Text = JsonSerializer.Serialize(display, Pretty);
-            EditorFileInfo.Text = $"Số dòng: {ToolEditor.Text.Split('\n').Length}\nDung lượng: {Encoding.UTF8.GetByteCount(ToolEditor.Text) / 1024.0:0.00} KB\nCập nhật: {DateTime.Now:HH:mm:ss}";
+            RefreshEditorInfo();
             _loaded = true;
             Result("Đã tải dữ liệu thực từ Python Engine.", true);
         });
@@ -87,12 +104,15 @@ public partial class ToolsDashboard : UserControl
     {
         if (sender is not Button button || button.Tag is not string mode) return;
         _mode = mode;
-        foreach (var child in ToolMenu.Children.OfType<Button>()) child.Background = Brush.Parse(child == button ? "#064592" : "#06223C");
+        foreach (var child in ToolMenu.Children.OfType<Button>()) SetMenuAppearance(child, child == button);
         var title = (button.Content as Grid)?.Children.OfType<StackPanel>().FirstOrDefault()?.Children.OfType<TextBlock>().FirstOrDefault()?.Text ?? mode;
         ToolTitle.Text = title;
         SelectedToolName.Text = title;
+        var icon = (button.Content as Grid)?.Children.OfType<Border>().FirstOrDefault()?.Child as ReferenceIcon;
+        ToolHeaderIcon.Kind = SelectedToolIcon.Kind = icon?.Kind ?? "document";
         ToolEditor.IsReadOnly = mode is not ("editor" or "profile" or "news");
         ApplyToolButton.IsEnabled = mode is "editor" or "profile";
+        SaveProfileButton.IsEnabled = DefaultProfileButton.IsEnabled = ApplyToolButton.IsEnabled;
         RiskInputs.IsVisible = mode == "risk";
         HistoryInputs.IsVisible = mode == "export";
         ToolSubtitle.Text = mode is "editor" or "profile" ? "Chỉnh sửa cấu hình chuẩn; kiểm tra cú pháp và áp dụng nhanh." : "Kiểm tra dữ liệu thực, lưu báo cáo và đối chiếu trạng thái hệ thống.";
@@ -100,6 +120,91 @@ public partial class ToolsDashboard : UserControl
     }
 
     private async void Reload_OnClick(object? sender, RoutedEventArgs e) => await EnsureLoadedAsync(true);
+    private static void SetMenuAppearance(Button button, bool selected)
+    {
+        button.Background = new LinearGradientBrush
+        {
+            StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative), EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+            GradientStops = new GradientStops { new(selected ? Color.Parse("#073D83") : Color.Parse("#06233D"), 0), new(Color.Parse("#02182E"), 1) }
+        };
+        button.BorderBrush = Brush.Parse(selected ? "#1287FF" : "#174765");
+        if (button.Content is Grid grid && grid.Children.OfType<Border>().FirstOrDefault() is { } tile)
+            tile.Background = Brush.Parse(selected ? "#0868F4" : "#082844");
+    }
+    private void EditorScroll_OnChanged(object? sender, ScrollChangedEventArgs e)
+    {
+        if (_gutterScroll is not null && _editorScroll is not null) _gutterScroll.Offset = new Vector(0, _editorScroll.Offset.Y);
+    }
+    private void Editor_OnTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (EditorFileInfo is null) return;
+        RefreshEditorInfo();
+        EditorValidation.Text = "●  Chưa kiểm tra";
+        EditorValidation.Foreground = Brushes.Gold;
+        _searchNext = 0;
+    }
+    private void RefreshEditorInfo()
+    {
+        var text = ToolEditor.Text ?? "";
+        var count = text.Count(c => c == '\n') + 1;
+        if (_lineNumbers is not null) _lineNumbers.Text = string.Join('\n', Enumerable.Range(1, count));
+        EditorFileInfo.Text = $"Số dòng          {count:N0}\nKích thước       {Encoding.UTF8.GetByteCount(text) / 1024.0:0.00} KB\nCập nhật          {DateTime.Now:HH:mm:ss}";
+    }
+    private void Find_OnClick(object? sender, RoutedEventArgs e)
+    {
+        EditorSearchBar.IsVisible = true;
+        EditorSearchText.Focus();
+        EditorSearchText.SelectAll();
+    }
+    private void CloseSearch_OnClick(object? sender, RoutedEventArgs e) { EditorSearchBar.IsVisible = false; ToolEditor.Focus(); }
+    private void FindNext_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var query = EditorSearchText.Text ?? "";
+        var text = ToolEditor.Text ?? "";
+        if (query.Length == 0) { EditorSearchStatus.Text = "Nhập từ cần tìm"; return; }
+        var index = text.IndexOf(query, Math.Min(_searchNext, text.Length), StringComparison.OrdinalIgnoreCase);
+        if (index < 0) index = text.IndexOf(query, StringComparison.OrdinalIgnoreCase);
+        if (index < 0) { EditorSearchStatus.Text = "Không tìm thấy"; return; }
+        ToolEditor.CaretIndex = index + query.Length;
+        ToolEditor.SelectionStart = index;
+        ToolEditor.SelectionEnd = index + query.Length;
+        _searchNext = index + query.Length;
+        EditorSearchStatus.Text = $"Dòng {text[..index].Count(c => c == '\n') + 1}";
+        ToolEditor.Focus();
+    }
+    private void Search_OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter) { FindNext_OnClick(sender, new RoutedEventArgs()); e.Handled = true; }
+        else if (e.Key == Key.Escape) { CloseSearch_OnClick(sender, new RoutedEventArgs()); e.Handled = true; }
+    }
+    private void Expand_OnClick(object? sender, RoutedEventArgs e)
+    {
+        _expanded = !_expanded;
+        ToolNavigation.IsVisible = ToolHelpColumn.IsVisible = !_expanded;
+        ToolsLayout.ColumnDefinitions = new ColumnDefinitions(_expanded ? "0,*,0" : "330,*,320");
+        ExpandEditorButton.Content = _expanded ? "⛶  Thu gọn" : "⛶  Toàn màn hình";
+    }
+    private void Tools_OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift) && e.Key == Key.F) Format_OnClick(sender, new RoutedEventArgs());
+        else if (e.KeyModifiers == KeyModifiers.Control && e.Key == Key.F) Find_OnClick(sender, new RoutedEventArgs());
+        else if (e.KeyModifiers == KeyModifiers.Control && e.Key == Key.S) Apply_OnClick(sender, new RoutedEventArgs());
+        else if (e.Key == Key.F11) Expand_OnClick(sender, new RoutedEventArgs());
+        else return;
+        e.Handled = true;
+    }
+    private async void Defaults_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
+    {
+        if (_supervisor is null || _mode is not ("editor" or "profile")) return;
+        ToolEditor.Text = JsonSerializer.Serialize(await _supervisor.GetDefaultConfigAsync(), Pretty);
+        Result("Đã nạp mặc định vào bản nháp.", true);
+        ToolResultDetail.Text = "Kiểm tra và nhấn Áp dụng nếu muốn thay cấu hình đang chạy.";
+    });
+    private void Help_OnClick(object? sender, RoutedEventArgs e)
+    {
+        Result("Mở hoặc chỉnh sửa JSON → kiểm tra cú pháp → áp dụng.", true);
+        ToolResultDetail.Text = "Ctrl+F tìm kiếm • Ctrl+Shift+F định dạng • Ctrl+S lưu profile • F11 mở rộng. Sao lưu/khôi phục tại Cài đặt.";
+    }
     private async void HistoryStart_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
     {
         if (_supervisor is null) return;
@@ -144,6 +249,8 @@ public partial class ToolsDashboard : UserControl
             if (_supervisor is null) return;
             var result = await _supervisor.ValidateConfigAsync(json.RootElement);
             Result(result.Valid ? "Cú pháp JSON và schema cấu hình hợp lệ." : string.Join(" • ", result.Errors), result.Valid);
+            EditorValidation.Text = result.Valid ? "●  Hợp lệ (Valid)" : "●  Cấu hình không hợp lệ";
+            EditorValidation.Foreground = result.Valid ? Brushes.SpringGreen : Brushes.OrangeRed;
         }
         else Result("Cú pháp JSON hợp lệ.", true);
     });
@@ -167,7 +274,7 @@ public partial class ToolsDashboard : UserControl
         using var json = JsonDocument.Parse(text);
         ToolEditor.Text = JsonSerializer.Serialize(json.RootElement, Pretty);
         ToolFileName.Text = paths[0].Name;
-        if (_mode != "news") { _mode = "profile"; ToolEditor.IsReadOnly = false; ApplyToolButton.IsEnabled = true; }
+        if (_mode != "news") { _mode = "profile"; ToolEditor.IsReadOnly = false; ApplyToolButton.IsEnabled = SaveProfileButton.IsEnabled = DefaultProfileButton.IsEnabled = true; }
         Result("Đã mở file. Nhấn Kiểm tra cú pháp trước khi áp dụng.", true);
     });
     private async void Save_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
@@ -202,6 +309,10 @@ public partial class ToolsDashboard : UserControl
     private void Result(string message, bool ok)
     {
         ToolResult.Text = message; ToolResult.Foreground = ok ? Brushes.SpringGreen : Brushes.OrangeRed;
+        ToolResultBadge.Background = ok ? Brush.Parse("#08D690") : Brushes.OrangeRed;
+        ToolResultIcon.Text = ok ? "✓" : "!";
+        ToolResultDetail.Text = ok ? "Thao tác hoàn tất. Cấu hình chỉ thay đổi khi áp dụng." : "Kiểm tra thông tin và thử lại.";
+        ToolResultMeta.Text = $"Thời gian: {DateTime.Now:HH:mm:ss}\nSố dòng: {(ToolEditor.Text ?? "").Count(c => c == '\n') + 1}";
         _history.Insert(0, $"{DateTime.Now:HH:mm:ss}  {message}");
         ToolHistory.Text = string.Join("\n", _history.Take(15));
     }

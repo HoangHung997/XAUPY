@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia;
 using Avalonia.Layout;
 using Avalonia.Media;
 using XAUPY.Ipc;
@@ -10,6 +11,7 @@ public partial class MonitoringDashboard : UserControl
     private const int MaxQuotePoints = 24;
     private readonly List<double> _quotes = new();
     private string? _lastSnapshotToken;
+    private string? _conditionTableToken;
 
     public MonitoringDashboard()
     {
@@ -38,6 +40,10 @@ public partial class MonitoringDashboard : UserControl
         Text("MonitorTerminalDot").Foreground = bridge.TerminalConnected ? Brushes.MediumSpringGreen : Brushes.Gold;
         Text("MonitorBridgeDot").Foreground = bridge.Connected ? Brushes.MediumSpringGreen : Brushes.Gold;
         Text("MonitorDataDot").Foreground = overview.Available ? Brushes.MediumSpringGreen : Brushes.Gold;
+        Text("MonitorEngineDot").Foreground = overview.Available || strategy.Available ? Brushes.MediumSpringGreen : Brushes.Gray;
+        Text("MonitorProfileDot").Foreground = strategy.Available ? Brushes.MediumSpringGreen : Brushes.Gray;
+        Text("MonitorBridgeConnectionText").Text = bridge.Connected ? "Đã kết nối" : "Chưa kết nối";
+        Text("MonitorDataStatusText").Text = overview.Available ? "Đang nhận dữ liệu" : "Chờ dữ liệu";
         Text("MonitorBridgeText").Text = bridge.Connected ? "CONNECTED" : "WAITING";
         Text("MonitorBridgeText").Foreground = bridge.Connected ? Brushes.LightGreen : Brushes.Gold;
         Text("MonitorAgeText").Text = bridge.AgeMs.HasValue ? $"{bridge.AgeMs.Value}" : "—";
@@ -72,6 +78,10 @@ public partial class MonitoringDashboard : UserControl
         Text("MonitorTriggerRsiText").Text = Metric(strategy.TriggerIndicators.Rsi);
         Text("MonitorAdxText").Text = Metric(strategy.Filters.Adx);
         Text("MonitorAtrText").Text = Metric(strategy.Filters.Atr);
+        this.FindControl<ReferenceGauge>("MonitorZGauge")!.Value = strategy.PullbackIndicators.Z;
+        this.FindControl<ReferenceGauge>("MonitorRsiGauge")!.Value = strategy.TriggerIndicators.Rsi;
+        this.FindControl<ReferenceGauge>("MonitorAdxGauge")!.Value = strategy.Filters.Adx;
+        this.FindControl<ReferenceGauge>("MonitorAtrGauge")!.Value = strategy.Filters.Atr;
 
         Text("MonitorDirectionTfText").Text = strategy.DirectionTimeframe;
         Text("MonitorPullbackTfText").Text = strategy.PullbackTimeframe;
@@ -86,6 +96,7 @@ public partial class MonitoringDashboard : UserControl
         Text("MonitorTriggerStateText").Text = strategy.State.StartsWith("TRIGGERED_", StringComparison.Ordinal)
             ? strategy.State
             : strategy.ArmedSide is not null ? "WAIT REVERSAL" : "WAIT";
+        UpdateConditionMatrix(strategy);
 
         Text("MonitorTerminalText").Text =
             bridge.TerminalConnected ? "Đã kết nối" : "Chưa kết nối";
@@ -97,6 +108,62 @@ public partial class MonitoringDashboard : UserControl
         Text("MonitorAlertText").Foreground = strategy.Available && bridge.Connected
             ? Brushes.LightGreen
             : Brushes.Gold;
+    }
+
+    private void UpdateConditionMatrix(StrategySnapshot strategy)
+    {
+        string token = string.Join('|', strategy.Available, strategy.DirectionTimeframe, strategy.PullbackTimeframe,
+            strategy.TriggerTimeframe, strategy.Direction, strategy.State, strategy.ArmedSide,
+            strategy.PullbackBuyPassed, strategy.PullbackSellPassed);
+        if (token == _conditionTableToken) return;
+        _conditionTableToken = token;
+        var table = this.FindControl<Grid>("MonitorConditionMatrix")!;
+        table.Children.Clear();
+        table.RowDefinitions.Clear();
+        var frames = new[] { "M1", "M5", "M15", "M30", "H1", "H4", "D1",
+            strategy.DirectionTimeframe, strategy.PullbackTimeframe, strategy.TriggerTimeframe }
+            .Where(tf => !string.IsNullOrWhiteSpace(tf)).Distinct().OrderBy(TimeframeMinutes).ToArray();
+        table.RowDefinitions.Add(new RowDefinition(32, GridUnitType.Pixel));
+        string[] headers = ["Khung", "Direction", "Pullback", "Trigger", "Trạng thái"];
+        for (int column = 0; column < headers.Length; column++)
+            Cell(0, column, headers[column], new SolidColorBrush(Color.Parse("#B6CFE6")), true);
+        for (int i = 0; i < frames.Length; i++)
+        {
+            string tf = frames[i];
+            bool direction = strategy.Available && tf == strategy.DirectionTimeframe;
+            bool pullback = strategy.Available && tf == strategy.PullbackTimeframe;
+            bool trigger = strategy.Available && tf == strategy.TriggerTimeframe;
+            table.RowDefinitions.Add(new RowDefinition(33, GridUnitType.Pixel));
+            Cell(i + 1, 0, tf, Brushes.LightGray);
+            string sign = strategy.Direction == "BUY" ? "▲ " : strategy.Direction == "SELL" ? "▼ " : "— ";
+            Cell(i + 1, 1, direction ? sign + strategy.Direction : "—", direction ? DirectionBrush(strategy.Direction) : Brushes.SlateGray);
+            string pb = strategy.ArmedSide is not null ? "Đã sẵn sàng" : strategy.PullbackBuyPassed == true || strategy.PullbackSellPassed == true ? "Đã đạt" : "Đang chờ";
+            Cell(i + 1, 2, pullback ? pb : "—", pullback && pb != "Đang chờ" ? Brushes.MediumSpringGreen : Brushes.LightGray);
+            bool triggered = strategy.State.StartsWith("TRIGGERED_", StringComparison.Ordinal);
+            Cell(i + 1, 3, trigger ? triggered ? "Có tín hiệu" : "Chờ tín hiệu" : "—", trigger && triggered ? Brushes.MediumSpringGreen : Brushes.LightGray);
+            Cell(i + 1, 4, direction || pullback || trigger ? "Đang xét" : "Chưa xét", Brushes.SlateGray);
+        }
+
+        void Cell(int row, int column, string value, IBrush foreground, bool header = false)
+        {
+            var cell = new Border
+            {
+                BorderBrush = new SolidColorBrush(Color.Parse("#113A58")), BorderThickness = new Thickness(0, 0, 1, 1),
+                Background = header ? new SolidColorBrush(Color.Parse("#082039")) : null,
+                Padding = new Thickness(6, 2), Child = new TextBlock
+                {
+                    Text = value, FontSize = 13, Foreground = foreground, TextWrapping = TextWrapping.Wrap,
+                    VerticalAlignment = VerticalAlignment.Center, FontWeight = header ? FontWeight.Medium : FontWeight.Normal
+                }
+            };
+            Grid.SetRow(cell, row); Grid.SetColumn(cell, column); table.Children.Add(cell);
+        }
+    }
+
+    private static int TimeframeMinutes(string timeframe)
+    {
+        if (timeframe.Length < 2 || !int.TryParse(timeframe.AsSpan(1), out int value)) return int.MaxValue;
+        return timeframe[0] switch { 'M' => value, 'H' => value * 60, 'D' => value * 1440, 'W' => value * 10080, _ => int.MaxValue };
     }
 
     private void ApplyBar(

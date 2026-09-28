@@ -64,15 +64,21 @@ public partial class SettingsDashboard : UserControl
         Mt5Status.Text = connected ? "●  Kết nối thành công" : "●  Đang chờ EA Bridge / MT5";
         Mt5Status.Foreground = connected ? Brushes.SpringGreen : Brushes.Gold;
         AccountMode.Text = bridge.TryGetProperty("account_trade_mode", out var mode) ? mode.GetString() ?? "—" : "—";
+        AccountLogin.Text = connected && _supervisor.OrdersPositions.Available
+            ? _supervisor.OrdersPositions.AccountLogin?.ToString() ?? "—" : "—";
         var paths = diag.GetProperty("paths");
         StatePath.Text = paths.GetProperty("state").GetString();
         LogPath.Text = paths.GetProperty("logs").GetString();
         BacktestPath.Text = paths.GetProperty("backtests").GetString();
+        HistoryPath.Text = Path.Combine(StatePath.Text ?? "", "market-history");
         SystemInfo.Text = $"Phiên bản: {diag.GetProperty("engine_version").GetString()}\nPython: {diag.GetProperty("python_version").GetString()}\nUptime: {diag.GetProperty("uptime_seconds")} giây\nEA Bridge: {(connected ? "Đã kết nối" : "Đang chờ")}\nExecution: LOCKED";
         var profile = await _supervisor.GetActiveConfigAsync();
         var risk = profile.GetProperty("risk");
-        var limits = new[] { ("max_lot", "Max lot mỗi lệnh"), ("max_trades_per_day", "Max lệnh / ngày"), ("max_daily_loss_pct", "Giới hạn lỗ ngày (%)"), ("max_open_positions", "Max lệnh đồng thời") };
-        RiskLimits.Text = string.Join("\n", limits.Where(p => risk.TryGetProperty(p.Item1, out _)).Select(p => $"{p.Item2}: {risk.GetProperty(p.Item1)}"));
+        RiskMaxLot.Text = Risk("max_lot");
+        RiskDailyTrades.Text = Risk("max_trades_per_day");
+        RiskDailyLoss.Text = Risk("max_daily_loss_pct");
+        RiskPositions.Text = Risk("max_open_positions");
+        string Risk(string field) => risk.TryGetProperty(field, out var value) ? value.ToString() : "—";
     }
     private async void Probe_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () => { await ProbeAsync(); Status("Đã kiểm tra kết nối thực.", true); });
     private async void Cancel_OnClick(object? sender, RoutedEventArgs e) => await EnsureLoadedAsync(true);
@@ -124,9 +130,18 @@ public partial class SettingsDashboard : UserControl
         var chosen = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Chọn terminal64.exe", AllowMultiple = false, FileTypeFilter = new[] { new FilePickerFileType("MT5 Terminal") { Patterns = new[] { "terminal64.exe" } } } });
         if (chosen.Count > 0) Mt5Path.Text = chosen[0].TryGetLocalPath();
     });
-    private void OpenData_OnClick(object? sender, RoutedEventArgs e)
+    private void OpenFolder_OnClick(object? sender, RoutedEventArgs e)
     {
-        try { if (Directory.Exists(StatePath.Text)) Process.Start(new ProcessStartInfo { FileName = StatePath.Text, UseShellExecute = true }); }
+        var path = (sender as Button)?.Tag?.ToString() switch
+        {
+            "logs" => LogPath.Text, "backtests" => BacktestPath.Text,
+            "backups" => BackupPath.Text, "history" => HistoryPath.Text, _ => StatePath.Text
+        };
+        try
+        {
+            if (Directory.Exists(path)) Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
+            else Status("Thư mục chưa tồn tại. Dữ liệu sẽ tạo khi tác vụ tương ứng chạy.", false);
+        }
         catch (Exception ex) { Status(ex.Message, false); }
     }
     private static void ApplyWindowsStartup(bool enabled)

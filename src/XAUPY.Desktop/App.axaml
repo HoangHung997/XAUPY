@@ -99,6 +99,7 @@
     </Style>
     <Style Selector="CheckBox">
       <Setter Property="Foreground" Value="#DCEAF8"/>
+      <Setter Property="Padding" Value="7,0,0,0"/>
     </Style>
     <Style Selector="Button">
       <Setter Property="HorizontalAlignment" Value="Stretch"/>

@@ -5,7 +5,9 @@
   <UserControl.Styles>
     <Style Selector="TextBlock.tableHeader">
       <Setter Property="Foreground" Value="#B9CCE0"/>
-      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="Margin" Value="5,6"/>
+      <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
     </Style>
     <Style Selector="Button.rowAction">
       <Setter Property="Background" Value="#0A54B5"/>
@@ -29,6 +31,12 @@
       <Setter Property="MinHeight" Value="34"/>
       <Setter Property="HorizontalContentAlignment" Value="Right"/>
     </Style>
+    <Style Selector="Button.quickLot">
+      <Setter Property="Padding" Value="5,2"/>
+      <Setter Property="Height" Value="28"/>
+      <Setter Property="MinHeight" Value="28"/>
+      <Setter Property="FontSize" Value="14"/>
+    </Style>
   </UserControl.Styles>
 
   <Grid ColumnDefinitions="4*,1*" ColumnSpacing="8">
@@ -38,69 +46,55 @@
       <StackPanel Spacing="8">
         <!-- Approved five KPI cards -->
         <Grid ColumnDefinitions="*,*,*,*,*" ColumnSpacing="8">
-          <Border Grid.Column="0" Classes="panel" Padding="12,10">
-            <StackPanel Spacing="3">
-              <StackPanel Orientation="Horizontal" Spacing="9">
-                <Border Width="38" Height="38" CornerRadius="19" BorderBrush="#0AAE77" BorderThickness="2">
-                  <TextBlock Text="$" Foreground="#18E58B" FontSize="23" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="Tổng P/L đang mở" Classes="label" VerticalAlignment="Center"/>
+          <Border Grid.Column="0" Classes="panel" Height="106" Padding="12,10">
+            <Grid ColumnDefinitions="48,*" ColumnSpacing="12">
+              <Border Width="48" Height="48" CornerRadius="24" BorderBrush="#18E58B" BorderThickness="1" VerticalAlignment="Top"><TextBlock Text="$" Foreground="#18E58B" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+              <StackPanel Grid.Column="1" Spacing="3">
+                <TextBlock Text="Tổng P/L đang mở" FontSize="15" TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="OpenPlText" Text="—" FontSize="28" FontWeight="Bold" Foreground="#18E58B"/>
+                <TextBlock x:Name="OpenPlPercentText" Text="—" Classes="dim" FontSize="13" TextTrimming="CharacterEllipsis"/>
               </StackPanel>
-              <TextBlock x:Name="OpenPlText" Text="—" FontSize="25" FontWeight="Bold" Foreground="#18E58B" Margin="48,-5,0,0"/>
-              <TextBlock x:Name="OpenPlPercentText" Text="—" Foreground="#18E58B" Margin="48,0,0,0"/>
-            </StackPanel>
+            </Grid>
           </Border>
-
-          <Border Grid.Column="1" Classes="panel" Padding="12,10">
-            <StackPanel Spacing="3">
-              <StackPanel Orientation="Horizontal" Spacing="9">
-                <Border Width="38" Height="38" CornerRadius="19" BorderBrush="#216ED0" BorderThickness="2">
-                  <TextBlock Text="▥" Foreground="#4C9BFF" FontSize="21" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="P/L đã thực hiện" Classes="label" VerticalAlignment="Center"/>
+          <Border Grid.Column="1" Classes="panel" Height="106" Padding="12,10">
+            <Grid ColumnDefinitions="48,*" ColumnSpacing="12">
+              <Border Width="48" Height="48" CornerRadius="24" BorderBrush="#4C9BFF" BorderThickness="1" VerticalAlignment="Top"><local:ReferenceIcon Kind="bars" Width="27" Height="27" Tint="#4C9BFF"/></Border>
+              <StackPanel Grid.Column="1" Spacing="3">
+                <TextBlock Text="P/L đã thực hiện" FontSize="15" TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="RealizedPlText" Text="—" FontSize="28" FontWeight="Bold" Foreground="#18E58B"/>
+                <TextBlock x:Name="RealizedTodayText" Text="Hôm nay: —" Classes="dim" FontSize="13" TextTrimming="CharacterEllipsis"/>
               </StackPanel>
-              <TextBlock x:Name="RealizedPlText" Text="—" FontSize="25" FontWeight="Bold" Foreground="#18E58B" Margin="48,-5,0,0"/>
-              <TextBlock x:Name="RealizedTodayText" Text="Hôm nay: —" Classes="dim" Margin="48,0,0,0"/>
-            </StackPanel>
+            </Grid>
           </Border>
-
-          <Border Grid.Column="2" Classes="panel" Padding="12,10">
-            <StackPanel Spacing="3">
-              <StackPanel Orientation="Horizontal" Spacing="9">
-                <Border Width="38" Height="38" CornerRadius="19" BorderBrush="#327BE8" BorderThickness="2">
-                  <TextBlock Text="◔" Foreground="#69A7FF" FontSize="23" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="Tổng mức tiếp xúc" Classes="label" VerticalAlignment="Center"/>
+          <Border Grid.Column="2" Classes="panel" Height="106" Padding="12,10">
+            <Grid ColumnDefinitions="48,*" ColumnSpacing="12">
+              <Border Width="48" Height="48" CornerRadius="24" BorderBrush="#69A7FF" BorderThickness="1" VerticalAlignment="Top"><Path Data="M12,2 L12,12 22,12 A10,10 0 0 1 2,12 A10,10 0 0 1 12,2 M15,1 A10,10 0 0 1 25,11 L15,11 Z" Stroke="#69A7FF" StrokeThickness="1.5" Fill="#204784" Width="28" Height="28" Stretch="Uniform"/></Border>
+              <StackPanel Grid.Column="1" Spacing="3">
+                <TextBlock Text="Tổng mức tiếp xúc" FontSize="15" TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="ExposureText" Text="— lots" FontSize="28" FontWeight="Bold" Foreground="#EAF3FF"/>
+                <TextBlock Text="Khối lượng vị thế đang mở" Classes="dim" FontSize="13" TextTrimming="CharacterEllipsis"/>
               </StackPanel>
-              <TextBlock x:Name="ExposureText" Text="— lots" FontSize="24" FontWeight="Bold" Margin="48,-5,0,0"/>
-              <TextBlock Text="Khối lượng vị thế đang mở" Classes="dim" FontSize="12" Margin="48,0,0,0"/>
-            </StackPanel>
+            </Grid>
           </Border>
-
-          <Border Grid.Column="3" Classes="panel" Padding="12,10">
-            <StackPanel Spacing="3">
-              <StackPanel Orientation="Horizontal" Spacing="9">
-                <Border Width="38" Height="38" CornerRadius="19" BorderBrush="#2B76D8" BorderThickness="2">
-                  <TextBlock Text="⬟" Foreground="#68A6FF" FontSize="21" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="Rủi ro hiện tại" Classes="label" VerticalAlignment="Center"/>
+          <Border Grid.Column="3" Classes="panel" Height="106" Padding="12,10">
+            <Grid ColumnDefinitions="48,*" ColumnSpacing="12">
+              <Border Width="48" Height="48" CornerRadius="24" BorderBrush="#68A6FF" BorderThickness="1" VerticalAlignment="Top"><local:ReferenceIcon Kind="shield" Width="27" Height="27" Tint="#68A6FF"/></Border>
+              <StackPanel Grid.Column="1" Spacing="3">
+                <TextBlock Text="Rủi ro hiện tại" FontSize="15" TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="RiskText" Text="—" FontSize="28" FontWeight="Bold" Foreground="#EAF3FF"/>
+                <TextBlock x:Name="RiskDetailText" Text="Dựa trên server SL thật" Classes="dim" FontSize="13" TextTrimming="CharacterEllipsis"/>
               </StackPanel>
-              <TextBlock x:Name="RiskText" Text="—" FontSize="24" FontWeight="Bold" Margin="48,-5,0,0"/>
-              <TextBlock x:Name="RiskDetailText" Text="Dựa trên server SL thật" Classes="dim" FontSize="12" Margin="48,0,0,0"/>
-            </StackPanel>
+            </Grid>
           </Border>
-
-          <Border Grid.Column="4" Classes="panel" Padding="12,10">
-            <StackPanel Spacing="3">
-              <StackPanel Orientation="Horizontal" Spacing="9">
-                <Border Width="38" Height="38" CornerRadius="19" BorderBrush="#286DC6" BorderThickness="2">
-                  <TextBlock Text="▣" Foreground="#70AFFF" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="Lệnh chờ đang hoạt động" Classes="label" VerticalAlignment="Center"/>
+          <Border Grid.Column="4" Classes="panel" Height="106" Padding="12,10">
+            <Grid ColumnDefinitions="48,*" ColumnSpacing="12">
+              <Border Width="48" Height="48" CornerRadius="24" BorderBrush="#70AFFF" BorderThickness="1" VerticalAlignment="Top"><local:ReferenceIcon Kind="document" Width="27" Height="27" Tint="#70AFFF"/></Border>
+              <StackPanel Grid.Column="1" Spacing="3">
+                <TextBlock Text="Lệnh chờ đang hoạt động" FontSize="14" TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="PendingCountText" Text="0" FontSize="28" FontWeight="Bold" Foreground="#EAF3FF"/>
+                <TextBlock x:Name="PendingTypesText" Text="—" Classes="dim" FontSize="13" TextTrimming="CharacterEllipsis"/>
               </StackPanel>
-              <TextBlock x:Name="PendingCountText" Text="0" FontSize="25" FontWeight="Bold" Margin="48,-5,0,0"/>
-              <TextBlock x:Name="PendingTypesText" Text="—" Classes="dim" FontSize="12" Margin="48,0,0,0" TextWrapping="Wrap"/>
-            </StackPanel>
+            </Grid>
           </Border>
         </Grid>
 
@@ -111,7 +105,7 @@
               <TextBlock x:Name="PositionsTitleText" Text="Vị thế đang mở (0)" Classes="panelTitle" Margin="12,8"/>
               <CheckBox x:Name="ShowAllSymbolsCheck" Grid.Column="1" Content="Hiển thị tất cả symbol" IsChecked="True" Margin="0,0,12,0" VerticalAlignment="Center"/>
             </Grid>
-            <Grid Margin="10,7,10,4" ColumnDefinitions="0.38*,0.92*,0.78*,0.68*,0.76*,0.86*,0.86*,0.76*,0.76*,0.96*,0.86*,0.92*,1.26*,2*">
+            <Grid Margin="10,0,10,0" ColumnDefinitions="0.38*,0.92*,0.78*,0.68*,0.76*,0.86*,0.86*,0.76*,0.76*,0.96*,0.86*,0.92*,1.26*,2*">
               <TextBlock Text="#" Classes="tableHeader"/>
               <TextBlock Grid.Column="1" Text="Ticket" Classes="tableHeader"/>
               <TextBlock Grid.Column="2" Text="Symbol" Classes="tableHeader"/>
@@ -137,7 +131,7 @@
             <Border Background="#082038" Padding="12,8">
               <TextBlock x:Name="PendingTitleText" Text="Lệnh chờ đang hoạt động (0)" Classes="panelTitle"/>
             </Border>
-            <Grid Margin="10,7,10,4" ColumnDefinitions="0.38*,0.92*,0.82*,0.92*,0.74*,0.92*,0.78*,0.78*,1.2*,1*,1.3*,1.8*">
+            <Grid Margin="10,0,10,0" ColumnDefinitions="0.38*,0.92*,0.82*,0.92*,0.74*,0.92*,0.78*,0.78*,1.2*,1*,1.3*,1.8*">
               <TextBlock Text="#" Classes="tableHeader"/>
               <TextBlock Grid.Column="1" Text="Ticket" Classes="tableHeader"/>
               <TextBlock Grid.Column="2" Text="Symbol" Classes="tableHeader"/>
@@ -156,21 +150,21 @@
         </Border>
 
         <!-- Bulk actions exactly in reference order -->
-        <Border Classes="panel" Padding="10,8">
-          <StackPanel Spacing="6">
-            <WrapPanel>
-              <Button Classes="dangerAction" Content="◉  Đóng tất cả vị thế" Tag="CLOSE_ALL" Click="BulkAction_OnClick" Margin="0,0,8,5"/>
+        <Border Classes="panel" Padding="10,6">
+          <StackPanel Spacing="2">
+            <UniformGrid Columns="7">
+              <Button Classes="dangerAction" Content="◉  Đóng tất cả vị thế" Tag="CLOSE_ALL" FontSize="14" Padding="5,7" Click="BulkAction_OnClick" Margin="0,0,8,5"/>
               <Button Classes="secondary" Content="$  Đóng lãi" Tag="CLOSE_PROFIT" Click="BulkAction_OnClick" Margin="0,0,8,5"/>
               <Button Classes="secondary" Content="▥  Đóng lỗ" Tag="CLOSE_LOSS" Click="BulkAction_OnClick" Margin="0,0,8,5"/>
               <Button Classes="secondary" Content="◔  Đóng một phần" Tag="PARTIAL_ALL" Click="BulkAction_OnClick" Margin="0,0,8,5"/>
               <Button Classes="secondary" Content="⬟  Chuyển SL về BE" Tag="BE_ALL" Click="BulkAction_OnClick" Margin="0,0,8,5"/>
               <Button Classes="secondary" Content="⌁  Trailing Stop" Tag="TRAIL_ALL" Click="BulkAction_OnClick" Margin="0,0,8,5"/>
-              <Button Classes="dangerAction" Content="⊘  Hủy tất cả lệnh chờ" Tag="CANCEL_ALL_PENDING" Click="BulkAction_OnClick" Margin="0,0,0,5"/>
-            </WrapPanel>
+              <Button Classes="dangerAction" Content="⊘  Hủy tất cả lệnh chờ" Tag="CANCEL_ALL_PENDING" FontSize="14" Padding="5,7" Click="BulkAction_OnClick" Margin="0,0,0,5"/>
+            </UniformGrid>
             <Grid ColumnDefinitions="Auto,*">
-              <CheckBox x:Name="ConfirmCloseCheck" Content="Xác nhận trước khi đóng / sửa / hủy"/>
+              <CheckBox x:Name="ConfirmCloseCheck" MinHeight="23" FontSize="13" Content="Xác nhận trước khi đóng / sửa / hủy"/>
               <TextBlock x:Name="ActionStatusText"
-                         Grid.Column="1"
+                         Grid.Column="1" FontSize="13" VerticalAlignment="Center"
                          Text="SIMULATION ONLY • broker execution locked"
                          Foreground="#FFD34D"
                          HorizontalAlignment="Right"
@@ -180,14 +174,14 @@
         </Border>
 
         <!-- Deal history -->
-        <Border Classes="panel">
+        <Border Classes="panel" MinHeight="180">
           <StackPanel>
             <Grid Background="#082038" ColumnDefinitions="*,Auto,Auto">
               <TextBlock Text="Lịch sử giao dịch (Deals)" Classes="panelTitle" Margin="12,8"/>
               <CheckBox Grid.Column="1" Content="Hiển thị symbol hiện tại" IsChecked="True" Margin="0,0,14,0" VerticalAlignment="Center"/>
               <Button Grid.Column="2" Classes="secondary" Content="⬇  Xuất báo cáo" IsEnabled="False" Margin="0,4,10,4"/>
             </Grid>
-            <Grid Margin="10,7,10,4" ColumnDefinitions="92,145,86,70,76,94,94,100,94,92,90,*">
+            <Grid Margin="10,0,10,0" ColumnDefinitions="0.92*,1.45*,0.86*,0.7*,0.76*,0.94*,0.94*,1*,0.94*,0.92*,2.2*">
               <TextBlock Text="#" Classes="tableHeader"/>
               <TextBlock Grid.Column="1" Text="Thời gian" Classes="tableHeader"/>
               <TextBlock Grid.Column="2" Text="Symbol" Classes="tableHeader"/>
@@ -210,12 +204,13 @@
     <ScrollViewer Grid.Column="1"
                   VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
-      <StackPanel Spacing="8">
+      <StackPanel Spacing="6">
         <Border Classes="panel" Padding="12,9">
           <StackPanel Spacing="3">
             <StackPanel Orientation="Horizontal" Spacing="8">
               <TextBlock x:Name="OrdersSymbolText" Text="XAUUSD" FontSize="22" FontWeight="Bold" Foreground="#CBE0F8"/>
-              <TextBlock x:Name="OrdersConnectionDot" Text="●" Foreground="#8092A6" FontSize="16" VerticalAlignment="Center"/>
+              <TextBlock x:Name="OrdersConnectionDot" IsVisible="False" Foreground="#8092A6"/>
+              <Ellipse Width="16" Height="16" Fill="{Binding #OrdersConnectionDot.Foreground}" VerticalAlignment="Center"/>
             </StackPanel>
             <TextBlock x:Name="OrdersLastPriceText" Text="—" FontSize="36" FontWeight="Bold" Foreground="#18E58B"/>
             <TextBlock x:Name="OrdersChangeText" Text="—" FontSize="20" FontWeight="Bold" Foreground="#FF415C"/>
@@ -253,8 +248,8 @@
               <Button Grid.Column="2" Classes="navTab" Content="Thông tin" IsEnabled="False"/>
             </Grid>
 
-            <StackPanel Margin="10,7" Spacing="5">
-              <Border Background="#2F2915" BorderBrush="#6A5C24" BorderThickness="1" CornerRadius="4" Padding="8,5">
+            <StackPanel Margin="10,5" Spacing="5">
+              <Border Background="#2F2915" BorderBrush="#6A5C24" BorderThickness="1" CornerRadius="4" Padding="4,1">
                 <TextBlock Text="CHẾ ĐỘ MÔ PHỎNG • GIAO DỊCH ĐANG KHÓA" Foreground="#FFD34D" FontWeight="Bold" FontSize="12" TextAlignment="Center"/>
               </Border>
 
@@ -268,25 +263,25 @@
               </Grid>
 
               <Grid ColumnDefinitions="*,*,*,*,*" ColumnSpacing="5">
-                <Button Grid.Column="0" Classes="secondary" Content="0.01" Tag="0.01" Click="QuickLot_OnClick"/>
-                <Button Grid.Column="1" Classes="secondary" Content="0.05" Tag="0.05" Click="QuickLot_OnClick"/>
-                <Button Grid.Column="2" Classes="secondary" Content="0.10" Tag="0.10" Click="QuickLot_OnClick"/>
-                <Button Grid.Column="3" Classes="secondary" Content="0.50" Tag="0.50" Click="QuickLot_OnClick"/>
-                <Button Grid.Column="4" Classes="secondary" Content="1.00" Tag="1.00" Click="QuickLot_OnClick"/>
+                <Button Grid.Column="0" Classes="secondary quickLot" Content="0.01" Tag="0.01" Click="QuickLot_OnClick"/>
+                <Button Grid.Column="1" Classes="secondary quickLot" Content="0.05" Tag="0.05" Click="QuickLot_OnClick"/>
+                <Button Grid.Column="2" Classes="secondary quickLot" Content="0.10" Tag="0.10" Click="QuickLot_OnClick"/>
+                <Button Grid.Column="3" Classes="secondary quickLot" Content="0.50" Tag="0.50" Click="QuickLot_OnClick"/>
+                <Button Grid.Column="4" Classes="secondary quickLot" Content="1.00" Tag="1.00" Click="QuickLot_OnClick"/>
               </Grid>
 
               <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                <Button x:Name="MarketBuyButton" HorizontalAlignment="Stretch" Grid.Column="0" Background="#08B966" BorderBrush="#16E18A" BorderThickness="1" CornerRadius="5" Padding="12,9" Click="MarketBuy_OnClick">
+                <Button x:Name="MarketBuyButton" HorizontalAlignment="Stretch" Grid.Column="0" Background="#08B966" BorderBrush="#16E18A" BorderThickness="1" CornerRadius="5" Padding="12,6" Click="MarketBuy_OnClick">
                   <StackPanel><TextBlock Text="BUY" FontWeight="Bold" HorizontalAlignment="Center"/><TextBlock x:Name="BuyPriceText" Text="—" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/></StackPanel>
                 </Button>
-                <Button x:Name="MarketSellButton" HorizontalAlignment="Stretch" Grid.Column="1" Background="#E51E45" BorderBrush="#FF4667" BorderThickness="1" CornerRadius="5" Padding="12,9" Click="MarketSell_OnClick">
+                <Button x:Name="MarketSellButton" HorizontalAlignment="Stretch" Grid.Column="1" Background="#E51E45" BorderBrush="#FF4667" BorderThickness="1" CornerRadius="5" Padding="12,6" Click="MarketSell_OnClick">
                   <StackPanel><TextBlock Text="SELL" FontWeight="Bold" HorizontalAlignment="Center"/><TextBlock x:Name="SellPriceText" Text="—" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/></StackPanel>
                 </Button>
               </Grid>
 
               <Grid ColumnDefinitions="*,Auto">
                 <TextBlock x:Name="ManualSpreadText" Text="Spread: —" Classes="dim"/>
-                <CheckBox x:Name="ManualConfirmCheck" Grid.Column="1" Content="Xác nhận lệnh mô phỏng"/>
+                <CheckBox x:Name="ManualConfirmCheck" Grid.Column="1" MinHeight="23" Height="23" Padding="5,0" FontSize="13" Content="Xác nhận lệnh mô phỏng"/>
               </Grid>
             </StackPanel>
           </StackPanel>

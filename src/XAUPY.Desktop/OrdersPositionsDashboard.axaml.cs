@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.LogicalTree;
 using Avalonia.Media;
 using XAUPY.Ipc;
 
@@ -22,6 +23,7 @@ public partial class OrdersPositionsDashboard : UserControl
     public OrdersPositionsDashboard()
     {
         InitializeComponent();
+        StyleTableHeaders();
         RenderAll();
         RenderQuoteChart();
     }
@@ -29,6 +31,20 @@ public partial class OrdersPositionsDashboard : UserControl
     public void AttachSupervisor(EngineProcessSupervisor supervisor)
     {
         _supervisor = supervisor;
+    }
+
+    private void StyleTableHeaders()
+    {
+        foreach (var grid in this.GetLogicalDescendants().OfType<Grid>().ToArray())
+        foreach (var header in grid.Children.OfType<TextBlock>().Where(text => text.Classes.Contains("tableHeader")).ToArray())
+        {
+            int column = Grid.GetColumn(header);
+            grid.Children.Remove(header);
+            var cell = new Border { Child = header,
+                BorderBrush = new SolidColorBrush(Color.Parse("#123751")), BorderThickness = new Thickness(0,1,1,1) };
+            Grid.SetColumn(cell, column);
+            grid.Children.Add(cell);
+        }
     }
 
     public void Apply(
@@ -73,6 +89,8 @@ public partial class OrdersPositionsDashboard : UserControl
             SetActionStatus("SIMULATION BLOCKED • chờ snapshot MT5 tươi.", Brushes.Gold);
         else if (!simulationReady)
             SetActionStatus("SIMULATION BLOCKED • Task 009 yêu cầu tài khoản DEMO + terminal online.", Brushes.Gold);
+        else if (Text("ActionStatusText").Text?.StartsWith("SIMULATION BLOCKED", StringComparison.Ordinal) == true)
+            SetActionStatus("Chế độ mô phỏng • Giao dịch đang khóa", Brushes.Gold);
     }
 
     private void RenderAll()
@@ -120,7 +138,7 @@ public partial class OrdersPositionsDashboard : UserControl
 
         if (!_book.Available || _book.Positions.Count == 0)
         {
-            host.Children.Add(EmptyRow("Không có vị thế strategy-owned trong snapshot MT5 hiện tại."));
+            host.Children.Add(EmptyRow(_book.Available ? "Chưa có vị thế của chiến lược này." : "Đang chờ dữ liệu vị thế từ MT5."));
             return;
         }
 
@@ -130,7 +148,7 @@ public partial class OrdersPositionsDashboard : UserControl
 
     private Border PositionRow(PositionSnapshot position, int index)
     {
-        var grid = CreateRowGrid(38, 92, 78, 68, 76, 86, 86, 76, 76, 96, 86, 92, 126, null);
+        var grid = CreateRowGrid(38, 92, 78, 68, 76, 86, 86, 76, 76, 96, 86, 92, 126, 200);
 
         AddCell(grid, 0, (index + 1).ToString());
         AddCell(grid, 1, position.Ticket.ToString());
@@ -171,7 +189,7 @@ public partial class OrdersPositionsDashboard : UserControl
 
         if (!_book.Available || _book.Orders.Count == 0)
         {
-            host.Children.Add(EmptyRow("Không có pending order strategy-owned trong snapshot MT5 hiện tại."));
+            host.Children.Add(EmptyRow(_book.Available ? "Chưa có lệnh chờ của chiến lược này." : "Đang chờ dữ liệu lệnh chờ từ MT5."));
             return;
         }
 
@@ -181,7 +199,7 @@ public partial class OrdersPositionsDashboard : UserControl
 
     private Border PendingOrderRow(PendingOrderSnapshot order, int index)
     {
-        var grid = CreateRowGrid(38, 92, 82, 92, 74, 92, 78, 78, 120, 100, 130, null);
+        var grid = CreateRowGrid(38, 92, 82, 92, 74, 92, 78, 78, 120, 100, 130, 180);
 
         AddCell(grid, 0, (index + 1).ToString());
         AddCell(grid, 1, order.Ticket.ToString());
@@ -216,7 +234,7 @@ public partial class OrdersPositionsDashboard : UserControl
 
         if (!_book.Available || _book.Deals.Count == 0)
         {
-            host.Children.Add(EmptyRow("Chưa có realized deal strategy-owned trong history MT5."));
+            host.Children.Add(EmptyRow(_book.Available ? "Chưa có giao dịch đã đóng của chiến lược này." : "Đang chờ lịch sử giao dịch từ MT5."));
             return;
         }
 
@@ -226,7 +244,7 @@ public partial class OrdersPositionsDashboard : UserControl
 
     private Border DealRow(DealSnapshot deal, int index)
     {
-        var grid = CreateRowGrid(92, 145, 86, 70, 76, 94, 94, 100, 94, 92, 90, null);
+        var grid = CreateRowGrid(92, 145, 86, 70, 76, 94, 94, 100, 94, 92, 220);
 
         AddCell(grid, 0, deal.Ticket.ToString());
         AddCell(grid, 1, Epoch(deal.Time));
@@ -553,12 +571,12 @@ public partial class OrdersPositionsDashboard : UserControl
 
     private static Grid CreateRowGrid(params double?[] widths)
     {
-        var grid = new Grid { MinHeight = 29 };
+        var grid = new Grid { MinHeight = 31 };
         foreach (double? width in widths)
         {
             grid.ColumnDefinitions.Add(
                 width.HasValue
-                    ? new ColumnDefinition(new GridLength(width.Value))
+                    ? new ColumnDefinition(new GridLength(width.Value, GridUnitType.Star))
                     : new ColumnDefinition(new GridLength(1, GridUnitType.Star)));
         }
 
@@ -574,13 +592,16 @@ public partial class OrdersPositionsDashboard : UserControl
         var cell = new TextBlock
         {
             Text = value,
-            FontSize = 13,
+            FontSize = 14,
             Foreground = foreground ?? new SolidColorBrush(Color.Parse("#D7E4F2")),
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis
         };
-        Grid.SetColumn(cell, column);
-        grid.Children.Add(cell);
+        ToolTip.SetTip(cell, value);
+        var border = new Border { Child = cell, Padding = new Thickness(5, 2),
+            BorderBrush = new SolidColorBrush(Color.Parse("#102F48")), BorderThickness = new Thickness(0,0,1,0) };
+        Grid.SetColumn(border, column);
+        grid.Children.Add(border);
     }
 
     private Button ActionButton(string text, long ticket, string action, bool danger = false)

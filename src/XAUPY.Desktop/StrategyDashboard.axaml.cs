@@ -148,8 +148,9 @@ public partial class StrategyDashboard : UserControl
         Text("IntrabarObservationText").Text = strategy.Intrabar.Mode == "CLOSED_BAR"
             ? "Đang đánh giá nến đóng. Bỏ chọn xác nhận nến đóng để ghi nhận RSI/Z theo tick."
             : $"Theo tick: {strategy.Intrabar.ObservedTicks:N0} quan sát • Cực trị RSI {Format(strategy.Intrabar.RsiExtreme)} / Z {Format(strategy.Intrabar.ZExtreme)}\n{strategy.Intrabar.Reason}";
-        Text("StrategyStateText").Text = strategy.State;
-        Text("StrategyStateText").Foreground = StateBrush(strategy.State);
+        Text("StrategyStateText").Text = strategy.Available && strategy.Ready ? "ĐANG HOẠT ĐỘNG" : "ĐANG CHỜ";
+        ToolTip.SetTip(Text("StrategyStateText"), strategy.State);
+        Text("StrategyStateText").Foreground = strategy.Available && strategy.Ready ? Brushes.MediumSpringGreen : Brushes.Gold;
         Text("BlockedReasonText").Text = strategy.BlockedReason ?? "Không bị block";
         Text("ProfileText").Text = strategy.ProfileName;
         Text("ProfileHashText").Text = string.IsNullOrWhiteSpace(strategy.ProfileHash)
@@ -164,7 +165,8 @@ public partial class StrategyDashboard : UserControl
         Text("TriggerDot").Foreground = strategy.TriggerPassed == true ? Brushes.MediumSpringGreen : Brushes.SlateGray;
         Text("AdxConditionText").Text = Format(strategy.Filters.Adx);
         Text("AtrConditionText").Text = Format(strategy.Filters.Atr);
-        Text("AllConditionText").Text = strategy.Ready && strategy.Available ? "SẴN SÀNG" : "ĐANG CHỜ";
+        Text("AllConditionText").Text = strategy.Available && strategy.Ready &&
+            strategy.State.StartsWith("TRIGGERED_", StringComparison.Ordinal) ? "ĐẠT" : "ĐANG CHỜ";
         Text("PullbackRsiMirror").Text = Format(strategy.PullbackIndicators.Rsi);
         Text("TriggerRsiMirror").Text = Format(strategy.TriggerIndicators.Rsi);
         Text("PullbackZFilterMirror").Text = Format(strategy.PullbackIndicators.Z);
@@ -276,8 +278,8 @@ public partial class StrategyDashboard : UserControl
 
     private static IBrush DirectionBrush(string direction) => direction switch
     {
-        "BUY" => Brushes.LightGreen,
-        "SELL" => Brushes.IndianRed,
+        "BUY" => new SolidColorBrush(Color.Parse("#18E58B")),
+        "SELL" => new SolidColorBrush(Color.Parse("#FF415C")),
         "BOTH" => Brushes.LightBlue,
         _ => Brushes.LightGray
     };

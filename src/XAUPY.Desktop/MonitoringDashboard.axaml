@@ -51,49 +51,10 @@
             <Border Background="#082038" Padding="12,8">
               <TextBlock Text="Trạng thái điều kiện đa khung thời gian" Classes="panelTitle"/>
             </Border>
-            <Grid Classes="timeframeTable" Margin="10,8" ColumnDefinitions="0.65*,0.8*,1.05*,1.15*,1*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="9">
-              <TextBlock Grid.Row="0" Text="Khung" Classes="dim" FontSize="12"/>
-              <TextBlock Grid.Row="0" Grid.Column="1" Text="Direction" Classes="dim" FontSize="12"/>
-              <TextBlock Grid.Row="0" Grid.Column="2" Text="Pullback" Classes="dim" FontSize="12"/>
-              <TextBlock Grid.Row="0" Grid.Column="3" Text="Trigger" Classes="dim" FontSize="12"/>
-              <TextBlock Grid.Row="0" Grid.Column="4" Text="Trạng thái" Classes="dim" FontSize="12"/>
-
-              <TextBlock Grid.Row="1" x:Name="MonitorDirectionTfText" Text="M30"/>
-              <TextBlock Grid.Row="1" Grid.Column="1" x:Name="MonitorDirectionStateText" Text="NEUTRAL"/>
-              <TextBlock Grid.Row="1" Grid.Column="2" Text="—"/>
-              <TextBlock Grid.Row="1" Grid.Column="3" Text="—"/>
-              <TextBlock Grid.Row="1" Grid.Column="4" Text="Chờ dữ liệu" Foreground="#86A0BA"/>
-
-              <TextBlock Grid.Row="2" x:Name="MonitorPullbackTfText" Text="M5"/>
-              <TextBlock Grid.Row="2" Grid.Column="1" Text="—"/>
-              <TextBlock Grid.Row="2" Grid.Column="2" x:Name="MonitorPullbackStateText" Text="WAIT"/>
-              <TextBlock Grid.Row="2" Grid.Column="3" Text="—"/>
-              <TextBlock Grid.Row="2" Grid.Column="4" Text="Chờ dữ liệu" Foreground="#86A0BA"/>
-
-              <TextBlock Grid.Row="3" x:Name="MonitorTriggerTfText" Text="M1"/>
-              <TextBlock Grid.Row="3" Grid.Column="1" Text="—"/>
-              <TextBlock Grid.Row="3" Grid.Column="2" Text="—"/>
-              <TextBlock Grid.Row="3" Grid.Column="3" x:Name="MonitorTriggerStateText" Text="WAIT"/>
-              <TextBlock Grid.Row="3" Grid.Column="4" Text="Chờ dữ liệu" Foreground="#86A0BA"/>
-
-              <TextBlock Grid.Row="4" Text="M15" Classes="dim"/>
-              <TextBlock Grid.Row="4" Grid.Column="1" Text="—" Classes="dim"/>
-              <TextBlock Grid.Row="4" Grid.Column="2" Text="—" Classes="dim"/>
-              <TextBlock Grid.Row="4" Grid.Column="3" Text="—" Classes="dim"/>
-              <TextBlock Grid.Row="4" Grid.Column="4" Text="Chưa xét" Classes="dim"/>
-
-              <TextBlock Grid.Row="5" Text="H1" Classes="dim" FontSize="11"/>
-              <TextBlock Grid.Row="5" Grid.Column="1" Text="—" Classes="dim" FontSize="11"/>
-              <TextBlock Grid.Row="5" Grid.Column="2" Text="—" Classes="dim" FontSize="11"/>
-              <TextBlock Grid.Row="5" Grid.Column="3" Text="—" Classes="dim" FontSize="11"/>
-              <TextBlock Grid.Row="5" Grid.Column="4" Text="Chưa xét" Classes="dim"/>
-
-              <TextBlock Grid.Row="6" Text="H4" Classes="dim"/>
-              <TextBlock Grid.Row="6" Grid.Column="1" Text="—" Classes="dim"/>
-              <TextBlock Grid.Row="6" Grid.Column="2" Text="—" Classes="dim"/>
-              <TextBlock Grid.Row="6" Grid.Column="3" Text="—" Classes="dim"/>
-              <TextBlock Grid.Row="6" Grid.Column="4" Text="Chưa xét" Classes="dim"/>
-            </Grid>
+            <ScrollViewer Height="276" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+              <Grid x:Name="MonitorConditionMatrix" Margin="6,0,6,8" ColumnDefinitions="0.82*,0.92*,1*,1.1*,1.05*"/>
+            </ScrollViewer>
+            <StackPanel IsVisible="False"><TextBlock Grid.Row="1" x:Name="MonitorDirectionTfText" Text="M30"/><TextBlock Grid.Row="1" Grid.Column="1" x:Name="MonitorDirectionStateText" Text="NEUTRAL"/><TextBlock Grid.Row="2" x:Name="MonitorPullbackTfText" Text="M5"/><TextBlock Grid.Row="2" Grid.Column="2" x:Name="MonitorPullbackStateText" Text="WAIT"/><TextBlock Grid.Row="3" x:Name="MonitorTriggerTfText" Text="M1"/><TextBlock Grid.Row="3" Grid.Column="3" x:Name="MonitorTriggerStateText" Text="WAIT"/></StackPanel>
           </StackPanel>
         </Border>
       </Grid>
@@ -103,65 +64,93 @@
         <Border Grid.Column="0" Classes="panel">
           <StackPanel>
             <Border Background="#082038" Padding="12,7"><TextBlock Text="Chỉ báo &amp; Thị trường (Realtime)" Classes="panelTitle"/></Border>
-            <Grid ColumnDefinitions="*,*,*,*,*,*,*,*" ColumnSpacing="7" Margin="10,8">
-              <Border Grid.Column="0" Classes="panelSoft" Padding="5">
-                <StackPanel HorizontalAlignment="Center">
-                  <TextBlock Text="Z-Score" Classes="label"/>
-                  <Border Width="65" Height="35" CornerRadius="37,37,0,0" BorderBrush="#4C9BFF" BorderThickness="7,7,7,0" Margin="0,8,0,0"/>
-                  <TextBlock x:Name="MonitorPbZText" Text="—" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
-                  <TextBlock Text="Pullback" Classes="dim" FontSize="12"/>
+            <Grid ColumnDefinitions="1.18*,1.18*,1.18*,1.18*,0.82*,0.82*,0.82*,0.82*" ColumnSpacing="6" Margin="5,3,5,8">
+              <Border Grid.Column="0" Classes="panelSoft" Padding="5,5" Height="124">
+                <Grid RowDefinitions="22,60,*">
+                  <TextBlock Text="Z-Score" HorizontalAlignment="Center" FontSize="13"/>
+                  <Grid Grid.Row="1">
+                    <local:ReferenceGauge x:Name="MonitorZGauge" Width="104" Height="58" Tint="#359CFF" Minimum="-3" Maximum="+3"/>
+                    <TextBlock x:Name="MonitorPbZText" Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,3"/>
+                  </Grid>
+                  <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Bottom">
+                    <TextBlock Text="-3" FontSize="11" Classes="dim"/>
+                    <TextBlock Grid.Column="1" Text="Pullback" FontSize="11" Classes="dim" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="+3" FontSize="11" Classes="dim"/>
+                  </Grid>
+                </Grid>
+              </Border>
+              <Border Grid.Column="1" Classes="panelSoft" Padding="5,5" Height="124">
+                <Grid RowDefinitions="22,60,*">
+                  <TextBlock Text="RSI" HorizontalAlignment="Center" FontSize="13"/>
+                  <Grid Grid.Row="1">
+                    <local:ReferenceGauge x:Name="MonitorRsiGauge" Width="104" Height="58" Tint="#3A98FB" Minimum="0" Maximum="100"/>
+                    <TextBlock x:Name="MonitorTriggerRsiText" Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,3"/>
+                  </Grid>
+                  <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Bottom">
+                    <TextBlock Text="0" FontSize="11" Classes="dim"/>
+                    <TextBlock Grid.Column="1" Text="Trigger" FontSize="11" Classes="dim" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="100" FontSize="11" Classes="dim"/>
+                  </Grid>
+                </Grid>
+              </Border>
+              <Border Grid.Column="2" Classes="panelSoft" Padding="5,5" Height="124">
+                <Grid RowDefinitions="22,60,*">
+                  <TextBlock Text="ADX" HorizontalAlignment="Center" FontSize="13"/>
+                  <Grid Grid.Row="1">
+                    <local:ReferenceGauge x:Name="MonitorAdxGauge" Width="104" Height="58" Tint="#7398CB" Minimum="0" Maximum="50"/>
+                    <TextBlock x:Name="MonitorAdxText" Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,3"/>
+                  </Grid>
+                  <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Bottom">
+                    <TextBlock Text="0" FontSize="11" Classes="dim"/>
+                    <TextBlock Grid.Column="1" Text="Trend" FontSize="11" Classes="dim" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="50" FontSize="11" Classes="dim"/>
+                  </Grid>
+                </Grid>
+              </Border>
+              <Border Grid.Column="3" Classes="panelSoft" Padding="5,5" Height="124">
+                <Grid RowDefinitions="22,60,*">
+                  <TextBlock Text="ATR" HorizontalAlignment="Center" FontSize="13"/>
+                  <Grid Grid.Row="1">
+                    <local:ReferenceGauge x:Name="MonitorAtrGauge" Width="104" Height="58" Tint="#7398CB" Minimum="0" Maximum="50"/>
+                    <TextBlock x:Name="MonitorAtrText" Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,3"/>
+                  </Grid>
+                  <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Bottom">
+                    <TextBlock Text="0" FontSize="11" Classes="dim"/>
+                    <TextBlock Grid.Column="1" Text="Volatility" FontSize="11" Classes="dim" HorizontalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Text="50" FontSize="11" Classes="dim"/>
+                  </Grid>
+                </Grid>
+              </Border>
+              <Border Grid.Column="4" Classes="panelSoft" Padding="4,5" Height="124">
+                <StackPanel Spacing="4" HorizontalAlignment="Stretch">
+                  <TextBlock Text="MA" FontSize="13" HorizontalAlignment="Center"/>
+                  <local:ReferenceIcon Kind="bars" Width="23" Height="23" Tint="#B6D9FF" HorizontalAlignment="Center"/>
+                  <TextBlock x:Name="MonitorMaText" Text="—" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center"/>
+                  <TextBlock Text="Direction" FontSize="12" Classes="dim" HorizontalAlignment="Center"/>
                 </StackPanel>
               </Border>
-              <Border Grid.Column="1" Classes="panelSoft" Padding="5">
-                <StackPanel HorizontalAlignment="Center">
-                  <TextBlock Text="RSI" Classes="label"/>
-                  <Border Width="65" Height="35" CornerRadius="37,37,0,0" BorderBrush="#5BA9FF" BorderThickness="7,7,7,0" Margin="0,8,0,0"/>
-                  <TextBlock x:Name="MonitorTriggerRsiText" Text="—" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
-                  <TextBlock Text="Trigger" Classes="dim" FontSize="12"/>
+              <Border Grid.Column="5" Classes="panelSoft" Padding="4,5" Height="124">
+                <StackPanel Spacing="4" HorizontalAlignment="Stretch">
+                  <TextBlock Text="Latency" FontSize="13" HorizontalAlignment="Center"/>
+                  <local:ReferenceIcon Kind="pulse" Width="23" Height="23" Tint="#00D980" HorizontalAlignment="Center"/>
+                  <TextBlock x:Name="MonitorAgeText" Text="—" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center"/>
+                  <TextBlock Text="ms" FontSize="12" Classes="dim" HorizontalAlignment="Center"/>
                 </StackPanel>
               </Border>
-              <Border Grid.Column="2" Classes="panelSoft" Padding="5">
-                <StackPanel HorizontalAlignment="Center">
-                  <TextBlock Text="ADX" Classes="label"/>
-                  <Border Width="65" Height="35" CornerRadius="37,37,0,0" BorderBrush="#8EA9CC" BorderThickness="7,7,7,0" Margin="0,8,0,0"/>
-                  <TextBlock x:Name="MonitorAdxText" Text="—" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
-                  <TextBlock Text="Trend" Classes="dim" FontSize="12"/>
+              <Border Grid.Column="6" Classes="panelSoft" Padding="4,5" Height="124">
+                <StackPanel Spacing="4" HorizontalAlignment="Stretch">
+                  <TextBlock Text="Strategy" FontSize="13" HorizontalAlignment="Center"/>
+                  <local:ReferenceIcon Kind="pulse" Width="23" Height="23" Tint="#FF4264" HorizontalAlignment="Center"/>
+                  <TextBlock x:Name="MonitorStrategyText" Text="—" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center"/>
+                  <TextBlock Text="" FontSize="12" Classes="dim" HorizontalAlignment="Center"/><TextBlock x:Name="MonitorDirectionText" Text="Direction: —" IsVisible="False"/>
                 </StackPanel>
               </Border>
-              <Border Grid.Column="3" Classes="panelSoft" Padding="5">
-                <StackPanel HorizontalAlignment="Center">
-                  <TextBlock Text="ATR" Classes="label"/>
-                  <Border Width="65" Height="35" CornerRadius="37,37,0,0" BorderBrush="#8EA9CC" BorderThickness="7,7,7,0" Margin="0,8,0,0"/>
-                  <TextBlock x:Name="MonitorAtrText" Text="—" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
-                  <TextBlock Text="Volatility" Classes="dim" FontSize="12"/>
-                </StackPanel>
-              </Border>
-              <Border Grid.Column="4" Classes="panelSoft" Padding="5">
-                <StackPanel HorizontalAlignment="Center" Spacing="5">
-                  <TextBlock Text="MA" Classes="label"/>
-                  <TextBlock x:Name="MonitorMaText" Text="—" FontSize="19" FontWeight="Bold"/>
-                  <TextBlock Text="Direction" Classes="dim" FontSize="12"/>
-                </StackPanel>
-              </Border>
-              <Border Grid.Column="5" Classes="panelSoft" Padding="5">
-                <StackPanel HorizontalAlignment="Center" Spacing="5">
-                  <TextBlock Text="Latency" Classes="label"/>
-                  <TextBlock x:Name="MonitorAgeText" Text="—" FontSize="19" FontWeight="Bold"/>
-                  <TextBlock Text="ms" Classes="dim" FontSize="12"/>
-                </StackPanel>
-              </Border>
-              <Border Grid.Column="6" Classes="panelSoft" Padding="5">
-                <StackPanel HorizontalAlignment="Center" Spacing="5">
-                  <TextBlock Text="Strategy" Classes="label"/>
-                  <TextBlock x:Name="MonitorStrategyText" Text="STALE" FontSize="15" FontWeight="Bold" TextWrapping="Wrap" TextAlignment="Center"/>
-                  <TextBlock x:Name="MonitorDirectionText" Text="Direction: NEUTRAL" Classes="dim" FontSize="12" TextWrapping="Wrap"/>
-                </StackPanel>
-              </Border>
-              <Border Grid.Column="7" Classes="panelSoft" Padding="5">
-                <StackPanel HorizontalAlignment="Center" Spacing="5">
-                  <TextBlock Text="Bridge" Classes="label"/>
-                  <TextBlock x:Name="MonitorBridgeText" Text="WAITING" FontSize="15" FontWeight="Bold"/>
-                  <TextBlock Text="Realtime" Classes="dim" FontSize="12"/>
+              <Border Grid.Column="7" Classes="panelSoft" Padding="4,5" Height="124">
+                <StackPanel Spacing="4" HorizontalAlignment="Stretch">
+                  <TextBlock Text="Bridge" FontSize="13" HorizontalAlignment="Center"/>
+                  <local:ReferenceIcon Kind="database" Width="23" Height="23" Tint="#329AFF" HorizontalAlignment="Center"/>
+                  <TextBlock x:Name="MonitorBridgeText" Text="—" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center"/>
+                  <TextBlock Text="Realtime" FontSize="12" Classes="dim" HorizontalAlignment="Center"/>
                 </StackPanel>
               </Border>
             </Grid>
@@ -172,11 +161,32 @@
         <Border Grid.Column="1" Classes="panel">
           <StackPanel>
             <Border Background="#082038" Padding="12,7"><TextBlock Text="Kết nối &amp; Engine" Classes="panelTitle"/></Border>
-            <Grid Margin="12,8" ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
-              <TextBlock x:Name="MonitorTerminalDot" Grid.Row="0" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="0" Grid.Column="1" Text="MT5 Terminal" Classes="label"/><TextBlock x:Name="MonitorTerminalText" Grid.Row="0" Grid.Column="2" Text="offline"/>
-              <TextBlock x:Name="MonitorBridgeDot" Grid.Row="1" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="1" Grid.Column="1" Text="EA Bridge (MQL5)" Classes="label"/><TextBlock Grid.Row="1" Grid.Column="2" Text="Realtime"/>
-              <TextBlock x:Name="MonitorEngineDot" Grid.Row="2" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="2" Grid.Column="1" Text="Python Engine" Classes="label"/><TextBlock x:Name="MonitorSnapshotCountText" Grid.Row="2" Grid.Column="2" Text="Snapshots: 0"/>
-              <TextBlock x:Name="MonitorDataDot" Grid.Row="3" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="3" Grid.Column="1" Text="Profile" Classes="label"/><TextBlock x:Name="MonitorProfileText" Grid.Row="3" Grid.Column="2" Text="Baseline" TextWrapping="Wrap"/>
+            <Grid Margin="8,0,8,5" ColumnDefinitions="22,1.15*,1.35*" RowDefinitions="26,26,26,26,26">
+              <Border Grid.Row="0" Grid.ColumnSpan="3" BorderBrush="#103450" BorderThickness="0,0,0,1"/>
+              <Grid Grid.Row="0" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorTerminalDot.Foreground}"/><TextBlock x:Name="MonitorTerminalDot" Foreground="#8092A6" IsVisible="False"/></Grid>
+              <TextBlock Grid.Row="0" Grid.Column="1" Text="MT5 Terminal" FontSize="13" VerticalAlignment="Center"/>
+              <TextBlock x:Name="MonitorTerminalText" Grid.Row="0" Grid.Column="2" Text="—" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+
+              <Border Grid.Row="1" Grid.ColumnSpan="3" BorderBrush="#103450" BorderThickness="0,0,0,1"/>
+              <Grid Grid.Row="1" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorBridgeDot.Foreground}"/><TextBlock x:Name="MonitorBridgeDot" Foreground="#8092A6" IsVisible="False"/></Grid>
+              <TextBlock Grid.Row="1" Grid.Column="1" Text="EA Bridge (MQL5)" FontSize="13" VerticalAlignment="Center"/>
+              <TextBlock x:Name="MonitorBridgeConnectionText" Grid.Row="1" Grid.Column="2" Text="—" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+
+              <Border Grid.Row="2" Grid.ColumnSpan="3" BorderBrush="#103450" BorderThickness="0,0,0,1"/>
+              <Grid Grid.Row="2" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorEngineDot.Foreground}"/><TextBlock x:Name="MonitorEngineDot" Foreground="#8092A6" IsVisible="False"/></Grid>
+              <TextBlock Grid.Row="2" Grid.Column="1" Text="Python Engine" FontSize="13" VerticalAlignment="Center"/>
+              <TextBlock x:Name="MonitorSnapshotCountText" Grid.Row="2" Grid.Column="2" Text="—" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+
+              <Border Grid.Row="3" Grid.ColumnSpan="3" BorderBrush="#103450" BorderThickness="0,0,0,1"/>
+              <Grid Grid.Row="3" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorDataDot.Foreground}"/><TextBlock x:Name="MonitorDataDot" Foreground="#8092A6" IsVisible="False"/></Grid>
+              <TextBlock Grid.Row="3" Grid.Column="1" Text="Dữ liệu thị trường" FontSize="13" VerticalAlignment="Center"/>
+              <TextBlock x:Name="MonitorDataStatusText" Grid.Row="3" Grid.Column="2" Text="—" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+
+              <Border Grid.Row="4" Grid.ColumnSpan="3" BorderBrush="#103450" BorderThickness="0,0,0,1"/>
+              <Grid Grid.Row="4" Width="14" Height="14" VerticalAlignment="Center"><Ellipse Fill="{Binding #MonitorProfileDot.Foreground}"/><TextBlock x:Name="MonitorProfileDot" Foreground="#8092A6" IsVisible="False"/></Grid>
+              <TextBlock Grid.Row="4" Grid.Column="1" Text="Profile" FontSize="13" VerticalAlignment="Center"/>
+              <TextBlock x:Name="MonitorProfileText" Grid.Row="4" Grid.Column="2" Text="—" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+
             </Grid>
           </StackPanel>
         </Border>
@@ -227,10 +237,10 @@
         <Border Grid.Column="2" Classes="panel">
           <StackPanel>
             <Border Background="#082038" Padding="12,7"><TextBlock Text="Tài nguyên hệ thống" Classes="panelTitle"/></Border>
-            <Grid ColumnDefinitions="*,*,*" Margin="10,10" ColumnSpacing="8">
-              <StackPanel Grid.Column="0" HorizontalAlignment="Center"><Border Width="55" Height="55" CornerRadius="28" BorderBrush="#00B873" BorderThickness="7"><TextBlock Text="—" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/></Border><TextBlock Text="CPU" Classes="dim" FontSize="12" HorizontalAlignment="Center"/></StackPanel>
-              <StackPanel Grid.Column="1" HorizontalAlignment="Center"><Border Width="55" Height="55" CornerRadius="28" BorderBrush="#258DEC" BorderThickness="7"><TextBlock Text="—" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/></Border><TextBlock Text="RAM" Classes="dim" FontSize="12" HorizontalAlignment="Center"/></StackPanel>
-              <StackPanel Grid.Column="2" HorizontalAlignment="Center"><Border Width="55" Height="55" CornerRadius="28" BorderBrush="#9746F4" BorderThickness="7"><TextBlock Text="—" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold"/></Border><TextBlock Text="Disk" Classes="dim" FontSize="12" HorizontalAlignment="Center"/></StackPanel>
+            <Grid ColumnDefinitions="*,*,*" Margin="10,5,10,8" ColumnSpacing="8">
+              <Border Grid.Column="0" Width="78" Height="78" CornerRadius="39" BorderBrush="#00B873" BorderThickness="8" HorizontalAlignment="Center"><StackPanel VerticalAlignment="Center" Spacing="1"><TextBlock Text="CPU" FontSize="13" HorizontalAlignment="Center"/><TextBlock Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center"/></StackPanel></Border>
+              <Border Grid.Column="1" Width="78" Height="78" CornerRadius="39" BorderBrush="#258DEC" BorderThickness="8" HorizontalAlignment="Center"><StackPanel VerticalAlignment="Center" Spacing="1"><TextBlock Text="RAM" FontSize="13" HorizontalAlignment="Center"/><TextBlock Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center"/></StackPanel></Border>
+              <Border Grid.Column="2" Width="78" Height="78" CornerRadius="39" BorderBrush="#9746F4" BorderThickness="8" HorizontalAlignment="Center"><StackPanel VerticalAlignment="Center" Spacing="1"><TextBlock Text="Disk" FontSize="13" HorizontalAlignment="Center"/><TextBlock Text="—" FontSize="21" FontWeight="SemiBold" HorizontalAlignment="Center"/></StackPanel></Border>
             </Grid>
             <TextBlock Text="Chưa có dữ liệu tài nguyên hệ thống." Classes="dim" FontSize="12" TextWrapping="Wrap" Margin="10,0,10,8"/>
           </StackPanel>
@@ -267,7 +277,7 @@
       <!-- A compact horizontal alert strip leaves the table visible at the reference canvas size. -->
       <Border x:Name="MonitoringAlertStrip" Classes="panel" Height="91">
         <Grid x:Name="MonitoringAlertColumns" ColumnDefinitions="315,*">
-          <StackPanel Margin="12,8" Spacing="8">
+          <StackPanel Margin="12,8" Spacing="12" Orientation="Horizontal" VerticalAlignment="Top">
             <TextBlock Text="Cảnh báo &amp; Thông báo" Classes="panelTitle"/>
             <Border Background="#0866F4" CornerRadius="4" Padding="10,3" HorizontalAlignment="Left"><TextBlock Text="Tất cả"/></Border>
           </StackPanel>

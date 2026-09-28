@@ -24,7 +24,12 @@ public partial class StrategyDashboard
     {
         string[] frames = ["M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4"];
         foreach (var role in new[] { "Direction", "Pullback", "Trigger" })
-            Host(role + "Editor").Children.Add(Choice("timeframes." + role.ToLowerInvariant(), frames));
+        {
+            var selector = Choice("timeframes." + role.ToLowerInvariant(), frames);
+            selector.Height = 36;
+            ((ComboBox)selector).FontSize = 16;
+            Host(role + "Editor").Children.Add(selector);
+        }
         Host("ZEditor").Children.Add(Toggles(("pullback.z_enabled", "Pullback"), ("trigger.z_enabled", "Trigger")));
         Host("ZEditor").Children.Add(Pair("Chu kỳ Z", Number("pullback.z_period", 2, 500, true),
                                               "Hồi Z (Trigger)", Number("trigger.z_reversal_delta", 0, 10)));
@@ -72,7 +77,7 @@ public partial class StrategyDashboard
         control.Tag = path;
         control.HorizontalAlignment = HorizontalAlignment.Stretch;
         control.MinHeight = 20;
-        control.Height = 22;
+        control.Height = control is CheckBox ? 20 : 22;
         control.IsEnabled = false;
         _strategyFields.Add(path, control);
         return control;
@@ -88,7 +93,7 @@ public partial class StrategyDashboard
         var control = new NumericUpDown { Minimum = min, Maximum = max, Increment = integer ? 1 : .1m,
             FormatString = integer ? "0" : "0.##", FontSize = 13, Padding = new Thickness(5, 1),
             Background = new SolidColorBrush(Color.Parse("#0C2942")), BorderBrush = new SolidColorBrush(Color.Parse("#285573")),
-            AllowSpin = true, ShowButtonSpinner = true };
+            AllowSpin = true, ShowButtonSpinner = false };
         control.ValueChanged += (_, _) => StrategyEdited();
         return Register(path, control);
     }
@@ -100,7 +105,7 @@ public partial class StrategyDashboard
     }
     private Control Toggle(string path, string label)
     {
-        var control = new CheckBox { Content = label, FontSize = 13, Padding = new Thickness(0) };
+        var control = new CheckBox { Content = label, FontSize = 13, Padding = new Thickness(5, 0) };
         control.IsCheckedChanged += (_, _) => StrategyEdited();
         return Register(path, control);
     }
@@ -113,8 +118,8 @@ public partial class StrategyDashboard
     private static Control Pair(string leftLabel, Control left, string rightLabel, Control right)
     {
         var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
-        var a = new StackPanel { Spacing = 1, Children = { new TextBlock { Text = leftLabel, FontSize = 12, Foreground = Brushes.LightSteelBlue }, left } };
-        var b = new StackPanel { Spacing = 1, Children = { new TextBlock { Text = rightLabel, FontSize = 12, Foreground = Brushes.LightSteelBlue }, right } };
+        var a = new StackPanel { Spacing = 0, Children = { new TextBlock { Text = leftLabel, FontSize = 12, Foreground = Brushes.LightSteelBlue }, left } };
+        var b = new StackPanel { Spacing = 0, Children = { new TextBlock { Text = rightLabel, FontSize = 12, Foreground = Brushes.LightSteelBlue }, right } };
         Grid.SetColumn(b, 1); row.Children.Add(a); row.Children.Add(b);
         return row;
     }
@@ -176,13 +181,15 @@ public partial class StrategyDashboard
             ("RSI Pullback", $"{Read("pullback.rsi_buy_level")} / {Read("pullback.rsi_sell_level")} ({Read("pullback.rsi_period")})"),
             ("Z-Score Pullback", $"{Read("pullback.z_buy_level")} / {Read("pullback.z_sell_level")} ({Read("pullback.z_period")})"),
             ("Đảo chiều RSI / Z", $"{Read("trigger.rsi_reversal_delta")} / {Read("trigger.z_reversal_delta")}"),
+            ("ADX / ATR", $"{(Read("filters.adx.enabled") == "true" ? Read("filters.adx.min") : "Tắt")} / {(Read("filters.atr.enabled") == "true" ? Read("filters.atr.min_price_units") : "Tắt")}"),
             ("SL / TP Mode", $"{Read("stop_loss.mode")} / {Read("take_profit.mode")}"),
             ("Logic Pullback / Trigger", $"{Read("pullback.logic")} / {Read("trigger.logic")}") })
         {
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-            row.Children.Add(new TextBlock { Text = label, FontSize = 12, Foreground = Brushes.LightSteelBlue });
-            var text = new TextBlock { Text = value, FontSize = 12 }; Grid.SetColumn(text, 1); row.Children.Add(text);
-            rules.Children.Add(row);
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("1.4*,1*") };
+            row.Children.Add(new Border { Padding = new Thickness(8,4), BorderBrush = new SolidColorBrush(Color.Parse("#123751")), BorderThickness = new Thickness(0,0,1,0), Child = new TextBlock { Text = label, FontSize = 13, Foreground = Brushes.LightSteelBlue } });
+            var valueCell = new Border { Padding = new Thickness(8,4), Child = new TextBlock { Text = value, FontSize = 13, TextWrapping = TextWrapping.Wrap } };
+            Grid.SetColumn(valueCell, 1); row.Children.Add(valueCell);
+            rules.Children.Add(new Border { BorderBrush = new SolidColorBrush(Color.Parse("#123751")), BorderThickness = new Thickness(0,0,0,1), Child = row });
         }
     }
     private void RefreshStrategyEditor(string profileHash)

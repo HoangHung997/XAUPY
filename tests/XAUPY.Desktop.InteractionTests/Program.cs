@@ -2,7 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Interactivity;
+using Avalonia.Input;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using System.Collections;
 using System.Net;
 using System.Net.Sockets;
@@ -63,6 +65,51 @@ var main = new MainWindow(); // Never Show(): the real application's auto-start 
 var editor = main.FindControl<ConfigurationEditor>("ConfigurationEditor")!;
 editor.AttachSupervisor(supervisor);
 try {
+    // Reconnection must clear an automatic stale warning, and warm-up readiness
+    // must never be presented as all entry conditions passing.
+    var orderStatus = new OrdersPositionsDashboard();
+    orderStatus.Apply(OrdersPositionsSnapshot.Empty, OverviewSnapshot.Empty, Mt5BridgeStatus.Offline, ConfigurationSummary.Default);
+    Assert(orderStatus.FindControl<TextBlock>("ActionStatusText")!.Text!.StartsWith("SIMULATION BLOCKED"),
+        "orders show an automatic blocked message while MT5 data is unavailable");
+    orderStatus.Apply(OrdersPositionsSnapshot.Empty with { Available = true, TerminalConnected = true, AccountTradeMode = "DEMO" },
+        OverviewSnapshot.Empty, Mt5BridgeStatus.Offline, ConfigurationSummary.Default);
+    Assert(!orderStatus.FindControl<TextBlock>("ActionStatusText")!.Text!.StartsWith("SIMULATION BLOCKED"),
+        "fresh connected demo snapshot clears only the obsolete automatic blocked message");
+    var statusStrategy = new StrategyDashboard();
+    statusStrategy.Apply(StrategySnapshot.Empty with { Available = true, Ready = true, State = "WAIT_PULLBACK_SELL" }, ConfigurationSummary.Default);
+    Assert(statusStrategy.FindControl<TextBlock>("AllConditionText")!.Text == "ĐANG CHỜ",
+        "warm indicators while waiting for pullback do not imply entry conditions passed");
+    statusStrategy.Apply(StrategySnapshot.Empty with { Available = true, Ready = true, State = "TRIGGERED_SELL" }, ConfigurationSummary.Default);
+    Assert(statusStrategy.FindControl<TextBlock>("AllConditionText")!.Text == "ĐẠT",
+        "all-condition badge follows an actual triggered strategy state");
+    var monitor = new MonitoringDashboard();
+    var observedStrategy = StrategySnapshot.Empty with {
+        Available = true, Ready = true, State = "WAIT_PULLBACK_SELL", Direction = "SELL",
+        PullbackIndicators = new OscillatorIndicatorSnapshot("M5", 67, 2.4),
+        TriggerIndicators = new OscillatorIndicatorSnapshot("M1", 61, .7),
+        Filters = new StrategyFilterSnapshot(28, 1.8, null)
+    };
+    monitor.Apply(observedStrategy, OverviewSnapshot.Empty, Mt5BridgeStatus.Offline, ConfigurationSummary.Default);
+    var matrix = monitor.FindControl<Grid>("MonitorConditionMatrix")!;
+    string Cell(int row, int column) => ((TextBlock)((Border)matrix.Children.Single(c => Grid.GetRow(c) == row && Grid.GetColumn(c) == column)).Child!).Text!;
+    Assert(matrix.RowDefinitions.Count == 8 && Cell(7, 0) == "D1" && Enumerable.Range(1, 3).All(column => Cell(7, column) == "—"),
+        "Monitoring seven-frame matrix leaves unevaluated D1 conditions unavailable");
+    monitor.Apply(observedStrategy with { DirectionTimeframe = "H2", PullbackTimeframe = "M3" }, OverviewSnapshot.Empty, Mt5BridgeStatus.Offline, ConfigurationSummary.Default);
+    var monitorWindow = new Window { Content = monitor, Width = 1342, Height = 794 };
+    monitorWindow.Show(); Dispatcher.UIThread.RunJobs();
+    try {
+        var matrixScroll = matrix.GetVisualAncestors().OfType<ScrollViewer>().First();
+        matrixScroll.Offset = new Vector(0, 999); Dispatcher.UIThread.RunJobs();
+        Assert(matrix.RowDefinitions.Count == 10 && Enumerable.Range(1, 9).Any(row => Cell(row, 0) == "M3")
+            && Enumerable.Range(1, 9).Any(row => Cell(row, 0) == "H2") && matrixScroll.Offset.Y > 0,
+            "Monitoring adds real M3/H2 roles and scrolls all nine timeframe rows within the card");
+        Assert(monitor.FindControl<ReferenceGauge>("MonitorZGauge")!.Value == 2.4
+            && monitor.FindControl<ReferenceGauge>("MonitorRsiGauge")!.Value == 61
+            && monitor.FindControl<ReferenceGauge>("MonitorAdxGauge")!.Value == 28
+            && monitor.FindControl<ReferenceGauge>("MonitorAtrGauge")!.Value == 1.8,
+            "Monitoring gauges reflect supplied strategy metrics rather than readiness or placeholder values");
+    }
+    finally { monitorWindow.Close(); }
     var direction = main.FindControl<ComboBox>("QuickDirection")!;
     var apply = main.FindControl<Button>("QuickApply")!;
     Assert(direction.SelectedItem?.ToString() == "M30", "quick controls initialize from canonical baseline");
@@ -224,6 +271,93 @@ try {
         "Strategy merged saved baseline survives actual engine restart");
     Assert(File.Exists(Path.Combine(runtime.Root, "state", "runtime-v1.json")),
         "Strategy save evidence exists exclusively in isolated temporary state");
+
+    var toolsView = new ToolsDashboard(); toolsView.AttachSupervisor(supervisor);
+    Complete(toolsView.EnsureLoadedAsync());
+    var toolsWindow = new Window { Content = toolsView, Width = 1644, Height = 794 };
+    toolsWindow.Show(); Dispatcher.UIThread.RunJobs();
+    try {
+        var jsonEditor = toolsView.FindControl<TextBox>("ToolEditor")!;
+        Assert(jsonEditor.GetVisualDescendants().OfType<JsonSyntaxPresenter>().Any(),
+            "Tools uses syntax-colored native TextPresenter inside editable TextBox");
+        string originalJson = jsonEditor.Text!;
+        var colorSpans = JsonSyntaxPresenter.Tokenize("{\"escaped\\\"key\":\"value\",\"n\":-1.2e+3,\"b\":true,\"x\":null}");
+        Assert(colorSpans.Count == 8 && colorSpans.Select(s => s.Brush.ToString()).Distinct().Count() == 5,
+            "JSON tokenizer preserves escaped string boundaries and five token colors");
+        jsonEditor.Text = "{\n  \"side\": \"SELL\",\n  \"enabled\": true\n}";
+        Dispatcher.UIThread.RunJobs(); jsonEditor.Focus();
+        var sellIndex = jsonEditor.Text.IndexOf("SELL", StringComparison.Ordinal);
+        jsonEditor.CaretIndex = sellIndex + 4; jsonEditor.SelectionStart = sellIndex; jsonEditor.SelectionEnd = sellIndex + 4;
+        toolsWindow.KeyTextInput("BUY"); Dispatcher.UIThread.RunJobs();
+        Assert(jsonEditor.Text.Contains("\"BUY\"") && !jsonEditor.Text.Contains("SELL"),
+            "native editor typing replaces the actual selected JSON range");
+        toolsWindow.KeyPress(Key.Z, RawInputModifiers.Control, PhysicalKey.Z, null); toolsWindow.KeyRelease(Key.Z, RawInputModifiers.Control, PhysicalKey.Z, null); Dispatcher.UIThread.RunJobs();
+        Assert(jsonEditor.Text.Contains("SELL"), "native editor undo restores selected text replacement");
+        toolsWindow.KeyPress(Key.F, RawInputModifiers.Control, PhysicalKey.F, null); toolsWindow.KeyRelease(Key.F, RawInputModifiers.Control, PhysicalKey.F, null); Dispatcher.UIThread.RunJobs();
+        Assert(toolsView.FindControl<Grid>("EditorSearchBar")!.IsVisible,
+            "Ctrl+F opens the Tools search control through routed keyboard input");
+        var search = toolsView.FindControl<TextBox>("EditorSearchText")!;
+        search.Text = "enabled"; search.Focus();
+        toolsWindow.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null); toolsWindow.KeyRelease(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null); Dispatcher.UIThread.RunJobs();
+        Assert(jsonEditor.SelectedText == "enabled", "Enter in search selects the actual matching editor text");
+        jsonEditor.Text = "{\"message\":\"Unicode tiếng Việt\",\"enabled\":true}";
+        jsonEditor.Focus(); toolsWindow.KeyPress(Key.F, RawInputModifiers.Control | RawInputModifiers.Shift, PhysicalKey.F, null);
+        toolsWindow.KeyRelease(Key.F, RawInputModifiers.Control | RawInputModifiers.Shift, PhysicalKey.F, null); Dispatcher.UIThread.RunJobs();
+        Assert(jsonEditor.Text.Contains('\n') && JsonNode.Parse(jsonEditor.Text)!["message"]!.GetValue<string>() == "Unicode tiếng Việt",
+            "Ctrl+Shift+F formats editable JSON without changing Unicode values");
+        toolsWindow.KeyPress(Key.F11, RawInputModifiers.None, PhysicalKey.F11, null); toolsWindow.KeyRelease(Key.F11, RawInputModifiers.None, PhysicalKey.F11, null); Dispatcher.UIThread.RunJobs();
+        Assert(!toolsView.FindControl<Border>("ToolNavigation")!.IsVisible,
+            "F11 expands the actual JSON workspace");
+        toolsWindow.KeyPress(Key.F11, RawInputModifiers.None, PhysicalKey.F11, null); toolsWindow.KeyRelease(Key.F11, RawInputModifiers.None, PhysicalKey.F11, null); Dispatcher.UIThread.RunJobs();
+        Assert(toolsView.FindControl<Border>("ToolNavigation")!.IsVisible,
+            "second F11 restores the tool and help columns");
+        jsonEditor.Text = originalJson; Dispatcher.UIThread.RunJobs();
+        var editScroll = jsonEditor.GetVisualDescendants().OfType<ScrollViewer>().Single(v => v.Name == "PART_ScrollViewer");
+        var gutterScroll = jsonEditor.GetVisualDescendants().OfType<ScrollViewer>().Single(v => v.Name == "PART_GutterScroll");
+        editScroll.Offset = new Vector(0, 190); Dispatcher.UIThread.RunJobs();
+        Assert(editScroll.Offset.Y > 0 && Math.Abs(editScroll.Offset.Y - gutterScroll.Offset.Y) < .1,
+            "native multiline scrolling keeps line-number gutter synchronized");
+        var numbers = jsonEditor.GetVisualDescendants().OfType<TextBlock>().Single(v => v.Name == "PART_LineNumbers");
+        Assert(numbers.Text!.Split('\n').Length == originalJson.Count(c => c == '\n') + 1,
+            "line-number gutter covers every real JSON line");
+        var info = toolsView.FindControl<TextBlock>("EditorFileInfo")!;
+        Assert(info.Bounds.Height > 0 && info.Bounds.Width > 0, "Tools file information remains arranged beside the real editor");
+    }
+    finally { toolsWindow.Close(); }
+
+    var settingsView = new SettingsDashboard(); settingsView.AttachSupervisor(supervisor);
+    Complete(settingsView.EnsureLoadedAsync());
+    var settingsWindow = new Window { Content = settingsView, Width = 1342, Height = 794 };
+    settingsWindow.Show(); Dispatcher.UIThread.RunJobs();
+    try {
+        var autoEngine = settingsView.FindControl<ToggleSwitch>("AutoEngine")!;
+        var autoRestart = settingsView.FindControl<ToggleSwitch>("AutoRestart")!;
+        var autoBackup = settingsView.FindControl<ToggleSwitch>("AutoBackup")!;
+        Assert(autoEngine.IsChecked == true && autoRestart.IsChecked == true && autoBackup.IsChecked == true,
+            "Settings replacement toggles load persisted boolean settings");
+        autoEngine.IsChecked = false; autoRestart.IsChecked = false; autoBackup.IsChecked = false;
+        string profileBefore = ActiveProfile(supervisor).ToJsonString();
+        Invoke(settingsView, "Save_OnClick", settingsView, new RoutedEventArgs(Button.ClickEvent));
+        PumpUntil(() => !(bool)Field(settingsView, "_busy")!);
+        var savedSettingsTask = supervisor.GetSettingsAsync(); Complete(savedSettingsTask);
+        var savedSettings = savedSettingsTask.Result.GetProperty("settings");
+        Assert(!savedSettings.GetProperty("startup").GetProperty("auto_start_engine").GetBoolean()
+            && !savedSettings.GetProperty("startup").GetProperty("auto_restart_engine").GetBoolean()
+            && !savedSettings.GetProperty("backup").GetProperty("auto_backup").GetBoolean(),
+            "Settings native switches persist through the actual isolated maintenance API");
+        Assert(ActiveProfile(supervisor).ToJsonString() == profileBefore,
+            "Settings visual controls do not overwrite the strategy profile");
+        Complete(supervisor.StopAsync()); Complete(supervisor.StartAsync()); PumpUntil(() => supervisor.State == EngineConnectionState.Ready);
+        Complete(settingsView.EnsureLoadedAsync(true));
+        Assert(autoEngine.IsChecked == false && autoRestart.IsChecked == false && autoBackup.IsChecked == false,
+            "Settings toggle choices survive an actual isolated Engine restart");
+        Assert(!settingsView.GetVisualDescendants().OfType<ScrollViewer>().Any(v => v.Content == settingsView.FindControl<Grid>("SettingsCards")),
+            "Settings card rows fit the reference canvas without a clipping outer scroll viewport");
+        var cards = settingsView.FindControl<Grid>("SettingsCards")!;
+        Assert(cards.Bounds.Height > 600 && cards.Children.All(c => c.Bounds.Bottom <= cards.Bounds.Height + .1),
+            "all Settings cards, including backup and recovery, stay inside the arranged canvas");
+    }
+    finally { settingsWindow.Close(); }
 }
 finally {
     try { Complete(supervisor.StopAsync()); }

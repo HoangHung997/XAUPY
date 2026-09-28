@@ -1,11 +1,23 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:XAUPY.Desktop"
              x:Class="XAUPY.Desktop.StrategyDashboard">
+  <UserControl.Styles>
+    <Style Selector="Border.stage">
+      <Setter Property="MinHeight" Value="230"/>
+      <Setter Property="BorderThickness" Value="1.5"/>
+      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="Padding" Value="16,12"/>
+    </Style>
+    <Style Selector="Border.filterCard">
+      <Setter Property="Padding" Value="9,6"/>
+    </Style>
+  </UserControl.Styles>
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <Grid ColumnDefinitions="2.75*,1*" ColumnSpacing="8">
       <StackPanel Grid.Column="0" Spacing="8">
         <Border Classes="panel">
-          <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" Margin="12,8" RowSpacing="5">
+          <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" Margin="12,6" RowSpacing="5">
             <TextBlock Text="Xây dựng chiến lược giao dịch" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
               <Button x:Name="SaveStrategyButton" Classes="secondary" Padding="8,6" FontSize="13" Content="▣  Lưu chiến lược" Click="SaveStrategy_OnClick" ToolTip.Tip="Lưu hồ sơ chiến lược đang áp dụng thành file JSON."/>
@@ -20,7 +32,8 @@
 
         <!-- Approved 3-stage Direction → Pullback → Trigger flow -->
         <Grid ColumnDefinitions="*,28,*,28,*" ColumnSpacing="6">
-          <Border Grid.Column="0" Background="#071C35" BorderBrush="#0C7DFF" BorderThickness="2" CornerRadius="6" Padding="14,10">
+          <Border Grid.Column="0" Classes="stage" BorderBrush="#0C9DFF">
+            <Border.Background><LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%"><GradientStop Color="#052B50" Offset="0"/><GradientStop Color="#051932" Offset="1"/></LinearGradientBrush></Border.Background>
             <StackPanel Spacing="6">
               <StackPanel Orientation="Horizontal" Spacing="10">
                 <Border Width="38" Height="38" CornerRadius="19" Background="#0A66F2"><TextBlock Text="1" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
@@ -29,7 +42,7 @@
                   <TextBlock Text="Xác định xu hướng chính" Classes="dim" FontSize="13"/>
                 </StackPanel>
               </StackPanel>
-              <Border Classes="panelSoft" Padding="12,6">
+              <Border Background="Transparent" Padding="0,5,0,7">
                 <StackPanel x:Name="DirectionEditor"><TextBlock x:Name="DirectionTfText" IsVisible="False" Text="M30"/></StackPanel>
               </Border>
               <Border Background="#2A1830" BorderBrush="#6B2C5D" BorderThickness="1" CornerRadius="5" Padding="12,9">
@@ -46,7 +59,8 @@
 
           <TextBlock Grid.Column="1" Text="→" FontSize="37" Foreground="#59AFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-          <Border Grid.Column="2" Background="#17113A" BorderBrush="#7A4BFF" BorderThickness="2" CornerRadius="6" Padding="14,10">
+          <Border Grid.Column="2" Classes="stage" BorderBrush="#A04BFF">
+            <Border.Background><LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%"><GradientStop Color="#1C254A" Offset="0"/><GradientStop Color="#16152D" Offset="1"/></LinearGradientBrush></Border.Background>
             <StackPanel Spacing="6">
               <StackPanel Orientation="Horizontal" Spacing="10">
                 <Border Width="38" Height="38" CornerRadius="19" Background="#6842D8"><TextBlock Text="2" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
@@ -55,7 +69,7 @@
                   <TextBlock Text="Tìm nhịp hồi để vào lệnh" Classes="dim" FontSize="13"/>
                 </StackPanel>
               </StackPanel>
-              <Border Classes="panelSoft" Padding="12,6">
+              <Border Background="Transparent" Padding="0,5,0,7">
                 <StackPanel x:Name="PullbackEditor"><TextBlock x:Name="PullbackTfText" IsVisible="False" Text="M5"/></StackPanel>
               </Border>
               <Border Background="#2A1743" BorderBrush="#8049B6" BorderThickness="1" CornerRadius="5" Padding="12,9">
@@ -69,7 +83,8 @@
 
           <TextBlock Grid.Column="3" Text="→" FontSize="37" Foreground="#59AFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-          <Border Grid.Column="4" Background="#062E30" BorderBrush="#11CF91" BorderThickness="2" CornerRadius="6" Padding="14,10">
+          <Border Grid.Column="4" Classes="stage" BorderBrush="#00D4A2">
+            <Border.Background><LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%"><GradientStop Color="#07373D" Offset="0"/><GradientStop Color="#051E2D" Offset="1"/></LinearGradientBrush></Border.Background>
             <StackPanel Spacing="6">
               <StackPanel Orientation="Horizontal" Spacing="10">
                 <Border Width="38" Height="38" CornerRadius="19" Background="#0C9F73"><TextBlock Text="3" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
@@ -78,7 +93,7 @@
                   <TextBlock Text="Tín hiệu vào lệnh chính xác" Classes="dim" FontSize="13"/>
                 </StackPanel>
               </StackPanel>
-              <Border Classes="panelSoft" Padding="12,6">
+              <Border Background="Transparent" Padding="0,5,0,7">
                 <StackPanel x:Name="TriggerEditor"><TextBlock x:Name="TriggerTfText" IsVisible="False" Text="M1"/></StackPanel>
               </Border>
               <Border Background="#082B3D" BorderBrush="#14657A" BorderThickness="1" CornerRadius="5" Padding="12,9">
@@ -96,41 +111,41 @@
             <Border Background="#082038" Padding="12,7">
               <TextBlock Text="▦  Bộ lọc và điều kiện chiến lược" Classes="panelTitle"/>
             </Border>
-            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8" Margin="10">
+            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8" Margin="10,0,10,8">
               <Border Grid.Row="0" Grid.Column="0" Classes="panelSoft" Padding="9,6">
-                <StackPanel Spacing="3">
-                  <TextBlock Text="∿  Z-Score (Mean Reversion)" Foreground="#59B7FF" FontWeight="SemiBold"/>
+                <StackPanel Spacing="2">
+                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="pulse" Width="23" Height="23" Tint="#59B7FF"/><TextBlock Text="Z-Score (Mean Reversion)" Foreground="#59B7FF" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
                   <StackPanel x:Name="ZEditor" Spacing="3"/>
                   <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="Z Pullback:" Classes="dim" FontSize="12"/><TextBlock x:Name="PullbackZFilterMirror" Text="—" FontSize="12"/><TextBlock Text="Trigger:" Classes="dim" FontSize="12"/><TextBlock x:Name="TriggerZFilterMirror" Text="—" FontSize="12"/></StackPanel>
                 </StackPanel>
               </Border>
 
               <Border Grid.Row="0" Grid.Column="1" Classes="panelSoft" Padding="9,6">
-                <StackPanel Spacing="3">
-                  <TextBlock Text="▥  RSI (Momentum)" Foreground="#56A8FF" FontWeight="SemiBold"/>
+                <StackPanel Spacing="2">
+                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="bars" Width="23" Height="23" Tint="#56A8FF"/><TextBlock Text="RSI (Momentum)" Foreground="#56A8FF" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
                   <StackPanel x:Name="RsiEditor" Spacing="3"/>
                   <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="RSI Pullback:" Classes="dim" FontSize="12"/><TextBlock x:Name="PullbackRsiMirror" Text="—" FontSize="12"/><TextBlock Text="Trigger:" Classes="dim" FontSize="12"/><TextBlock x:Name="TriggerRsiMirror" Text="—" FontSize="12"/></StackPanel>
                 </StackPanel>
               </Border>
 
               <Border Grid.Row="0" Grid.Column="2" Classes="panelSoft" Padding="9,6">
-                <StackPanel Spacing="3">
-                  <TextBlock Text="▥  ADX (Xu hướng)" Foreground="#42DDF4" FontWeight="SemiBold"/>
+                <StackPanel Spacing="2">
+                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="bars" Width="23" Height="23" Tint="#42DDF4"/><TextBlock Text="ADX (Xu hướng)" Foreground="#42DDF4" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
                   <StackPanel x:Name="AdxEditor" Spacing="3"/>
                   <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="ADX hiện tại:" Classes="dim" FontSize="12"/><TextBlock x:Name="AdxText" Text="—" FontSize="13"/></StackPanel>
                 </StackPanel>
               </Border>
 
               <Border Grid.Row="1" Grid.Column="0" Classes="panelSoft" Padding="9,6">
-                <StackPanel Spacing="3">
-                  <TextBlock Text="∿  ATR (Biến động)" Foreground="#59B7FF" FontWeight="SemiBold"/>
+                <StackPanel Spacing="2">
+                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="pulse" Width="23" Height="23" Tint="#59B7FF"/><TextBlock Text="ATR (Biến động)" Foreground="#59B7FF" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
                   <StackPanel x:Name="AtrEditor" Spacing="3"/>
                   <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="ATR hiện tại:" Classes="dim" FontSize="12"/><TextBlock x:Name="AtrText" Text="—" FontSize="13"/></StackPanel>
                 </StackPanel>
               </Border>
 
               <Border Grid.Row="1" Grid.Column="1" Classes="panelSoft" Padding="9,6">
-                <StackPanel Spacing="3">
+                <StackPanel Spacing="2">
                   <TextBlock Text="◷  Open Filter (Thời gian giao dịch)" Foreground="#44C8FF" FontWeight="SemiBold"/>
                   <StackPanel x:Name="SessionEditor" Spacing="3"/>
                   <StackPanel Orientation="Horizontal" Spacing="6"><TextBlock Text="Giờ theo cấu hình phiên · Open:" Classes="dim" FontSize="12"/><TextBlock x:Name="OpenFilterText" Text="—" FontSize="13"/></StackPanel>
@@ -138,8 +153,8 @@
               </Border>
 
               <Border Grid.Row="1" Grid.Column="2" Classes="panelSoft" Padding="9,6">
-                <StackPanel Spacing="3">
-                  <TextBlock Text="🛡  SL / TP Mode" Foreground="#59B7FF" FontWeight="SemiBold"/>
+                <StackPanel Spacing="2">
+                  <StackPanel Orientation="Horizontal" Spacing="7"><local:ReferenceIcon Kind="shield" Width="23" Height="23" Tint="#59B7FF"/><TextBlock Text="SL / TP Mode" Foreground="#59B7FF" FontWeight="SemiBold" VerticalAlignment="Center"/></StackPanel>
                   <StackPanel x:Name="StopsEditor" Spacing="3"/>
                   <TextBlock x:Name="ConfigSummaryText" Text="Direction EMA50" FontSize="15" TextWrapping="Wrap"/>
                   <TextBlock Text="Execution vẫn LOCKED" Foreground="#FFD34D" FontSize="12"/>
@@ -180,6 +195,7 @@
               <TextBlock x:Name="BarsSeenText" Text="Bars: —" FontFamily="Consolas" Classes="label" TextWrapping="Wrap"/>
               <TextBlock x:Name="WarmupText" Text="Warm-up: chờ dữ liệu thật." Classes="dim" FontSize="13" TextWrapping="Wrap"/>
               <TextBlock x:Name="DataErrorText" Text="Data error: none" Classes="dim" FontSize="13" TextWrapping="Wrap"/>
+              <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="Symbol / sẵn sàng / lần reset:" Classes="dim" FontSize="12"/><TextBlock Text="{Binding #SymbolText.Text}" FontSize="12"/><TextBlock Text="{Binding #ReadyText.Text}" FontSize="12"/><TextBlock Text="{Binding #ResetReasonText.Text}" FontSize="12"/></StackPanel>
             </StackPanel>
             <StackPanel Grid.Column="1">
               <TextBlock Text="Tín hiệu gần nhất" Classes="panelTitle"/>
@@ -208,16 +224,13 @@
               <TextBlock Text="Mô tả" Classes="dim" FontSize="12"/>
               <Border Classes="panelSoft" Padding="9" MinHeight="70"><TextBlock x:Name="StrategyDescriptionText" Text="Đang tải quy tắc chiến lược." TextWrapping="Wrap" FontSize="13"/></Border>
               <TextBlock Text="Cấu hình chính" Foreground="#7DB7E8" FontWeight="SemiBold"/>
-              <StackPanel x:Name="StrategyRulesHost" Spacing="7"/>
-              <Grid ColumnDefinitions="1.2*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="7">
+              <StackPanel x:Name="StrategyRulesHost" Spacing="0"/>
+              <Grid ColumnDefinitions="1.2*,*" RowDefinitions="Auto,0,0,0" RowSpacing="0" Margin="8,0">
                 <TextBlock Grid.Row="0" Text="Khung thời gian" Classes="label" ToolTip.Tip="Direction → Pullback → Trigger"/>
                 <TextBlock x:Name="TimeframeSummaryText" Grid.Row="0" Grid.Column="1" Text="M30 → M5 → M1" HorizontalAlignment="Right"/>
-                <TextBlock Grid.Row="1" Text="Symbol" Classes="label"/>
-                <TextBlock x:Name="SymbolText" Grid.Row="1" Grid.Column="1" Text="XAUUSD" HorizontalAlignment="Right"/>
-                <TextBlock Grid.Row="2" Text="Ready" Classes="label"/>
-                <TextBlock x:Name="ReadyText" Grid.Row="2" Grid.Column="1" Text="NO" HorizontalAlignment="Right"/>
-                <TextBlock Grid.Row="3" Text="Reset" Classes="label"/>
-                <TextBlock x:Name="ResetReasonText" Grid.Row="3" Grid.Column="1" Text="—" HorizontalAlignment="Right" TextWrapping="Wrap"/>
+                <TextBlock x:Name="SymbolText" Grid.Row="1" Grid.Column="1" IsVisible="False" Text="XAUUSD"/>
+                <TextBlock x:Name="ReadyText" Grid.Row="2" Grid.Column="1" IsVisible="False" Text="NO"/>
+                <TextBlock x:Name="ResetReasonText" Grid.Row="3" Grid.Column="1" IsVisible="False" Text="—"/>
               </Grid>
             </StackPanel>
           </StackPanel>

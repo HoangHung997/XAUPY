@@ -28,13 +28,14 @@
         </StackPanel>
 
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,18,0">
-          <TextBlock x:Name="HeaderBridgePillText" Text="●  Waiting for MT5" Foreground="#FFD34D" FontSize="15" VerticalAlignment="Center"/>
+          <Ellipse Width="17" Height="17" Fill="{Binding #HeaderBridgePillText.Foreground}" VerticalAlignment="Center"/>
+          <Border ClipToBounds="True"><TextBlock x:Name="HeaderBridgePillText" Text="●  Waiting for MT5" Foreground="#FFD34D" FontSize="17" Margin="-16,0,0,0" VerticalAlignment="Center"/></Border>
         </StackPanel>
 
         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Stretch">
-          <Button Width="42" Background="Transparent" BorderThickness="0" Foreground="#C9D9EA" Content="—" Click="Minimize_OnClick"/>
-          <Button Width="42" Background="Transparent" BorderThickness="0" Foreground="#C9D9EA" Content="□" Click="Maximize_OnClick"/>
-          <Button Width="42" Background="Transparent" BorderThickness="0" Foreground="#C9D9EA" Content="✕" Click="Close_OnClick"/>
+          <Button Width="56" Background="Transparent" BorderThickness="0" Foreground="#C9D9EA" Content="—" Click="Minimize_OnClick"/>
+          <Button Width="56" Background="Transparent" BorderThickness="0" Foreground="#C9D9EA" Content="□" Click="Maximize_OnClick"/>
+          <Button Width="56" Background="Transparent" BorderThickness="0" Foreground="#C9D9EA" Content="✕" Click="Close_OnClick"/>
         </StackPanel>
       </Grid>
     </Border>
@@ -87,7 +88,7 @@
             <StackPanel x:Name="SidebarQuoteContent" Spacing="3">
               <StackPanel Orientation="Horizontal" Spacing="9">
                 <TextBlock x:Name="SymbolValue" Text="XAUUSD" FontSize="26" FontWeight="Bold" Foreground="#B9D5F0"/>
-                <TextBlock x:Name="SymbolConnectionDot" Text="●" Foreground="#8092A6" FontSize="18" VerticalAlignment="Center"/>
+                <Grid Width="17" Height="17" VerticalAlignment="Center"><Ellipse Fill="{Binding #SymbolConnectionDot.Foreground}"/><TextBlock x:Name="SymbolConnectionDot" Text="●" Foreground="#8092A6" FontSize="18" VerticalAlignment="Center" IsVisible="False"/></Grid>
               </StackPanel>
               <TextBlock x:Name="BidValue" Text="—" FontSize="40" FontWeight="Bold" Foreground="#17E58B"/>
               <Grid ColumnDefinitions="*,Auto">
@@ -115,7 +116,7 @@
                     <TextBlock x:Name="EaRunStateText" Text="CHỜ KẾT NỐI" Foreground="#FFD34D" FontWeight="Bold" FontSize="16"/>
                     <TextBlock x:Name="HeaderEnginePillText" Text="ENGINE STARTING" Foreground="#A8C2DA" FontSize="13"/>
                   </StackPanel>
-                  <Button Grid.Column="2" Width="40" Height="25" Padding="0" CornerRadius="13" Background="#00CB78" BorderBrush="#13F49A" BorderThickness="1" Foreground="White" FontSize="16" Content="■" Click="StopEngine_OnClick" ToolTip.Tip="Dừng Python Engine"/>
+                  <Button Grid.Column="2" Width="40" Height="25" Padding="0" CornerRadius="13" Background="#00CB78" BorderBrush="#13F49A" BorderThickness="1" Foreground="White" FontSize="16" Click="StopEngine_OnClick" ToolTip.Tip="Dừng Python Engine"><Ellipse Width="19" Height="19" Fill="White" HorizontalAlignment="Right" Margin="15,0,2,0"/></Button>
                 </Grid>
               </Border>
             </StackPanel>
@@ -124,7 +125,7 @@
           <Border x:Name="SidebarAccountCard" Classes="panel" MinHeight="250">
             <StackPanel>
               <Border Background="#082038" Padding="12,7"><TextBlock Text="Tài khoản giao dịch" Classes="panelTitle"/></Border>
-              <Grid x:Name="SidebarAccountRows" Margin="15,9" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="11">
+              <Grid x:Name="SidebarAccountRows" Margin="15,9" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="11"><Border Grid.Row="5" Grid.ColumnSpan="2" BorderBrush="#102F48" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="4" Grid.ColumnSpan="2" BorderBrush="#102F48" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="3" Grid.ColumnSpan="2" BorderBrush="#102F48" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="#102F48" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="1" Grid.ColumnSpan="2" BorderBrush="#102F48" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/><Border Grid.Row="0" Grid.ColumnSpan="2" BorderBrush="#102F48" BorderThickness="0,0,0,1" Margin="0,0,0,-5"/>
                 <TextBlock Grid.Row="0" Text="Balance" Classes="label"/><TextBlock x:Name="BalanceValue" Grid.Row="0" Grid.Column="1" Text="—" FontWeight="SemiBold"/>
                 <TextBlock Grid.Row="1" Text="Equity" Classes="label"/><TextBlock x:Name="EquityValue" Grid.Row="1" Grid.Column="1" Text="—" FontWeight="SemiBold"/>
                 <TextBlock Grid.Row="2" Text="Lợi nhuận hôm nay" Classes="label"/><TextBlock x:Name="DailyProfitValue" Grid.Row="2" Grid.Column="1" Text="—" Foreground="#18E58B"/>
@@ -139,11 +140,11 @@
           <Border x:Name="SidebarConnectionCard" Classes="panel" MinHeight="232">
             <StackPanel>
               <Border Background="#082038" Padding="12,7"><TextBlock Text="Kết nối &amp; Hệ thống" Classes="panelTitle"/></Border>
-              <Grid x:Name="SidebarConnectionRows" Margin="12,8" ColumnDefinitions="19,*,74" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
-                <TextBlock x:Name="TerminalConnectionDot" Grid.Row="0" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="0" Grid.Column="1" Text="MT5 Terminal" Classes="label" FontSize="14"/><TextBlock x:Name="BridgeStateText" Grid.Row="0" Grid.Column="2" Text="WAITING" Foreground="#FFD34D" FontSize="12" HorizontalAlignment="Right"/>
-                <TextBlock x:Name="BridgeConnectionDot" Grid.Row="1" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="1" Grid.Column="1" Text="EA Bridge" Classes="label" FontSize="14"/><TextBlock x:Name="BridgeAgeText" Grid.Row="1" Grid.Column="2" Text="—" Foreground="#9AB5CF" FontSize="12" HorizontalAlignment="Right"/>
-                <TextBlock x:Name="EngineConnectionDot" Grid.Row="2" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="2" Grid.Column="1" Text="Python Engine" Classes="label" FontSize="14"/><TextBlock x:Name="EngineStateText" Grid.Row="2" Grid.Column="2" Text="STARTING" Foreground="#FFD34D" FontSize="12" HorizontalAlignment="Right"/>
-                <TextBlock x:Name="MarketConnectionDot" Grid.Row="3" Text="●" Foreground="#8092A6" Margin="0,0,8,0"/><TextBlock Grid.Row="3" Grid.Column="1" Text="Dữ liệu thị trường" Classes="label" FontSize="14"/><TextBlock x:Name="LastHeartbeatText" Grid.Row="3" Grid.Column="2" Text="—" Foreground="#9AB5CF" FontSize="12" HorizontalAlignment="Right"/>
+              <Grid x:Name="SidebarConnectionRows" Margin="12,8" ColumnDefinitions="27,*,74" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
+                <Grid Grid.Row="0" Width="16" Height="16" VerticalAlignment="Center"><Ellipse Fill="{Binding #TerminalConnectionDot.Foreground}"/><TextBlock x:Name="TerminalConnectionDot" Grid.Row="0" Text="●" Foreground="#8092A6" Margin="0,0,8,0" IsVisible="False"/></Grid><TextBlock Grid.Row="0" Grid.Column="1" Text="MT5 Terminal" Classes="label" FontSize="14"/><TextBlock x:Name="BridgeStateText" Grid.Row="0" Grid.Column="2" Text="WAITING" Foreground="#FFD34D" FontSize="12" HorizontalAlignment="Right"/>
+                <Grid Grid.Row="1" Width="16" Height="16" VerticalAlignment="Center"><Ellipse Fill="{Binding #BridgeConnectionDot.Foreground}"/><TextBlock x:Name="BridgeConnectionDot" Grid.Row="1" Text="●" Foreground="#8092A6" Margin="0,0,8,0" IsVisible="False"/></Grid><TextBlock Grid.Row="1" Grid.Column="1" Text="EA Bridge" Classes="label" FontSize="14"/><TextBlock x:Name="BridgeAgeText" Grid.Row="1" Grid.Column="2" Text="—" Foreground="#9AB5CF" FontSize="12" HorizontalAlignment="Right"/>
+                <Grid Grid.Row="2" Width="16" Height="16" VerticalAlignment="Center"><Ellipse Fill="{Binding #EngineConnectionDot.Foreground}"/><TextBlock x:Name="EngineConnectionDot" Grid.Row="2" Text="●" Foreground="#8092A6" Margin="0,0,8,0" IsVisible="False"/></Grid><TextBlock Grid.Row="2" Grid.Column="1" Text="Python Engine" Classes="label" FontSize="14"/><TextBlock x:Name="EngineStateText" Grid.Row="2" Grid.Column="2" Text="STARTING" Foreground="#FFD34D" FontSize="12" HorizontalAlignment="Right"/>
+                <Grid Grid.Row="3" Width="16" Height="16" VerticalAlignment="Center"><Ellipse Fill="{Binding #MarketConnectionDot.Foreground}"/><TextBlock x:Name="MarketConnectionDot" Grid.Row="3" Text="●" Foreground="#8092A6" Margin="0,0,8,0" IsVisible="False"/></Grid><TextBlock Grid.Row="3" Grid.Column="1" Text="Dữ liệu thị trường" Classes="label" FontSize="14"/><TextBlock x:Name="LastHeartbeatText" Grid.Row="3" Grid.Column="2" Text="—" Foreground="#9AB5CF" FontSize="12" HorizontalAlignment="Right"/>
               </Grid>
               <Grid ColumnDefinitions="Auto,*" Margin="12,0,12,6"><TextBlock Text="An toàn" FontSize="13" Classes="label"/><TextBlock x:Name="GuardianReasonValue" Grid.Column="1" Text="LOCKED" FontSize="11" Foreground="#FFD34D" HorizontalAlignment="Right"/></Grid>
               <TextBlock x:Name="EngineDetailText" Text="Đang chuẩn bị Engine..." Classes="dim" FontSize="10" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="12,0,12,4"/>
@@ -193,7 +194,7 @@
             <Border Grid.Column="1" Classes="panel" Height="344">
               <StackPanel>
                 <Border Background="#082038" Padding="12,8"><TextBlock Text="Thông tin chiến lược (Realtime)" Classes="panelTitle"/></Border>
-                <Grid Margin="12,8" ColumnDefinitions="1.2*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="9">
+                <Grid Margin="12,8" ColumnDefinitions="1.2*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="9"><Border Grid.Row="0" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="1" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="3" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="4" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="5" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="6" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="7" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/><Border Grid.Row="8" Grid.ColumnSpan="2" BorderBrush="#10334F" BorderThickness="0,0,0,1" Margin="0,0,0,-4"/>
                   <TextBlock Grid.Row="0" Text="Direction" Classes="label"/><TextBlock x:Name="OverviewDirectionState" Grid.Row="0" Grid.Column="1" Text="—" Foreground="#FF415C" FontWeight="Bold"/>
                   <TextBlock Grid.Row="1" Text="Pullback" Classes="label"/><TextBlock x:Name="OverviewPullbackState" Grid.Row="1" Grid.Column="1" Text="—" Foreground="#FFD34D"/>
                   <TextBlock Grid.Row="2" Text="Trigger" Classes="label"/><TextBlock x:Name="OverviewTriggerState" Grid.Row="2" Grid.Column="1" Text="—"/>
@@ -212,14 +213,14 @@
             <StackPanel>
               <Grid Background="#082038" ColumnDefinitions="*,Auto" Margin="12,7">
                 <StackPanel Orientation="Horizontal" Spacing="9">
-                  <TextBlock Text="▣" Foreground="#62AFFF"/>
+                  <local:ReferenceIcon Kind="document" Width="23" Height="23" Tint="#74B7FF"/>
                   <TextBlock Text="Công cụ &amp; Tham số đầy đủ (Trung tâm cấu hình)" FontSize="16" Classes="panelTitle"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                  <Button Classes="secondary" Content="⚡  Cài đặt nhanh" Tag="timeframes" Click="ConfigurationShortcut_OnClick"/>
-                  <Button Classes="secondary" Content="▣  Preset" Tag="load" Click="ConfigurationShortcut_OnClick"/>
-                  <Button Classes="secondary" Content="▣  Quản lý set" Tag="profile" Click="ConfigurationShortcut_OnClick"/>
-                  <Button Classes="secondary" Content="▥  Hướng dẫn" Click="QuickHelp_OnClick"/>
+                  <Button Classes="secondary" Tag="timeframes" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="lightning" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Cài đặt nhanh" VerticalAlignment="Center"/></StackPanel></Button>
+                  <Button Classes="secondary" Tag="load" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="folder" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Preset" VerticalAlignment="Center"/></StackPanel></Button>
+                  <Button Classes="secondary" Tag="profile" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="save" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Quản lý set" VerticalAlignment="Center"/></StackPanel></Button>
+                  <Button Classes="secondary" Click="QuickHelp_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="book" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Hướng dẫn" VerticalAlignment="Center"/></StackPanel></Button>
                 </StackPanel>
               </Grid>
               <WrapPanel Margin="6,5,6,5">
@@ -236,36 +237,36 @@
                 <Button Classes="secondary" Margin="2" Padding="8,6" Content="11. Thời gian" Tag="sessions" Click="ConfigurationShortcut_OnClick"/>
                 <Button Classes="secondary" Margin="2" Padding="8,6" Content="12. Khác" Tag="profile" Click="ConfigurationShortcut_OnClick"/>
               </WrapPanel>
-              <Grid ColumnDefinitions="1.05*,1.05*,1.2*" Margin="12,2,12,6" ColumnSpacing="18">
-                <StackPanel Grid.Column="0" Spacing="5">
+              <Grid ColumnDefinitions="1.02*,1*,1.3*" Margin="10,2,10,6" ColumnSpacing="0">
+                <Border Grid.Column="0" Padding="10,0,22,0" BorderBrush="#16405D" BorderThickness="0,0,1,0"><StackPanel Spacing="5">
                   <TextBlock Text="Khung thời gian chính" FontWeight="SemiBold"/>
                   <Grid ColumnDefinitions="*,195"><TextBlock Text="Direction TF" Classes="label" VerticalAlignment="Center"/><ComboBox x:Name="QuickDirection" Grid.Column="1" HorizontalAlignment="Stretch" MinHeight="30"/></Grid>
                   <Grid ColumnDefinitions="*,195"><TextBlock Text="Pullback TF" Classes="label" VerticalAlignment="Center"/><ComboBox x:Name="QuickPullback" Grid.Column="1" HorizontalAlignment="Stretch" MinHeight="30"/></Grid>
                   <Grid ColumnDefinitions="*,195"><TextBlock Text="Trigger TF" Classes="label" VerticalAlignment="Center"/><ComboBox x:Name="QuickTrigger" Grid.Column="1" HorizontalAlignment="Stretch" MinHeight="30"/></Grid>
                   <StackPanel IsVisible="False"><TextBlock x:Name="DirectionTfValue"/><TextBlock x:Name="PullbackTfValue"/><TextBlock x:Name="TriggerTfValue"/></StackPanel>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Spacing="3">
+                </StackPanel></Border>
+                <Border Grid.Column="1" Padding="22,0,22,0" BorderBrush="#16405D" BorderThickness="0,0,1,0"><StackPanel Spacing="3">
                   <TextBlock Text="Logic kết hợp" FontWeight="SemiBold"/>
                   <Grid ColumnDefinitions="*,195"><TextBlock Text="Điều kiện Pullback" Classes="label" VerticalAlignment="Center"/><ComboBox x:Name="QuickLogic" Grid.Column="1" MinHeight="30" IsEnabled="False" ToolTip.Tip="Logic kết hợp bộ lọc Pullback; logic Trigger được chỉnh ở tab Cấu hình."/></Grid>
                   <CheckBox x:Name="QuickAllowBuy" Content="Cho phép BUY" MinHeight="24"/>
                   <CheckBox x:Name="QuickAllowSell" Content="Cho phép SELL" MinHeight="24"/>
                   <Button x:Name="QuickApply" Classes="primary" Padding="10,4" Height="28" Content="Áp dụng cấu hình nhanh" Click="QuickApply_OnClick"/>
                   <StackPanel IsVisible="False"><TextBlock x:Name="DirectionRuleValue"/><TextBlock x:Name="TpSlValue"/><TextBlock x:Name="TradePermissionsText"/></StackPanel>
-                </StackPanel>
-                <StackPanel Grid.Column="2" Spacing="5">
+                </StackPanel></Border>
+                <Border Grid.Column="2" Padding="20,0,4,0"><StackPanel Spacing="4">
                   <TextBlock Text="Preset cấu hình" FontWeight="SemiBold"/>
-                  <Border Classes="panelSoft" Padding="10,7"><TextBlock x:Name="ProfileValue" Text="Profile: Baseline"/></Border>
+                  <Border Classes="panelSoft" Padding="10,4"><TextBlock x:Name="ProfileValue" Text="Profile: Baseline"/></Border>
                   <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                    <Button Classes="secondary" Content="Lưu preset" HorizontalAlignment="Stretch" Tag="save" Click="ConfigurationShortcut_OnClick"/>
-                    <Button Grid.Column="1" Classes="secondary" Content="Mở preset" HorizontalAlignment="Stretch" Tag="load" Click="ConfigurationShortcut_OnClick"/>
+                    <Button Classes="secondary" Content="Lưu preset" Padding="10,4" HorizontalAlignment="Stretch" Tag="save" Click="ConfigurationShortcut_OnClick"/>
+                    <Button Grid.Column="1" Classes="secondary" Content="Mở preset" Padding="10,4" HorizontalAlignment="Stretch" Tag="load" Click="ConfigurationShortcut_OnClick"/>
                   </Grid>
-                  <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="6">
-                    <Button Classes="secondary" Content="Mở .set" HorizontalAlignment="Stretch" Padding="7,5" Tag="import-set" Click="ConfigurationShortcut_OnClick"/>
-                    <Button Grid.Column="1" Classes="secondary" Content="Lưu .set" HorizontalAlignment="Stretch" Padding="7,5" Tag="export-set" Click="ConfigurationShortcut_OnClick"/>
-                    <Button Grid.Column="2" Classes="secondary" Content="Xuất JSON" HorizontalAlignment="Stretch" Padding="7,5" Tag="save" Click="ConfigurationShortcut_OnClick"/>
-                    <Button Grid.Column="3" Classes="secondary" Content="Nhập JSON" HorizontalAlignment="Stretch" Padding="7,5" Tag="load" Click="ConfigurationShortcut_OnClick"/>
+                  <TextBlock Text="Tải / Lưu file .set" FontWeight="SemiBold"/><Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="6">
+                    <Button Classes="secondary" HorizontalAlignment="Stretch" Padding="7,5" Tag="import-set" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="folder" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Mở .set" VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Grid.Column="1" Classes="secondary" HorizontalAlignment="Stretch" Padding="7,5" Tag="export-set" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="save" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Lưu .set" VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Grid.Column="2" Classes="secondary" HorizontalAlignment="Stretch" Padding="7,5" Tag="save" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="upload" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Xuất JSON" VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Grid.Column="3" Classes="secondary" HorizontalAlignment="Stretch" Padding="7,5" Tag="load" Click="ConfigurationShortcut_OnClick"><StackPanel Orientation="Horizontal" Spacing="8"><local:ReferenceIcon Kind="download" Width="19" Height="19" Tint="#85BCFF"/><TextBlock Text="Nhập JSON" VerticalAlignment="Center"/></StackPanel></Button>
                   </Grid>
-                </StackPanel>
+                </StackPanel></Border>
               </Grid>
             </StackPanel>
           </Border>
@@ -342,26 +343,26 @@
     <!-- Approved narrow status footer -->
     <Border Grid.Row="3" Background="#03162A" BorderBrush="#124467" BorderThickness="0,1,0,0">
       <Grid ColumnDefinitions="*,Auto" Margin="20,0">
-        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-          <TextBlock Text="●" Foreground="#18E58B" FontSize="12"/>
-          <TextBlock Text="Python Engine:" Classes="dim" FontSize="12"/>
-          <TextBlock x:Name="FooterEngineStateText" Text="Starting" FontSize="12"/>
-          <TextBlock Text="|" Classes="dim" FontSize="12"/>
-          <TextBlock Text="Model: Rule-based (Z + RSI)" Classes="dim" FontSize="12"/>
-          <TextBlock Text="|" Classes="dim" FontSize="12"/>
-          <TextBlock Text="Log: ON" Classes="dim" FontSize="12"/>
+        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <TextBlock Text="●" Foreground="#18E58B" FontSize="13"/>
+          <TextBlock Text="Python Engine:" Classes="dim" FontSize="13"/>
+          <TextBlock x:Name="FooterEngineStateText" Text="Starting" FontSize="13"/>
+          <TextBlock Text="|" Classes="dim" FontSize="13"/>
+          <TextBlock Text="Model: Rule-based (Z + RSI)" Classes="dim" FontSize="13"/>
+          <TextBlock Text="|" Classes="dim" FontSize="13"/>
+          <TextBlock Text="Log: ON" Classes="dim" FontSize="13"/>
         </StackPanel>
-        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-          <TextBlock Text="Giờ máy:" Classes="dim" FontSize="12"/>
-          <TextBlock x:Name="FooterServerTimeText" Text="—" FontSize="12"/>
-          <TextBlock Text="|" Classes="dim" FontSize="12"/>
-          <TextBlock Text="Spread:" Classes="dim" FontSize="12"/>
-          <TextBlock x:Name="FooterSpreadText" Text="—" FontSize="12"/>
-          <TextBlock Text="|" Classes="dim" FontSize="12"/>
-          <TextBlock Text="Account:" Classes="dim" FontSize="12"/>
-          <TextBlock x:Name="FooterAccountText" Text="—" FontSize="12"/>
-          <TextBlock Text="Leverage:" Classes="dim" FontSize="12"/>
-          <TextBlock x:Name="FooterLeverageText" Text="—" FontSize="12"/>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+          <TextBlock Text="Giờ máy:" Classes="dim" FontSize="13"/>
+          <TextBlock x:Name="FooterServerTimeText" Text="—" FontSize="13"/>
+          <TextBlock Text="|" Classes="dim" FontSize="13"/>
+          <TextBlock Text="Spread:" Classes="dim" FontSize="13"/>
+          <TextBlock x:Name="FooterSpreadText" Text="—" FontSize="13"/>
+          <TextBlock Text="|" Classes="dim" FontSize="13"/>
+          <TextBlock Text="Account:" Classes="dim" FontSize="13"/>
+          <TextBlock x:Name="FooterAccountText" Text="—" FontSize="13"/>
+          <TextBlock Text="Leverage:" Classes="dim" FontSize="13"/>
+          <TextBlock x:Name="FooterLeverageText" Text="—" FontSize="13"/>
         </StackPanel>
       </Grid>
     </Border>

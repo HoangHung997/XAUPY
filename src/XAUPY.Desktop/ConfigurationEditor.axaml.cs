@@ -262,6 +262,13 @@ public partial class ConfigurationEditor : UserControl
             Grid.SetRow(fieldsGrid, 1);
             int rows = (values.Length + columns - 1) / columns;
             for (int i = 0; i < rows; i++) fieldsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            if (columns == 2 && rows > 0)
+            {
+                var divider = new Border { Width = 1, Background = new SolidColorBrush(Color.Parse("#14517A")),
+                    HorizontalAlignment = HorizontalAlignment.Right, Margin = new Avalonia.Thickness(0, 1, -9, 1) };
+                Grid.SetRowSpan(divider, rows);
+                fieldsGrid.Children.Add(divider);
+            }
             for (int i = 0; i < values.Length; i++)
             {
                 var binding = CreateFieldRow(values[i], key);

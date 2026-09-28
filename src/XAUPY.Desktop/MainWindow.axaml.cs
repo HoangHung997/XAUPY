@@ -216,7 +216,10 @@ public partial class MainWindow : Window
     private void SetMonitoringLayout(bool monitoring)
     {
         this.FindControl<ContentControl>("MonitoringAlertsHost")!.IsVisible = monitoring;
-        this.FindControl<Grid>("DashboardGrid")!.ColumnDefinitions[0].Width = new GridLength(monitoring ? 275 : 288);
+        bool strategy = _strategyDashboard.IsVisible;
+        var dashboard = this.FindControl<Grid>("DashboardGrid")!;
+        dashboard.ColumnDefinitions[0].Width = new GridLength(monitoring ? 275 : strategy ? 272 : 288);
+        dashboard.ColumnSpacing = strategy ? 8 : 14;
         var quote = this.FindControl<Border>("SidebarQuoteCard")!;
         quote.MinHeight = monitoring ? 154 : 166;
         quote.Padding = new Avalonia.Thickness(17, monitoring ? 5 : 10);

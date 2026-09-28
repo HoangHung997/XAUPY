@@ -178,7 +178,7 @@ public partial class StrategyDashboard : UserControl
         Text("DirectionTfText").Text = strategy.DirectionTimeframe;
         Text("PullbackTfText").Text = strategy.PullbackTimeframe;
         Text("TriggerTfText").Text = strategy.TriggerTimeframe;
-        Text("DirectionRuleText").Text = $"{config.DirectionMaType}{config.DirectionMaPeriod}";
+        Text("DirectionRuleText").Text = config.DirectionRuleSummary;
         Text("DirectionMaText").Text = $"MA: {Format(strategy.DirectionIndicators.Ma)}";
         Text("DirectionOpenText").Text = $"Open ref: {Format(strategy.DirectionIndicators.OpenReference)}";
         Text("PullbackRsiText").Text = $"RSI: {Format(strategy.LivePullback.Rsi)}";
@@ -212,7 +212,7 @@ public partial class StrategyDashboard : UserControl
         Text("TimeframeSummaryText").Text =
             $"{strategy.DirectionTimeframe} → {strategy.PullbackTimeframe} → {strategy.TriggerTimeframe}";
         Text("ConfigSummaryText").Text =
-            $"Direction {config.DirectionMaType}{config.DirectionMaPeriod} • BUY={(config.AllowBuy ? "ON" : "OFF")} • SELL={(config.AllowSell ? "ON" : "OFF")}";
+            $"Direction {config.DirectionRuleSummary} • BUY={(config.AllowBuy ? "ON" : "OFF")} • SELL={(config.AllowSell ? "ON" : "OFF")}";
         Text("ResetReasonText").Text = strategy.LastResetReason ?? "—";
 
         Text("DirectionConditionText").Text = strategy.Direction;

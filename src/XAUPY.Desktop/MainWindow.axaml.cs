@@ -388,7 +388,7 @@ public partial class MainWindow : Window
         FindText("TriggerTfValue").Text = config.TriggerTimeframe;
         FindText("TradePermissionsText").Text = $"Cho phép BUY: {(config.AllowBuy ? "ON" : "OFF")}    SELL: {(config.AllowSell ? "ON" : "OFF")}";
         FindText("DirectionRuleValue").Text =
-            $"Direction: {config.DirectionMaType}{config.DirectionMaPeriod} • BUY={(config.AllowBuy ? "ON" : "OFF")} • SELL={(config.AllowSell ? "ON" : "OFF")}";
+            $"Direction: {config.DirectionRuleSummary} • BUY={(config.AllowBuy ? "ON" : "OFF")} • SELL={(config.AllowSell ? "ON" : "OFF")}";
         FindText("TpSlValue").Text =
             $"SL {config.StopLossMode} • TP {config.TakeProfitMode} • Max lot {config.MaxLot:0.###} • {config.MaxTradesPerDay} lệnh/ngày";
     }

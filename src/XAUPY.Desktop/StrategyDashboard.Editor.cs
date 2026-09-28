@@ -171,7 +171,9 @@ public partial class StrategyDashboard
         }
         finally { _strategySync = false; }
         StrategyEdited();
-        Text("StrategyDescriptionText").Text = $"Theo hướng {ValueAt(profile, "direction.ma_type")}{ValueAt(profile, "direction.ma_period")}; " +
+        Text("StrategyDescriptionText").Text = (ValueAt(profile, "direction.ma_enabled")?.GetValue<bool>() == false
+            ? "Không lọc hướng bằng MA; "
+            : $"Theo hướng {ValueAt(profile, "direction.ma_type")}{ValueAt(profile, "direction.ma_period")}; ") +
             $"tìm nhịp hồi ở {ValueAt(profile, "timeframes.pullback")}, xác nhận ở {ValueAt(profile, "timeframes.trigger")}. " +
             (ValueAt(profile, "trigger.confirm_closed_bar")?.GetValue<bool>() == true ? "Đánh giá nến đóng." : "Ghi nhớ cực trị RSI/Z theo tick; xác nhận từ nến sau.");
         var rules = Host("StrategyRulesHost");

@@ -246,6 +246,8 @@ public sealed record ConfigurationSummary(
     double MaxLot,
     int MaxTradesPerDay)
 {
+    public bool DirectionMaEnabled { get; init; } = true;
+    public string DirectionRuleSummary => DirectionMaEnabled ? $"{DirectionMaType}{DirectionMaPeriod}" : "MA tắt";
     public static ConfigurationSummary Default { get; } = new(
         "Baseline",
         "XAUUSD",
@@ -338,6 +340,7 @@ public sealed record ConfigurationSummary(
             ReadNestedString("take_profit", "mode", "FIXED"),
             ReadNestedString("stop_loss", "mode", "STRUCTURE"),
             ReadNestedDouble("risk", "max_lot", 0.10),
-            ReadNestedInt("risk", "max_trades_per_day", 8));
+            ReadNestedInt("risk", "max_trades_per_day", 8))
+        { DirectionMaEnabled = ReadNestedBool("direction", "ma_enabled", true) };
     }
 }

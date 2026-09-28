@@ -108,9 +108,9 @@
             <Grid ColumnDefinitions="*,Auto,80,Auto,80,Auto" ColumnSpacing="7">
               <TextBlock x:Name="DemoOnceContextText" Text="Chờ kết nối DEMO · tối đa một lệnh" FontSize="12" Foreground="#9CBAD4" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
               <TextBlock Grid.Column="1" Text="Max lot" FontSize="12" VerticalAlignment="Center"/>
-              <NumericUpDown x:Name="DemoOnceVolume" Grid.Column="2" Minimum="0.001" Maximum="0.01" Increment="0.001" Value="0.01" FormatString="0.###" MinHeight="25" Height="25" FontSize="12" Padding="4,0"/>
+              <NumericUpDown x:Name="DemoOnceVolume" Grid.Column="2" Minimum="0.001" Maximum="0.01" Increment="0.001" Value="0.01" FormatString="0.###" ShowButtonSpinner="False" MinHeight="32" Height="32" FontSize="12" Padding="4,0"/>
               <TextBlock Grid.Column="3" Text="Chờ (phút)" FontSize="12" VerticalAlignment="Center"/>
-              <NumericUpDown x:Name="DemoOnceMinutes" Grid.Column="4" Minimum="1" Maximum="1440" Increment="5" Value="60" FormatString="0" MinHeight="25" Height="25" FontSize="12" Padding="4,0"/>
+              <NumericUpDown x:Name="DemoOnceMinutes" Grid.Column="4" Minimum="1" Maximum="1440" Increment="5" Value="60" FormatString="0" ShowButtonSpinner="False" MinHeight="32" Height="32" FontSize="12" Padding="4,0"/>
               <Button Grid.Column="5" Classes="secondary" Content="↻" Padding="6,1" MinHeight="25" ToolTip.Tip="Đọc trạng thái hiện tại" Click="DemoOnceRefresh_OnClick"/>
             </Grid>
             <TextBlock x:Name="DemoOnceMessage" Text="Chỉ gửi khi có tín hiệu mới đúng chiến lược. Dừng chờ không đóng vị thế đã khớp." FontSize="11" Foreground="#8CA8C2" TextWrapping="Wrap"/>

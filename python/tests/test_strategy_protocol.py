@@ -104,6 +104,24 @@ class StrategyProtocolTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(heartbeat.payload["trading_enabled"])
         self.assertFalse(heartbeat.payload["execution_enabled"])
 
+    async def test_fast_market_update_omits_bulk_history_and_background_summaries(self):
+        from unittest.mock import Mock
+        await exchange(self.reader, self.writer, "bridge_snapshot", bridge_snapshot(1, 100, 100, 100))
+        full = await exchange(self.reader, self.writer, "heartbeat")
+        self.assertTrue(full.payload["overview"]["bar_history"])
+        self.server.journal.summary = Mock(side_effect=AssertionError("Fast path must not scan journal"))
+        fast = await exchange(self.reader, self.writer, "market_update")
+        self.assertEqual("market_update_ack", fast.type)
+        self.assertNotIn("bar_history", fast.payload["overview"])
+        self.assertNotIn("journal_summary", fast.payload)
+        self.assertNotIn("optimizer_status", fast.payload)
+        self.assertEqual(full.payload["overview"]["bid"], fast.payload["overview"]["bid"])
+        self.assertEqual(full.payload["overview"]["bars"], fast.payload["overview"]["bars"])
+        self.assertFalse(fast.payload["execution_enabled"])
+        self.assertFalse(fast.payload["trading_enabled"])
+        self.assertIn("demo_once", fast.payload)
+        self.assertIn("tick_transport", fast.payload)
+
     async def test_bridge_snapshots_drive_deterministic_buy_state(self):
         active = await exchange(self.reader, self.writer, "config_active_get")
         profile = fast_profile(active.payload["profile"])

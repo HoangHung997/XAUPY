@@ -75,8 +75,8 @@ try {
         OverviewSnapshot.Empty, Mt5BridgeStatus.Offline, ConfigurationSummary.Default);
     Assert(!orderStatus.FindControl<TextBlock>("ActionStatusText")!.Text!.StartsWith("SIMULATION BLOCKED"),
         "fresh connected demo snapshot clears only the obsolete automatic blocked message");
-    Assert(!orderStatus.FindControl<Border>("DemoOnceStatusPanel")!.IsVisible,
-        "absent optional one-shot report leaves the established Orders layout unchanged");
+    Assert(orderStatus.FindControl<Border>("DemoOnceStatusPanel")!.IsVisible && !orderStatus.FindControl<Button>("DemoOnceStart")!.IsEnabled,
+        "native demo controls are visible but cannot start without verified engine context");
     var demoReport = DemoOnceSnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new
     {
         demo_once = new { state = "ARMED", attempt_id = "6db89d49-7333-43b0-b656-9a5c04bc1c68", volume = .01 }
@@ -108,7 +108,7 @@ try {
         Assert(main.FindControl<TextBlock>("GuardianReasonValue")!.Text!.StartsWith("LOCKED", StringComparison.Ordinal),
             "sidebar one-shot status retains the general execution lock");
         orderStatus.ApplyDemoOnceStatus(DemoOnceSnapshot.Disabled);
-        Assert(!demoPanel.IsVisible, "disabled optional one-shot report restores the original Orders layout");
+        Assert(demoPanel.IsVisible && demoText.Text!.Contains("CHƯA BẮT ĐẦU"), "disabled report leaves native start controls available for an explicit user action");
     }
     finally { orderStatusWindow.Close(); }
     var statusStrategy = new StrategyDashboard();

@@ -31,6 +31,17 @@ public sealed record OverviewSnapshot(
         = new Dictionary<string, IReadOnlyList<MarketBar>>(StringComparer.OrdinalIgnoreCase);
     public long? TickTimeMsc { get; init; }
     public long? ServerTime { get; init; }
+    public IReadOnlyDictionary<string, MarketBar> FormingBars { get; init; } = new Dictionary<string, MarketBar>();
+
+    public static OverviewSnapshot FromMarketUpdate(JsonElement payload, OverviewSnapshot previous)
+    {
+        var next = FromHeartbeatPayload(payload);
+        if (next.Available && previous.Available && next.Symbol == previous.Symbol &&
+            next.AccountTradeMode == previous.AccountTradeMode && payload.TryGetProperty("overview", out var raw) &&
+            !raw.TryGetProperty("bar_history", out _))
+            next = next with { BarHistory = previous.BarHistory };
+        return next;
+    }
     public double? TickAgeMilliseconds => Available && ServerTime is > 0 && TickTimeMsc is > 0 &&
         (double)ServerTime.Value * 1000 >= TickTimeMsc.Value - 1000
             ? Math.Max(0, (double)ServerTime.Value * 1000 - TickTimeMsc.Value) : null;
@@ -79,6 +90,12 @@ public sealed record OverviewSnapshot(
         }
 
         var history = new Dictionary<string, IReadOnlyList<MarketBar>>(StringComparer.OrdinalIgnoreCase);
+        var forming = new Dictionary<string, MarketBar>(StringComparer.OrdinalIgnoreCase);
+        if (available && overview.TryGetProperty("forming_bars", out var formingElement) && formingElement.ValueKind == JsonValueKind.Object)
+            foreach (var item in formingElement.EnumerateObject())
+                if (item.Value.ValueKind == JsonValueKind.Object && TryReadBar(item.Value, out var current) &&
+                    (!bars.TryGetValue(item.Name, out var closed) || current.Time > closed.Time))
+                    forming[item.Name] = current;
         string[] supportedTimeframes = ["M1", "M3", "M5", "M15", "M30", "H1", "H2", "H4"];
         if (overview.TryGetProperty("bar_history", out var historyElement) &&
             historyElement.ValueKind == JsonValueKind.Object)
@@ -125,6 +142,7 @@ public sealed record OverviewSnapshot(
             bars)
         {
             BarHistory = history,
+            FormingBars = forming,
             TickTimeMsc = ReadLong(overview, "tick_time_msc") is > 0 and <= 253402300799999
                 ? ReadLong(overview, "tick_time_msc") : null,
             ServerTime = ReadLong(overview, "server_time") is > 0 and <= 253402300799
@@ -132,7 +150,7 @@ public sealed record OverviewSnapshot(
         };
     }
 
-    private static bool TryReadBar(JsonElement value, out MarketBar bar)
+    internal static bool TryReadBar(JsonElement value, out MarketBar bar)
     {
         var time = ReadLong(value, "time");
         var open = ReadDouble(value, "open");

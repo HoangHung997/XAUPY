@@ -74,12 +74,12 @@ public partial class MonitoringDashboard : UserControl
         ApplyBar("Trigger", strategy.TriggerTimeframe, overview, "TriggerBarRoleText", "TriggerBarText", "TriggerBarTimeText");
 
         Text("MonitorMaText").Text = Metric(strategy.DirectionIndicators.Ma);
-        Text("MonitorPbZText").Text = Metric(strategy.PullbackIndicators.Z);
-        Text("MonitorTriggerRsiText").Text = Metric(strategy.TriggerIndicators.Rsi);
+        Text("MonitorPbZText").Text = Metric(strategy.LivePullback.Z);
+        Text("MonitorTriggerRsiText").Text = Metric(strategy.LiveTrigger.Rsi);
         Text("MonitorAdxText").Text = Metric(strategy.Filters.Adx);
         Text("MonitorAtrText").Text = Metric(strategy.Filters.Atr);
-        this.FindControl<ReferenceGauge>("MonitorZGauge")!.Value = strategy.PullbackIndicators.Z;
-        this.FindControl<ReferenceGauge>("MonitorRsiGauge")!.Value = strategy.TriggerIndicators.Rsi;
+        this.FindControl<ReferenceGauge>("MonitorZGauge")!.Value = strategy.LivePullback.Z;
+        this.FindControl<ReferenceGauge>("MonitorRsiGauge")!.Value = strategy.LiveTrigger.Rsi;
         this.FindControl<ReferenceGauge>("MonitorAdxGauge")!.Value = strategy.Filters.Adx;
         this.FindControl<ReferenceGauge>("MonitorAtrGauge")!.Value = strategy.Filters.Atr;
 

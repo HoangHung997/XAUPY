@@ -69,10 +69,10 @@
         </StackPanel></Border>
         <Border Grid.Row="2" Classes="panel" Padding="10"><StackPanel Spacing="7">
           <StackPanel Orientation="Horizontal" Spacing="9"><local:ReferenceIcon Kind="user" Width="27" Height="27" Tint="#69BCFF"/><TextBlock Text="Quyền &amp; Bảo mật tài khoản" Classes="panelTitle" Foreground="#8FCCFF" VerticalAlignment="Center"/></StackPanel>
-          <CheckBox Content="Chặn lệnh mới khi mất kết nối" IsChecked="True" IsEnabled="False" FontSize="13"/>
-          <CheckBox Content="Giữ nguyên SL phía broker" IsChecked="True" IsEnabled="False" FontSize="13"/>
-          <CheckBox Content="Cho phép tài khoản thật" IsChecked="False" IsEnabled="False" FontSize="13"/>
-          <TextBlock Text="●  EXECUTION LOCKED" Foreground="#FFD34D" FontSize="14"/>
+          <TextBlock Text="Chọn tài khoản đang đăng nhập trong MT5." TextWrapping="Wrap" FontSize="13"/>
+          <TextBlock Text="Bắt đầu / dừng chờ tại Lệnh &amp; Vị thế." TextWrapping="Wrap" FontSize="13"/>
+          <TextBlock Text="Bản kiểm thử hiện hỗ trợ một lệnh DEMO. Giao dịch tài khoản thật chưa được triển khai." TextWrapping="Wrap" FontSize="12" Foreground="#8DB0CC"/>
+          <TextBlock x:Name="ExecutionModeSummary" Text="Chưa bắt đầu" Foreground="#FFD34D" FontSize="12" TextTrimming="CharacterEllipsis"/>
         </StackPanel></Border>
         <Border Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="2" Classes="panel" Padding="10">
           <Grid ColumnDefinitions="*,135" RowDefinitions="Auto,*" ColumnSpacing="10"><StackPanel Orientation="Horizontal" Spacing="9"><local:ReferenceIcon Kind="cloud" Width="27" Height="27" Tint="#69BCFF"/><TextBlock Text="Sao lưu &amp; Khôi phục" Classes="panelTitle" Foreground="#8FCCFF" VerticalAlignment="Center"/></StackPanel>

@@ -370,6 +370,13 @@ class StrategyEngine:
         self._tick_required_closed_times: dict[str, int] = {}
         self._tick_metrics_cache_key: int | None = None
         self._tick_metrics_cache: tuple[Any, ...] | None = None
+        self._display_metrics: dict[str, Any] = {}
+        self._display_warmup: list[str] = []
+        self._display_bars: dict[str, dict[str, Any]] = {}
+        self._display_quote: dict[str, Any] = {}
+        self._display_continuous = False
+        self._display_reason = "WAIT_TICK_BASELINE"
+        self._display_observed_ticks = 0
 
     def ingest_snapshot(self, payload: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(payload, dict):
@@ -454,8 +461,7 @@ class StrategyEngine:
         idempotent while equal-millisecond ticks retain their supplied ordering.
         Closed history is filtered at each event time before indicator evaluation.
         """
-        if self.profile["trigger"]["confirm_closed_bar"]:
-            return self.status_payload(market_connected=True)
+        closed_confirmation = self.profile["trigger"]["confirm_closed_bar"]
         if not isinstance(payload, dict) or payload.get("symbol") != self.profile["strategy"]["symbol"]:
             raise StrategyDataError("tick batch symbol does not match active profile")
         batch = payload.get("tick_batch")
@@ -469,7 +475,7 @@ class StrategyEngine:
         raw_ticks = batch.get("ticks")
         if not isinstance(raw_ticks, list) or len(raw_ticks) > 1000:
             raise StrategyDataError("tick_batch.ticks must contain at most 1000 observations")
-        ticks: list[tuple[int, float | None]] = []
+        ticks: list[tuple[int, float | None, float | None]] = []
         for row in raw_ticks:
             if not isinstance(row, dict):
                 raise StrategyDataError("tick observation must be an object")
@@ -482,7 +488,8 @@ class StrategyEngine:
                 raise StrategyDataError("tick bid/ask must be finite nonnegative ordered quotes")
             if ticks and timestamp < ticks[-1][0]:
                 raise StrategyDataError("ticks must preserve chronological order")
-            ticks.append((timestamp, float(bid) if bid > 0 and ask > 0 else None))
+            valid_quote = bid > 0 and ask > 0
+            ticks.append((timestamp, float(bid) if valid_quote else None, float(ask) if valid_quote else None))
 
         same_stream = stream_id == self._tick_stream_id
         if same_stream and self._tick_sequence is not None and sequence <= self._tick_sequence:
@@ -494,18 +501,28 @@ class StrategyEngine:
         )
         if discontinuity:
             reason = "TICK_STREAM_BASELINE" if not same_stream else "TICK_STREAM_GAP"
-            self.reset_setup(reason)
+            if closed_confirmation:
+                # Display transport must never reset a setup that the user has
+                # configured to confirm from closed bars.
+                self._reset_tick_observation()
+            else:
+                self.reset_setup(reason)
             self._tick_stream_id, self._tick_sequence = stream_id, sequence
             self._tick_last_time_msc = ticks[-1][0] if ticks else None
             self._tick_reason = reason
             if ticks:
                 self._tick_bar_times = self._tick_times(ticks[-1][0])
-            self.last_metrics, self.warmup_reasons = self._metrics()
-            self.state = "WARMUP" if self.warmup_reasons else "WAIT_INTRABAR"
+            for timestamp, bid, ask in ticks:
+                if bid is not None:
+                    self._update_tick_display(timestamp, bid, ask, continuous=False, reason=reason)
+            if not closed_confirmation:
+                self.last_metrics, self.warmup_reasons = self._metrics()
+                self.state = "WARMUP" if self.warmup_reasons else "WAIT_INTRABAR"
             return self.status_payload(market_connected=True)
 
         self._tick_sequence = sequence
-        for timestamp, bid in ticks:
+        self._display_continuous = complete
+        for timestamp, bid, ask in ticks:
             if bid is None:
                 # CopyTicks may include trade-only records without a valid
                 # quote. Keep transport ordering but never invent its bid.
@@ -517,7 +534,8 @@ class StrategyEngine:
             trigger_time = bar_times[trigger_tf]
             if (self._tick_last_time_msc is None or
                     (previous_trigger is not None and trigger_time > previous_trigger + HISTORY_TIMEFRAME_SECONDS[trigger_tf])):
-                self._clear_arm("TICK_BAR_GAP")
+                if not closed_confirmation:
+                    self._clear_arm("TICK_BAR_GAP")
                 self._tick_latches.clear()
                 self._tick_candidate_extremes.clear()
                 self._tick_setup_latches.clear()
@@ -525,16 +543,72 @@ class StrategyEngine:
                 self._tick_bar_extremes.clear()
                 self._tick_required_closed_times.clear()
                 self._tick_reason = "TICK_BAR_GAP"
+                self._display_bars.clear()
+                self._update_tick_display(timestamp, bid, ask, continuous=False, reason="TICK_BAR_GAP")
             else:
                 for tf, current_time in bar_times.items():
                     previous_time = self._tick_bar_times.get(tf)
                     if previous_time is not None and current_time > previous_time:
                         self._tick_required_closed_times[tf] = previous_time
-                self._evaluate_tick(timestamp, bid, bar_times)
+                if not closed_confirmation:
+                    self._evaluate_tick(timestamp, bid, bar_times)
+                self._update_tick_display(timestamp, bid, ask, continuous=True, reason="OBSERVED_TICK",
+                                          decision_projection=None if closed_confirmation else (self.last_metrics, self.warmup_reasons))
                 self._observed_ticks_total += 1
             self._tick_last_time_msc = timestamp
             self._tick_bar_times = bar_times
         return self.status_payload(market_connected=True)
+
+    def _update_tick_display(self, timestamp: int, bid: float, ask: float, *, continuous: bool, reason: str,
+                             decision_projection: tuple[dict[str, Any], list[str]] | None = None) -> None:
+        """Project observed forming-bar values without changing decision state.
+
+        These OHLC ranges cover only ticks actually received since the baseline,
+        so they remain explicitly partial. No current_bars/high-low payload is
+        used to infer observations before a tick's timestamp.
+        """
+        if decision_projection is None:
+            metrics, warmup, _ = self._tick_metrics(timestamp, bid)
+        else:
+            metrics, warmup = deepcopy(decision_projection[0]), list(decision_projection[1])
+        # Indicator switches control entry logic, not whether a gauge can show
+        # a mathematical value. Use configured periods for disabled gauges too.
+        for role in ("pullback", "trigger"):
+            cfg, timeframe = self.profile[role], self.profile["timeframes"][role]
+            values, rsi_state = self._tick_metrics_cache[3][role]
+            for name in ("rsi", "z"):
+                if cfg[f"{name}_enabled"]:
+                    continue
+                period = cfg[f"{name}_period"]
+                if name == "rsi" and rsi_state is not None:
+                    gain, loss = rsi_state
+                    change = bid - values[-1]
+                    value = _rsi_value((gain * (period - 1) + max(change, 0)) / period,
+                                       (loss * (period - 1) + max(-change, 0)) / period)
+                else:
+                    value = _rsi(values + [bid], period) if name == "rsi" else _zscore(values[-(period - 1):] + [bid], period)
+                metrics[role][name] = value
+                if value is None:
+                    warmup.append(f"display:{role}:{timeframe}:{name.upper()}{period}")
+        # A missing just-closed candle must not masquerade as a current RSI/Z.
+        # Keep unrelated timeframes readable and expose the missing dependency.
+        for role in ("pullback", "trigger"):
+            timeframe = self.profile["timeframes"][role]
+            if f"history:{timeframe}:CLOSED_BAR_PENDING" in warmup:
+                metrics[role]["rsi"] = metrics[role]["z"] = None
+        self._display_metrics, self._display_warmup = metrics, warmup
+        self._display_quote = {"tick_time_msc": timestamp, "bid": bid, "ask": ask}
+        self._display_continuous, self._display_reason = continuous, "WARMUP" if warmup else reason
+        self._display_observed_ticks += 1
+        for timeframe, seconds in HISTORY_TIMEFRAME_SECONDS.items():
+            bar_time = (timestamp // 1000 // seconds) * seconds
+            bar = self._display_bars.get(timeframe)
+            if bar is None or bar["time"] != bar_time:
+                self._display_bars[timeframe] = {"time": bar_time, "open": bid, "high": bid, "low": bid,
+                    "close": bid, "observed_ticks": 1, "partial": True, "source": "OBSERVED_TICKS"}
+            else:
+                bar["high"], bar["low"], bar["close"] = max(bar["high"], bid), min(bar["low"], bid), bid
+                bar["observed_ticks"] += 1
 
     def _tick_times(self, timestamp: int) -> dict[str, int]:
         seconds = timestamp // 1000
@@ -551,7 +625,7 @@ class StrategyEngine:
             for role in ("pullback", "trigger"):
                 cfg, timeframe = self.profile[role], self.profile["timeframes"][role]
                 values = [bar.close for bar in closed[timeframe]]
-                state = _rsi_state(values, cfg["rsi_period"]) if cfg["rsi_enabled"] else None
+                state = _rsi_state(values, cfg["rsi_period"])
                 role_state[role] = (values, state)
             self._tick_metrics_cache = closed, base_metrics, base_warmup, role_state
             self._tick_metrics_cache_key = key
@@ -1191,6 +1265,23 @@ class StrategyEngine:
                 for timeframe in TIMEFRAME_OPTIONS
             },
             "indicators": deepcopy(self.last_metrics),
+            "display": {
+                "available": market_connected and bool(self._display_quote),
+                "indicators_ready": market_connected and bool(self._display_quote) and not self._display_warmup,
+                "observation_mode": "OBSERVED_TICKS",
+                "confirmation_mode": "CLOSED_BAR" if self.profile["trigger"]["confirm_closed_bar"] else "OBSERVED_TICKS_NEXT_BAR",
+                "stream_id": self._tick_stream_id,
+                "sequence": self._tick_sequence,
+                "continuous": market_connected and self._display_continuous,
+                "reason": self._display_reason if market_connected else "BRIDGE_STALE",
+                "observed_ticks": self._display_observed_ticks,
+                **deepcopy(self._display_quote),
+                "indicators": deepcopy(self._display_metrics) if market_connected else {},
+                "warmup_reasons": list(self._display_warmup),
+                "indicator_basis": {"direction": "CLOSED_BAR", "pullback": "FORMING_BAR_BID",
+                                    "trigger": "FORMING_BAR_BID", "filters": "CLOSED_BAR"},
+                "current_bars": deepcopy(self._display_bars) if market_connected else {},
+            },
             "conditions": deepcopy(self.last_conditions),
             "last_data_error": self.last_data_error,
             "last_reset_reason": self.last_reset_reason,

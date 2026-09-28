@@ -62,6 +62,15 @@ public sealed record StrategySnapshot(
     bool ExecutionEnabled)
 {
     public IntrabarObservationSnapshot Intrabar { get; init; } = IntrabarObservationSnapshot.Empty;
+    public bool HasTickDisplay { get; init; }
+    public long? DisplayTickTimeMsc { get; init; }
+    public long DisplayObservedTicks { get; init; }
+    public OscillatorIndicatorSnapshot? DisplayPullback { get; init; }
+    public OscillatorIndicatorSnapshot? DisplayTrigger { get; init; }
+    public OscillatorIndicatorSnapshot LivePullback => HasTickDisplay
+        ? DisplayPullback ?? new(PullbackTimeframe, null, null) : PullbackIndicators;
+    public OscillatorIndicatorSnapshot LiveTrigger => HasTickDisplay
+        ? DisplayTrigger ?? new(TriggerTimeframe, null, null) : TriggerIndicators;
     public static StrategySnapshot Empty { get; } = new(
         false,
         false,
@@ -116,6 +125,11 @@ public sealed record StrategySnapshot(
         var filterIndicators = ReadObject(indicators, "filters");
         var intrabar = ReadObject(strategy, "intrabar");
         var extremes = ReadObject(intrabar, "setup_extremes");
+        var display = ReadObject(strategy, "display");
+        bool displayAvailable = OverviewSnapshot.ReadBool(strategy, "available") && OverviewSnapshot.ReadBool(display, "available");
+        var liveIndicators = displayAvailable ? ReadObject(display, "indicators") : default;
+        var livePullback = ReadObject(liveIndicators, "pullback");
+        var liveTrigger = ReadObject(liveIndicators, "trigger");
 
         var barsSeen = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var barsSeenElement = ReadObject(strategy, "bars_seen");
@@ -212,6 +226,11 @@ public sealed record StrategySnapshot(
             OverviewSnapshot.ReadBool(strategy, "trading_enabled"),
             OverviewSnapshot.ReadBool(strategy, "execution_enabled"))
         {
+            HasTickDisplay = display.ValueKind == JsonValueKind.Object,
+            DisplayTickTimeMsc = displayAvailable ? OverviewSnapshot.ReadLong(display, "tick_time_msc") : null,
+            DisplayObservedTicks = OverviewSnapshot.ReadLong(display, "observed_ticks") ?? 0,
+            DisplayPullback = new(pullbackTf, OverviewSnapshot.ReadDouble(livePullback, "rsi"), OverviewSnapshot.ReadDouble(livePullback, "z")),
+            DisplayTrigger = new(triggerTf, OverviewSnapshot.ReadDouble(liveTrigger, "rsi"), OverviewSnapshot.ReadDouble(liveTrigger, "z")),
             Intrabar = new IntrabarObservationSnapshot(
                 ReadObjectString(intrabar, "mode", "CLOSED_BAR"),
                 OverviewSnapshot.ReadLong(intrabar, "observed_ticks") ?? 0,

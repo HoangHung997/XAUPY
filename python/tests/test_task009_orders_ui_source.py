@@ -93,7 +93,7 @@ class Task009OrdersUiSourceTests(unittest.TestCase):
         self.assertIn("RejectUnexpectedOrdersExecutionEnable", self.supervisor)
         self.assertIn("BrokerExecutionLocked", self.model)
         self.assertIn("SimulationOnly", self.model)
-        self.assertIn('desktop_version = "0.17.0-demo1"', self.supervisor)
+        self.assertIn('desktop_version = "0.17.1-tickui"', self.supervisor)
 
     def test_no_old_task009_placeholder_wording_remains(self):
         self.assertNotIn("Execution và màn hình quản lý lệnh thuộc Task 009", self.main_code)

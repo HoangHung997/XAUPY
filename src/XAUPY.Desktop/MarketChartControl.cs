@@ -146,6 +146,7 @@ public sealed class MarketChartControl : Control
     private static readonly IBrush UpBrush = Brush("#00CF88");
     private static readonly IBrush DownBrush = Brush("#FF3658");
 
+    private IReadOnlyDictionary<string, MarketBar> _formingBars = new Dictionary<string, MarketBar>();
     public void SetSnapshot(OverviewSnapshot snapshot, string? timeframe = null)
     {
         if (!string.Equals(_symbol, snapshot.Symbol, StringComparison.OrdinalIgnoreCase) && snapshot.Available)
@@ -155,6 +156,8 @@ public sealed class MarketChartControl : Control
         }
         if (!_userSelectedTimeframe && !string.IsNullOrWhiteSpace(timeframe)) _timeframe = timeframe;
         _connected = snapshot.Available && snapshot.TerminalConnected;
+        _formingBars = _connected ? snapshot.FormingBars : new Dictionary<string, MarketBar>();
+        ToolTip.SetTip(this, "Nến cuối cập nhật theo tick đã nhận; OHLC và volume của nến này chỉ phản ánh phần đã quan sát.");
         _bid = _connected ? snapshot.Bid : null;
         if (snapshot.Available)
         {
@@ -195,6 +198,9 @@ public sealed class MarketChartControl : Control
         context.DrawLine(new Pen(Brush("#57718A"), .8), plot.TopRight, plot.BottomRight);
         context.DrawLine(new Pen(Brush("#57718A"), .8), plot.BottomLeft, plot.BottomRight);
         var allBars = _history.TryGetValue(_timeframe, out var history) ? history.Values.ToArray() : [];
+        if (_formingBars.TryGetValue(_timeframe, out var forming) && Valid(forming) &&
+            (allBars.Length == 0 || forming.Time > allBars[^1].Time))
+            allBars = [..allBars, forming];
         var bars = allBars.TakeLast(64).ToArray();
         double captionSize = Bounds.Width >= 550 ? 14 : 11;
         if (bars.Length == 0)

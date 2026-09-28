@@ -1,16 +1,16 @@
 [Setup]
 AppId={{07BF11D7-1E2A-478F-A51F-428439D1CF3A}
 AppName=XAUPY Control Center
-AppVersion=0.17.0
-VersionInfoVersion=0.17.0.1
-AppVerName=XAUPY Control Center 0.17.0 DEMO1
+AppVersion=0.17.1
+VersionInfoVersion=0.17.1.0
+AppVerName=XAUPY Control Center 0.17.1 Tick UI
 DefaultDirName={localappdata}\Programs\XAUPY
 DefaultGroupName=XAUPY
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\dist
-OutputBaseFilename=XAUPY-0.17.0-demo1-Setup
+OutputBaseFilename=XAUPY-0.17.1-tickui-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern

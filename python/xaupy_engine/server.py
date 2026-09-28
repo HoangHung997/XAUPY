@@ -423,7 +423,8 @@ class EngineServer:
             )
             return Envelope.response("hello_ack", request.request_id, common), False
 
-        if request.type == "heartbeat":
+        if request.type in {"heartbeat", "market_update"}:
+            full = request.type == "heartbeat"
             bridge_status = self.bridge.status()
             market_connected = self.bridge.market_data_connected()
             self._observe_runtime_health(
@@ -439,15 +440,30 @@ class EngineServer:
                 "bridge": bridge_status.to_payload(),
                 "tick_transport": self.tick_transport.payload(),
                 "demo_once": self.demo_once.status(),
-                "overview": self.bridge.overview_payload(),
+                "overview": self.bridge.overview_payload(include_history=full),
                 "orders_positions": self.bridge.orders_positions_payload(),
                 "strategy": self.strategy.status_payload(
                     market_connected=market_connected
                 ),
-                "journal_summary": self.journal.summary(date_scope="TODAY"),
-                "optimizer_status": self.optimizer_jobs.status(),
             }
-            return Envelope.response("heartbeat_ack", request.request_id, payload), False
+            display = payload["strategy"].get("display", {})
+            overview = payload["overview"]
+            if overview.get("available") and display.get("available"):
+                timestamp = display.get("tick_time_msc", 0)
+                # A late display packet must never move a newer snapshot quote backward.
+                if timestamp >= (overview.get("tick_time_msc") or 0):
+                    overview.update(bid=display["bid"], ask=display["ask"], tick_time_msc=timestamp)
+                    if overview.get("point"):
+                        overview["spread_points"] = (display["ask"] - display["bid"]) / overview["point"]
+                    payload["orders_positions"].update(bid=display["bid"], ask=display["ask"],
+                                                       spread_points=overview.get("spread_points"))
+                overview["forming_bars"] = {tf: {**bar, "tick_volume": bar["observed_ticks"]}
+                                            for tf, bar in display.get("current_bars", {}).items()}
+                overview["forming_bars_partial"] = True
+            if full:
+                payload["journal_summary"] = self.journal.summary(date_scope="TODAY")
+                payload["optimizer_status"] = self.optimizer_jobs.status()
+            return Envelope.response(request.type + "_ack", request.request_id, payload), False
 
         if request.type == "config_schema_get":
             return (

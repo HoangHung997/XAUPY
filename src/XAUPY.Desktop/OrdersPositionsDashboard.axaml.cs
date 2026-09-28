@@ -95,11 +95,13 @@ public partial class OrdersPositionsDashboard : UserControl
 
     public void ApplyDemoOnceStatus(DemoOnceSnapshot report)
     {
+        _demoOnceReport = report;
         var panel = this.FindControl<Border>("DemoOnceStatusPanel")!;
-        panel.IsVisible = DemoOncePresentation.IsVisible(report);
-        Text("DemoOnceStatusText").Text = DemoOncePresentation.Summary(report);
+        Text("DemoOnceStatusText").Text = report.HasReport && report.State != "DISABLED"
+            ? DemoOncePresentation.Summary(report) : "DEMO 1 LỆNH · CHƯA BẮT ĐẦU";
         Text("DemoOnceStatusText").Foreground = DemoOncePresentation.StatusBrush(report);
         ToolTip.SetTip(panel, DemoOncePresentation.Detail(report));
+        RefreshDemoOnceControls();
     }
 
     private void RenderAll()

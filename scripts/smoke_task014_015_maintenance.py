@@ -60,7 +60,7 @@ def engine_session(executable: str, runtime: Path):
         stream = sock.makefile("rwb")
         hello = exchange(stream, "hello", {"component": "maintenance-smoke"})
         assert hello["engine_instance_id"] == instance, "launched process identity missing"
-        assert hello["engine_version"] == "0.17.0-demo1"
+        assert hello["engine_version"] == "0.17.1-tickui"
         yield stream
     finally:
         if stream is not None and process.poll() is None:

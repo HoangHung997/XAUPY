@@ -15,6 +15,10 @@ public sealed record DemoOnceSnapshot(
     long? OrderTicket,
     long? DealTicket)
 {
+    public bool? BudgetConsumed { get; init; }
+    public DateTimeOffset? ArmedUntilUtc { get; init; }
+    public double? AuthorizedVolume { get; init; }
+    public string? LastBlocker { get; init; }
     public static DemoOnceSnapshot Disabled { get; } = new(
         false, false, "DISABLED", null, null, null, null, null, null, null);
 
@@ -42,7 +46,15 @@ public sealed record DemoOnceSnapshot(
             ReadPositiveDouble(report, "volume"),
             ReadString(report, "side"),
             ReadTicket(report, "order_ticket"),
-            ReadTicket(report, "deal_ticket"));
+            ReadTicket(report, "deal_ticket"))
+        {
+            BudgetConsumed = report.TryGetProperty("budget_consumed", out var consumed) &&
+                consumed.ValueKind is JsonValueKind.True or JsonValueKind.False ? consumed.GetBoolean() : null,
+            ArmedUntilUtc = DateTimeOffset.TryParse(ReadString(report, "armed_until_utc"), out var until) ? until : null,
+            AuthorizedVolume = report.TryGetProperty("authorization", out var authorization) && authorization.ValueKind == JsonValueKind.Object
+                ? ReadPositiveDouble(authorization, "max_volume") : ReadPositiveDouble(report, "authorized_volume"),
+            LastBlocker = ReadString(report, "last_blocker")
+        };
         if (result.State == "FILLED" &&
             (!Guid.TryParse(result.AttemptId, out _) || result.Side is not ("BUY" or "SELL") ||
              result.Volume is null || result.DealTicket is null))

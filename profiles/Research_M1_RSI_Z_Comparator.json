@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "profile": {
+    "name": "DEMO study proxy M1 RSI14 Z20 AND",
+    "notes": "DEMO M1 event-study proxy only; chosen from training statistics. Negative validation/test means; not validated for profitability or whole-strategy execution. M1-all-roles and MA-off approximate the study, not optimized settings. No cross-timeframe optimum mixing. Intrabar requires actual observed ticks."
+  },
+  "strategy": {
+    "symbol": "XAUUSD",
+    "allow_buy": true,
+    "allow_sell": true
+  },
+  "timeframes": {
+    "direction": "M1",
+    "pullback": "M1",
+    "trigger": "M1"
+  },
+  "direction": {
+    "ma_enabled": false,
+    "ma_type": "EMA",
+    "ma_period": 50,
+    "price_source": "CLOSE",
+    "require_close_side": true,
+    "open_filter_enabled": false,
+    "open_reference_mode": "DAILY_OPEN"
+  },
+  "pullback": {
+    "logic": "AND",
+    "rsi_enabled": true,
+    "rsi_period": 14,
+    "rsi_buy_level": 40.0,
+    "rsi_sell_level": 60.0,
+    "z_enabled": true,
+    "z_period": 20,
+    "z_buy_level": -2.0,
+    "z_sell_level": 2.0
+  },
+  "trigger": {
+    "logic": "AND",
+    "rsi_enabled": true,
+    "rsi_period": 14,
+    "rsi_reversal_delta": 3.0,
+    "z_enabled": true,
+    "z_period": 20,
+    "z_reversal_delta": 0.3,
+    "confirm_closed_bar": false
+  },
+  "filters": {
+    "adx": {
+      "enabled": false,
+      "timeframe": "M5",
+      "period": 14,
+      "min": 0.0,
+      "max": 100.0
+    },
+    "atr": {
+      "enabled": false,
+      "timeframe": "M5",
+      "period": 14,
+      "min_price_units": 0.0,
+      "max_price_units": 1000.0
+    },
+    "open": {
+      "enabled": false,
+      "reference_mode": "DAILY_OPEN",
+      "buffer_price_units": 0.0
+    }
+  },
+  "entry": {
+    "mode": "MARKET",
+    "pending_buffer_price_units": 0.1,
+    "pending_expiration_minutes": 5,
+    "cancel_on_opposite_setup": true,
+    "cancel_on_direction_change": true,
+    "max_signal_age_bars": 2
+  },
+  "risk": {
+    "sizing_mode": "FIXED_LOT",
+    "risk_percent": 0.5,
+    "fixed_lot": 0.01,
+    "max_lot": 0.01,
+    "max_daily_loss_pct": 2.0,
+    "max_trades_per_day": 8,
+    "max_open_positions": 1,
+    "cooldown_minutes": 3,
+    "max_consecutive_losses": 3,
+    "stop_after_daily_target": false,
+    "daily_target_pct": 2.0
+  },
+  "stop_loss": {
+    "mode": "STRUCTURE",
+    "fixed_price_units": 5.0,
+    "atr_timeframe": "M5",
+    "atr_period": 14,
+    "atr_multiplier": 1.5,
+    "structure_timeframe": "M5",
+    "structure_lookback": 3,
+    "structure_buffer_price_units": 0.3,
+    "min_price_units": 0.5,
+    "max_price_units": 20.0
+  },
+  "take_profit": {
+    "mode": "FIXED",
+    "fixed_price_units": 7.0,
+    "rr_ratio": 1.5,
+    "dynamic": {
+      "near_tp_distance": 0.5,
+      "extend_use_z": true,
+      "extend_use_rsi": true,
+      "extend_logic": "BOTH",
+      "exit_z_reverse_delta": 0.5,
+      "exit_rsi_reverse_delta": 4.0,
+      "lock_sl_at_original_tp": true,
+      "lock_profit_buffer": 0.0,
+      "max_extension_price_units": 10.0,
+      "max_extension_minutes": 15,
+      "emergency_server_tp_enabled": true,
+      "emergency_server_tp_price_units": 20.0
+    }
+  },
+  "management": {
+    "breakeven_enabled": false,
+    "breakeven_trigger_rr": 1.0,
+    "breakeven_offset_price_units": 0.1,
+    "partial_close_enabled": false,
+    "partial_close_at_rr": 1.0,
+    "partial_close_percent": 50.0,
+    "trailing_enabled": false,
+    "trailing_mode": "STRUCTURE",
+    "trailing_atr_multiplier": 1.0,
+    "trailing_structure_lookback": 2,
+    "trailing_step_price_units": 0.2,
+    "sl_tighten_mode": "OFF"
+  },
+  "sessions": {
+    "timezone": "BROKER",
+    "session1_enabled": true,
+    "session1_start": "07:00",
+    "session1_end": "17:00",
+    "session2_enabled": true,
+    "session2_start": "17:00",
+    "session2_end": "22:00",
+    "monday": true,
+    "tuesday": true,
+    "wednesday": true,
+    "thursday": true,
+    "friday": true,
+    "saturday": false,
+    "sunday": false,
+    "weekend_close_enabled": false,
+    "weekend_close_minutes_before": 30
+  },
+  "news": {
+    "enabled": false,
+    "minutes_before": 15,
+    "minutes_after": 15,
+    "high_impact_only": true
+  },
+  "costs": {
+    "max_spread_price_units": 0.5,
+    "max_commission_per_lot": 20.0,
+    "min_net_rr": 1.2,
+    "max_slippage_points": 30
+  },
+  "execution": {
+    "magic": 991188,
+    "order_comment": "XAUPY",
+    "max_retry_count": 0,
+    "demo_only": true,
+    "allow_real_account": false
+  },
+  "safety": {
+    "never_widen_sl": true,
+    "require_server_sl": true,
+    "block_on_stale_market_data": true
+  },
+  "logging": {
+    "csv_enabled": true,
+    "decision_trace_enabled": true
+  }
+}

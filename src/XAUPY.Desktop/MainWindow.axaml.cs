@@ -210,6 +210,7 @@ public partial class MainWindow : Window
             _ = _journalDashboard.EnsureLoadedAsync(force: true);
         }
         else if (tools) _ = _toolsDashboard.EnsureLoadedAsync(force: true);
+        else if (orders) _ = _ordersPositionsDashboard.RefreshDemoOnceAsync();
         else if (settings) _ = _settingsDashboard.EnsureLoadedAsync(force: true);
     }
 
@@ -322,6 +323,7 @@ public partial class MainWindow : Window
         _monitoringDashboard.Apply(e.Strategy, e.Overview, e.Mt5Bridge, e.Configuration);
         _ordersPositionsDashboard.Apply(e.OrdersPositions, e.Overview, e.Mt5Bridge, e.Configuration);
         _ordersPositionsDashboard.ApplyDemoOnceStatus(e.DemoOnce);
+        _settingsDashboard.ApplyDemoStatus(e.DemoOnce);
         _journalDashboard.ApplySummary(e.JournalSummary);
         _backtestDashboard.ApplyConfiguration(e.Configuration);
         _optimizerDashboard.ApplyStatus(e.OptimizerStatus);
@@ -408,10 +410,10 @@ public partial class MainWindow : Window
         FindText("OverviewDirectionState").Foreground = DirectionColor(strategy.Direction);
         FindText("OverviewPullbackState").Text = PullbackState(strategy);
         FindText("OverviewTriggerState").Text = TriggerState(strategy);
-        FindText("OverviewZTrigger").Text = FormatMetric(strategy.TriggerIndicators.Z);
-        FindText("OverviewRsiTrigger").Text = FormatMetric(strategy.TriggerIndicators.Rsi);
-        FindText("OverviewZPullback").Text = FormatMetric(strategy.PullbackIndicators.Z);
-        FindText("OverviewRsiPullback").Text = FormatMetric(strategy.PullbackIndicators.Rsi);
+        FindText("OverviewZTrigger").Text = FormatMetric(strategy.LiveTrigger.Z);
+        FindText("OverviewRsiTrigger").Text = FormatMetric(strategy.LiveTrigger.Rsi);
+        FindText("OverviewZPullback").Text = FormatMetric(strategy.LivePullback.Z);
+        FindText("OverviewRsiPullback").Text = FormatMetric(strategy.LivePullback.Rsi);
         FindText("OverviewMaValue").Text = FormatPrice(strategy.DirectionIndicators.Ma);
     }
 

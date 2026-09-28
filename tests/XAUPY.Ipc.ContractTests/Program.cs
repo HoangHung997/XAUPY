@@ -1072,4 +1072,31 @@ using (var demoSupervisor = new EngineProcessSupervisor())
         "IPC handshake does not mark prior demo report fresh before a new heartbeat");
 }
 
+var liveStrategyPayload = JsonSerializer.SerializeToElement(new {
+    strategy = new { available = true, ready = true, state = "ARMED_SELL",
+        indicators = new { trigger = new { rsi = 62.0, z = 2.7 } },
+        display = new { available = true, tick_time_msc = 1790000000123L, observed_ticks = 10,
+            indicators = new { trigger = new { rsi = 58.0, z = 2.2 }, pullback = new { rsi = 59.0, z = 2.3 } } } }
+});
+var liveStrategy = StrategySnapshot.FromHeartbeatPayload(liveStrategyPayload);
+Check(liveStrategy.LiveTrigger is { Rsi: 58.0, Z: 2.2 } && liveStrategy.TriggerIndicators is { Rsi: 62.0, Z: 2.7 },
+    "tick gauges and closed decision evidence remain separate");
+Check(liveStrategy.State == "ARMED_SELL" && liveStrategy.DisplayObservedTicks == 10 && liveStrategy.DisplayTickTimeMsc == 1790000000123L,
+    "tick display carries observation evidence without inventing strategy confirmation");
+var offlineTickPayload = JsonSerializer.SerializeToElement(new { strategy = new { available = false,
+    display = new { available = false, indicators = new { trigger = new { rsi = 58.0, z = 2.2 } } } } });
+Check(StrategySnapshot.FromHeartbeatPayload(offlineTickPayload).LiveTrigger is { Rsi: null, Z: null },
+    "disconnected tick gauges never reuse stale or decision values");
+var chartPrevious = OverviewSnapshot.Empty with { Available = true, Symbol = "XAUUSD", AccountTradeMode = "DEMO",
+    BarHistory = new Dictionary<string, IReadOnlyList<MarketBar>> { ["M1"] = new[] { new MarketBar(60, 10, 12, 9, 11, 5) } } };
+var fastMarketPayload = JsonSerializer.SerializeToElement(new { overview = new { available = true, symbol = "XAUUSD", account_trade_mode = "DEMO", bid = 12.0,
+    forming_bars = new { M1 = new { time = 120, open = 11.0, high = 12.0, low = 11.0, close = 12.0, tick_volume = 2 } } } });
+var fastOverview = OverviewSnapshot.FromMarketUpdate(fastMarketPayload, chartPrevious);
+Check(fastOverview.BarHistory["M1"].Count == 1 && fastOverview.FormingBars["M1"].Close == 12 && fastOverview.Bid == 12,
+    "light market updates preserve closed history and expose a separate live candle");
+Check(OverviewSnapshot.FromMarketUpdate(JsonSerializer.SerializeToElement(new { overview = new { available = false } }), chartPrevious).BarHistory.Count == 0,
+    "stale market updates clear history cache association");
+var demoContext = new DemoOnceContext(123, "Demo-Server", "DEMO", "XAUUSD", 991188, new string('a',64), true);
+Check(demoContext.CanArm && !(demoContext with { AccountMode = "REAL" }).CanArm,
+    "native demo start requires a capable verified demo context");
 Console.WriteLine($"XAUPY IPC contract self-test complete: {passed} checks passed.");

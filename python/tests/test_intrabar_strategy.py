@@ -242,11 +242,16 @@ class IntrabarStrategyTests(unittest.TestCase):
         self.assertIsNone(result["armed_side"])
         self.assertEqual(0, result["signal_sequence"])
 
-    def test_closed_bar_mode_ignores_tick_pipeline(self):
+    def test_closed_bar_mode_ignores_ticks_for_decisions_but_updates_display(self):
         engine = engine_for()
         engine.profile["trigger"]["confirm_closed_bar"] = True
         before = engine.status_payload(market_connected=True)
-        self.assertEqual(before, engine.ingest_tick_batch(batch(1, [(10_000, 1000)])))
+        after = engine.ingest_tick_batch(batch(1, [(10_000, 1000)]))
+        self.assertTrue(after["display"]["available"])
+        for telemetry in ("display", "intrabar"):
+            before.pop(telemetry)
+            after.pop(telemetry)
+        self.assertEqual(before, after)
 
     def test_ohlc_backtest_explicitly_rejects_intrabar_tick_claims(self):
         with self.assertRaisesRegex(BacktestError, "requires observed real ticks"):

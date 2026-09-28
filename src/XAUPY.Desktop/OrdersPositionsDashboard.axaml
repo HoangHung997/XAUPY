@@ -98,8 +98,23 @@
           </Border>
         </Grid>
 
-        <Border x:Name="DemoOnceStatusPanel" Classes="panel" IsVisible="False" Padding="10,5">
-          <TextBlock x:Name="DemoOnceStatusText" FontSize="13" TextTrimming="CharacterEllipsis"/>
+        <Border x:Name="DemoOnceStatusPanel" Classes="panel" Padding="10,6">
+          <StackPanel Spacing="4">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+              <TextBlock x:Name="DemoOnceStatusText" Text="DEMO 1 LỆNH · CHƯA BẮT ĐẦU" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+              <Button x:Name="DemoOnceStart" Grid.Column="1" Classes="primary" Content="▶  Bắt đầu chờ tín hiệu" Padding="10,4" FontSize="13" IsEnabled="False" Click="DemoOnceStart_OnClick"/>
+              <Button x:Name="DemoOnceCancel" Grid.Column="2" Classes="secondary" Content="■  Dừng chờ" Padding="10,4" FontSize="13" IsEnabled="False" Click="DemoOnceCancel_OnClick"/>
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto,80,Auto,80,Auto" ColumnSpacing="7">
+              <TextBlock x:Name="DemoOnceContextText" Text="Chờ kết nối DEMO · tối đa một lệnh" FontSize="12" Foreground="#9CBAD4" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+              <TextBlock Grid.Column="1" Text="Max lot" FontSize="12" VerticalAlignment="Center"/>
+              <NumericUpDown x:Name="DemoOnceVolume" Grid.Column="2" Minimum="0.001" Maximum="0.01" Increment="0.001" Value="0.01" FormatString="0.###" MinHeight="25" Height="25" FontSize="12" Padding="4,0"/>
+              <TextBlock Grid.Column="3" Text="Chờ (phút)" FontSize="12" VerticalAlignment="Center"/>
+              <NumericUpDown x:Name="DemoOnceMinutes" Grid.Column="4" Minimum="1" Maximum="1440" Increment="5" Value="60" FormatString="0" MinHeight="25" Height="25" FontSize="12" Padding="4,0"/>
+              <Button Grid.Column="5" Classes="secondary" Content="↻" Padding="6,1" MinHeight="25" ToolTip.Tip="Đọc trạng thái hiện tại" Click="DemoOnceRefresh_OnClick"/>
+            </Grid>
+            <TextBlock x:Name="DemoOnceMessage" Text="Chỉ gửi khi có tín hiệu mới đúng chiến lược. Dừng chờ không đóng vị thế đã khớp." FontSize="11" Foreground="#8CA8C2" TextWrapping="Wrap"/>
+          </StackPanel>
         </Border>
 
         <!-- Open positions -->

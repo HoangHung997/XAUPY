@@ -256,22 +256,25 @@ public sealed partial class EngineProcessSupervisor : IDisposable
                 _restartAttempts = 0;
                 SetState(EngineConnectionState.Ready, $"IPC v1 sẵn sàng tại 127.0.0.1:{Port}.");
 
+                var lastFullHeartbeat = DateTimeOffset.MinValue;
                 while (!cancellationToken.IsCancellationRequested &&
                        !_stopRequested &&
                        _process is { HasExited: false })
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+                    await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+                    bool fullHeartbeat = DateTimeOffset.UtcNow - lastFullHeartbeat >= TimeSpan.FromSeconds(2);
+                    string updateKind = fullHeartbeat ? "heartbeat" : "market_update";
 
                     var heartbeat = ProtocolEnvelope.Create(
-                        "heartbeat",
-                        new { component = "desktop", desktop_version = "0.17.0-demo1" });
+                        updateKind,
+                        new { component = "desktop", desktop_version = "0.17.1-tickui" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
                         TimeSpan.FromSeconds(3),
                         cancellationToken);
 
-                    if (response.Type != "heartbeat_ack")
+                    if (response.Type != updateKind + "_ack")
                         throw new InvalidDataException($"Unexpected heartbeat response: {response.Type}");
 
                     if (!string.Equals(response.RequestId, heartbeat.RequestId, StringComparison.Ordinal))
@@ -279,10 +282,14 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
                     RejectUnexpectedExecutionEnable(response);
                     Mt5Bridge = ParseBridgeStatus(response.Payload);
-                    Overview = OverviewSnapshot.FromHeartbeatPayload(response.Payload);
+                    Overview = OverviewSnapshot.FromMarketUpdate(response.Payload, Overview);
                     OrdersPositions = OrdersPositionsSnapshot.FromHeartbeatPayload(response.Payload);
-                    JournalSummary = JournalSummarySnapshot.FromHeartbeatPayload(response.Payload);
-                    OptimizerStatus = OptimizerStatusSnapshot.FromHeartbeatPayload(response.Payload);
+                    if (fullHeartbeat)
+                    {
+                        JournalSummary = JournalSummarySnapshot.FromHeartbeatPayload(response.Payload);
+                        OptimizerStatus = OptimizerStatusSnapshot.FromHeartbeatPayload(response.Payload);
+                        lastFullHeartbeat = DateTimeOffset.UtcNow;
+                    }
                     Strategy = StrategySnapshot.FromHeartbeatPayload(response.Payload);
                     RejectUnexpectedStrategyExecutionEnable(Strategy);
                     RejectUnexpectedOrdersExecutionEnable(OrdersPositions);
@@ -342,7 +349,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "0.17.0-demo1" });
+            new { component = "desktop", desktop_version = "0.17.1-tickui" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -360,7 +367,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
         var configRequest = ProtocolEnvelope.Create(
             "config_active_get",
-            new { component = "desktop", desktop_version = "0.17.0-demo1" });
+            new { component = "desktop", desktop_version = "0.17.1-tickui" });
 
         var configResponse = await SendReceiveAsync(
             configRequest,

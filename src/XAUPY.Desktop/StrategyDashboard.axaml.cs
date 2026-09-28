@@ -167,10 +167,10 @@ public partial class StrategyDashboard : UserControl
         Text("AtrConditionText").Text = Format(strategy.Filters.Atr);
         Text("AllConditionText").Text = strategy.Available && strategy.Ready &&
             strategy.State.StartsWith("TRIGGERED_", StringComparison.Ordinal) ? "ĐẠT" : "ĐANG CHỜ";
-        Text("PullbackRsiMirror").Text = Format(strategy.PullbackIndicators.Rsi);
-        Text("TriggerRsiMirror").Text = Format(strategy.TriggerIndicators.Rsi);
-        Text("PullbackZFilterMirror").Text = Format(strategy.PullbackIndicators.Z);
-        Text("TriggerZFilterMirror").Text = Format(strategy.TriggerIndicators.Z);
+        Text("PullbackRsiMirror").Text = Format(strategy.LivePullback.Rsi);
+        Text("TriggerRsiMirror").Text = Format(strategy.LiveTrigger.Rsi);
+        Text("PullbackZFilterMirror").Text = Format(strategy.LivePullback.Z);
+        Text("TriggerZFilterMirror").Text = Format(strategy.LiveTrigger.Z);
         Text("PullbackConditionMirror").Text = PullbackEvidence(strategy);
         Text("TriggerConditionMirror").Text = Flag(strategy.TriggerPassed);
         Text("ArmedSideText").Text = $"Armed: {strategy.ArmedSide ?? "—"}";
@@ -181,12 +181,12 @@ public partial class StrategyDashboard : UserControl
         Text("DirectionRuleText").Text = $"{config.DirectionMaType}{config.DirectionMaPeriod}";
         Text("DirectionMaText").Text = $"MA: {Format(strategy.DirectionIndicators.Ma)}";
         Text("DirectionOpenText").Text = $"Open ref: {Format(strategy.DirectionIndicators.OpenReference)}";
-        Text("PullbackRsiText").Text = $"RSI: {Format(strategy.PullbackIndicators.Rsi)}";
-        Text("PullbackZText").Text = $"Z: {Format(strategy.PullbackIndicators.Z)}";
+        Text("PullbackRsiText").Text = $"RSI: {Format(strategy.LivePullback.Rsi)}";
+        Text("PullbackZText").Text = $"Z: {Format(strategy.LivePullback.Z)}";
         Text("PullbackConditionText").Text =
             $"BUY {Flag(strategy.PullbackBuyPassed)} • SELL {Flag(strategy.PullbackSellPassed)}";
-        Text("TriggerRsiText").Text = $"RSI: {Format(strategy.TriggerIndicators.Rsi)}";
-        Text("TriggerZText").Text = $"Z: {Format(strategy.TriggerIndicators.Z)}";
+        Text("TriggerRsiText").Text = $"RSI: {Format(strategy.LiveTrigger.Rsi)}";
+        Text("TriggerZText").Text = $"Z: {Format(strategy.LiveTrigger.Z)}";
         Text("TriggerConditionText").Text = $"Reversal: {Flag(strategy.TriggerPassed)}";
 
         Text("AdxText").Text = Format(strategy.Filters.Adx);

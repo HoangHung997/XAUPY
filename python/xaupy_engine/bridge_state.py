@@ -179,7 +179,7 @@ class BridgeRegistry:
         self._last_snapshot_monotonic = now
         self._snapshots_total += 1
 
-    def overview_payload(self) -> dict[str, Any]:
+    def overview_payload(self, *, include_history: bool = True) -> dict[str, Any]:
         status = self.status()
         snapshot = self._latest_snapshot or {}
 
@@ -210,7 +210,7 @@ class BridgeRegistry:
         if not isinstance(bars, dict):
             bars = {}
 
-        return {
+        result = {
             "available": True,
             "snapshot_received_utc": self._latest_snapshot_received_utc,
             "symbol": snapshot.get("symbol"),
@@ -229,8 +229,10 @@ class BridgeRegistry:
             "positions_count": snapshot.get("positions_count", len(snapshot.get("positions", []))),
             "orders_count": snapshot.get("orders_count", len(snapshot.get("orders", []))),
             "bars": deepcopy(bars),
-            "bar_history": deepcopy(self._bar_history),
         }
+        if include_history:
+            result["bar_history"] = deepcopy(self._bar_history)
+        return result
 
     def orders_positions_payload(self) -> dict[str, Any]:
         status = self.status()

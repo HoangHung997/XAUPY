@@ -1,12 +1,12 @@
 #property strict
-#property version   "1.017"
+#property version   "1.018"
 #property description "XAUPY data bridge. General execution locked; separate bounded DEMO one-shot capability."
 
 input string InpHost               = "127.0.0.1";
 input uint   InpPort               = 39421;
 input uint   InpConnectTimeoutMs   = 1500;
 input uint   InpSocketTimeoutMs    = 1500;
-input uint   InpTimerMs            = 1000;
+input uint   InpTimerMs            = 250;
 input long   InpMagic              = 991188;
 input double InpMaxVolume          = 0.10;
 input double InpMaxDailyLossPct    = 2.00;
@@ -593,7 +593,7 @@ string JsonBarsWithHistory(string &history_json)
 string BuildHelloPayload()
 {
    string json = "{";
-   json += JsonKey("bridge_version") + JsonString("1.017") + ",";
+   json += JsonKey("bridge_version") + JsonString("1.018") + ",";
    json += JsonKey("component") + JsonString("mt5-bridge") + ",";
    json += JsonKey("symbol") + JsonString(_Symbol) + ",";
    json += JsonKey("magic") + StringFormat("%I64d", InpMagic) + ",";
@@ -621,7 +621,7 @@ string BuildSnapshotPayload(bool include_history=false)
    string history_json = "";
    string latest_bars = include_history ? JsonBarsWithHistory(history_json) : JsonBars();
    string json = "{";
-   json += JsonKey("bridge_version") + JsonString("1.017") + ",";
+   json += JsonKey("bridge_version") + JsonString("1.018") + ",";
    json += JsonKey("symbol") + JsonString(_Symbol) + ",";
    json += JsonKey("magic") + StringFormat("%I64d", InpMagic) + ",";
    json += JsonKey("terminal_connected") + JsonBool((bool)TerminalInfoInteger(TERMINAL_CONNECTED)) + ",";

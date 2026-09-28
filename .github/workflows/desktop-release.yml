@@ -56,7 +56,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $setup = (Resolve-Path 'dist/XAUPY-0.17.0-demo1-Setup.exe').Path
+          $setup = (Resolve-Path 'dist/XAUPY-0.17.1-tickui-Setup.exe').Path
           $installRoot = Join-Path $env:RUNNER_TEMP 'XAUPY-installer-acceptance'
           $process = Start-Process -FilePath $setup -WindowStyle Hidden -Wait -PassThru -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', ('/DIR="' + $installRoot + '"'))
           if ($process.ExitCode -ne 0) { throw "Installer exited with $($process.ExitCode)" }
@@ -72,10 +72,10 @@ jobs:
       - name: Upload verified build
         uses: actions/upload-artifact@v4
         with:
-          name: XAUPY-0.17.0-demo1-win-x64
+          name: XAUPY-0.17.1-tickui-win-x64
           path: |
-            dist/XAUPY-0.17.0-demo1-win-x64.zip
-            dist/XAUPY-0.17.0-demo1-Setup.exe
+            dist/XAUPY-0.17.1-tickui-win-x64.zip
+            dist/XAUPY-0.17.1-tickui-Setup.exe
             dist/SHA256SUMS.txt
             dist/XAUPY-win-x64/build-manifest.json
           if-no-files-found: error

@@ -18,6 +18,8 @@ public partial class SettingsDashboard : UserControl
     private bool _loaded;
     public SettingsDashboard() => InitializeComponent();
     public void AttachSupervisor(EngineProcessSupervisor supervisor) => _supervisor = supervisor;
+    public void ApplyDemoStatus(DemoOnceSnapshot status) => ExecutionModeSummary.Text =
+        status.HasReport ? DemoOncePresentation.Summary(status) : "Chưa bắt đầu";
     public async Task EnsureLoadedAsync(bool force = false)
     {
         if (_busy || (_loaded && !force) || _supervisor?.State != EngineConnectionState.Ready) return;
@@ -26,7 +28,7 @@ public partial class SettingsDashboard : UserControl
             var result = await _supervisor.GetSettingsAsync(); EnsureOk(result); Apply(result);
             await ProbeAsync();
             _loaded = true;
-            Status("Đã tải cài đặt đã lưu. Guardian đang khóa execution.", true);
+            Status("Đã tải cài đặt. Điều khiển lần chờ lệnh tại tab Lệnh & Vị thế.", true);
         });
     }
     private void Apply(JsonElement payload)

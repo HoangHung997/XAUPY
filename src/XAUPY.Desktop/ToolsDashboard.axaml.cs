@@ -30,7 +30,8 @@ public partial class ToolsDashboard : UserControl
     public bool HasUnsavedChanges => _loaded && !ToolEditor.IsReadOnly && (ToolEditor.Text ?? "") != _loadedText;
     public Func<bool>? HasConflictingDraft { get; set; }
     private readonly List<string> _history = new();
-    private static readonly JsonSerializerOptions Pretty = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions Pretty = new() { WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All) };
     private static readonly FilePickerFileType JsonType = new("JSON") { Patterns = new[] { "*.json" } };
 
     public ToolsDashboard()
@@ -150,7 +151,6 @@ public partial class ToolsDashboard : UserControl
         LibraryInputs.IsVisible = mode == "profile";
         CompareInputs.IsVisible = mode == "compare";
         ApplyToolButton.IsEnabled = mode is "editor" or "profile" or "news";
-        ToolSubtitle.Text = mode is "editor" or "profile" ? "Chỉnh sửa cấu hình chuẩn; kiểm tra cú pháp và áp dụng nhanh." : "Kiểm tra dữ liệu thực, lưu báo cáo và đối chiếu trạng thái hệ thống.";
         SelectedToolDescription.Text = mode switch
         {
             "compare" => "Đối chiếu cấu hình đang dùng với mặc định hoặc hai file đã chọn.",
@@ -164,6 +164,7 @@ public partial class ToolsDashboard : UserControl
             "export" => "Chuyển dữ liệu phân tích bằng ZIP và tải lịch sử nến, tick từ MT5.",
             _ => "Chỉnh sửa và kiểm tra cấu hình trước khi áp dụng."
         };
+        ToolSubtitle.Text = SelectedToolDescription.Text;
         SelectedToolCapabilities.Text = mode switch
         {
             "export" => "✓ Xuất / nhập ZIP có kiểm tra toàn vẹn\n✓ Tải nến của 9 khung\n✓ Tải tick Bid/Ask theo ngày\n✓ Xem tiến độ và hủy tác vụ\n✓ Giữ cấu hình hiện tại khi nhập",

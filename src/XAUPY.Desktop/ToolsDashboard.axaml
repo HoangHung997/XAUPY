@@ -44,7 +44,12 @@
           <Grid x:Name="EditorSearchBar" Grid.Row="1" IsVisible="False" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6" Margin="0,4,0,8"><TextBox x:Name="EditorSearchText" PlaceholderText="{DynamicResource Text_69b101d30d89cd8f}" KeyDown="Search_OnKeyDown"/><TextBlock x:Name="EditorSearchStatus" Grid.Column="1" VerticalAlignment="Center"/><Button Grid.Column="2" Classes="secondary toolAction" Content="{DynamicResource Text_26ee6e2d24b01ecc}" Click="FindNext_OnClick"/><Button Grid.Column="3" Classes="secondary toolAction" Content="✕" Click="CloseSearch_OnClick"/></Grid>
           <StackPanel Grid.Row="2" x:Name="RiskInputs" IsVisible="False" Spacing="6" Margin="0,5">
             <TextBlock Text="{DynamicResource Text_329cb4fcbd0bcd8f}" Classes="dim" TextWrapping="Wrap"/>
-            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="6"><TextBox x:Name="RiskBudget" Text="100" PlaceholderText="Risk USD"/><TextBox Grid.Column="1" x:Name="RiskDistance" Text="5" PlaceholderText="{DynamicResource Text_26830835c5d92a6e}"/><TextBox Grid.Column="2" x:Name="RiskTickSize" Text="0.01" PlaceholderText="Tick size"/><TextBox Grid.Column="3" x:Name="RiskTickValue" Text="1" PlaceholderText="Tick value/lot"/></Grid>
+            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="6">
+              <StackPanel Spacing="4"><TextBlock Text="{DynamicResource Text_6bd9d4d0b38a9917}" TextWrapping="Wrap"/><TextBox x:Name="RiskBudget" Text="100"/></StackPanel>
+              <StackPanel Grid.Column="1" Spacing="4"><TextBlock Text="{DynamicResource Text_85ec04a658f9b473}" TextWrapping="Wrap"/><TextBox x:Name="RiskDistance" Text="5"/></StackPanel>
+              <StackPanel Grid.Column="2" Spacing="4"><TextBlock Text="{DynamicResource Text_a4105d5efec7fa9f}" TextWrapping="Wrap"/><TextBox x:Name="RiskTickSize" Text="0.01"/></StackPanel>
+              <StackPanel Grid.Column="3" Spacing="4"><TextBlock Text="{DynamicResource Text_9ad4a5ce02bca72c}" TextWrapping="Wrap"/><TextBox x:Name="RiskTickValue" Text="1"/></StackPanel>
+            </Grid>
             <Button Classes="primary" Content="{DynamicResource Text_ba189c6d55f2bcbb}" Click="CalculateRisk_OnClick"/>
           </StackPanel>
           <WrapPanel Grid.Row="2" x:Name="LibraryInputs" IsVisible="False" Orientation="Horizontal" Margin="0,5">

@@ -2794,5 +2794,21 @@
   "e46b4243f8030f7a": {
     "vi": "Thời gian MT5",
     "en": "MT5 time"
+  },
+  "6bd9d4d0b38a9917": {
+    "vi": "Ngân sách (tiền tài khoản)",
+    "en": "Budget (account currency)"
+  },
+  "85ec04a658f9b473": {
+    "vi": "Khoảng SL (đơn vị giá)",
+    "en": "Stop distance (price units)"
+  },
+  "a4105d5efec7fa9f": {
+    "vi": "Bước giá (tick size)",
+    "en": "Price increment (tick size)"
+  },
+  "9ad4a5ce02bca72c": {
+    "vi": "Giá trị tick / lot (tiền TK)",
+    "en": "Tick value / lot (account currency)"
   }
 }

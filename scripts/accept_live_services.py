@@ -45,7 +45,9 @@ def main():
     last=samples[-1]; monitoring=last['monitoring']; broker=diagnostics['broker_metadata']
     indicators=diagnostics['indicator_comparison']['rows']
     expected=dict(account_login=args.login,account_server=args.server,magic=args.magic,symbol=args.symbol)
-    ticks=[s['overview'].get('tick_time_msc',0) for s in samples]
+    # A disconnect/re-attach can legitimately expose a null quote. Record a
+    # failed check and preserve evidence instead of crashing the acceptance.
+    ticks=[s['overview'].get('tick_time_msc') or 0 for s in samples]
     history_data=history.get('history',{})
     checks={
         'expected_demo_identity':all(broker.get(k)==v for k,v in expected.items()) and broker.get('account_trade_mode')=='DEMO',

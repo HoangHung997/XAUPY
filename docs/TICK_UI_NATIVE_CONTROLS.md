@@ -55,4 +55,44 @@ RSI(14)+Z(20) AND comparator is not silently mixed into the chosen profile.
 Raw ranking evidence remains local in artifacts/research-demo-comparison/.
 See RSI_Z_CALIBRATION_20260928.md for data sizes, splits and limitations.
 
-Build/native deployment evidence will be appended after validation.
+## Native checkpoint — 2026-09-28 09:32 ICT
+
+- Clean source `4a51b28b0e7dec5c44ea9a07f0a81f8637ef503f` passed 386 Python
+  tests, 148 IPC contract checks and 84 desktop interaction assertions. All
+  packaged smoke checks passed; MetaEditor reported zero errors and warnings.
+  [CI run 36369800086](https://github.com/HoangHung997/XAUPY/actions/runs/36369800086)
+  independently passed for the same source.
+- The local package was copied to `dist/XAUPY-verified-tickui-final-win-x64` and
+  every file was verified against its manifest before launch. EA 1.018 is
+  attached to the existing Bridge chart with the 250 ms input confirmed; its
+  native JSON self-test passed 23 cases. Other EAs were not changed.
+- Native review caught a clipped duration/lot input in the first build. Hiding
+  its spinner buttons makes both values readable. Strategy summaries now
+  correctly say MA is disabled for this preset. These are presentation fixes;
+  they do not alter the strategy or entry guards.
+- `Research_M1_RSI7_Demo.json` was applied through the native Strategy import
+  and confirmation dialog. It survived the app restart. The active profile hash
+  is `3f832ad47c84b8d66118ce89de75d119de754b98546182a1d436f4b3ca4d3386`.
+- At 09:31:41 ICT the native Orders Start button and its confirmation authorized
+  one DEMO entry, at most 0.01 lot, for 1,440 minutes. The app shows CHỜ TÍN HIỆU
+  and enables Stop; IPC independently reports ARMED with budget unconsumed.
+  Earlier strategy signals were excluded by the authorization baseline. No
+  broker fill has been observed at this checkpoint. Sessions start at 07:00
+  broker time, approximately 11:00 ICT with the observed offset.
+- Twenty read-only live samples of the unchanged tick-processing implementation
+  over 4.28 seconds showed 15 distinct tick times/quotes, changing RSI and Z,
+  and an M1 forming-candle count rising from 332 to 362 observed ticks. All 21
+  checks passed. The active mode was intrabar: enabled RSI decision values
+  correctly changed with ticks; disabled Z stayed null in decision evidence
+  while its display value changed. Closed-bar separation is covered by isolated
+  tests, not claimed as a live test on this intrabar profile.
+- The existing five-minute task observer was updated for this native attempt.
+  It only reads the running app/EA evidence, never generates signals, rearms,
+  changes settings or sends orders. It stops after a verified fill or an
+  actionable failure. The application itself continuously processes ticks.
+
+Local evidence: `artifacts/tickui-build-final.log`,
+`artifacts/tickui-live-samples.json`, `artifacts/tickui-native-arm-status.json`
+and `artifacts/tickui-native-final/`. Account identifiers and raw observations
+remain local. Strict 100% visual parity and general user-controlled REAL
+execution remain unfulfilled; this checkpoint does not certify either.

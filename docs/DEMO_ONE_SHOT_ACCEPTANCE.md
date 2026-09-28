@@ -125,3 +125,13 @@ does not claim full live execution acceptance or 100% reference-image parity.
 References: [MetaQuotes OrderSend](https://www.mql5.com/en/docs/trading/ordersend),
 [OrderCheck](https://www.mql5.com/en/docs/trading/ordercheck),
 [atomic terminal global-variable claim](https://www.mql5.com/en/docs/globals/globalvariablesetoncondition).
+
+## Superseding native checkpoint — 2026-09-28 09:32 ICT
+
+The 08:39 allowance was cancelled unused before the tick-display upgrade.
+The newer source `4a51b28` and EA 1.018 run a research DEMO profile, applied
+through the Strategy page. The Orders page itself authorized the new one-entry
+allowance at 09:31:41 ICT, capped at 0.01 lot for 24 hours. It remains ARMED,
+unconsumed, with no broker fill at this checkpoint. See
+[Tick UI and native controls](TICK_UI_NATIVE_CONTROLS.md) for the build, live
+tick evidence, profile limitations and read-only follow-up behavior.

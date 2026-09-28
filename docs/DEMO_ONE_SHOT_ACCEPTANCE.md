@@ -91,8 +91,36 @@ The observer itself has no MT5 order API.
   be recorded separately below. Automated tests are not evidence of a live DEMO
   fill.
 
-Initial implementation checkpoint: live authorization and live order receipt
-are pending. Account identifiers and raw broker evidence remain local.
+## Native checkpoint — 2026-09-28 08:42 ICT
+
+- Source `89aea083c677a07621b04d7fa39af3c63dc29be5` was built locally with a clean
+  working tree: 373 Python tests, 142 IPC contract checks and 84 desktop
+  interaction assertions passed. All packaged smoke checks passed, including
+  the 16-check isolated one-shot flow. MetaEditor reported zero errors/warnings.
+- The packaged EA 1.017 and both helpers were deployed to the existing XAUUSD
+  M30 Bridge chart. Its native OnInit JSON self-test passed all 23 cases. The
+  unrelated M5 EA remains in its previous user-paused state.
+- Desktop and Engine run from `dist/XAUPY-verified-demo1-win-x64`. The live
+  Bridge reports DEMO, fresh quotes, complete broker-risk history, valid trading
+  permissions and no XAUUSD position or pending order at authorization time.
+- The user-requested one-shot allowance was armed at 08:39:20 ICT with a
+  0.01-lot cap and a 24-hour expiry. The exact existing profile hash remains
+  `04d944ec567a78ec2b368a00cb9dc271172cf4a73ec42fc28fa2e1d693a9ffe9`.
+  Its baseline uses closed-bar RSI with Z disabled; this entry-path acceptance
+  does not silently activate the separately implemented intrabar feature.
+- At this checkpoint the allowance is **ARMED, not consumed**. Strategy state
+  is `WAIT_PULLBACK_SELL`; no command or broker order has been sent. Trading
+  sessions begin at 07:00 broker time, approximately 11:00 ICT with the observed
+  broker offset. A read-only task heartbeat checks every five minutes while EA
+  and Engine process market data continuously. It reports a verified fill or
+  an actionable failure and never rearms or retries.
+- Native Orders UI displays `DEMO 1 LỆNH · CHỜ TÍN HIỆU` and zero positions/
+  pending orders. Manual controls still explicitly state simulation mode.
+
+Local evidence is in `artifacts/demo1-build.log`, `demo1-live-arm.json`,
+`demo1-live-watch.json` and `demo1-live-current.json`. Account identifiers and
+raw broker evidence remain local. A broker fill remains pending; this checkpoint
+does not claim full live execution acceptance or 100% reference-image parity.
 
 References: [MetaQuotes OrderSend](https://www.mql5.com/en/docs/trading/ordersend),
 [OrderCheck](https://www.mql5.com/en/docs/trading/ordercheck),

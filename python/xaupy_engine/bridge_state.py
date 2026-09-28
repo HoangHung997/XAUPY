@@ -121,7 +121,7 @@ class BridgeRegistry:
         except StrategyDataError as exc:
             raise BridgeSnapshotError(str(exc)) from exc
 
-        for collection_name in ("positions", "orders", "deals"):
+        for collection_name in ("positions", "orders", "deals", "all_positions", "all_deals"):
             collection = payload.get(collection_name, [])
             if not isinstance(collection, list):
                 raise BridgeSnapshotError(f"{collection_name} must be an array")
@@ -132,11 +132,13 @@ class BridgeRegistry:
                     )
 
         snapshot_magic = payload.get("magic")
+        if any(name in payload for name in ("all_positions", "all_deals")) and (isinstance(snapshot_magic, bool) or not isinstance(snapshot_magic, int)):
+            raise BridgeSnapshotError("all-symbol collections require a valid bridge magic")
         if isinstance(snapshot_magic, int):
-            for collection_name in ("positions", "orders", "deals"):
+            for collection_name in ("positions", "orders", "deals", "all_positions", "all_deals"):
                 for index, item in enumerate(payload.get(collection_name, [])):
                     item_magic = item.get("magic")
-                    if item_magic is not None and item_magic != snapshot_magic:
+                    if (collection_name.startswith("all_") or item_magic is not None) and item_magic != snapshot_magic:
                         raise BridgeSnapshotError(
                             f"{collection_name}[{index}] magic does not match bridge magic"
                         )
@@ -343,9 +345,9 @@ class BridgeRegistry:
             "risk_complete": risk_complete,
             "positions_count": len(positions),
             "orders_count": len(orders),
-            "positions": positions,
+            "positions": deepcopy(snapshot.get("all_positions", positions)),
             "orders": orders,
-            "deals": deals,
+            "deals": deepcopy(snapshot.get("all_deals", deals)),
             "volume_min": snapshot.get("volume_min"),
             "volume_max": snapshot.get("volume_max"),
             "volume_step": snapshot.get("volume_step"),

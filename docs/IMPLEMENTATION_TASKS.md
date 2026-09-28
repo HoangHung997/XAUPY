@@ -1014,3 +1014,32 @@ No automatic retries or rearming occur after consumption or uncertain results.
 See [one-shot acceptance](DEMO_ONE_SHOT_ACCEPTANCE.md) for the exact authorization,
 guards, IPC/result contract, crash behavior, test scope and live acceptance.
 Task 016's outstanding strict visual parity requirement is unchanged.
+
+## Feature-by-feature audit — 2026-09-28
+
+The [functional audit](FEATURE_FUNCTION_AUDIT_20260928.md) supersedes any
+interpretation that a completed scoped task means every visible product feature
+is implemented. It records 172 capabilities across all ten tabs and shared charts,
+all 133 canonical configuration fields, and an inventory of 259 static controls.
+Current classification: 83 implemented within their stated scope, 40 partial,
+17 simulation-only, 24 absent, seven defects and one OS acceptance item.
+
+The existing 386 Python, 148 IPC and 84 desktop checks pass, but additional
+isolated probes reproduce missing behavior, shared-loop blocking during
+backtests and ignored profile cost guards in replay. This audit changes documentation only; its remediation list remains
+open. A broker-confirmed DEMO entry and subsequent server-SL exit were verified
+read-only during the audit; general execution, real-account trading and broker
+position-management features remain incomplete. Strict 100% UI parity is still
+not certified.
+
+## Defect remediation — 2026-09-28
+
+[Remediation results](REMEDIATION_20260928.md) record fixes for all seven entries
+classified as defects in the audit, plus cancellation, optimizer ranges and
+snapshot export. Version 0.17.2-remediation / Bridge 1.019 is deployed locally;
+394 Python, 148 IPC and 100 desktop checks passed. The original audit counts
+above describe the pre-remediation baseline, not the updated defect count.
+General/REAL execution, broker position management and the other absent or
+partial capabilities remain open. [Parameter research](PARAMETER_RESEARCH_20260928.md)
+used all 100,062 archived M1 bars; none of the 16 candidates passed the
+profitability screens. The active trading configuration was not replaced.

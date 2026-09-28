@@ -94,12 +94,12 @@ foreach ($required in $requiredFiles) {
     if (-not (Test-Path -LiteralPath (Join-Path $releaseRoot $required) -PathType Leaf)) { throw "Release file missing: $required" }
 }
 if (@(Get-ChildItem -LiteralPath "$releaseRoot/docs/ui-reference" -Filter '*.png' -File).Count -ne 10) { throw 'Release requires all ten approved UI reference images.' }
-$manifest = [ordered]@{version='0.17.1-tickui'; commit=$revision; working_tree_modified=$isDirty; built_at_utc=[DateTime]::UtcNow.ToString('o'); broker_execution_locked=$true; general_execution_locked=$true; real_account_execution_locked=$true; demo_one_shot_capable=$true; demo_one_shot_requires_explicit_arm=$true; tests_executed=(-not [bool]$SkipTests); files=@()}
+$manifest = [ordered]@{version='0.17.2-remediation'; commit=$revision; working_tree_modified=$isDirty; built_at_utc=[DateTime]::UtcNow.ToString('o'); broker_execution_locked=$true; general_execution_locked=$true; real_account_execution_locked=$true; demo_one_shot_capable=$true; demo_one_shot_requires_explicit_arm=$true; tests_executed=(-not [bool]$SkipTests); files=@()}
 $manifest.files = @(Get-ChildItem -LiteralPath $releaseRoot -Recurse -File | Where-Object Name -ne 'build-manifest.json' | ForEach-Object {
     @{path=[IO.Path]::GetRelativePath($releaseRoot,$_.FullName).Replace('\','/');bytes=$_.Length;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()}
 })
 $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath "$releaseRoot/build-manifest.json" -Encoding utf8
-$zipPath = Join-Path $distRoot 'XAUPY-0.17.1-tickui-win-x64.zip'
+$zipPath = Join-Path $distRoot 'XAUPY-0.17.2-remediation-win-x64.zip'
 Compress-Archive -Path "$releaseRoot/*" -DestinationPath $zipPath -Force
 $archive = [IO.Compression.ZipFile]::OpenRead($zipPath)
 try {
@@ -116,7 +116,7 @@ try {
 } finally { $archive.Dispose() }
 $artifactPaths = @($zipPath)
 if ($Iscc) {
-    $installerPath = Join-Path $distRoot 'XAUPY-0.17.1-tickui-Setup.exe'
+    $installerPath = Join-Path $distRoot 'XAUPY-0.17.2-remediation-Setup.exe'
     if (Test-Path -LiteralPath $installerPath) { Remove-Item -LiteralPath $installerPath -Force }
     Invoke-Checked $Iscc @('installer/XAUPY.iss')
     if (-not (Test-Path -LiteralPath $installerPath -PathType Leaf)) { throw 'Inno Setup returned without the required installer.' }

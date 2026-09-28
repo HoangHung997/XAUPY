@@ -332,10 +332,12 @@ public partial class OptimizerDashboard : UserControl
             }
             else
             {
-                _slPath = null;
-                Text("SlParameterLabel").Text = $"SL {slMode} (Task 011 chưa hỗ trợ)";
-                Text("SlDefaultText").Text = "—";
-                SetRowEnabled(false, "SlMinBox", "SlMaxBox", "SlStepBox");
+                _slPath = "stop_loss.atr_multiplier";
+                Text("SlParameterLabel").Text = "SL ATR ×";
+                double value = GetDouble(profile, "stop_loss", "atr_multiplier") ?? 1.5;
+                SetNumericRange("SlMinBox", "SlMaxBox", "SlStepBox", value, value, .25);
+                Text("SlDefaultText").Text = Format(value);
+                SetRowEnabled(true, "SlMinBox", "SlMaxBox", "SlStepBox");
             }
 
             string tpMode = GetString(profile, "take_profit", "mode") ?? "FIXED";
@@ -363,16 +365,19 @@ public partial class OptimizerDashboard : UserControl
             }
             else
             {
-                _tpPath = null;
-                Text("TpParameterLabel").Text = $"TP {tpMode} (Task 011 chưa hỗ trợ)";
-                Text("TpDefaultText").Text = "—";
-                SetRowEnabled(false, "TpMinBox", "TpMaxBox", "TpStepBox");
+                _tpPath = "take_profit.fixed_price_units";
+                Text("TpParameterLabel").Text = "TP động: mục tiêu gốc";
+                double value = GetDouble(profile, "take_profit", "fixed_price_units") ?? 7;
+                SetNumericRange("TpMinBox", "TpMaxBox", "TpStepBox", value, value, 1);
+                Text("TpDefaultText").Text = Format(value);
+                SetRowEnabled(true, "TpMinBox", "TpMaxBox", "TpStepBox");
             }
 
             Box("WorkersBox").Text = Math.Max(
                 1,
                 Math.Min(4, Environment.ProcessorCount)).ToString(CultureInfo.InvariantCulture);
 
+            InitializeExtraRanges(profile);
             UpdateCombinationPreview();
         }
         finally
@@ -1091,6 +1096,11 @@ public partial class OptimizerDashboard : UserControl
 
                 if (!TryPresetRange(item, out var min, out var max, out var step))
                     continue;
+                if (_extraRanges.TryGetValue(path, out var extra))
+                {
+                    extra.Min.Text = Format(min); extra.Max.Text = Format(max); extra.Step.Text = Format(step);
+                    continue;
+                }
 
                 switch (path)
                 {
@@ -1207,6 +1217,7 @@ public partial class OptimizerDashboard : UserControl
 
         if (ranges.Count == 0)
             throw new InvalidDataException("Không có tham số nào khả dụng để tối ưu.");
+        ranges.AddRange(ExtraParameterRanges());
         return ranges;
     }
 

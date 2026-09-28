@@ -44,7 +44,7 @@ class Task011BacktestUiSourceTests(unittest.TestCase):
             "Từ ngày",
             "Đến ngày",
             "Model",
-            "Spread (pip)",
+            "Spread (point)",
             "Hoa hồng (USD/lot)",
             "Chạy Backtest",
         ):
@@ -99,7 +99,9 @@ class Task011BacktestUiSourceTests(unittest.TestCase):
 
         for message in (
             "backtest_dataset_inspect",
-            "backtest_run",
+            "backtest_start",
+            "backtest_status",
+            "backtest_cancel",
             "backtest_history_query",
             "backtest_result_get",
             "backtest_result_delete",
@@ -135,7 +137,7 @@ class Task011BacktestUiSourceTests(unittest.TestCase):
         self.assertNotIn("Every tick (chính xác nhất)", self.xaml)
 
     def test_task011_version_and_safety_guards_remain(self):
-        self.assertIn('desktop_version = "0.17.1-tickui"', self.supervisor)
+        self.assertIn('desktop_version = "0.17.2-remediation"', self.supervisor)
         self.assertIn("RejectUnexpectedExecutionEnable", self.supervisor)
         self.assertIn("RejectUnexpectedOrdersExecutionEnable", self.supervisor)
         self.assertIn("Task 012 manual action response violated simulation-only safety", self.supervisor)

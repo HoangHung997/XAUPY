@@ -27,9 +27,6 @@ public partial class OrdersPositionsDashboard
     {
         _demoOnceContext = response.Context;
         ApplyDemoOnceStatus(response.Status);
-        var reason = response.Status.LastBlocker ?? response.Status.Code ?? response.Status.Reason;
-        Text("DemoOnceMessage").Text = string.IsNullOrWhiteSpace(reason)
-            ? "Chỉ gửi khi có tín hiệu mới đúng chiến lược. Dừng chờ không đóng vị thế đã khớp." : reason;
     }
 
     private void RefreshDemoOnceControls()
@@ -45,8 +42,6 @@ public partial class OrdersPositionsDashboard
         string mode = _book.AccountTradeMode ?? _demoOnceContext.AccountMode ?? "—";
         string until = _demoOnceReport.ArmedUntilUtc is { } end ? $" · đến {end.ToLocalTime():HH:mm:ss dd/MM}" : "";
         Text("DemoOnceContextText").Text = $"Tài khoản {account} · {mode} · {_book.Symbol ?? _demoOnceContext.Symbol ?? "—"}{until}";
-        if (_demoOnceReport.BudgetConsumed == true)
-            Text("DemoOnceMessage").Text = "Lần giao dịch này đã dùng quyền gửi. Không tự gửi lại; đối chiếu ticket trong MT5.";
     }
 
     private async void DemoOnceRefresh_OnClick(object? sender, RoutedEventArgs e) => await RefreshDemoOnceAsync();

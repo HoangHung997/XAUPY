@@ -1,0 +1,173 @@
+﻿id,tab,function,status,code,finding,source,evidence
+UI-001,Tổng quan,"Thu nhỏ, phóng to, đóng cửa sổ",Đã triển khai,OK,Có xử lý cửa sổ native.,src/XAUPY.Desktop/MainWindow.axaml.cs,Mã
+UI-002,Tổng quan,Điều hướng đủ 10 tab,Đã triển khai,OK,Các tab thật được tạo và gắn với Engine.,src/XAUPY.Desktop/MainWindow.axaml.cs,Mã + 84 kiểm tra UI
+UI-003,Tổng quan,Bắt đầu / dừng Python Engine,Đã triển khai,OK,"Khởi động, kết nối, dừng tiến trình Engine. Nút này không phải bật/tắt giao dịch tự động chung.",src/XAUPY.Desktop/MainWindow.axaml.cs,Mã + kiểm tra cách ly
+UI-004,Tổng quan,"Bid, Ask, spread, thời điểm giá",Đã triển khai,OK,Dùng tick thật; có phân biệt giá gần nhất với trạng thái kết nối.,src/XAUPY.Desktop/MainWindow.axaml.cs,Mã + luồng đang chạy
+UI-005,Tổng quan,"Balance, equity, free margin, loại tài khoản",Đã triển khai,OK,"Đọc từ MT5 Bridge, không phải số mẫu trong ảnh.",src/XAUPY.Desktop/MainWindow.axaml.cs,Mã + luồng đang chạy
+UI-006,Tổng quan,Lợi nhuận hôm nay,Chưa có,NONE,"DailyProfitValue còn là dấu —, chưa cập nhật dù tab Lệnh có dữ liệu P/L.",src/XAUPY.Desktop/MainWindow.axaml,Mã
+UI-007,Tổng quan,Số lệnh hôm nay,Chưa có,NONE,DailyTradeCountValue còn là dấu —.,src/XAUPY.Desktop/MainWindow.axaml,Mã
+UI-008,Tổng quan,Drawdown lớn nhất hôm nay,Chưa có,NONE,DailyDrawdownValue còn là dấu —; chưa có bộ tính DD ngày tại sidebar.,src/XAUPY.Desktop/MainWindow.axaml,Mã
+UI-009,Tổng quan,Đếm vị thế / lệnh chờ,Đã triển khai,OK,"Đếm snapshot thuộc symbol + magic của EA, không đại diện mọi EA trong tài khoản.",src/XAUPY.Desktop/MainWindow.axaml.cs,Mã
+UI-010,Tổng quan,Danh sách lệnh gần đây,Một phần,PART,Chỉ thông báo số position/order và hướng dẫn sang tab Lệnh; chưa có bảng lịch sử như demo.,src/XAUPY.Desktop/MainWindow.axaml.cs,Mã
+UI-011,Tổng quan,"Đồng hồ, account, leverage ở chân trang",Đã triển khai,OK,Đồng hồ ghi Giờ máy; account/leverage từ Bridge. Không nhầm tên biến FooterServerTime với chức năng UI.,src/XAUPY.Desktop/MainWindow.axaml.cs,Mã
+UI-012,Tổng quan,3 timeframe nhanh,Đã triển khai,OK,"Direction/Pullback/Trigger đọc active, giữ bản nháp, áp dụng có kiểm xung đột.",src/XAUPY.Desktop/MainWindow.QuickConfiguration.cs,Mã + UI cách ly
+UI-013,Tổng quan,Logic AND/OR nhanh và cho phép BUY/SELL,Đã triển khai,OK,"Sửa giá trị thực trong profile, không phải công tắc giả.",src/XAUPY.Desktop/MainWindow.QuickConfiguration.cs,Mã + UI cách ly
+UI-014,Tổng quan,Áp dụng cấu hình nhanh,Đã triển khai,OK,Chỉ vá giá trị đã sửa; kiểm bản nháp/xung đột với Cấu hình và Chiến lược.,src/XAUPY.Desktop/MainWindow.QuickConfiguration.cs,Mã + UI cách ly
+UI-015,Tổng quan,"Các lối tắt cài đặt, preset, 12 nhóm tham số",Đã triển khai,OK,Đi đến trình cấu hình và nhóm tương ứng; không phải kho preset riêng.,src/XAUPY.Desktop/MainWindow.QuickConfiguration.cs,Mã + UI cách ly
+UI-016,Tổng quan,"Mở/lưu preset, JSON, SET ở lối tắt",Đã triển khai,OK,Dùng các thao tác file của trình Cấu hình.,src/XAUPY.Desktop/MainWindow.QuickConfiguration.cs,Mã + UI cách ly
+UI-017,Tổng quan,Hướng dẫn và log nhanh,Một phần,PART,Có nội dung và log thật; một số thông báo khóa giao dịch tổng quát chưa diễn đạt rõ ngoại lệ DEMO một lệnh.,src/XAUPY.Desktop/MainWindow.axaml.cs,Mã
+UI-018,Biểu đồ dùng chung,"Nến, giá đóng, volume",Đã triển khai,OK,Vẽ dữ liệu Bridge và nến đang hình thành riêng; không dùng nến giả để giống ảnh.,src/XAUPY.Desktop/MarketChartControl.cs,Mã + kiểm tra biểu đồ
+UI-019,Biểu đồ dùng chung,Chọn timeframe bằng chuột / bàn phím,Đã triển khai,OK,"Đã gắn sự kiện động, dù AXAML không có Click trực tiếp.",src/XAUPY.Desktop/MarketChartControl.cs,Mã + kiểm tra biểu đồ
+UI-020,Biểu đồ dùng chung,Nến Nhật / đường giá,Đã triển khai,OK,"Đổi kiểu biểu đồ, giữ lựa chọn khi có snapshot mới.",src/XAUPY.Desktop/MarketChartControl.cs,Mã + kiểm tra biểu đồ
+UI-021,Biểu đồ dùng chung,Chỉ báo EMA,Một phần,PART,Bật/tắt bộ EMA 10/20/50 cố định; chưa là thư viện chỉ báo tùy chỉnh.,src/XAUPY.Desktop/MarketChartControl.cs,Mã + kiểm tra biểu đồ
+UI-022,Biểu đồ dùng chung,So sánh,Một phần,PART,"So sánh timeframe khác của cùng symbol, chuẩn hóa giá; chưa so nhiều tài sản.",src/XAUPY.Desktop/MarketChartControl.cs,Mã + kiểm tra biểu đồ
+UI-023,Biểu đồ dùng chung,Xem toàn bộ lịch sử / zoom / pan,Một phần,PART,"Giữ tối đa 180 nến mỗi timeframe, vẽ 64 nến cuối; chưa có trình duyệt toàn bộ kho nến.",src/XAUPY.Desktop/MarketChartControl.cs,Mã
+UI-024,Biểu đồ dùng chung,Chụp ảnh / fullscreen như hình demo,Chưa có,NONE,Chưa có thao tác tương ứng trên thanh công cụ chart.,src/XAUPY.Desktop/MarketChartControl.cs,Mã + hồ sơ parity
+UI-025,Biểu đồ dùng chung,"Hiển thị giá, RSI, Z theo tick",Đã triển khai,OK,"Đọc tick quan sát; EA gom khoảng 250 ms, app lấy cập nhật nhẹ khoảng 200 ms. Không vẽ riêng từng tick.",src/XAUPY.Desktop/MainWindow.axaml.cs,Mã + tick đang chạy
+UI-026,Cấu hình,Sinh đủ 133 ô tham số,Đã triển khai,OK,"Schema sinh trường, kiểu, miền giá trị và trạng thái khóa; xem phụ lục riêng từng trường.",src/XAUPY.Desktop/ConfigurationEditor.axaml.cs,133 ô được nạp qua IPC cách ly
+UI-027,Cấu hình,Điều hướng nhóm / tìm kiếm,Đã triển khai,OK,Nhảy đến nhóm và lọc tham số thật.,src/XAUPY.Desktop/ConfigurationEditor.axaml.cs,Mã + UI cách ly
+UI-028,Cấu hình,MTF Pullback / MTF Trigger,Một phần,PART,Đi đến thiết lập timeframe của một vai trò; chưa là nhiều điều kiện Pullback/Trigger đồng thời trên mọi khung.,src/XAUPY.Desktop/ConfigurationEditor.axaml.cs,Mã
+UI-029,Cấu hình,Kiểm tra lại / báo lỗi tham số,Đã triển khai,OK,"Backend kiểm kiểu, giới hạn, ràng buộc chéo, trường khóa; chưa đồng nghĩa mọi chế độ hợp lệ đều thực thi được.",src/XAUPY.Desktop/ConfigurationEditor.axaml.cs,Mã + bộ kiểm cấu hình
+UI-030,Cấu hình,Nhập JSON,Đã triển khai,OK,"Đọc và kiểm profile vào bản nháp, chưa đổi active trước khi Áp dụng.",src/XAUPY.Desktop/ConfigurationEditor.axaml.cs,Mã + UI cách ly
+UI-031,Cấu hình,Lưu JSON / Lưu thành,Một phần,PART,Cả hai mở hộp lưu file; chưa có hành vi ghi lại file hiện tại riêng.,src/XAUPY.Desktop/ConfigurationEditor.axaml.cs,Mã
+UI-032,Cấu hình,Nhập / xuất SET,Đã triển khai,OK,"Codec SET, alias và kiểm cấu hình đã có. Không phải thao tác tự thay Inputs của EA đang gắn trên MT5.",src/XAUPY.Desktop/ConfigurationEditor.axaml.cs,Mã + kiểm codec
+UI-033,Cấu hình,Mặc định / Hoàn tác,Đã triển khai,OK,Nạp mặc định vào bản nháp hoặc tải active trở lại.,src/XAUPY.Desktop/ConfigurationEditor.axaml.cs,Mã + UI cách ly
+UI-034,Cấu hình,Áp dụng / lưu bền / phục hồi sau restart,Đã triển khai,OK,Profile chuẩn được lưu; đổi profile làm quyền DEMO đang chờ thành SUSPENDED để ràng buộc lại cấu hình.,src/XAUPY.Desktop/ConfigurationEditor.axaml.cs,Mã + API cách ly
+UI-035,Cấu hình,Đóng trước cuối tuần,Chưa có,NONE,Có hai tham số nhận/lưu được nhưng không có nơi thực thi trong Python hoặc EA.,python/xaupy_engine/config_schema.py,Quét consumer + B03
+UI-036,Cấu hình,Order comment tùy chỉnh,Chưa có,NONE,"Giá trị lưu được; lệnh DEMO thực tế dùng comment X1:attempt, không đọc execution.order_comment.",python/xaupy_engine/config_schema.py,Mã + deal MT5
+UI-037,Chiến lược,Sửa khung thời gian / chỉ báo / bộ lọc / SL-TP,Đã triển khai,OK,Các ô tạo động sửa profile thật; phần mở rộng giữ các tùy chọn còn lại.,src/XAUPY.Desktop/StrategyDashboard.Editor.cs,Mã + UI cách ly
+UI-038,Chiến lược,Áp dụng / Tải lại / bảo toàn bản nháp,Đã triển khai,OK,Giữ thay đổi qua heartbeat và chặn xung đột với Cấu hình/Tổng quan.,src/XAUPY.Desktop/StrategyDashboard.Editor.cs,Mã + UI cách ly
+UI-039,Chiến lược,Lưu chiến lược / Xuất cấu hình,Một phần,PART,Xuất active profile; không xuất những sửa đổi chưa áp dụng trong bản nháp trên tab.,src/XAUPY.Desktop/StrategyDashboard.axaml.cs,Mã
+UI-040,Chiến lược,Tải chiến lược JSON,Đã triển khai,OK,"Kiểm schema, hiện tóm tắt và xác nhận trước khi áp dụng.",src/XAUPY.Desktop/StrategyDashboard.axaml.cs,Mã
+UI-041,Chiến lược,Đặt làm mặc định,Chưa có,NONE,Nút đang bị vô hiệu hóa; chưa có thao tác mặc định riêng.,src/XAUPY.Desktop/StrategyDashboard.axaml,Mã
+UI-042,Chiến lược,Direction → Pullback → Trigger,Đã triển khai,OK,Máy trạng thái và lý do điều kiện có thực; không lấy trạng thái đủ dữ liệu làm tín hiệu vào lệnh.,src/XAUPY.Desktop/StrategyDashboard.axaml.cs,Mã + kiểm chiến lược
+UI-043,Chiến lược,RSI/Z động ghi nhớ vượt ngưỡng trong nến,Đã triển khai,OK,"Chế độ observed ticks ghi nhớ cực trị đã quan sát, xác nhận từ nến Trigger tiếp theo; mất liên tục dữ liệu không tự suy ra tick bị bỏ lỡ.",python/xaupy_engine/strategy_engine.py,Kiểm thuật toán + tín hiệu đã tạo lệnh DEMO
+UI-044,Chiến lược,RSI/Z hiển thị khi bộ lọc tắt,Đã triển khai,OK,Giá trị live để xem tách riêng khỏi chỉ báo dùng quyết định; tắt lọc không làm biến mất toàn bộ giá trị hiển thị.,src/XAUPY.Desktop/StrategyDashboard.axaml.cs,Kiểm market_update
+UI-045,Chiến lược,Tự chọn RSI/Z tối ưu và áp vào app,Chưa có,NONE,Chưa có luồng tự hiệu chỉnh trong app. Nghiên cứu trước đó là công cụ riêng; chưa có bộ tham số chứng minh tốt nhất ngoài mẫu.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Mã + hồ sơ nghiên cứu
+UI-046,Giám sát,"Kết nối EA/Python, tuổi dữ liệu",Đã triển khai,OK,Thông tin Bridge và số snapshot thật.,src/XAUPY.Desktop/MonitoringDashboard.axaml.cs,Mã + kết nối đang chạy
+UI-047,Giám sát,Latency,Một phần,PART,"Hiện tuổi snapshot (AgeMs), chưa đo độ trễ mạng khứ hồi.",src/XAUPY.Desktop/MonitoringDashboard.axaml.cs,Mã
+UI-048,Giám sát,Ma trận điều kiện đa khung,Một phần,PART,"Chỉ ba vai trò được cấu hình có kết quả; các khung khác Chưa xét, không quét độc lập cả bảy khung.",src/XAUPY.Desktop/MonitoringDashboard.axaml.cs,UI cách ly
+UI-049,Giám sát,Đồng hồ đo RSI/Z/ADX/ATR và MA,Đã triển khai,OK,"RSI/Z live; ADX/ATR/MA là chỉ báo chiến lược tại chu kỳ đánh giá tương ứng, có trạng thái thiếu dữ liệu.",src/XAUPY.Desktop/MonitoringDashboard.axaml.cs,UI cách ly
+UI-050,Giám sát,Phiên Sydney/Tokyo/London/New York,Chưa có,NONE,Chưa có dữ liệu/trạng thái phiên độc lập đầy đủ cho các ô minh họa.,src/XAUPY.Desktop/MonitoringDashboard.axaml,Mã
+UI-051,Giám sát,Lịch tin tức,Chưa có,NONE,Không có nguồn lịch tin trực tiếp; UI báo chưa tải lịch.,src/XAUPY.Desktop/MonitoringDashboard.axaml,Mã
+UI-052,Giám sát,CPU / RAM / Disk,Chưa có,NONE,Vòng đo chưa được nối tới bộ thu thông số máy; không có số sử dụng thực.,src/XAUPY.Desktop/MonitoringDashboard.axaml,Mã + diagnostics
+UI-053,Giám sát,Bộ đếm thực thi / từ chối / chờ,Một phần,PART,Một số ô vẫn — hoặc LOCKED; chưa là bảng số liệu đầy đủ của đường DEMO một lệnh.,src/XAUPY.Desktop/MonitoringDashboard.axaml,Mã
+UI-054,Giám sát,Bảng cảnh báo,Một phần,PART,Hiện câu trạng thái mới nhất; chưa là danh sách cảnh báo đầy đủ như Journal.,src/XAUPY.Desktop/MonitoringDashboard.axaml.cs,Mã
+UI-055,Lệnh & Vị thế,Đọc vị thế / lệnh chờ MT5,Đã triển khai,OK,"Đọc ticket thật, lọc sẵn theo symbol EA và magic; không tác động EA khác.",src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + MT5 đọc trực tiếp
+UI-056,Lệnh & Vị thế,"P/L, exposure, rủi ro theo SL",Đã triển khai,OK,"Tính từ snapshot, báo không đủ nếu thiếu SL/tick metadata; không mặc định rủi ro bằng 0.",src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm snapshot
+UI-057,Lệnh & Vị thế,Hiển thị tất cả symbol,Lỗi,BUG,Checkbox không được dùng để lọc; cả hai trạng thái cho cùng danh sách. Bridge cũng chỉ gửi một symbol.,src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,F02 tái hiện
+UI-058,Lệnh & Vị thế,Lịch sử deal đóng,Một phần,PART,EA gửi tối đa 50 deal đóng trong 7 ngày theo symbol/magic; chưa là lịch sử toàn tài khoản. Giá vào có thể thiếu nếu deal vào ngoài cửa sổ 7 ngày.,mql5/XAUPY_Bridge_EA.mq5,Mã JsonDeals/HistoryPositionEntryPrice
+UI-059,Lệnh & Vị thế,Hiển thị symbol hiện tại ở lịch sử,Lỗi,BUG,Checkbox không có xử lý lọc; danh sách dùng nguyên snapshot đã lọc từ EA.,src/XAUPY.Desktop/OrdersPositionsDashboard.axaml,Mã
+UI-060,Lệnh & Vị thế,Cột P/L pips / khoảng cách pips,Một phần,PART,"Phép tính chia cho Point; thực chất là point, chưa định nghĩa pip riêng theo symbol.",src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã
+UI-061,Lệnh & Vị thế,Đóng một vị thế,Mô phỏng,SIM,Gửi yêu cầu mô phỏng và báo kết quả; không gửi đóng broker.,src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-062,Lệnh & Vị thế,Đóng 1/2 vị thế,Mô phỏng,SIM,Mô phỏng một phần; không giảm volume tại MT5.,src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-063,Lệnh & Vị thế,Chuyển một SL về BE,Mô phỏng,SIM,Không sửa SL broker.,src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-064,Lệnh & Vị thế,Trailing một vị thế,Mô phỏng,SIM,Không bật vòng trailing trên vị thế broker.,src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-065,Lệnh & Vị thế,Sửa / hủy một pending,Mô phỏng,SIM,"Hai thao tác hàng dùng simulator, không sửa/hủy tại MT5.",src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-066,Lệnh & Vị thế,Đóng tất cả,Mô phỏng,SIM,Chỉ mô phỏng các ticket thuộc snapshot.,src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-067,Lệnh & Vị thế,Đóng lãi,Mô phỏng,SIM,"Lọc và mô phỏng, không đóng broker.",src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-068,Lệnh & Vị thế,Đóng lỗ,Mô phỏng,SIM,"Lọc và mô phỏng, không đóng broker.",src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-069,Lệnh & Vị thế,Đóng một phần hàng loạt,Mô phỏng,SIM,"Mô phỏng 50%, chưa cho tùy chọn tỷ lệ riêng trong nút này.",src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-070,Lệnh & Vị thế,Chuyển BE hàng loạt,Mô phỏng,SIM,Không sửa SL tại MT5.,src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-071,Lệnh & Vị thế,Trailing hàng loạt,Mô phỏng,SIM,Không có quản lý broker liên tục.,src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-072,Lệnh & Vị thế,Hủy tất cả pending,Mô phỏng,SIM,Không hủy lệnh tại MT5.,src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-073,Lệnh & Vị thế,Xác nhận trước đóng/sửa/hủy,Đã triển khai,OK,"Là điều kiện xác nhận cho simulator, không cấp quyền giao dịch thật.",src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-074,Lệnh & Vị thế,"Nhập lot, SL, TP và năm nút lot nhanh",Đã triển khai,OK,"Thay đổi tham số yêu cầu mô phỏng, có kiểm volume/stops.",src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-075,Lệnh & Vị thế,BUY thủ công,Mô phỏng,SIM,"Chỉ MarketBuy → SimulateManualAction, không phải đường DEMO một lệnh.",src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-076,Lệnh & Vị thế,SELL thủ công,Mô phỏng,SIM,Chỉ MarketSell → SimulateManualAction.,src/XAUPY.Desktop/OrdersPositionsDashboard.axaml.cs,Mã + kiểm simulator
+UI-077,Lệnh & Vị thế,Form đặt lệnh chờ / tab Thông tin,Chưa có,NONE,Hai nút bị vô hiệu hóa; chưa có form đặt pending thực.,src/XAUPY.Desktop/OrdersPositionsDashboard.axaml,Mã
+UI-078,Lệnh & Vị thế,Xuất báo cáo lệnh,Chưa có,NONE,"Nút bị vô hiệu hóa, chưa có handler xuất.",src/XAUPY.Desktop/OrdersPositionsDashboard.axaml,Mã
+UI-079,Lệnh & Vị thế,Bắt đầu chờ tín hiệu DEMO một lệnh,Đã triển khai,OK,"Có đường EA OrderSend thực, tối đa 0,01 lot, tín hiệu mới, SL/TP broker, dùng quyền một lần.",src/XAUPY.Desktop/OrdersPositionsDashboard.DemoOnce.cs,Đã đối chiếu broker fill trong lần audit này
+UI-080,Lệnh & Vị thế,Dừng chờ DEMO / làm mới trạng thái,Đã triển khai,OK,Hủy quyền chờ ARMED hoặc đọc lại trạng thái; không đóng vị thế đã khớp.,src/XAUPY.Desktop/OrdersPositionsDashboard.DemoOnce.cs,Mã + kiểm giao thức
+UI-081,Lệnh & Vị thế,Giới hạn lot / thời hạn chờ,Đã triển khai,OK,"Gửi ràng buộc cụ thể vào quyền DEMO, nhận trạng thái thực.",src/XAUPY.Desktop/OrdersPositionsDashboard.DemoOnce.cs,Mã + UI cách ly
+UI-082,Lệnh & Vị thế,Lý do chờ DEMO tự cập nhật,Lỗi,BUG,Heartbeat đổi nhãn trạng thái nhưng không đổi dòng DemoOnceMessage; reason cũ còn lại đến khi refresh. LastBlocker cũng được ưu tiên trước Reason.,src/XAUPY.Desktop/OrdersPositionsDashboard.DemoOnce.cs,F03 tái hiện
+UI-083,Lệnh & Vị thế,Thực thi liên tục nhiều lệnh DEMO,Chưa có,NONE,"Hiện là entry acceptance một lần, không phải robot chạy nhiều lệnh theo profile.",python/xaupy_engine/demo_once.py,Mã + budget_consumed thực
+UI-084,Lệnh & Vị thế,Chọn DEMO/REAL và quyền giao dịch theo người dùng,Chưa có,NONE,Chưa đạt yêu cầu người dùng: demo_only/allow_real vẫn khóa trong schema; không có executor REAL.,python/xaupy_engine/config_schema.py,Mã
+UI-085,Lệnh & Vị thế,"BE, partial, trailing tự động sau khi khớp",Mô phỏng,SIM,"Có trong backtest, chưa có vòng quản lý vị thế broker. Profile guard vẫn chấp nhận các cờ này, dễ gây hiểu nhầm đã hoạt động.",python/xaupy_engine/demo_once.py,B02 + chỉ có một vị trí OrderSend trong EA
+UI-086,Lệnh & Vị thế,"MARKET, STOP_CONFIRM, TP động khi chạy broker",Một phần,PART,"DEMO thực chỉ MARKET và TP FIXED/RR; STOP_CONFIRM, ZRSI_DYNAMIC bị từ chối rõ. SL FIXED/STRUCTURE/ATR đã có.",python/xaupy_engine/demo_once.py,Mã + kiểm guard
+UI-087,Lệnh & Vị thế,Sizing theo % rủi ro,Một phần,PART,"DEMO chọn volume trong trần 0,01 rồi kiểm giới hạn lỗ; chưa sizing theo % giống backtest. max_open_positions>1 cũng không mở nhiều vị thế.",python/xaupy_engine/demo_once.py,Mã _volume/_risk_guard/_command
+UI-088,Lệnh & Vị thế,Giờ phiên / ngày / spread / rủi ro trước lệnh,Đã triển khai,OK,"Có kiểm phiên, ngày, cooldown, lỗ ngày, chuỗi lỗ, mục tiêu ngày, spread, phí dự phòng, SL và RR. Không phải bật REAL.",python/xaupy_engine/demo_once.py,Mã + kiểm guard + fill đúng active profile
+UI-089,Backtest,Chọn file JSON/CSV M1,Đã triển khai,OK,"Nạp dữ liệu lịch sử thật, kiểm OHLC và metadata. Không tự lấy toàn bộ kho đã tải nếu chưa chọn file.",src/XAUPY.Desktop/BacktestDashboard.axaml.cs,Mã + kiểm dữ liệu
+UI-090,Backtest,"Ngày bắt đầu/kết thúc, vốn, spread, commission",Đã triển khai,OK,"Được truyền vào bộ replay, kiểm định dạng và giới hạn.",src/XAUPY.Desktop/BacktestDashboard.axaml.cs,Mã + kiểm backtest
+UI-091,Backtest,Chạy M1 OHLC,Đã triển khai,OK,"Có replay, giao dịch mô phỏng, metrics và lưu lịch sử. Không phải mô hình Every Tick.",python/xaupy_engine/backtest.py,386 tests gồm backtest + B05 chạy thực 3.000 nến
+UI-092,Backtest,Các giới hạn chi phí trong profile,Lỗi,BUG,"Backtest không đọc nhóm costs: trần spread/commission, min net RR, max slippage. Đặt spread tối đa 0 và RR tối thiểu 100 vẫn có cùng giao dịch/metrics. Spread/commission nhập tay vẫn được tính vào P/L.",python/xaupy_engine/backtest.py,B06 tái hiện + quét consumer
+UI-093,Backtest,Chọn timeframe/model khác,Chưa có,NONE,Chỉ M1 OHLC; các bộ chọn khác bị khóa.,src/XAUPY.Desktop/BacktestDashboard.axaml,Mã
+UI-094,Backtest,Chạy profile RSI/Z intrabar đang dùng,Chưa có,NONE,Bị từ chối vì OHLC không chứa thứ tự tick. Cần dữ liệu tick và mô hình replay tick; không được coi nến đóng là tương đương.,python/xaupy_engine/backtest.py,B01 tái hiện với bản sao active
+UI-095,Backtest,Dữ liệu live tiếp tục cập nhật trong lúc backtest,Lỗi,BUG,"Dispatch backtest chạy đồng bộ trong luồng IPC chung. 3.000 nến giữ luồng 1,6117 s; timer 10 ms chạy sau 1,6118 s. IPC desktop còn dùng chung khóa I/O.",python/xaupy_engine/server.py,B05 tái hiện cách ly
+UI-096,Backtest,Dừng / hủy backtest từ UI,Chưa có,NONE,Không có nút hủy và job riêng như Optimizer.,src/XAUPY.Desktop/BacktestDashboard.axaml.cs,Mã
+UI-097,Backtest,"SL ATR/structure/fixed, TP dynamic/fixed/RR",Mô phỏng,SIM,"Đã triển khai trong replay, không chứng minh các chế độ đó đã dùng trên broker.",python/xaupy_engine/backtest.py,Kiểm backtest + B04
+UI-098,Backtest,BE / partial / trailing / STOP_CONFIRM,Mô phỏng,SIM,"Đã có trong backtest, chỉ mô phỏng.",python/xaupy_engine/backtest.py,Kiểm backtest
+UI-099,Backtest,Equity / balance / cả hai,Đã triển khai,OK,"Vẽ kết quả thực của lần chạy, đổi series và giữ lựa chọn.",src/XAUPY.Desktop/BacktestChartControl.cs,Kiểm chart
+UI-100,Backtest,Drawdown / histogram / KPI,Đã triển khai,OK,"Tính từ kết quả mô phỏng, không lấy số trong ảnh demo.",src/XAUPY.Desktop/BacktestDashboard.axaml.cs,Kiểm backtest + chart
+UI-101,Backtest,So sánh kết quả,Chưa có,NONE,Nút bị vô hiệu hóa; chưa có màn hình compare hai lần chạy.,src/XAUPY.Desktop/BacktestDashboard.axaml,Mã
+UI-102,Backtest,Lưu kết quả JSON,Đã triển khai,OK,Xuất kết quả và lấy đủ các trang giao dịch.,src/XAUPY.Desktop/BacktestDashboard.axaml.cs,Mã + kiểm API
+UI-103,Backtest,Xuất báo cáo CSV,Một phần,PART,CSV danh sách trade; chưa là báo cáo tổng hợp PDF/HTML riêng.,src/XAUPY.Desktop/BacktestDashboard.axaml.cs,Mã
+UI-104,Backtest,Làm mới / chọn / xem / xóa lịch sử,Đã triển khai,OK,Đọc và xóa kết quả đã lưu; UI lấy tối đa 50 lần chạy gần nhất.,src/XAUPY.Desktop/BacktestDashboard.axaml.cs,Mã + kiểm repository
+UI-105,Backtest,Phân trang giao dịch,Đã triển khai,OK,"8 trade mỗi trang, có trước/sau và tổng trang.",src/XAUPY.Desktop/BacktestDashboard.axaml.cs,Mã + kiểm API
+UI-106,Tối ưu hóa,"Chọn dataset, ngày, vốn, chi phí",Đã triển khai,OK,Bộ chọn dữ liệu M1 và tham số chạy thật; chịu giới hạn replay giống Backtest.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Mã + kiểm optimizer
+UI-107,Tối ưu hóa,Dải ba timeframe,Đã triển khai,OK,Min/max các khung hợp lệ tạo tập ứng viên.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Mã + kiểm ranges
+UI-108,Tối ưu hóa,Dải ngưỡng RSI BUY/SELL,Đã triển khai,OK,Min/max/step dùng khi RSI Pullback bật.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Mã + kiểm ranges
+UI-109,Tối ưu hóa,Delta RSI / Z,Một phần,PART,"Chỉ có một hàng delta; ưu tiên RSI nếu cả RSI và Z bật, chưa tối ưu riêng cả hai qua UI.",src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Mã
+UI-110,Tối ưu hóa,Chu kỳ RSI / chu kỳ Z / ngưỡng Z,Chưa có,NONE,Chưa có hàng dải tương ứng trên UI; API backend tổng quát hơn UI.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Mã
+UI-111,Tối ưu hóa,Dải MA period,Đã triển khai,OK,Có dải chu kỳ khi Direction MA bật.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Mã
+UI-112,Tối ưu hóa,Dải SL fixed / structure,Đã triển khai,OK,Hai chế độ có ô dải tương ứng.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Mã
+UI-113,Tối ưu hóa,Dải SL ATR,Một phần,PART,"Backend hỗ trợ, UI vô hiệu hóa và ghi Task 011 chưa hỗ trợ.",src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,F06 + B04
+UI-114,Tối ưu hóa,Dải TP fixed / RR,Đã triển khai,OK,Có dải theo chế độ active.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Mã
+UI-115,Tối ưu hóa,Dải TP ZRSI_DYNAMIC,Một phần,PART,"Backend hỗ trợ, UI chưa có range editor, còn nhãn cũ.",src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,F07 + B04
+UI-116,Tối ưu hóa,Bắt đầu sweep / workers / min trades,Đã triển khai,OK,"Có hàng đợi ứng viên, worker và tiêu chí đủ số lệnh.",src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Kiểm optimizer
+UI-117,Tối ưu hóa,Dừng job / xem tiến độ,Đã triển khai,OK,Có cancel và progress thật; khác Backtest đơn lẻ.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Kiểm optimizer
+UI-118,Tối ưu hóa,Top 10 / xem tham số ứng viên,Đã triển khai,OK,Xếp hạng và mở JSON cấu hình ứng viên. Chưa kết luận có lợi nhuận tương lai.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Kiểm optimizer
+UI-119,Tối ưu hóa,Áp dụng ứng viên tốt nhất trực tiếp,Chưa có,NONE,Chưa có nút đưa ứng viên đã chọn vào active profile.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Mã
+UI-120,Tối ưu hóa,Heatmap X/Y/metric,Đã triển khai,OK,Đọc dữ liệu tối ưu và đổi trục/metric thật.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Kiểm heatmap
+UI-121,Tối ưu hóa,"Walk-forward: folds, ratio, rolling/expanding",Đã triển khai,OK,"Có chia train/test và chạy ngoài mẫu; vẫn là M1 OHLC, không chạy intrabar active hiện tại.",src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Kiểm walk-forward
+UI-122,Tối ưu hóa,Lưu / tải preset tối ưu,Đã triển khai,OK,Lưu file mô tả ranges/context. Combo không phải thư viện nhiều preset dựng sẵn.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Kiểm preset
+UI-123,Tối ưu hóa,CPU/RAM/Disk và hiệu suất worker,Một phần,PART,Có số worker/tiến độ; chưa có telemetry CPU/RAM/Disk thật. Hai loại số liệu không tương đương.,src/XAUPY.Desktop/OptimizerDashboard.axaml.cs,Mã
+UI-124,Nhật ký,Log thật / tự cập nhật,Đã triển khai,OK,"Structured journal từ Engine, tải lại khi latest sequence thay đổi.",src/XAUPY.Desktop/JournalDashboard.axaml.cs,Mã + kiểm journal
+UI-125,Nhật ký,7 nguồn log,Một phần,PART,"Bộ lọc hoạt động theo source; mục MT5 là sự kiện được XAUPY ghi, không phải bộ đọc toàn bộ Experts/Journal của terminal.",src/XAUPY.Desktop/JournalDashboard.axaml.cs,Mã + kiểm journal
+UI-126,Nhật ký,INFO / WARN / ERROR / DEBUG,Đã triển khai,OK,Các checkbox được đưa vào truy vấn backend.,src/XAUPY.Desktop/JournalDashboard.axaml.cs,Mã + kiểm journal
+UI-127,Nhật ký,Tìm kiếm và phạm vi ngày,Đã triển khai,OK,"Tìm kiếm trễ 350 ms, chọn Hôm nay/Tất cả và làm mới.",src/XAUPY.Desktop/JournalDashboard.axaml.cs,Mã + kiểm journal
+UI-128,Nhật ký,Chọn dòng / chi tiết JSON,Đã triển khai,OK,"Hiện nội dung sự kiện, nguồn, tag, sequence, chi tiết.",src/XAUPY.Desktop/JournalDashboard.axaml.cs,Mã
+UI-129,Nhật ký,Thêm / bỏ / lọc dấu trang,Đã triển khai,OK,"Lưu dấu trang, truy vấn lại và phục hồi từ journal.",src/XAUPY.Desktop/JournalDashboard.axaml.cs,Kiểm journal
+UI-130,Nhật ký,Xem tất cả cảnh báo / dấu trang,Một phần,PART,"Đổi bộ lọc hoạt động nhưng truy vấn vẫn tối đa 500 dòng, không có phân trang tiếp.",src/XAUPY.Desktop/JournalDashboard.axaml.cs,Mã limit:500
+UI-131,Nhật ký,Xuất log,Một phần,PART,"Xuất JSONL các dòng đang tải, tối đa 500; không xuất toàn bộ số TotalMatched nếu vượt giới hạn.",src/XAUPY.Desktop/JournalDashboard.axaml.cs,Mã ExportLog
+UI-132,Nhật ký,"Replay / nhận diện log lỗi, trùng",Đã triển khai,OK,"Có kiểm schema, duplicate và bộ đếm integrity.",python/xaupy_engine/journal.py,Kiểm journal
+UI-133,Công cụ,"Trình JSON: nhập/sửa, màu cú pháp, số dòng",Đã triển khai,OK,"Editor native thực, có cập nhật số dòng và thông tin file.",src/XAUPY.Desktop/ToolsDashboard.axaml.cs,84 kiểm tra UI
+UI-134,Công cụ,Tìm kiếm / tìm tiếp / đóng tìm kiếm,Đã triển khai,OK,"Ctrl+F, chọn kết quả và wrap tìm tiếp.",src/XAUPY.Desktop/ToolsDashboard.axaml.cs,UI cách ly
+UI-135,Công cụ,Định dạng JSON / kiểm cú pháp và schema,Đã triển khai,OK,"Có format, parse, validate profile. File tin có bộ kiểm riêng.",src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã + UI cách ly
+UI-136,Công cụ,Mở file / Lưu thành,Đã triển khai,OK,"Đọc/ghi JSON trên máy; SaveAs là lưu file, không phải áp dụng.",src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã
+UI-137,Công cụ,Lưu thay đổi / Áp dụng / Ctrl+S,Một phần,PART,"Cả hai gọi Apply active profile; Ctrl+S cũng có thể áp dụng cấu hình đang chạy, không chỉ lưu file.",src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã
+UI-138,Công cụ,Bảo toàn bản nháp khi Tải lại/đổi công cụ,Lỗi,BUG,Không có dirty guard; tải lại ghi đè nội dung đang sửa mà không báo trước.,src/XAUPY.Desktop/ToolsDashboard.axaml.cs,F05 tái hiện
+UI-139,Công cụ,Chặn xung đột với bản nháp tab khác,Một phần,PART,Tools không tham gia HasConflictingDraft của Cấu hình/Chiến lược/Tổng quan; còn đường áp dụng ngoài cơ chế bảo vệ chung.,src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã
+UI-140,Công cụ,Ô Symbol thông tin file,Lỗi,BUG,"Đọc active.symbol thay vì active.strategy.symbol, nên profile EURUSD vẫn hiện XAUUSD.",src/XAUPY.Desktop/ToolsDashboard.axaml.cs,F04 tái hiện
+UI-141,Công cụ,Mặc định / Tải lại,Đã triển khai,OK,Nạp default/active thật; lưu ý lỗi mất bản nháp ở dòng riêng.,src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã
+UI-142,Công cụ,Toàn màn hình editor,Một phần,PART,"Mở rộng vùng soạn thảo bằng F11, không chuyển toàn app sang fullscreen hệ điều hành.",src/XAUPY.Desktop/ToolsDashboard.axaml.cs,UI cách ly
+UI-143,Công cụ,So sánh Preset,Một phần,PART,"Chỉ so DEFAULT với ACTIVE, chưa chọn hai file tùy ý.",src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã
+UI-144,Công cụ,Kiểm tra chỉ báo,Một phần,PART,Xem diagnostics.strategy; chưa là đối chiếu độc lập công thức/indicator giữa MT5 và Python.,src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã
+UI-145,Công cụ,Tính lot theo rủi ro,Một phần,PART,"Tính theo tiền rủi ro, SL, tick size/value nhập tay; chưa làm tròn broker step và chưa tính spread/phí/trượt giá.",src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã
+UI-146,Công cụ,Thông tin Symbol & Phiên,Một phần,PART,Hiện overview + sessions; chưa là trang đủ thuộc tính broker và lịch phiên từng thị trường.,src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã
+UI-147,Công cụ,Kiểm tra file tin tức,Một phần,PART,Đọc và kiểm định dạng JSON; không nhập thành nguồn news guard giao dịch.,src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã
+UI-148,Công cụ,Chẩn đoán hệ thống,Đã triển khai,OK,"Có kiểm môi trường, kết nối, cấu hình, đường dẫn và journal; phạm vi không bao gồm CPU/RAM/Disk live.",src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Kiểm maintenance
+UI-149,Công cụ,Kiểm tra Bridge,Đã triển khai,OK,"Đọc trạng thái Bridge thật qua diagnostics, không tạo tín hiệu hoặc lệnh.",src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Kiểm maintenance
+UI-150,Công cụ,Quản lý hồ sơ,Một phần,PART,"Cùng editor active profile; chưa có thư viện profile đặt tên, chuyển hàng loạt hoặc quản lý phiên bản riêng.",src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã
+UI-151,Công cụ,Xuất / nhập dữ liệu,Một phần,PART,Xuất diagnostics JSON / nhập cấu hình JSON; tải lịch sử là luồng riêng. Chưa là bộ nhập/xuất mọi dữ liệu giao dịch.,src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã
+UI-152,Công cụ,Tải lịch sử MT5 và xem tiến độ,Đã triển khai,OK,"Job riêng tải các timeframe tới giới hạn MT5/broker trả về, có terminal/symbol đầu vào; không làm việc chặn đồng bộ trong IPC.",python/xaupy_engine/history_jobs.py,Mã + bằng chứng tải lịch sử trước audit
+UI-153,Công cụ,Tự nối kho lịch sử vào Backtest/Optimizer,Chưa có,NONE,Sau tải vẫn cần chọn dataset M1; chưa có quy trình liền mạch chọn kho/chạy nghiên cứu/áp kết quả.,src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã
+UI-154,Công cụ,Hướng dẫn,Đã triển khai,OK,Có hướng dẫn thao tác và shortcut trong app.,src/XAUPY.Desktop/ToolsDashboard.axaml.cs,Mã
+UI-155,Cài đặt,Đọc tài khoản / loại tài khoản / probe,Đã triển khai,OK,Dùng phiên MT5 qua EA đang kết nối; không có đăng nhập bằng mật khẩu trong app.,src/XAUPY.Desktop/SettingsDashboard.axaml.cs,Kiểm maintenance + live
+UI-156,Cài đặt,Chọn / lưu đường dẫn MT5,Một phần,PART,Có hộp chọn và lưu; chưa có consumer dùng setting này để mở/chuyển terminal kết nối. HistoryTerminal là trường khác.,src/XAUPY.Desktop/SettingsDashboard.axaml.cs,Quét tham chiếu mt5_path
+UI-157,Cài đặt,Chế độ Bridge / host / port,Một phần,PART,Chỉ một chế độ Python Bridge và loopback/39421 cố định; không phải lựa chọn nhiều backend.,src/XAUPY.Desktop/SettingsDashboard.axaml,Mã
+UI-158,Cài đặt,Tự khởi động Engine,Đã triển khai,OK,Preference được đọc khi mở MainWindow.,src/XAUPY.Desktop/SettingsDashboard.axaml.cs,Mã + UI/API cách ly
+UI-159,Cài đặt,Tự khởi động lại Engine khi lỗi,Đã triển khai,OK,Preference được truyền vào supervisor; chưa có nghĩa tự bật giao dịch sau lỗi.,src/XAUPY.Desktop/SettingsDashboard.axaml.cs,Mã + UI/API cách ly
+UI-160,Cài đặt,Đường dẫn dữ liệu/log/backtest/history/backup,Đã triển khai,OK,"Các ô chỉ đọc và nút mở thư mục thật, không phải các đường dẫn cho sửa.",src/XAUPY.Desktop/SettingsDashboard.axaml.cs,Mã
+UI-161,Cài đặt,Theme / ngôn ngữ / tỷ lệ chữ,Một phần,PART,"Mỗi combo chỉ một lựa chọn cố định N30 Dark/Tiếng Việt/100%; chưa có đổi theme, dịch hay scale.",src/XAUPY.Desktop/SettingsDashboard.axaml,Mã
+UI-162,Cài đặt,Hiện lỗi hệ thống / thay đổi kết nối,Một phần,PART,"Hai preference thực sự lọc log nhanh; chưa phải thông báo toast, âm thanh hoặc email.",src/XAUPY.Desktop/MainWindow.axaml.cs,Mã + kiểm lưu preference
+UI-163,Cài đặt,Giới hạn rủi ro hiển thị,Đã triển khai,OK,"Đọc từ active profile; muốn sửa phải vào Cấu hình, ô Settings chỉ đọc.",src/XAUPY.Desktop/SettingsDashboard.axaml.cs,Mã
+UI-164,Cài đặt,Khởi động cùng Windows,Chưa nghiệm thu OS,OS,Đã có ghi/xóa HKCU Run và rollback nếu lưu lỗi; chưa kiểm nghiệm một phiên Windows đăng nhập mới trong audit này.,src/XAUPY.Desktop/SettingsDashboard.axaml.cs,"Đọc mã, không sửa registry máy đang dùng"
+UI-165,Cài đặt,Bắt buộc đồng bộ Bridge lúc mở,Một phần,PART,Checkbox khóa true; Engine chờ dữ liệu mới. Không là tùy chọn người dùng có thể bỏ.,src/XAUPY.Desktop/SettingsDashboard.axaml,Mã
+UI-166,Cài đặt,Tự động chạy giao dịch,Chưa có,NONE,Checkbox bị khóa false; chưa có general autotrading lifecycle.,src/XAUPY.Desktop/SettingsDashboard.axaml,Mã
+UI-167,Cài đặt,Quyền tài khoản thật,Chưa có,NONE,Đã đổi UI thành mô tả chưa triển khai; không có nút bật REAL hoạt động. Yêu cầu người dùng tự quyết định còn chưa hoàn tất.,src/XAUPY.Desktop/SettingsDashboard.axaml,Mã
+UI-168,Cài đặt,Sao lưu trước thay đổi / giữ tối đa,Đã triển khai,OK,"Preference, giới hạn 1–100 và retention có xử lý thực.",src/XAUPY.Desktop/SettingsDashboard.axaml.cs,Kiểm settings/backup
+UI-169,Cài đặt,Sao lưu ngay / danh sách backup,Đã triển khai,OK,Tạo và đọc bản backup thật trong thư mục dữ liệu.,src/XAUPY.Desktop/SettingsDashboard.axaml.cs,Kiểm maintenance
+UI-170,Cài đặt,Khôi phục backup,Đã triển khai,OK,Validate rồi khôi phục profile/settings; không khôi phục quyền gửi DEMO đã dùng thành quyền mới.,src/XAUPY.Desktop/SettingsDashboard.axaml.cs,Kiểm maintenance
+UI-171,Cài đặt,Mặc định / Hủy thay đổi / Lưu cài đặt,Đã triển khai,OK,Đọc/ghi cấu hình hệ thống thực và giữ độc lập với strategy profile.,src/XAUPY.Desktop/SettingsDashboard.axaml.cs,UI/API cách ly
+UI-172,Cài đặt,Thông tin hệ thống / execution summary,Một phần,PART,Có phiên bản và diagnostics; một số nhãn LOCKED tổng quát chưa trình bày đầy đủ ngoại lệ DEMO một lệnh.,src/XAUPY.Desktop/SettingsDashboard.axaml.cs,Mã

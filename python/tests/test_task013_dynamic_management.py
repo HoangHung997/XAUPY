@@ -24,6 +24,8 @@ from xaupy_engine.strategy_engine import Bar, StrategyEngine, _atr
 
 def make_profile() -> dict:
     profile = default_profile()
+    # Management/entry fixtures isolate price mechanics; costs are covered separately.
+    profile["costs"].update(max_spread_price_units=100, min_net_rr=0, max_slippage_points=0)
     profile["profile"]["name"] = "Task013 Test"
     profile["strategy"]["allow_buy"] = True
     profile["strategy"]["allow_sell"] = True

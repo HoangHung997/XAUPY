@@ -159,6 +159,8 @@ def create_dataset(path: Path, days: int = 12):
 
 def task012_profile(base: dict) -> dict:
     profile = copy.deepcopy(base)
+    # This fixture exercises optimizer protocol; cost-gate behavior has its own tests.
+    profile["costs"].update(max_spread_price_units=100, min_net_rr=0, max_slippage_points=0)
     profile["profile"]["name"] = "Task012 Packaged Smoke"
     profile["strategy"]["allow_buy"] = True
     profile["strategy"]["allow_sell"] = False
@@ -289,7 +291,7 @@ def main() -> int:
         try:
             heartbeat = exchange(file1, "heartbeat")
             assert heartbeat["type"] == "heartbeat_ack"
-            assert heartbeat["payload"]["engine_version"] == "0.17.1-tickui"
+            assert heartbeat["payload"]["engine_version"] == "0.17.2-remediation"
             assert heartbeat["payload"]["trading_enabled"] is False
             assert heartbeat["payload"]["execution_enabled"] is False
             assert heartbeat["payload"]["optimizer_status"]["status"] == "IDLE"

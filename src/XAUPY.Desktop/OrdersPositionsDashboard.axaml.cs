@@ -101,6 +101,7 @@ public partial class OrdersPositionsDashboard : UserControl
             ? DemoOncePresentation.Summary(report) : "DEMO 1 LỆNH · CHƯA BẮT ĐẦU";
         Text("DemoOnceStatusText").Foreground = DemoOncePresentation.StatusBrush(report);
         ToolTip.SetTip(panel, DemoOncePresentation.Detail(report));
+        Text("DemoOnceMessage").Text = DemoOncePresentation.CurrentReason(report);
         RefreshDemoOnceControls();
     }
 
@@ -147,14 +148,16 @@ public partial class OrdersPositionsDashboard : UserControl
         var host = Panel("PositionsRowsHost");
         host.Children.Clear();
 
-        if (!_book.Available || _book.Positions.Count == 0)
+        var positions = _book.Positions.Where(p => Check("ShowAllSymbolsCheck").IsChecked == true || IsCurrentSymbol(p.Symbol)).ToArray();
+        Text("PositionsTitleText").Text = $"Vị thế đang mở ({positions.Length})";
+        if (!_book.Available || positions.Length == 0)
         {
             host.Children.Add(EmptyRow(_book.Available ? "Chưa có vị thế của chiến lược này." : "Đang chờ dữ liệu vị thế từ MT5."));
             return;
         }
 
-        for (int i = 0; i < _book.Positions.Count; i++)
-            host.Children.Add(PositionRow(_book.Positions[i], i));
+        for (int i = 0; i < positions.Length; i++)
+            host.Children.Add(PositionRow(positions[i], i));
     }
 
     private Border PositionRow(PositionSnapshot position, int index)
@@ -187,6 +190,8 @@ public partial class OrdersPositionsDashboard : UserControl
         actions.Children.Add(ActionButton("1/2", position.Ticket, "PARTIAL_CLOSE"));
         actions.Children.Add(ActionButton("BE", position.Ticket, "MOVE_SL_BE"));
         actions.Children.Add(ActionButton("TS", position.Ticket, "START_TRAILING"));
+        actions.IsEnabled = IsCurrentSymbol(position.Symbol);
+        if (!actions.IsEnabled) ToolTip.SetTip(actions, "Chỉ quan sát symbol khác; thao tác dùng thông số của symbol đang kết nối.");
         Grid.SetColumn(actions, 13);
         grid.Children.Add(actions);
 
@@ -243,15 +248,19 @@ public partial class OrdersPositionsDashboard : UserControl
         var host = Panel("DealsRowsHost");
         host.Children.Clear();
 
-        if (!_book.Available || _book.Deals.Count == 0)
+        var deals = _book.Deals.Where(d => Check("CurrentSymbolHistoryCheck").IsChecked != true || IsCurrentSymbol(d.Symbol)).ToArray();
+        if (!_book.Available || deals.Length == 0)
         {
             host.Children.Add(EmptyRow(_book.Available ? "Chưa có giao dịch đã đóng của chiến lược này." : "Đang chờ lịch sử giao dịch từ MT5."));
             return;
         }
 
-        for (int i = 0; i < _book.Deals.Count; i++)
-            host.Children.Add(DealRow(_book.Deals[i], i));
+        for (int i = 0; i < deals.Length; i++)
+            host.Children.Add(DealRow(deals[i], i));
     }
+
+    private bool IsCurrentSymbol(string symbol) => string.Equals(symbol, _book.Symbol ?? _config.Symbol, StringComparison.Ordinal);
+    private void SymbolFilter_OnClick(object? sender, RoutedEventArgs e) => RenderAll();
 
     private Border DealRow(DealSnapshot deal, int index)
     {
@@ -320,7 +329,8 @@ public partial class OrdersPositionsDashboard : UserControl
         bool confirmed,
         double? percent = null)
     {
-        if (_book.Positions.Count == 0)
+        var positions = _book.Positions.Where(p => IsCurrentSymbol(p.Symbol)).ToArray();
+        if (positions.Length == 0)
         {
             SetActionStatus("REJECTED • không có position để mô phỏng.", Brushes.IndianRed);
             return;
@@ -329,7 +339,7 @@ public partial class OrdersPositionsDashboard : UserControl
         int accepted = 0;
         string lastCode = string.Empty;
 
-        foreach (var position in _book.Positions)
+        foreach (var position in positions)
         {
             var result = await SendActionAsync(
                 action,
@@ -344,8 +354,8 @@ public partial class OrdersPositionsDashboard : UserControl
         }
 
         SetActionStatus(
-            $"SIMULATED • {action}: {accepted}/{_book.Positions.Count} accepted • {lastCode}",
-            accepted == _book.Positions.Count ? Brushes.LightGreen : Brushes.Gold);
+            $"SIMULATED • {action}: {accepted}/{positions.Length} accepted • {lastCode}",
+            accepted == positions.Length ? Brushes.LightGreen : Brushes.Gold);
     }
 
     private async void MarketBuy_OnClick(object? sender, RoutedEventArgs e) =>
@@ -657,7 +667,7 @@ public partial class OrdersPositionsDashboard : UserControl
 
     private double PositionPipsValue(PositionSnapshot position)
     {
-        if (!_book.Point.HasValue || _book.Point.Value <= 0)
+        if (!IsCurrentSymbol(position.Symbol) || !_book.Point.HasValue || _book.Point.Value <= 0)
             return double.NaN;
 
         double delta = position.Side.Equals("SELL", StringComparison.OrdinalIgnoreCase)

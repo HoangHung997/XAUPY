@@ -30,6 +30,8 @@ from xaupy_engine.strategy_engine import Bar, StrategyEngine
 
 def test_profile():
     profile = default_profile()
+    # These event/management fixtures isolate mechanics; cost gates have dedicated replay regressions.
+    profile["costs"].update(max_spread_price_units=100, min_net_rr=0, max_slippage_points=0)
     profile["profile"]["name"] = "Task011 Test"
     profile["strategy"]["allow_buy"] = True
     profile["strategy"]["allow_sell"] = False

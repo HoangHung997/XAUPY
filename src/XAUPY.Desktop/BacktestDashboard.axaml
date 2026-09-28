@@ -79,7 +79,7 @@
             </StackPanel>
 
             <StackPanel Grid.Column="5" Spacing="3">
-              <TextBlock Text="Spread (pip)" Classes="label"/>
+              <TextBlock Text="Spread (point)" Classes="label"/>
               <TextBox x:Name="BacktestSpreadBox" Text="20"/>
             </StackPanel>
 
@@ -110,6 +110,8 @@
                      FontWeight="SemiBold"
                      VerticalAlignment="Center"/>
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+            <Button x:Name="CancelBacktestButton" Classes="secondary" Content="■ Hủy chạy"
+                    IsEnabled="False" Click="CancelBacktest_OnClick"/>
             <Button Classes="secondary"
                     Content="⇄  So sánh kết quả"
                     IsEnabled="False"

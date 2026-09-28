@@ -150,7 +150,7 @@ class StrategyMonitoringUiSourceTests(unittest.TestCase):
         self.assertIn("RejectUnexpectedStrategyExecutionEnable", self.supervisor)
         self.assertIn("TradingEnabled", self.model)
         self.assertIn("ExecutionEnabled", self.model)
-        self.assertIn('desktop_version = "0.17.1-tickui"', self.supervisor)
+        self.assertIn('desktop_version = "0.17.2-remediation"', self.supervisor)
 
     def test_main_overview_now_uses_real_strategy_state(self):
         self.assertIn('x:Name="StrategyStateValue"', self.main_xaml)

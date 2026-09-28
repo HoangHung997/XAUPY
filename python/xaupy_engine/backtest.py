@@ -13,6 +13,7 @@ from typing import Any, Callable
 from uuid import UUID, uuid4
 
 from .config_schema import normalized_profile
+from .execution_costs import entry_cost_plan
 from .journal import default_journal_directory
 from .strategy_engine import Bar, StrategyDataError, StrategyEngine, _atr, _rsi, _zscore
 
@@ -27,7 +28,7 @@ TIMEFRAME_SECONDS: dict[str, int] = {
     "H2": 7200,
     "H4": 14400,
 }
-BACKTEST_MODEL = "M1_OHLC_PARITY_V1"
+BACKTEST_MODEL = "M1_OHLC_COST_GUARDS_V2"
 DATASET_SCHEMA_VERSION = 1
 BACKTEST_SCHEMA_VERSION = 1
 
@@ -556,6 +557,7 @@ class BacktestEngine:
         from_date: str,
         to_date: str,
         cancel_check: Callable[[], bool] | None = None,
+        progress: Callable[[int, int], None] | None = None,
     ) -> dict[str, Any]:
         _raise_if_cancelled(cancel_check)
         if dataset.metadata.symbol != self.profile["strategy"]["symbol"]:
@@ -603,8 +605,10 @@ class BacktestEngine:
             process_bars.append(bar)
 
         range_setup_reset = False
-        for bar in process_bars:
+        for bar_index, bar in enumerate(process_bars):
             _raise_if_cancelled(cancel_check)
+            if progress is not None and bar_index % 128 == 0:
+                progress(bar_index, len(process_bars))
             local_date = dataset.local_date(bar.time)
             allow_entries = start_date <= local_date <= end_date
             if allow_entries and not range_setup_reset:
@@ -694,6 +698,8 @@ class BacktestEngine:
                 )
 
         _raise_if_cancelled(cancel_check)
+        if progress is not None:
+            progress(len(process_bars), len(process_bars))
         if state.pending_entries:
             final_time = in_range[-1].time + 60
             for pending in list(state.pending_entries):
@@ -1058,10 +1064,21 @@ class BacktestEngine:
         if target_distance <= 0 or target_distance + 1e-12 < minimum_stop:
             self._skip(state, "BROKER_INVALID_INITIAL_TP")
             return
+        costs = entry_cost_plan(
+            self.profile, risk_distance=risk_distance,
+            target_distance=abs(original_tp - entry_price), spread_price=spread_price,
+            point=dataset.metadata.point_size, tick_size=dataset.metadata.tick_size,
+            tick_value=dataset.metadata.tick_value,
+            actual_commission_per_lot=self.commission_per_lot,
+        )
+        if costs.blocker:
+            self._skip(state, costs.blocker)
+            return
         volume = self._position_volume(
             state.balance,
             dataset.metadata,
             risk_distance,
+            loss_per_lot=costs.loss_per_lot,
         )
         if volume is None:
             self._skip(state, "VOLUME_BELOW_MIN")
@@ -1351,6 +1368,8 @@ class BacktestEngine:
         balance: float,
         metadata: DatasetMetadata,
         risk_distance: float,
+        *,
+        loss_per_lot: float | None = None,
     ) -> float | None:
         risk = self.profile["risk"]
         if risk["sizing_mode"] == "FIXED_LOT":
@@ -1359,7 +1378,7 @@ class BacktestEngine:
             risk_amount = balance * float(risk["risk_percent"]) / 100.0
             risk_per_lot = (
                 risk_distance / metadata.tick_size * metadata.tick_value
-            )
+            ) if loss_per_lot is None else loss_per_lot
             if risk_per_lot <= 0:
                 return None
             raw = risk_amount / risk_per_lot

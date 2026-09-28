@@ -84,6 +84,7 @@ public partial class ConfigurationEditor : UserControl
     private bool _dirty;
     private Task? _loadTask;
     public bool HasUnsavedChanges => _dirty;
+    public Func<bool>? HasConflictingDraft { get; set; }
     private EngineConnectionState _lastEngineState = EngineConnectionState.Stopped;
     private string? _lastSetTemplatePath;
 
@@ -605,6 +606,8 @@ public partial class ConfigurationEditor : UserControl
         await RunUiActionAsync(async () =>
         {
             EnsureSupervisorReady();
+            if (HasConflictingDraft?.Invoke() == true)
+                throw new InvalidOperationException("Một tab khác có bản nháp chưa áp dụng. Hãy áp dụng hoặc hoàn tác bản nháp đó trước.");
             var validation = await ValidateDraftAsync();
             if (!validation.Valid || validation.Profile is null)
             {

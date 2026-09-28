@@ -1,5 +1,5 @@
 #property strict
-#property version   "1.018"
+#property version   "1.019"
 #property description "XAUPY data bridge. General execution locked; separate bounded DEMO one-shot capability."
 
 input string InpHost               = "127.0.0.1";
@@ -255,7 +255,7 @@ double OwnDailyRealized()
    return realized;
 }
 
-string JsonPositions()
+string JsonPositions(bool all_symbols=false)
 {
    string json = "[";
    bool first = true;
@@ -266,7 +266,7 @@ string JsonPositions()
       ulong ticket = PositionGetTicket(i);
       if(ticket == 0)
          continue;
-      if(PositionGetString(POSITION_SYMBOL) != _Symbol)
+      if(!all_symbols && PositionGetString(POSITION_SYMBOL) != _Symbol)
          continue;
       if((long)PositionGetInteger(POSITION_MAGIC) != InpMagic)
          continue;
@@ -275,16 +275,18 @@ string JsonPositions()
          json += ",";
       first = false;
 
+      int digits = (int)SymbolInfoInteger(PositionGetString(POSITION_SYMBOL), SYMBOL_DIGITS);
+
       string item = "{";
       item += JsonKey("ticket") + StringFormat("%I64u", ticket) + ",";
       item += JsonKey("magic") + StringFormat("%I64d", (long)PositionGetInteger(POSITION_MAGIC)) + ",";
       item += JsonKey("symbol") + JsonString(PositionGetString(POSITION_SYMBOL)) + ",";
       item += JsonKey("side") + JsonString(PositionTypeText(PositionGetInteger(POSITION_TYPE))) + ",";
       item += JsonKey("volume") + JsonNumber(PositionGetDouble(POSITION_VOLUME), 2) + ",";
-      item += JsonKey("price_open") + JsonNumber(PositionGetDouble(POSITION_PRICE_OPEN), _Digits) + ",";
-      item += JsonKey("price_current") + JsonNumber(PositionGetDouble(POSITION_PRICE_CURRENT), _Digits) + ",";
-      item += JsonKey("sl") + JsonNumber(PositionGetDouble(POSITION_SL), _Digits) + ",";
-      item += JsonKey("tp") + JsonNumber(PositionGetDouble(POSITION_TP), _Digits) + ",";
+      item += JsonKey("price_open") + JsonNumber(PositionGetDouble(POSITION_PRICE_OPEN), digits) + ",";
+      item += JsonKey("price_current") + JsonNumber(PositionGetDouble(POSITION_PRICE_CURRENT), digits) + ",";
+      item += JsonKey("sl") + JsonNumber(PositionGetDouble(POSITION_SL), digits) + ",";
+      item += JsonKey("tp") + JsonNumber(PositionGetDouble(POSITION_TP), digits) + ",";
       item += JsonKey("profit") + JsonNumber(PositionGetDouble(POSITION_PROFIT), 2) + ",";
       item += JsonKey("swap") + JsonNumber(PositionGetDouble(POSITION_SWAP), 2) + ",";
       item += JsonKey("time") + StringFormat("%I64d", PositionGetInteger(POSITION_TIME)) + ",";
@@ -339,7 +341,7 @@ string JsonOrders()
    return json;
 }
 
-double HistoryPositionEntryPrice(long position_id)
+double HistoryPositionEntryPrice(long position_id, string symbol)
 {
    int total = HistoryDealsTotal();
    for(int i=0; i<total; i++)
@@ -349,7 +351,7 @@ double HistoryPositionEntryPrice(long position_id)
          continue;
       if((long)HistoryDealGetInteger(deal_ticket, DEAL_POSITION_ID) != position_id)
          continue;
-      if(HistoryDealGetString(deal_ticket, DEAL_SYMBOL) != _Symbol)
+      if(HistoryDealGetString(deal_ticket, DEAL_SYMBOL) != symbol)
          continue;
       if((long)HistoryDealGetInteger(deal_ticket, DEAL_MAGIC) != InpMagic)
          continue;
@@ -361,7 +363,7 @@ double HistoryPositionEntryPrice(long position_id)
    return 0.0;
 }
 
-string JsonDeals()
+string JsonDeals(bool all_symbols=false)
 {
    datetime now = TimeCurrent();
    datetime from = now - (datetime)(7 * 24 * 60 * 60);
@@ -378,7 +380,7 @@ string JsonDeals()
       ulong ticket = HistoryDealGetTicket(i);
       if(ticket == 0)
          continue;
-      if(HistoryDealGetString(ticket, DEAL_SYMBOL) != _Symbol)
+      if(!all_symbols && HistoryDealGetString(ticket, DEAL_SYMBOL) != _Symbol)
          continue;
       if((long)HistoryDealGetInteger(ticket, DEAL_MAGIC) != InpMagic)
          continue;
@@ -391,7 +393,9 @@ string JsonDeals()
       double commission = HistoryDealGetDouble(ticket, DEAL_COMMISSION);
       double swap = HistoryDealGetDouble(ticket, DEAL_SWAP);
       long position_id = HistoryDealGetInteger(ticket, DEAL_POSITION_ID);
-      double price_in = HistoryPositionEntryPrice(position_id);
+      string symbol = HistoryDealGetString(ticket, DEAL_SYMBOL);
+      int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
+      double price_in = HistoryPositionEntryPrice(position_id, symbol);
       double price_out = HistoryDealGetDouble(ticket, DEAL_PRICE);
 
       if(!first)
@@ -406,8 +410,8 @@ string JsonDeals()
       item += JsonKey("side") + JsonString(DealTypeText(HistoryDealGetInteger(ticket, DEAL_TYPE))) + ",";
       item += JsonKey("entry") + JsonString(DealEntryText(entry)) + ",";
       item += JsonKey("volume") + JsonNumber(HistoryDealGetDouble(ticket, DEAL_VOLUME), 2) + ",";
-      item += JsonKey("price_in") + JsonNumber(price_in, _Digits) + ",";
-      item += JsonKey("price_out") + JsonNumber(price_out, _Digits) + ",";
+      item += JsonKey("price_in") + JsonNumber(price_in, digits) + ",";
+      item += JsonKey("price_out") + JsonNumber(price_out, digits) + ",";
       item += JsonKey("profit") + JsonNumber(profit, 2) + ",";
       item += JsonKey("commission") + JsonNumber(commission, 2) + ",";
       item += JsonKey("swap") + JsonNumber(swap, 2) + ",";
@@ -593,7 +597,7 @@ string JsonBarsWithHistory(string &history_json)
 string BuildHelloPayload()
 {
    string json = "{";
-   json += JsonKey("bridge_version") + JsonString("1.018") + ",";
+   json += JsonKey("bridge_version") + JsonString("1.019") + ",";
    json += JsonKey("component") + JsonString("mt5-bridge") + ",";
    json += JsonKey("symbol") + JsonString(_Symbol) + ",";
    json += JsonKey("magic") + StringFormat("%I64d", InpMagic) + ",";
@@ -621,7 +625,7 @@ string BuildSnapshotPayload(bool include_history=false)
    string history_json = "";
    string latest_bars = include_history ? JsonBarsWithHistory(history_json) : JsonBars();
    string json = "{";
-   json += JsonKey("bridge_version") + JsonString("1.018") + ",";
+   json += JsonKey("bridge_version") + JsonString("1.019") + ",";
    json += JsonKey("symbol") + JsonString(_Symbol) + ",";
    json += JsonKey("magic") + StringFormat("%I64d", InpMagic) + ",";
    json += JsonKey("terminal_connected") + JsonBool((bool)TerminalInfoInteger(TERMINAL_CONNECTED)) + ",";
@@ -655,8 +659,10 @@ string BuildSnapshotPayload(bool include_history=false)
    json += JsonKey("orders_count") + IntegerToString(OwnOrdersCount()) + ",";
    json += JsonKey("own_daily_realized") + JsonNumber(OwnDailyRealized(), 2) + ",";
    json += JsonKey("positions") + JsonPositions() + ",";
+   json += JsonKey("all_positions") + JsonPositions(true) + ",";
    json += JsonKey("orders") + JsonOrders() + ",";
    json += JsonKey("deals") + JsonDeals() + ",";
+   json += JsonKey("all_deals") + JsonDeals(true) + ",";
    json += JsonKey("guardian") + JsonGuardian() + ",";
    json += JsonKey("server_time") + StringFormat("%I64d", (long)TimeTradeServer()) + ",";
    json += JsonKey("bars") + latest_bars;

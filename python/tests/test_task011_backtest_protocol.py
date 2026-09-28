@@ -18,6 +18,8 @@ from xaupy_engine.server import EngineServer
 
 def profile_for_backtest():
     profile = default_profile()
+    # These event/management fixtures isolate mechanics; cost gates have dedicated replay regressions.
+    profile["costs"].update(max_spread_price_units=100, min_net_rr=0, max_slippage_points=0)
     profile["profile"]["name"] = "Task011 IPC Test"
     profile["strategy"]["allow_buy"] = True
     profile["strategy"]["allow_sell"] = False
@@ -171,7 +173,7 @@ class Task011BacktestProtocolTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("backtest_run_ack", run.type)
         self.assertTrue(run.payload["ok"])
         result = run.payload["result"]
-        self.assertEqual("M1_OHLC_PARITY_V1", result["model"])
+        self.assertEqual("M1_OHLC_COST_GUARDS_V2", result["model"])
         self.assertEqual(64, len(result["result_hash"]))
         self.assertGreaterEqual(result["trade_total"], 1)
         self.assertEqual(result["metrics"]["total_trades"], result["trade_total"])

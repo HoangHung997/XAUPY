@@ -23,6 +23,10 @@ public partial class ToolsDashboard : UserControl
     private ScrollViewer? _editorScroll;
     private ScrollViewer? _gutterScroll;
     private int _searchNext;
+    private string _loadedText = "";
+    private JsonElement? _baselineProfile;
+    public bool HasUnsavedChanges => _loaded && !ToolEditor.IsReadOnly && (ToolEditor.Text ?? "") != _loadedText;
+    public Func<bool>? HasConflictingDraft { get; set; }
     private readonly List<string> _history = new();
     private static readonly JsonSerializerOptions Pretty = new() { WriteIndented = true };
     private static readonly FilePickerFileType JsonType = new("JSON") { Patterns = new[] { "*.json" } };
@@ -64,12 +68,13 @@ public partial class ToolsDashboard : UserControl
     public void AttachSupervisor(EngineProcessSupervisor supervisor) => _supervisor = supervisor;
     public async Task EnsureLoadedAsync(bool force = false)
     {
-        if (_busy || (_loaded && !force) || _supervisor?.State != EngineConnectionState.Ready) return;
+        if (_busy || HasUnsavedChanges || (_loaded && !force) || _supervisor?.State != EngineConnectionState.Ready) return;
         await RunAsync(async () =>
         {
             var active = await _supervisor.GetActiveConfigAsync();
             ToolProfileName.Text = active.GetProperty("profile").GetProperty("name").GetString();
-            ToolSymbol.Text = active.TryGetProperty("symbol", out var symbol) ? symbol.GetString() : "XAUUSD";
+            ToolSymbol.Text = active.GetProperty("strategy").GetProperty("symbol").GetString();
+            _baselineProfile = active.Clone();
             object display = active;
             if (_mode == "compare")
             {
@@ -94,6 +99,7 @@ public partial class ToolsDashboard : UserControl
             else if (_mode == "news") display = new { format = "JSON array: timestamp_utc (ISO 8601 + timezone), currency, impact, title", active_filter = active.GetProperty("news"), status = "Mở file lịch tin để kiểm tra; chưa có nguồn lịch tin trực tiếp." };
             else if (_mode == "risk") display = new { status = "Nhập risk budget, khoảng SL, tick size và tick value rồi nhấn Tính lot.", note = "Ví dụ nhập tay; chưa dùng để đặt lệnh. Không bao gồm spread, commission hoặc slippage." };
             ToolEditor.Text = JsonSerializer.Serialize(display, Pretty);
+            _loadedText = ToolEditor.Text;
             RefreshEditorInfo();
             _loaded = true;
             Result("Đã tải dữ liệu thực từ Python Engine.", true);
@@ -103,6 +109,8 @@ public partial class ToolsDashboard : UserControl
     private async void SelectTool_OnClick(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.Tag is not string mode) return;
+        if (_busy || !await ConfirmDiscardDraftAsync()) return;
+        _loaded = false;
         _mode = mode;
         foreach (var child in ToolMenu.Children.OfType<Button>()) SetMenuAppearance(child, child == button);
         var title = (button.Content as Grid)?.Children.OfType<StackPanel>().FirstOrDefault()?.Children.OfType<TextBlock>().FirstOrDefault()?.Text ?? mode;
@@ -119,7 +127,29 @@ public partial class ToolsDashboard : UserControl
         await EnsureLoadedAsync(true);
     }
 
-    private async void Reload_OnClick(object? sender, RoutedEventArgs e) => await EnsureLoadedAsync(true);
+    private async void Reload_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (!_busy && await ConfirmDiscardDraftAsync()) { _loaded = false; await EnsureLoadedAsync(true); }
+    }
+
+    private async Task<bool> ConfirmDiscardDraftAsync()
+    {
+        if (!HasUnsavedChanges) return true;
+        if (TopLevel.GetTopLevel(this) is not Window owner) return false;
+        bool discard = false;
+        var dialog = new Window { Title = "Bản nháp chưa áp dụng", Width = 510, Height = 195,
+            CanResize = false, WindowStartupLocation = WindowStartupLocation.CenterOwner };
+        var keep = new Button { Content = "Giữ bản nháp" };
+        var replace = new Button { Content = "Bỏ thay đổi" };
+        keep.Click += (_, _) => dialog.Close();
+        replace.Click += (_, _) => { discard = true; dialog.Close(); };
+        dialog.Content = new StackPanel { Margin = new Thickness(18), Spacing = 18, Children = {
+            new TextBlock { Text = "Nội dung đang sửa sẽ bị thay thế. Bạn có thể giữ lại để lưu hoặc áp dụng trước.", TextWrapping = TextWrapping.Wrap },
+            new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { keep, replace } }
+        } };
+        await dialog.ShowDialog(owner);
+        return discard;
+    }
     private static void SetMenuAppearance(Button button, bool selected)
     {
         button.Background = new LinearGradientBrush
@@ -188,7 +218,7 @@ public partial class ToolsDashboard : UserControl
     {
         if (e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift) && e.Key == Key.F) Format_OnClick(sender, new RoutedEventArgs());
         else if (e.KeyModifiers == KeyModifiers.Control && e.Key == Key.F) Find_OnClick(sender, new RoutedEventArgs());
-        else if (e.KeyModifiers == KeyModifiers.Control && e.Key == Key.S) Apply_OnClick(sender, new RoutedEventArgs());
+        else if (e.KeyModifiers == KeyModifiers.Control && e.Key == Key.S) Save_OnClick(sender, new RoutedEventArgs());
         else if (e.Key == Key.F11) Expand_OnClick(sender, new RoutedEventArgs());
         else return;
         e.Handled = true;
@@ -196,6 +226,7 @@ public partial class ToolsDashboard : UserControl
     private async void Defaults_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
     {
         if (_supervisor is null || _mode is not ("editor" or "profile")) return;
+        if (!await ConfirmDiscardDraftAsync()) return;
         ToolEditor.Text = JsonSerializer.Serialize(await _supervisor.GetDefaultConfigAsync(), Pretty);
         Result("Đã nạp mặc định vào bản nháp.", true);
         ToolResultDetail.Text = "Kiểm tra và nhấn Áp dụng nếu muốn thay cấu hình đang chạy.";
@@ -203,7 +234,7 @@ public partial class ToolsDashboard : UserControl
     private void Help_OnClick(object? sender, RoutedEventArgs e)
     {
         Result("Mở hoặc chỉnh sửa JSON → kiểm tra cú pháp → áp dụng.", true);
-        ToolResultDetail.Text = "Ctrl+F tìm kiếm • Ctrl+Shift+F định dạng • Ctrl+S lưu profile • F11 mở rộng. Sao lưu/khôi phục tại Cài đặt.";
+        ToolResultDetail.Text = "Ctrl+F tìm kiếm • Ctrl+Shift+F định dạng • Ctrl+S lưu bản nháp ra file • F11 mở rộng. Áp dụng vào hệ thống thay đổi cấu hình đang chạy.";
     }
     private async void HistoryStart_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
     {
@@ -257,14 +288,24 @@ public partial class ToolsDashboard : UserControl
     private async void Apply_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
     {
         if (_supervisor is null || _mode is not ("editor" or "profile")) return;
+        if (HasConflictingDraft?.Invoke() == true)
+            throw new InvalidOperationException("Một tab khác có bản nháp chưa áp dụng. Hãy áp dụng hoặc hoàn tác bản nháp đó trước.");
         using var json = JsonDocument.Parse(ToolEditor.Text ?? "");
-        var result = await _supervisor.ApplyActiveConfigAsync(json.RootElement);
-        Result(result.Applied ? "Đã áp dụng và lưu profile. Guardian tiếp tục khóa execution." : string.Join(" • ", result.Errors), result.Applied);
+        var result = await _supervisor.ApplyActiveConfigAsync(json.RootElement, expectedProfile: _baselineProfile);
+        if (result.Applied && result.Profile is { } applied)
+        {
+            _baselineProfile = applied.Clone();
+            ToolEditor.Text = _loadedText = JsonSerializer.Serialize(applied, Pretty);
+            ToolSymbol.Text = applied.GetProperty("strategy").GetProperty("symbol").GetString();
+            ToolProfileName.Text = applied.GetProperty("profile").GetProperty("name").GetString();
+        }
+        Result(result.Applied ? "Đã áp dụng và lưu profile." : string.Join(" • ", result.Errors), result.Applied);
     });
     private async void Open_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
     {
         var top = TopLevel.GetTopLevel(this);
         if (top is null) return;
+        if (!await ConfirmDiscardDraftAsync()) return;
         var paths = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Mở JSON", AllowMultiple = false, FileTypeFilter = new[] { JsonType } });
         if (paths.Count == 0) return;
         await using var stream = await paths[0].OpenReadAsync();

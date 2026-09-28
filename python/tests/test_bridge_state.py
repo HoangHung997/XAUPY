@@ -35,6 +35,21 @@ def snapshot():
 
 
 class BridgeRegistryTests(unittest.TestCase):
+    def test_all_symbol_views_do_not_change_execution_scope_or_risk(self):
+        payload = snapshot()
+        own = dict(ticket=1, magic=991188, symbol="XAUUSD", profit=1, swap=0, volume=.01, price_open=4200, sl=4190)
+        foreign = dict(ticket=2, magic=991188, symbol="EURUSD", profit=100, swap=0, volume=1, price_open=1.1, sl=1)
+        payload.update(magic=991188, positions=[own], positions_count=1, all_positions=[own, foreign], all_deals=[dict(magic=991188, symbol="EURUSD", ticket=3)], tick_size=.01, tick_value=1, equity=1000)
+        registry = BridgeRegistry(); registry.record_snapshot(payload)
+        view = registry.orders_positions_payload()
+        self.assertEqual(2, len(view["positions"]))
+        self.assertEqual(1, view["open_pl"])
+        self.assertEqual(10, view["risk_usd"])
+        self.assertEqual([own], registry.latest_fresh_snapshot()["positions"])
+        for bad_magic in (12, None):
+            foreign["magic"] = bad_magic
+            with self.assertRaises(BridgeSnapshotError): registry.record_snapshot(payload)
+
     def test_valid_snapshot_is_connected_but_execution_locked(self):
         registry = BridgeRegistry(stale_seconds=1.0)
         registry.record_hello({"bridge_version": "0.3.0-task003", "symbol": "XAUUSD"})

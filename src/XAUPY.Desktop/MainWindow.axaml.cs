@@ -105,6 +105,9 @@ public partial class MainWindow : Window
         _optimizerDashboard.AttachSupervisor(_engineSupervisor);
         _toolsDashboard = this.FindControl<ToolsDashboard>("ToolsView")!;
         _toolsDashboard.AttachSupervisor(_engineSupervisor);
+        _strategyDashboard.HasConflictingDraft = () => _configurationEditor.HasUnsavedChanges || _quickConfigurationDirty || _toolsDashboard.HasUnsavedChanges;
+        _configurationEditor.HasConflictingDraft = () => _strategyDashboard.HasUnsavedChanges || _quickConfigurationDirty || _toolsDashboard.HasUnsavedChanges;
+        _toolsDashboard.HasConflictingDraft = () => _configurationEditor.HasUnsavedChanges || _strategyDashboard.HasUnsavedChanges || _quickConfigurationDirty;
         _settingsDashboard = this.FindControl<SettingsDashboard>("SettingsView")!;
         _settingsDashboard.AttachSupervisor(_engineSupervisor);
 

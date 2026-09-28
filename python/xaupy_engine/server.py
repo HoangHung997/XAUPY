@@ -36,6 +36,7 @@ from .strategy_engine import StrategyEngine, StrategyDataError
 from .settings import SettingsStore, default_settings
 from .diagnostics import collect_diagnostics
 from .history_jobs import HistoryJobs
+from .backtest_jobs import BacktestJobs
 from .tick_protocol import TickTransport, validate_tick_payload
 from .demo_once import DemoOnceController, DemoOnceError, UnavailableDemoOnceController, profile_hash
 
@@ -96,6 +97,7 @@ class EngineServer:
         self.manual_actions = ManualActionSimulator(self.bridge)
         self.journal = StructuredJournal(journal_dir)
         self.backtests = BacktestRepository(backtest_dir)
+        self.backtest_jobs = BacktestJobs(self.backtests, self._log)
         self.optimizers = OptimizerRepository(optimizer_dir)
         self.optimizer_jobs = OptimizerJobManager(
             self.optimizers,
@@ -150,6 +152,7 @@ class EngineServer:
         await self._shutdown_event.wait()
 
     async def close(self) -> None:
+        await asyncio.to_thread(self.backtest_jobs.close)
         await asyncio.to_thread(self.history_jobs.close)
         optimizer_stopped = await asyncio.to_thread(
             self.optimizer_jobs.shutdown,
@@ -307,7 +310,14 @@ class EngineServer:
                         and str(request.payload.get("bridge_session_id", "")).lower() != bridge_session_id):
                     await self._write(writer, self._bridge_error(request, "Bridge snapshot session changed"))
                     continue
-                response, should_shutdown = self._dispatch(request, bridge_session_id=bridge_session_id)
+                if request.type == "backtest_run":
+                    response = await self._legacy_backtest_async(request)
+                    should_shutdown = False
+                elif request.type == "backtest_dataset_inspect":
+                    response = await asyncio.to_thread(self._backtest_dataset_inspect_response, request, self._common())
+                    should_shutdown = False
+                else:
+                    response, should_shutdown = self._dispatch(request, bridge_session_id=bridge_session_id)
                 if candidate_session is not None and response.type == "bridge_hello_ack":
                     bridge_session_id = candidate_session
                     self._demo_bridge_writer = writer
@@ -505,6 +515,12 @@ class EngineServer:
             )
 
         if request.type == "config_active_set":
+            expected = request.payload.get("expected_profile")
+            if expected is not None and expected != self.active_profile:
+                return Envelope.response("config_active_set_ack", request.request_id, {
+                    **common, "applied": False,
+                    "errors": ["Cấu hình đang chạy đã thay đổi. Bản nháp được giữ; lưu bản nháp rồi tải lại trước khi áp dụng."],
+                }), False
             profile = request.payload.get("profile")
             if not isinstance(profile, dict):
                 errors = ["profile must be an object"]
@@ -830,8 +846,8 @@ class EngineServer:
         if request.type == "backtest_dataset_inspect":
             return self._backtest_dataset_inspect_response(request, common), False
 
-        if request.type == "backtest_run":
-            return self._backtest_run_response(request, common), False
+        if request.type in {"backtest_start", "backtest_status", "backtest_cancel"}:
+            return self._backtest_job_response(request, common), False
 
         if request.type == "backtest_history_query":
             return self._backtest_history_response(request, common), False
@@ -1051,109 +1067,34 @@ class EngineServer:
             payload,
         )
 
-    def _backtest_run_response(
-        self,
-        request: Envelope,
-        common: dict[str, Any],
-    ) -> Envelope:
+    def _backtest_job_response(self, request: Envelope, common: dict[str, Any]) -> Envelope:
         try:
-            path = request.payload.get("path")
-            if not isinstance(path, str) or not path.strip():
-                raise BacktestError("path is required")
+            if request.type == "backtest_start":
+                job = self.backtest_jobs.start(self.active_profile, request.payload)
+            elif request.type == "backtest_cancel":
+                job = self.backtest_jobs.cancel(str(request.payload.get("job_id", "")))
+            else:
+                job = self.backtest_jobs.status(str(request.payload.get("job_id", "")))
+            payload = {**common, "ok": True, "job": job}
+        except (BacktestError, TypeError, ValueError) as error:
+            payload = {**common, "ok": False, "errors": [str(error)]}
+        return Envelope.response(request.type + "_ack", request.request_id, payload)
 
-            from_date = str(request.payload.get("from_date", "")).strip()
-            to_date = str(request.payload.get("to_date", "")).strip()
-            initial_balance = float(
-                request.payload.get("initial_balance", 10_000.0)
-            )
-            spread_pips = float(request.payload.get("spread_pips", 20.0))
-            commission_per_lot = float(
-                request.payload.get("commission_per_lot", 7.0)
-            )
-
-            dataset = load_historical_dataset(path)
-            self._log(
-                "INFO",
-                "Python Engine",
-                "BACKTEST_RUN",
-                "Backtest started",
-                details={
-                    "dataset_file_name": dataset.path.name,
-                    "dataset_fingerprint": dataset.fingerprint,
-                    "from_date": from_date,
-                    "to_date": to_date,
-                    "initial_balance": initial_balance,
-                    "spread_pips": spread_pips,
-                    "commission_per_lot": commission_per_lot,
-                },
-                correlation_id=request.request_id,
-                symbol=dataset.metadata.symbol,
-            )
-
-            engine = BacktestEngine(
-                self.active_profile,
-                initial_balance=initial_balance,
-                spread_pips=spread_pips,
-                commission_per_lot=commission_per_lot,
-            )
-            result = engine.run(
-                dataset,
-                from_date=from_date,
-                to_date=to_date,
-            )
-            stored = self.backtests.save(result)
-
-            self._log(
-                "INFO",
-                "Python Engine",
-                "BACKTEST_RUN",
-                "Backtest completed",
-                details={
-                    "run_id": stored["run_id"],
-                    "result_hash": stored["result_hash"],
-                    "dataset_fingerprint": stored["dataset_fingerprint"],
-                    "profile_hash": stored["engine_profile_hash"],
-                    "from_date": stored["from_date"],
-                    "to_date": stored["to_date"],
-                    "metrics": stored["metrics"],
-                },
-                correlation_id=request.request_id,
-                symbol=dataset.metadata.symbol,
-                profile_hash=stored["engine_profile_hash"],
-            )
-            payload = {
-                **common,
-                "ok": True,
-                "result": self._public_backtest_result(
-                    stored,
-                    trade_offset=0,
-                    trade_limit=100,
-                ),
-            }
-        except (BacktestError, OSError, TypeError, ValueError) as exc:
-            self._log(
-                "WARN",
-                "Python Engine",
-                "BACKTEST_RUN",
-                f"Backtest rejected: {exc}",
-                details={
-                    "path": request.payload.get("path"),
-                    "from_date": request.payload.get("from_date"),
-                    "to_date": request.payload.get("to_date"),
-                },
-                correlation_id=request.request_id,
-            )
-            payload = {
-                **common,
-                "ok": False,
-                "errors": [str(exc)],
-            }
-
-        return Envelope.response(
-            "backtest_run_ack",
-            request.request_id,
-            payload,
-        )
+    async def _legacy_backtest_async(self, request: Envelope) -> Envelope:
+        # Compatibility for CLI clients; the desktop uses start/status/cancel,
+        # leaving its heartbeat socket available throughout the job.
+        try:
+            job = self.backtest_jobs.start(self.active_profile, request.payload)
+            while job["state"] in {"QUEUED", "RUNNING", "CANCELLING"}:
+                await asyncio.sleep(.025)
+                job = self.backtest_jobs.status(job["job_id"])
+            if job["state"] != "COMPLETED":
+                raise BacktestError("; ".join(job["errors"]) or job["state"])
+            stored = await asyncio.to_thread(self.backtests.get, job["run_id"])
+            payload = {**self._common(), "ok": True, "result": self._public_backtest_result(stored, trade_offset=0, trade_limit=100)}
+        except (BacktestError, TypeError, ValueError) as error:
+            payload = {**self._common(), "ok": False, "errors": [str(error)]}
+        return Envelope.response("backtest_run_ack", request.request_id, payload)
 
     def _backtest_history_response(
         self,

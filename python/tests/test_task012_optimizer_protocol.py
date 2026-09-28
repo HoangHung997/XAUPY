@@ -21,6 +21,8 @@ from xaupy_engine.server import EngineServer
 
 def optimizer_profile():
     profile = default_profile()
+    # Protocol fixtures must produce trades independently of cost-gate regressions.
+    profile["costs"].update(max_spread_price_units=100, min_net_rr=0, max_slippage_points=0)
     profile["profile"]["name"] = "Task012 IPC"
     profile["strategy"]["allow_buy"] = True
     profile["strategy"]["allow_sell"] = False

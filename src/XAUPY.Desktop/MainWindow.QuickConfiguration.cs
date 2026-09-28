@@ -100,6 +100,8 @@ public partial class MainWindow
                 throw new InvalidOperationException("Tab Cấu hình có thay đổi chưa áp dụng. Hãy áp dụng hoặc hoàn tác bản nháp đó trước.");
             if (_strategyDashboard.HasUnsavedChanges)
                 throw new InvalidOperationException("Tab Chiến lược có thay đổi chưa áp dụng. Hãy áp dụng hoặc hoàn tác bản nháp đó trước.");
+            if (_toolsDashboard.HasUnsavedChanges)
+                throw new InvalidOperationException("Tab Công cụ có thay đổi chưa áp dụng. Hãy áp dụng hoặc hoàn tác bản nháp đó trước.");
             var active = await _engineSupervisor.GetActiveConfigAsync();
             var profile = JsonNode.Parse(active.GetRawText())!.AsObject();
             var baseline = _quickConfigurationBaseline ?? throw new InvalidOperationException("Chưa tải cấu hình nhanh.");

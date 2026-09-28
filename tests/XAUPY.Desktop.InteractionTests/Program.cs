@@ -68,6 +68,23 @@ try {
     // Reconnection must clear an automatic stale warning, and warm-up readiness
     // must never be presented as all entry conditions passing.
     var orderStatus = new OrdersPositionsDashboard();
+    var multiBook = OrdersPositionsSnapshot.Empty with { Available = true, TerminalConnected = true, AccountTradeMode = "DEMO", Symbol = "XAUUSD", PositionsCount = 2,
+        Positions = new[] { new PositionSnapshot(1, 991188, "XAUUSD", "BUY", .01, 4200, 4201, 4190, 4210, 1, 0, 1700000000, "fixture"), new PositionSnapshot(2, 991188, "EURUSD", "BUY", .01, 1, 1.1, .9, 1.2, 1, 0, 1700000000, "fixture") },
+        Deals = new[] { new DealSnapshot(3, 1, 991188, "XAUUSD", "SELL", "OUT", .01, 4200, 4201, 1, 0, 0, 1, "TP", 1700000000, "fixture"), new DealSnapshot(4, 2, 991188, "EURUSD", "SELL", "OUT", .01, 1, 1.1, 1, 0, 0, 1, "TP", 1700000000, "fixture") } };
+    orderStatus.Apply(multiBook, OverviewSnapshot.Empty, Mt5BridgeStatus.Offline, ConfigurationSummary.Default);
+    var allSymbols = orderStatus.FindControl<CheckBox>("ShowAllSymbolsCheck")!;
+    allSymbols.IsChecked = false; allSymbols.RaiseEvent(new RoutedEventArgs(CheckBox.ClickEvent));
+    Assert(orderStatus.FindControl<StackPanel>("PositionsRowsHost")!.Children.Count == 1, "symbol filter changes position rows immediately without waiting for heartbeat");
+    allSymbols.IsChecked = true; allSymbols.RaiseEvent(new RoutedEventArgs(CheckBox.ClickEvent));
+    Assert(orderStatus.FindControl<StackPanel>("PositionsRowsHost")!.Children.Count == 2, "all symbols restores both XAUPY positions");
+    Assert(orderStatus.FindControl<StackPanel>("DealsRowsHost")!.Children.Count == 1, "history defaults to current symbol");
+    var historySymbol = orderStatus.FindControl<CheckBox>("CurrentSymbolHistoryCheck")!;
+    historySymbol.IsChecked = false; historySymbol.RaiseEvent(new RoutedEventArgs(CheckBox.ClickEvent));
+    Assert(orderStatus.FindControl<StackPanel>("DealsRowsHost")!.Children.Count == 2, "history checkbox reveals other XAUPY symbols");
+    orderStatus.ApplyDemoOnceStatus(DemoOnceSnapshot.Disabled with { HasReport = true, IsFresh = true, State = "ARMED", LastBlocker = "SESSION_TIME_BLOCKED" });
+    Assert(orderStatus.FindControl<TextBlock>("DemoOnceMessage")!.Text == "SESSION_TIME_BLOCKED", "heartbeat updates current entry blocker");
+    orderStatus.ApplyDemoOnceStatus(DemoOnceSnapshot.Disabled with { HasReport = true, IsFresh = true, State = "SUSPENDED", Reason = "PROFILE_CHANGED", LastBlocker = "SESSION_TIME_BLOCKED" });
+    Assert(orderStatus.FindControl<TextBlock>("DemoOnceMessage")!.Text == "PROFILE_CHANGED", "suspension reason replaces stale waiting blocker");
     orderStatus.Apply(OrdersPositionsSnapshot.Empty, OverviewSnapshot.Empty, Mt5BridgeStatus.Offline, ConfigurationSummary.Default);
     Assert(orderStatus.FindControl<TextBlock>("ActionStatusText")!.Text!.StartsWith("SIMULATION BLOCKED"),
         "orders show an automatic blocked message while MT5 data is unavailable");
@@ -360,6 +377,37 @@ try {
         Assert(info.Bounds.Height > 0 && info.Bounds.Width > 0, "Tools file information remains arranged beside the real editor");
     }
     finally { toolsWindow.Close(); }
+    var beforeToolsAudit = ActiveProfile(supervisor);
+    var eurProfile = (JsonObject)beforeToolsAudit.DeepClone(); eurProfile["strategy"]!["symbol"] = "EURUSD";
+    SetActiveProfile(supervisor, eurProfile);
+    var draftTools = new ToolsDashboard(); draftTools.AttachSupervisor(supervisor); Complete(draftTools.EnsureLoadedAsync());
+    Assert(draftTools.FindControl<TextBox>("ToolSymbol")!.Text == "EURUSD", "Tools reads symbol from strategy.symbol");
+    var draftEditor = draftTools.FindControl<TextBox>("ToolEditor")!;
+    var toolsDraft = (JsonObject)eurProfile.DeepClone(); toolsDraft["profile"]!["name"] = "Unapplied Tools draft";
+    draftEditor.Text = toolsDraft.ToJsonString(); Dispatcher.UIThread.RunJobs();
+    Complete(draftTools.EnsureLoadedAsync(true));
+    Assert(draftTools.HasUnsavedChanges && draftEditor.Text!.Contains("Unapplied Tools draft"), "automatic reload preserves Tools draft");
+    var menuButton = draftTools.FindControl<StackPanel>("ToolMenu")!.Children.OfType<Button>().First(b => b.Tag?.ToString() == "compare");
+    menuButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs();
+    Assert(draftEditor.Text!.Contains("Unapplied Tools draft") && Field(draftTools, "_mode")?.ToString() == "editor", "tool switch cannot discard draft without an explicit choice");
+    draftTools.HasConflictingDraft = () => true;
+    Invoke(draftTools, "Apply_OnClick", draftTools, new RoutedEventArgs()); PumpUntil(() => !(bool)Field(draftTools, "_busy")!);
+    Assert(draftTools.HasUnsavedChanges && draftTools.FindControl<TextBlock>("ToolResult")!.Text!.Contains("bản nháp"), "Tools prevents conflicting cross-tab apply");
+    draftTools.HasConflictingDraft = () => false;
+    SetActiveProfile(supervisor, beforeToolsAudit);
+    Invoke(draftTools, "Apply_OnClick", draftTools, new RoutedEventArgs()); PumpUntil(() => !(bool)Field(draftTools, "_busy")!);
+    Assert(draftTools.HasUnsavedChanges && draftTools.FindControl<TextBlock>("ToolResult")!.Text!.Contains("đã thay đổi"), "Tools detects concurrent active-profile changes and preserves draft");
+    var rangeOptimizer = new OptimizerDashboard();
+    var rangesProfile = (JsonObject)beforeToolsAudit.DeepClone(); rangesProfile["stop_loss"]!["mode"] = "ATR"; rangesProfile["take_profit"]!["mode"] = "ZRSI_DYNAMIC";
+    rangesProfile["pullback"]!["rsi_enabled"] = true; rangesProfile["pullback"]!["z_enabled"] = true;
+    rangesProfile["trigger"]!["rsi_enabled"] = true; rangesProfile["trigger"]!["z_enabled"] = true;
+    Invoke(rangeOptimizer, "InitializeRangesFromActiveProfile", JsonSerializer.SerializeToElement(rangesProfile));
+    var rangeList = (List<Dictionary<string, object>>)Invoke(rangeOptimizer, "BuildParameterRanges")!;
+    var paths = rangeList.Select(r => r["path"].ToString()).ToArray();
+    Assert(rangeOptimizer.FindControl<TextBox>("SlMinBox")!.IsEnabled && paths.Contains("stop_loss.atr_multiplier"), "ATR multiplier is an active optimizer range");
+    Assert(rangeOptimizer.FindControl<TextBox>("TpMinBox")!.IsEnabled && paths.Contains("take_profit.fixed_price_units"), "dynamic TP initial target is an active optimizer range");
+    Assert(new[] { "pullback.rsi_period", "trigger.rsi_period", "pullback.z_period", "trigger.z_period", "pullback.z_buy_level", "pullback.z_sell_level", "trigger.rsi_reversal_delta", "trigger.z_reversal_delta" }.All(paths.Contains), "RSI and Z periods, thresholds and both reversal deltas are independently represented");
+    ((DispatcherTimer)Field(rangeOptimizer, "_pollTimer")!).Stop();
 
     var settingsView = new SettingsDashboard(); settingsView.AttachSupervisor(supervisor);
     Complete(settingsView.EnsureLoadedAsync());

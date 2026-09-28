@@ -122,7 +122,7 @@
           <StackPanel>
             <Grid Background="#082038" ColumnDefinitions="*,Auto" Margin="0">
               <TextBlock x:Name="PositionsTitleText" Text="Vị thế đang mở (0)" Classes="panelTitle" Margin="12,8"/>
-              <CheckBox x:Name="ShowAllSymbolsCheck" Grid.Column="1" Content="Hiển thị tất cả symbol" IsChecked="True" Margin="0,0,12,0" VerticalAlignment="Center"/>
+              <CheckBox x:Name="ShowAllSymbolsCheck" Grid.Column="1" Content="Hiển thị tất cả symbol XAUPY" IsChecked="True" Click="SymbolFilter_OnClick" Margin="0,0,12,0" VerticalAlignment="Center"/>
             </Grid>
             <Grid Margin="10,0,10,0" ColumnDefinitions="0.38*,0.92*,0.78*,0.68*,0.76*,0.86*,0.86*,0.76*,0.76*,0.96*,0.86*,0.92*,1.26*,2*">
               <TextBlock Text="#" Classes="tableHeader"/>
@@ -197,8 +197,8 @@
           <StackPanel>
             <Grid Background="#082038" ColumnDefinitions="*,Auto,Auto">
               <TextBlock Text="Lịch sử giao dịch (Deals)" Classes="panelTitle" Margin="12,8"/>
-              <CheckBox Grid.Column="1" Content="Hiển thị symbol hiện tại" IsChecked="True" Margin="0,0,14,0" VerticalAlignment="Center"/>
-              <Button Grid.Column="2" Classes="secondary" Content="⬇  Xuất báo cáo" IsEnabled="False" Margin="0,4,10,4"/>
+              <CheckBox x:Name="CurrentSymbolHistoryCheck" Grid.Column="1" Content="Hiển thị symbol hiện tại" IsChecked="True" Click="SymbolFilter_OnClick" Margin="0,0,14,0" VerticalAlignment="Center"/>
+              <Button Grid.Column="2" Classes="secondary" Content="⬇  Xuất báo cáo" Click="ExportOrders_OnClick" ToolTip.Tip="Xuất ảnh chụp dữ liệu hiện tại. Lịch sử tối đa 50 deal thoát trong 7 ngày; bộ lọc symbol được giữ." Margin="0,4,10,4"/>
             </Grid>
             <Grid Margin="10,0,10,0" ColumnDefinitions="0.92*,1.45*,0.86*,0.7*,0.76*,0.94*,0.94*,1*,0.94*,0.92*,2.2*">
               <TextBlock Text="#" Classes="tableHeader"/>

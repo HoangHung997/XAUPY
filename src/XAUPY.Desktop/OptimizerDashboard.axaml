@@ -86,9 +86,12 @@
       <Grid ColumnDefinitions="1.12*,1.28*" ColumnSpacing="8">
         <!-- Parameter ranges -->
         <Border Grid.Column="0" Classes="panel">
-          <Grid RowDefinitions="36,Auto">
+          <Grid RowDefinitions="36,Auto,Auto">
             <Border Grid.Row="0" Background="#082038" Padding="12,8">
-              <TextBlock Text="Phạm vi tham số tối ưu" Classes="panelTitle"/>
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="Phạm vi tham số tối ưu" Classes="panelTitle"/>
+                <Button Grid.Column="1" Content="Chu kỳ RSI / Z…" Classes="secondary" Padding="6,0" MinHeight="20" FontSize="12" Click="ExtraRanges_OnClick"/>
+              </Grid>
             </Border>
 
             <Grid Grid.Row="1"
@@ -157,8 +160,9 @@
               <TextBox x:Name="TpStepBox" Grid.Row="9" Grid.Column="3" TextChanged="ParameterText_OnChanged"/>
               <TextBlock x:Name="TpDefaultText" Grid.Row="9" Grid.Column="4" Text="—" VerticalAlignment="Center"/>
             </Grid>
-
-
+            <Border x:Name="ExtraRangesPanel" Grid.Row="2" IsVisible="False" Margin="10,2,10,6">
+              <ScrollViewer MaxHeight="260"><StackPanel x:Name="ExtraRangesHost" Spacing="4"/></ScrollViewer>
+            </Border>
           </Grid>
         </Border>
 

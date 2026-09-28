@@ -240,7 +240,7 @@ def main() -> int:
         try:
             heartbeat = exchange(file, "heartbeat")
             assert heartbeat["type"] == "heartbeat_ack"
-            assert heartbeat["payload"]["engine_version"] == "0.17.1-tickui"
+            assert heartbeat["payload"]["engine_version"] == "0.17.2-remediation"
             assert heartbeat["payload"]["trading_enabled"] is False
             assert heartbeat["payload"]["execution_enabled"] is False
 
@@ -270,7 +270,7 @@ def main() -> int:
 
             result1 = first["payload"]["result"]
             result2 = second["payload"]["result"]
-            assert result1["model"] == "M1_OHLC_PARITY_V1"
+            assert result1["model"] == "M1_OHLC_COST_GUARDS_V2"
             assert result1["result_hash"] == result2["result_hash"]
             assert result1["trades"] == result2["trades"]
             assert result1["pending_entry_events"] == result2["pending_entry_events"]

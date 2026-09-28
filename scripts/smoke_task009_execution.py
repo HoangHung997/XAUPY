@@ -190,7 +190,7 @@ def main() -> int:
             "0.10.0-task010",
             "0.11.0-task011",
             "0.12.0-task012",
-                "0.17.1-tickui",
+                "0.17.2-remediation",
         }
         assert heartbeat["payload"]["execution_enabled"] is False
 

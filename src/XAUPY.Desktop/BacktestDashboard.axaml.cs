@@ -37,6 +37,7 @@ public partial class BacktestDashboard : UserControl
     private BacktestHistoryItem? _selectedHistory;
     private int _tradePage;
     private bool _loading;
+    private CancellationTokenSource? _runCancellation;
 
     public BacktestDashboard()
     {
@@ -138,6 +139,7 @@ public partial class BacktestDashboard : UserControl
 
     private async void RunBacktest_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (_loading) return;
         if (_supervisor is null || _supervisor.State != EngineConnectionState.Ready)
         {
             SetStatus("Python Engine chưa READY.", Brushes.Gold);
@@ -179,8 +181,10 @@ public partial class BacktestDashboard : UserControl
         try
         {
             _loading = true;
+            _runCancellation = new CancellationTokenSource();
             Button("RunBacktestButton").IsEnabled = false;
-            SetStatus("Đang chạy deterministic Backtest bằng StrategyEngine thật...", Brushes.LightBlue);
+            Button("CancelBacktestButton").IsEnabled = true;
+            SetStatus("Đang chạy Backtest nền; dữ liệu live tiếp tục cập nhật...", Brushes.LightBlue);
 
             var result = await _supervisor.RunBacktestAsync(
                 _dataset!.Path,
@@ -188,7 +192,11 @@ public partial class BacktestDashboard : UserControl
                 toDate,
                 initialBalance,
                 spread,
-                commission);
+                commission, _runCancellation.Token,
+                new Progress<BacktestJobSnapshot>(job => {
+                    if (_runCancellation is { IsCancellationRequested: false } && job.State is "QUEUED" or "RUNNING")
+                        SetStatus(job.TotalBars > 0 ? $"Backtest: {job.CompletedBars:N0}/{job.TotalBars:N0} nến • {job.State}" : "Đang đọc dữ liệu Backtest...", Brushes.LightBlue);
+                }));
 
             _tradePage = 0;
             await LoadRunAsync(result.RunId, page: 0);
@@ -198,6 +206,10 @@ public partial class BacktestDashboard : UserControl
 
             await RefreshHistoryAsync(selectRunId: result.RunId);
         }
+        catch (OperationCanceledException)
+        {
+            SetStatus("Đã yêu cầu hủy Backtest. Kết quả cũ được giữ nguyên.", Brushes.Gold);
+        }
         catch (Exception ex)
         {
             SetStatus($"Backtest thất bại: {ex.Message}", Brushes.IndianRed);
@@ -206,7 +218,17 @@ public partial class BacktestDashboard : UserControl
         {
             _loading = false;
             Button("RunBacktestButton").IsEnabled = true;
+            Button("CancelBacktestButton").IsEnabled = false;
+            _runCancellation?.Dispose();
+            _runCancellation = null;
         }
+    }
+
+    private void CancelBacktest_OnClick(object? sender, RoutedEventArgs e)
+    {
+        _runCancellation?.Cancel();
+        Button("CancelBacktestButton").IsEnabled = false;
+        SetStatus("Đang hủy Backtest...", Brushes.Gold);
     }
 
     private async void RefreshHistory_OnClick(object? sender, RoutedEventArgs e)

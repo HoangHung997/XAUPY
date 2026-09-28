@@ -146,6 +146,8 @@ def create_dataset(path: Path):
 
 def task011_profile(base_profile: dict) -> dict:
     profile = copy.deepcopy(base_profile)
+    # This fixture exercises persistence/IPC, independently of entry cost limits.
+    profile["costs"].update(max_spread_price_units=100, min_net_rr=0, max_slippage_points=0)
     profile["profile"]["name"] = "Task011 Packaged Smoke"
     profile["strategy"]["allow_buy"] = True
     profile["strategy"]["allow_sell"] = False
@@ -217,7 +219,7 @@ def main() -> int:
             assert heartbeat["payload"]["engine_version"] in {
                 "0.11.0-task011",
                 "0.12.0-task012",
-                "0.17.1-tickui",
+                "0.17.2-remediation",
             }
             assert heartbeat["payload"]["trading_enabled"] is False
             assert heartbeat["payload"]["execution_enabled"] is False
@@ -259,7 +261,7 @@ def main() -> int:
 
             result1 = first["payload"]["result"]
             result2 = second["payload"]["result"]
-            assert result1["model"] == "M1_OHLC_PARITY_V1"
+            assert result1["model"] == "M1_OHLC_COST_GUARDS_V2"
             assert result1["metrics"]["total_trades"] >= 1
             assert result1["result_hash"] == result2["result_hash"]
             assert result1["run_id"] != result2["run_id"]

@@ -19,6 +19,7 @@ from typing import Any
 from uuid import UUID
 
 from .config_schema import normalized_profile, validate_profile
+from .execution_costs import entry_cost_plan
 from .settings import _atomic_json
 from .strategy_engine import HISTORY_TIMEFRAME_SECONDS, _atr
 
@@ -508,14 +509,14 @@ class DemoOnceController:
         max_loss = min(max_loss, remaining_day_loss)
         ea_daily_limit = _number(snapshot["guardian"].get("daily_loss_limit"), "ea_daily_loss_limit", positive=True)
         max_loss = min(max_loss, ea_daily_limit + min(guard["daily_realized"], 0))
-        cost_reserve = profile["costs"]["max_commission_per_lot"] * volume
-        slippage_distance = profile["costs"]["max_slippage_points"] * point
-        planned_loss = (risk_distance + slippage_distance) / tick_size * tick_value * volume + cost_reserve
+        costs = entry_cost_plan(profile, risk_distance=risk_distance,
+                                target_distance=abs(tp - entry), spread_price=spread,
+                                point=point, tick_size=tick_size, tick_value=tick_value)
+        planned_loss = costs.loss_per_lot * volume
         if planned_loss > max_loss + 1e-10:
             raise DemoOnceError("RISK_BUDGET_EXCEEDED")
-        reward_money = (abs(tp - entry) - slippage_distance) / tick_size * tick_value * volume - cost_reserve
-        if reward_money / planned_loss + 1e-12 < profile["costs"]["min_net_rr"]:
-            raise DemoOnceError("MIN_NET_RR")
+        if costs.blocker:
+            raise DemoOnceError(costs.blocker)
         return {"kind": "DEMO_ONE_SHOT_MARKET", **auth, "side": side, "volume": volume,
                 "reference_price": entry, "sl": round(sl, 10), "tp": round(tp, 10),
                 "max_deviation_points": profile["costs"]["max_slippage_points"],

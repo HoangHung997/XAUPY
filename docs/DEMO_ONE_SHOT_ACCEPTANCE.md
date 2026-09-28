@@ -135,3 +135,27 @@ allowance at 09:31:41 ICT, capped at 0.01 lot for 24 hours. It remains ARMED,
 unconsumed, with no broker fill at this checkpoint. See
 [Tick UI and native controls](TICK_UI_NATIVE_CONTROLS.md) for the build, live
 tick evidence, profile limitations and read-only follow-up behavior.
+
+## Superseding broker checkpoint — 2026-09-28 functional audit
+
+The profile subsequently saved through the app uses session 1 start `02:00`
+in broker time. The earlier unused allowance was suspended on that profile
+change. The user's later native authorization at 09:44:55 ICT is bound to the
+new profile hash `1e8eb3d4fb26b318ac28b1af0390e5fe8ba91f68775bb8a5ae4a96286db2c92e`.
+
+At the audit's read-only check, Python reports `FILLED`,
+`BROKER_DEAL_CONFIRMED`, `budget_consumed=true`. Direct read-only MT5 history
+independently confirms exactly one entry deal for that attempt: BUY XAUUSD
+0.01 lot at 4205.97, with initial broker SL 4204.90 and TP 4212.69. The position
+then closed at its server SL, with reported P/L -1.07 USD and zero commission
+and swap in the inspected deals. There is no remaining position for this
+attempt. Broker order/deal tickets and account details remain in the local
+evidence folder rather than being needed as published acceptance metadata.
+
+Evidence: `artifacts/feature-audit-20260928/live-status.json` and
+`broker-fill-verification.json`. The observer did not rearm, send, modify or
+close an order. This establishes the bounded entry/protection path and its
+broker reconciliation. It does not establish profitable parameters, manual
+broker execution, trailing/breakeven/partial management, repeated automation,
+REAL execution or 100% visual parity. See the
+[full functional audit](FEATURE_FUNCTION_AUDIT_20260928.md) for these gaps.

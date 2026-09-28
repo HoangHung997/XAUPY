@@ -267,7 +267,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
                     var heartbeat = ProtocolEnvelope.Create(
                         updateKind,
-                        new { component = "desktop", desktop_version = "0.17.1-tickui" });
+                        new { component = "desktop", desktop_version = "0.17.2-remediation" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
@@ -349,7 +349,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "0.17.1-tickui" });
+            new { component = "desktop", desktop_version = "0.17.2-remediation" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -367,7 +367,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
         var configRequest = ProtocolEnvelope.Create(
             "config_active_get",
-            new { component = "desktop", desktop_version = "0.17.1-tickui" });
+            new { component = "desktop", desktop_version = "0.17.2-remediation" });
 
         var configResponse = await SendReceiveAsync(
             configRequest,
@@ -541,11 +541,12 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
     public async Task<ConfigApplyResult> ApplyActiveConfigAsync(
         JsonElement profile,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        JsonElement? expectedProfile = null)
     {
         ThrowIfDisposed();
         var response = await SendReceiveAsync(
-            ProtocolEnvelope.Create("config_active_set", new { profile }),
+            ProtocolEnvelope.Create("config_active_set", new { profile, expected_profile = expectedProfile }),
             TimeSpan.FromSeconds(5),
             cancellationToken);
 
@@ -696,11 +697,11 @@ public sealed partial class EngineProcessSupervisor : IDisposable
     {
         ThrowIfDisposed();
 
-        var response = await SendReceiveAsync(
+        var response = await SendReadOnlyAsync(
             ProtocolEnvelope.Create(
                 "backtest_dataset_inspect",
                 new { path }),
-            TimeSpan.FromSeconds(15),
+            TimeSpan.FromSeconds(60),
             cancellationToken);
 
         if (response.Type != "backtest_dataset_inspect_ack")
@@ -711,36 +712,45 @@ public sealed partial class EngineProcessSupervisor : IDisposable
     }
 
     public async Task<BacktestResultSnapshot> RunBacktestAsync(
-        string path,
-        string fromDate,
-        string toDate,
-        double initialBalance,
-        double spreadPips,
-        double commissionPerLot,
-        CancellationToken cancellationToken = default)
+        string path, string fromDate, string toDate, double initialBalance,
+        double spreadPips, double commissionPerLot, CancellationToken cancellationToken = default,
+        IProgress<BacktestJobSnapshot>? progress = null)
     {
         ThrowIfDisposed();
-
-        var response = await SendReceiveAsync(
-            ProtocolEnvelope.Create(
-                "backtest_run",
-                new
-                {
-                    path,
-                    from_date = fromDate,
-                    to_date = toDate,
-                    initial_balance = initialBalance,
-                    spread_pips = spreadPips,
-                    commission_per_lot = commissionPerLot
-                }),
-            TimeSpan.FromMinutes(5),
-            cancellationToken);
-
-        if (response.Type != "backtest_run_ack")
-            throw new InvalidDataException($"Unexpected backtest run response: {response.Type}");
-
-        RejectUnexpectedExecutionEnable(response);
-        return BacktestApiParser.ParseRunOrGet(response.Payload);
+        cancellationToken.ThrowIfCancellationRequested();
+        async Task<BacktestJobSnapshot> Exchange(string kind, object payload)
+        {
+            // Short, complete exchanges never leave an unread reply behind when
+            // the user cancels a job. The polling delay carries cancellation.
+            var response = await SendReceiveAsync(ProtocolEnvelope.Create(kind, payload),
+                TimeSpan.FromSeconds(5), CancellationToken.None);
+            if (response.Type != kind + "_ack") throw new InvalidDataException("Unexpected backtest job reply");
+            RejectUnexpectedExecutionEnable(response);
+            return BacktestJobSnapshot.FromAck(response.Payload);
+        }
+        var job = await Exchange("backtest_start", new { path, from_date = fromDate, to_date = toDate,
+            initial_balance = initialBalance, spread_pips = spreadPips, commission_per_lot = commissionPerLot });
+        string jobId = job.JobId;
+        try
+        {
+            while (job.State is "QUEUED" or "RUNNING" or "CANCELLING")
+            {
+                progress?.Report(job);
+                await Task.Delay(200, cancellationToken);
+                job = await Exchange("backtest_status", new { job_id = jobId });
+            }
+            progress?.Report(job);
+            if (job.State == "CANCELLED") throw new OperationCanceledException("Backtest đã hủy.");
+            if (job.RunId is null) throw new InvalidDataException("Backtest completed without a saved result");
+            return await GetBacktestResultAsync(job.RunId);
+        }
+        catch (OperationCanceledException)
+        {
+            var stopped = await Exchange("backtest_cancel", new { job_id = jobId });
+            if (stopped.State == "COMPLETED" && stopped.RunId is not null)
+                return await GetBacktestResultAsync(stopped.RunId);
+            throw;
+        }
     }
 
     public async Task<BacktestHistoryResult> QueryBacktestHistoryAsync(
@@ -1037,6 +1047,36 @@ public sealed partial class EngineProcessSupervisor : IDisposable
         }
 
         return profile.Clone();
+    }
+
+    // Dataset inspection owns a short-lived connection so reading a large file
+    // cannot queue desktop heartbeats behind the shared stream's I/O lock.
+    private async Task<ProtocolEnvelope> SendReadOnlyAsync(ProtocolEnvelope request, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        if (request.Type != "backtest_dataset_inspect") throw new InvalidOperationException("Unsupported independent read");
+        if (!_connectedToOwnedInstance) throw new IOException("Engine chưa sẵn sàng.");
+        string? instance = _ownedInstanceId;
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        cts.CancelAfter(timeout);
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback, Port, cts.Token);
+        await using var stream = client.GetStream();
+        using var reader = new StreamReader(stream, new UTF8Encoding(false), false, 4096, true);
+        await using var writer = new StreamWriter(stream, new UTF8Encoding(false), 4096, true) { AutoFlush = true, NewLine = "\n" };
+        async Task<ProtocolEnvelope> Exchange(ProtocolEnvelope envelope)
+        {
+            await writer.WriteLineAsync(envelope.ToJson().AsMemory(), cts.Token);
+            var line = await reader.ReadLineAsync(cts.Token) ?? throw new EndOfStreamException();
+            var response = ProtocolEnvelope.Parse(line);
+            if (response.RequestId != envelope.RequestId) throw new InvalidDataException("Read response mismatch");
+            EngineInstanceGuard.Validate(response.Payload, instance);
+            if (instance != _ownedInstanceId) throw new IOException("Engine đã khởi động lại trong lúc đọc dữ liệu.");
+            RejectUnexpectedExecutionEnable(response);
+            return response;
+        }
+        var hello = await Exchange(ProtocolEnvelope.Create("hello", new { component = "desktop-read" }));
+        if (hello.Type != "hello_ack") throw new InvalidDataException("Unexpected read handshake");
+        return await Exchange(request);
     }
 
     private async Task<ProtocolEnvelope> SendReceiveAsync(

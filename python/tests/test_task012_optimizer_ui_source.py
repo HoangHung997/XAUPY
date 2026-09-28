@@ -140,7 +140,7 @@ class Task012OptimizerUiSourceTests(unittest.TestCase):
             self.assertIn(f'"{name}"', self.code)
 
     def test_task012_version_and_safety_guards_remain(self):
-        self.assertIn('desktop_version = "0.17.1-tickui"', self.supervisor)
+        self.assertIn('desktop_version = "0.17.2-remediation"', self.supervisor)
         self.assertIn("RejectUnexpectedExecutionEnable", self.supervisor)
         self.assertIn("RejectUnexpectedOrdersExecutionEnable", self.supervisor)
         self.assertIn(

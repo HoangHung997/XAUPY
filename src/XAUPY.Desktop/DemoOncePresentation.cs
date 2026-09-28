@@ -6,6 +6,15 @@ namespace XAUPY.Desktop;
 
 internal static class DemoOncePresentation
 {
+    public static string CurrentReason(DemoOnceSnapshot report)
+    {
+        var reason = report.State == "ARMED" ? report.LastBlocker ?? report.Reason ?? report.Code : report.Reason ?? report.Code;
+        var message = string.IsNullOrWhiteSpace(reason)
+            ? "Chỉ gửi khi có tín hiệu mới đúng chiến lược. Dừng chờ không đóng vị thế đã khớp." : reason;
+        if (!report.IsFresh) message = "Mất kết nối; trạng thái cuối: " + message;
+        if (report.BudgetConsumed == true) message += " · Đã dùng quyền gửi; đối chiếu ticket trong MT5.";
+        return message;
+    }
     public static bool IsVisible(DemoOnceSnapshot report) => report.HasReport && report.State != "DISABLED";
 
     public static string StateLabel(DemoOnceSnapshot report) => !report.IsFresh ? "MẤT KẾT NỐI" : report.State switch

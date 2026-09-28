@@ -93,6 +93,15 @@ public partial class OrdersPositionsDashboard : UserControl
             SetActionStatus("Chế độ mô phỏng • Giao dịch đang khóa", Brushes.Gold);
     }
 
+    public void ApplyDemoOnceStatus(DemoOnceSnapshot report)
+    {
+        var panel = this.FindControl<Border>("DemoOnceStatusPanel")!;
+        panel.IsVisible = DemoOncePresentation.IsVisible(report);
+        Text("DemoOnceStatusText").Text = DemoOncePresentation.Summary(report);
+        Text("DemoOnceStatusText").Foreground = DemoOncePresentation.StatusBrush(report);
+        ToolTip.SetTip(panel, DemoOncePresentation.Detail(report));
+    }
+
     private void RenderAll()
     {
         Text("OpenPlText").Text = Money(_book.OpenPl, _book.AccountCurrency);

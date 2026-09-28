@@ -62,6 +62,7 @@ public sealed class EngineStateChangedEventArgs(
     public OptimizerStatusSnapshot OptimizerStatus { get; } = optimizerStatus;
     public ConfigurationSummary Configuration { get; } = configuration;
     public StrategySnapshot Strategy { get; } = strategy;
+    public DemoOnceSnapshot DemoOnce { get; init; } = DemoOnceSnapshot.Disabled;
 }
 
 public sealed partial class EngineProcessSupervisor : IDisposable
@@ -109,6 +110,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
     public OptimizerStatusSnapshot OptimizerStatus { get; private set; } = OptimizerStatusSnapshot.Idle;
     public ConfigurationSummary Configuration { get; private set; } = ConfigurationSummary.Default;
     public StrategySnapshot Strategy { get; private set; } = StrategySnapshot.Empty;
+    public DemoOnceSnapshot DemoOnce { get; private set; } = DemoOnceSnapshot.Disabled;
 
     public Task StartAsync()
     {
@@ -262,7 +264,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
                     var heartbeat = ProtocolEnvelope.Create(
                         "heartbeat",
-                        new { component = "desktop", desktop_version = "0.16.0-rc2" });
+                        new { component = "desktop", desktop_version = "0.17.0-demo1" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
@@ -284,6 +286,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
                     Strategy = StrategySnapshot.FromHeartbeatPayload(response.Payload);
                     RejectUnexpectedStrategyExecutionEnable(Strategy);
                     RejectUnexpectedOrdersExecutionEnable(OrdersPositions);
+                    DemoOnce = DemoOnceSnapshot.FromHeartbeatPayload(response.Payload);
 
                     LastHeartbeatUtc = DateTimeOffset.UtcNow;
                     SetState(
@@ -339,7 +342,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "0.16.0-rc2" });
+            new { component = "desktop", desktop_version = "0.17.0-demo1" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -357,7 +360,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
         var configRequest = ProtocolEnvelope.Create(
             "config_active_get",
-            new { component = "desktop", desktop_version = "0.16.0-rc2" });
+            new { component = "desktop", desktop_version = "0.17.0-demo1" });
 
         var configResponse = await SendReceiveAsync(
             configRequest,
@@ -1150,6 +1153,8 @@ public sealed partial class EngineProcessSupervisor : IDisposable
         DateTimeOffset? lastHeartbeatUtc = null)
     {
         State = state;
+        if (state != EngineConnectionState.Ready)
+            DemoOnce = DemoOnce.AsStale();
         if (lastHeartbeatUtc.HasValue)
             LastHeartbeatUtc = lastHeartbeatUtc;
 
@@ -1165,7 +1170,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
                 JournalSummary,
                 OptimizerStatus,
                 Configuration,
-                Strategy));
+                Strategy) { DemoOnce = DemoOnce });
     }
 
     private static int? ReadPortFromEnvironment()

@@ -75,6 +75,42 @@ try {
         OverviewSnapshot.Empty, Mt5BridgeStatus.Offline, ConfigurationSummary.Default);
     Assert(!orderStatus.FindControl<TextBlock>("ActionStatusText")!.Text!.StartsWith("SIMULATION BLOCKED"),
         "fresh connected demo snapshot clears only the obsolete automatic blocked message");
+    Assert(!orderStatus.FindControl<Border>("DemoOnceStatusPanel")!.IsVisible,
+        "absent optional one-shot report leaves the established Orders layout unchanged");
+    var demoReport = DemoOnceSnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new
+    {
+        demo_once = new { state = "ARMED", attempt_id = "6db89d49-7333-43b0-b656-9a5c04bc1c68", volume = .01 }
+    }));
+    orderStatus.ApplyDemoOnceStatus(demoReport);
+    var orderStatusWindow = new Window { Content = orderStatus, Width = 1644, Height = 794 };
+    orderStatusWindow.Show(); Dispatcher.UIThread.RunJobs();
+    try {
+        var demoPanel = orderStatus.FindControl<Border>("DemoOnceStatusPanel")!;
+        var demoText = orderStatus.FindControl<TextBlock>("DemoOnceStatusText")!;
+        var statusOrigin = demoText.TranslatePoint(default, orderStatusWindow)!.Value;
+        Assert(demoPanel.IsVisible && demoText.Text!.Contains("CHỜ TÍN HIỆU") &&
+            demoText.Bounds.Width > 0 && statusOrigin.Y >= 0 && statusOrigin.Y + demoText.Bounds.Height <= orderStatusWindow.Bounds.Height,
+            "armed one-shot status is arranged visibly in its separate Orders panel");
+        Assert(orderStatus.FindControl<TextBlock>("ActionStatusText")!.Text!.Contains("mô phỏng") &&
+            orderStatus.FindControl<CheckBox>("ManualConfirmCheck")!.IsChecked != true,
+            "one-shot status does not replace manual simulation notice or grant manual confirmation");
+        var manualConfirm = orderStatus.FindControl<CheckBox>("ManualConfirmCheck")!;
+        var confirmOrigin = manualConfirm.TranslatePoint(default, orderStatusWindow)!.Value;
+        Assert(confirmOrigin.Y >= 0 && confirmOrigin.Y + manualConfirm.Bounds.Height <= orderStatusWindow.Bounds.Height + .1,
+            "one-shot status panel preserves visibility of manual confirmation in the independent right rail");
+        orderStatus.ApplyDemoOnceStatus(demoReport with { State = "UNKNOWN", Reason = "RECONCILIATION_REQUIRED" });
+        Assert(demoText.Text!.Contains("CẦN KIỂM TRA") && !demoText.Text.Contains("ĐÃ KHỚP"),
+            "uncertain one-shot result never presents a confirmed fill");
+        orderStatus.ApplyDemoOnceStatus(demoReport.AsStale());
+        Assert(demoText.Text!.Contains("MẤT KẾT NỐI") && ToolTip.GetTip(demoPanel)!.ToString()!.Contains("ARMED"),
+            "lost IPC makes one-shot freshness explicit while retaining last reported state");
+        Invoke(main, "ApplyDemoOnceStatus", demoReport);
+        Assert(main.FindControl<TextBlock>("GuardianReasonValue")!.Text!.StartsWith("LOCKED", StringComparison.Ordinal),
+            "sidebar one-shot status retains the general execution lock");
+        orderStatus.ApplyDemoOnceStatus(DemoOnceSnapshot.Disabled);
+        Assert(!demoPanel.IsVisible, "disabled optional one-shot report restores the original Orders layout");
+    }
+    finally { orderStatusWindow.Close(); }
     var statusStrategy = new StrategyDashboard();
     statusStrategy.Apply(StrategySnapshot.Empty with { Available = true, Ready = true, State = "WAIT_PULLBACK_SELL" }, ConfigurationSummary.Default);
     Assert(statusStrategy.FindControl<TextBlock>("AllConditionText")!.Text == "ĐANG CHỜ",

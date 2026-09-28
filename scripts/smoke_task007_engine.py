@@ -125,7 +125,7 @@ def main() -> int:
             "0.10.0-task010",
             "0.11.0-task011",
             "0.12.0-task012",
-                "0.16.0-rc2",
+                "0.17.0-demo1",
         }
         assert heartbeat["payload"]["strategy"]["state"] == "STALE"
         assert heartbeat["payload"]["strategy"]["execution_enabled"] is False

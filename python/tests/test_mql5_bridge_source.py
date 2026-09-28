@@ -1,4 +1,5 @@
 import pathlib
+import re
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -9,6 +10,9 @@ class Mql5BridgeSourceSafetyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.text = SOURCE.read_text(encoding="utf-8")
+        cls.demo = (SOURCE.parent / "XAUPY_DemoOnce.mqh").read_text(encoding="utf-8")
+        cls.parser = (SOURCE.parent / "XAUPY_StrictJson.mqh").read_text(encoding="utf-8")
+        cls.all_source = "\n".join((cls.text, cls.demo, cls.parser))
 
     def test_task003_execution_is_hard_locked(self):
         self.assertIn("TASK003_EXECUTION_LOCKED = true", self.text)
@@ -16,9 +20,8 @@ class Mql5BridgeSourceSafetyTests(unittest.TestCase):
         self.assertIn("execution_ready", self.text)
         self.assertIn("TASK003_EXECUTION_LOCKED", self.text)
 
-    def test_no_order_execution_api_exists(self):
+    def test_general_execution_has_only_one_separate_bounded_demo_send(self):
         forbidden = (
-            "OrderSend(",
             "OrderSendAsync(",
             "CTrade ",
             "CTrade\t",
@@ -26,7 +29,12 @@ class Mql5BridgeSourceSafetyTests(unittest.TestCase):
         )
         for token in forbidden:
             with self.subTest(token=token):
-                self.assertNotIn(token, self.text)
+                self.assertNotIn(token, self.all_source)
+        self.assertNotIn("OrderSend(", self.text)
+        self.assertEqual(len(re.findall(r"\bOrderSend\s*\(", self.all_source)), 1)
+        send_path = self.demo.split("void DemoOnceHandleAck(string response)", 1)[1]
+        self.assertIn("OrderSend(final_request,sent)", send_path)
+        self.assertNotRegex(send_path, r"\b(?:for|while)\s*\(")
 
     def test_loopback_guard_exists(self):
         self.assertIn('InpHost != "127.0.0.1"', self.text)
@@ -52,11 +60,80 @@ class Mql5BridgeSourceSafetyTests(unittest.TestCase):
             with self.subTest(token=token):
                 self.assertIn(token, self.text)
 
-    def test_task009_still_has_no_broker_mutation_path(self):
+    def test_task009_order_book_cannot_manage_or_close_positions(self):
         self.assertIn("ORDER BOOK ACTIVE; BROKER EXECUTION LOCKED", self.text)
-        self.assertNotIn("PositionClose(", self.text)
-        self.assertNotIn("PositionModify(", self.text)
-        self.assertNotIn("OrderDelete(", self.text)
+        for token in ("PositionClose(", "PositionModify(", "OrderDelete(", "TRADE_ACTION_REMOVE", "TRADE_ACTION_SLTP", "TRADE_ACTION_CLOSE_BY", "TRADE_ACTION_PENDING"):
+            self.assertNotIn(token, self.all_source)
+
+    def test_one_shot_claim_and_unknown_report_precede_single_broker_send(self):
+        send_path = self.demo.split("void DemoOnceHandleAck(string response)", 1)[1]
+        steps = ("OnceParseCommand(json,node,command)", "OnceLiveGuard(command,request", "OrderCheck(request,checked)",
+                 "OnceClaimBudget(command,lock_handle", 'result.status="UNKNOWN"', "OncePublish(result,true)",
+                 "g_once_persisted_report!=OnceResultJson(result)", "OnceLiveGuard(command,final_request",
+                 "ACCOUNT_TRADE_MODE_DEMO", "OnceAnyExposure(final_positions,final_orders)", "OrderSend(final_request,sent)")
+        offsets = [send_path.index(step) for step in steps]
+        self.assertEqual(offsets, sorted(offsets))
+        self.assertIn("immediate_now>=command.expires_server_time", send_path)
+        self.assertIn("immediate.ask-immediate.bid>command.max_spread_price_units", send_path)
+        self.assertIn("FINAL_CLOSE_SIDE_STOP_DISTANCE_CHANGED", send_path)
+
+    def test_budget_is_shared_by_identity_and_not_reset_by_new_attempt_or_restart(self):
+        scope = self.demo.split("string OnceScope()", 1)[1].split("string OnceFile", 1)[0]
+        for identity in ("ACCOUNT_LOGIN", "ACCOUNT_SERVER", "_Symbol"):
+            self.assertIn(identity, scope)
+        self.assertNotIn("attempt_id", scope)
+        claim = self.demo.split("bool OnceClaimBudget", 1)[1].split("bool OnceVerifyFill", 1)[0]
+        self.assertIn("FILE_READ|FILE_WRITE|FILE_BIN", claim)
+        self.assertNotIn("FILE_SHARE", claim)
+        self.assertLess(claim.index("GlobalVariableSetOnCondition"), claim.index("GlobalVariablesFlush()"))
+        self.assertLess(claim.index("GlobalVariablesFlush()"), claim.index('OnceWrite(OnceFile(".claim")'))
+        self.assertIn('OnceRead(OnceFile(".claim"),verified)', claim)
+        self.assertNotIn("GlobalVariableDel", self.all_source)
+        self.assertNotIn("FileDelete", self.all_source)
+        reconnect = self.text.split("void CloseSocket()", 1)[1].split("bool EnsureConnected", 1)[0]
+        self.assertNotIn("g_bridge_session_id=", reconnect.replace(" ", ""))
+
+    def test_filled_requires_broker_deal_and_actual_protective_stops(self):
+        verify = self.demo.split("bool OnceVerifyFill", 1)[1].split("void DemoOncePoll", 1)[0]
+        checks = ("HistorySelect(", "DEAL_ORDER", "DEAL_SYMBOL", "DEAL_MAGIC", "DEAL_ENTRY_IN", "DEAL_TYPE",
+                  "DEAL_VOLUME", "DEAL_PRICE", "HistoryOrderSelect(", "ORDER_SL", "ORDER_TP", "POSITION_SL", "POSITION_TP")
+        for check in checks:
+            self.assertLess(verify.index(check), verify.index('result.status="FILLED"'))
+        poll = self.demo.split("void DemoOncePoll()", 1)[1].split("void DemoOnceHandleAck", 1)[0]
+        self.assertNotIn("OrderSend", poll)
+        init = self.demo.split("void DemoOnceInit()", 1)[1].split("void DemoOnceReplayResult", 1)[0]
+        self.assertNotIn("OrderSend", init)
+
+    def test_native_parser_selftest_gates_initialization_before_io(self):
+        init = self.text.split("int OnInit()", 1)[1].split("void OnDeinit", 1)[0]
+        self.assertLess(init.index("DemoOnceParserSelfTest()"), init.index("DemoOnceInit()"))
+        self.assertLess(init.index("DemoOnceParserSelfTest()"), init.index("EventSetMillisecondTimer"))
+        fixture = self.demo.split("bool DemoOnceParserSelfTest()", 1)[1].split("string OnceResultJson", 1)[0]
+        self.assertGreaterEqual(fixture.count("checks++"), 23)
+        for mutation in ("OrderSend(", "FileOpen(", "SocketConnect(", "GlobalVariableSet("):
+            self.assertNotIn(mutation, fixture)
+        self.assertIn("Find(index,child_key)>=0", self.parser)
+        self.assertIn("StringFormat(\"%I64d\",value)==raw", self.parser)
+
+    def test_commands_only_execute_after_correlated_structured_ack(self):
+        request = self.text.split("bool SendRequest(", 1)[1].split("bool EnsureHandshake()", 1)[0]
+        self.assertIn("OnceValidateEnvelope(response_text,request_id,expected_type", request)
+        self.assertNotIn("StringFind", request)
+        self.assertIn('json.Count(node)!=20', self.demo)
+        timer = self.text.split("void OnTimer()", 1)[1].split("void OnTick()", 1)[0]
+        self.assertEqual(timer.count("DemoOnceHandleAck(response)"), 2)
+        for field in ("account_server", "bridge_session_id", "demo_once_capable", "demo_once_consumed", "demo_once_guard"):
+            self.assertIn(f'JsonKey("{field}")', self.text)
+
+    def test_replayed_result_follows_fresh_snapshot_and_only_accepted_ack_clears_pending(self):
+        timer = self.text.split("void OnTimer()", 1)[1].split("void OnTick()", 1)[0]
+        self.assertLess(timer.index('SendRequest("bridge_snapshot"'), timer.index('SendRequest("bridge_ticks"'))
+        self.assertLess(timer.index('SendRequest("bridge_ticks"'), timer.index('SendRequest("bridge_demo_once_result"'))
+        self.assertEqual(timer.count("g_once_report_pending=false"), 1)
+        self.assertIn("if(DemoOnceResultAckAccepted(response)) g_once_report_pending=false;", timer)
+        ack = self.demo.split("bool DemoOnceResultAckAccepted", 1)[1].split("bool DemoOnceParserSelfTest", 1)[0]
+        self.assertIn('json.Bool(payload,"accepted",accepted) && accepted', ack)
+        self.assertNotIn("OrderSend", ack)
 
     def test_socket_data_channel_exists(self):
         for token in ("SocketCreate(", "SocketConnect(", "SocketSend(", "SocketRead(", "bridge_snapshot"):

@@ -98,6 +98,10 @@
           </Border>
         </Grid>
 
+        <Border x:Name="DemoOnceStatusPanel" Classes="panel" IsVisible="False" Padding="10,5">
+          <TextBlock x:Name="DemoOnceStatusText" FontSize="13" TextTrimming="CharacterEllipsis"/>
+        </Border>
+
         <!-- Open positions -->
         <Border Classes="panel" MinHeight="194">
           <StackPanel>

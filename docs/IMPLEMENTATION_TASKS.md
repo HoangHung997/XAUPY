@@ -999,3 +999,18 @@ local time). These observations are separate from the preceding artifact's
 19/19 and Stop/Start results. Task 016 stays ACTIVE because strict 100% reference
 parity has not been certified. See [RC2 audit](TASK_016_UAT_AUDIT.md) for complete
 identity and evidence scopes, and the separate UI audit for visual assessment.
+
+## User extension — one DEMO order, 0.17.0-demo1
+
+The user next requested observation until one order is placed. Prior tasks' bans
+on all broker order APIs describe their delivered read-only/simulation scope;
+this explicit extension authorizes a separate bounded DEMO-only entry path.
+General automatic execution and real-account execution remain locked. The manual
+order buttons still simulate; the new path requires explicit one-shot arming,
+a subsequent genuine strategy signal, volume at most 0.01, initial server SL/TP,
+durable consumption in Python and EA, and broker deal evidence for completion.
+No automatic retries or rearming occur after consumption or uncertain results.
+
+See [one-shot acceptance](DEMO_ONE_SHOT_ACCEPTANCE.md) for the exact authorization,
+guards, IPC/result contract, crash behavior, test scope and live acceptance.
+Task 016's outstanding strict visual parity requirement is unchanged.

@@ -1,6 +1,6 @@
 #property strict
-#property version   "1.016"
-#property description "XAUPY MT5 closed-history/data/order-book bridge. Broker execution is hard-locked."
+#property version   "1.017"
+#property description "XAUPY data bridge. General execution locked; separate bounded DEMO one-shot capability."
 
 input string InpHost               = "127.0.0.1";
 input uint   InpPort               = 39421;
@@ -11,6 +11,8 @@ input long   InpMagic              = 991188;
 input double InpMaxVolume          = 0.10;
 input double InpMaxDailyLossPct    = 2.00;
 input int    InpMaxOpenPositions   = 1;
+
+#include "XAUPY_DemoOnce.mqh"
 
 const bool TASK003_EXECUTION_LOCKED = true;
 
@@ -591,10 +593,15 @@ string JsonBarsWithHistory(string &history_json)
 string BuildHelloPayload()
 {
    string json = "{";
-   json += JsonKey("bridge_version") + JsonString("0.3.0-task003") + ",";
+   json += JsonKey("bridge_version") + JsonString("1.017") + ",";
    json += JsonKey("component") + JsonString("mt5-bridge") + ",";
    json += JsonKey("symbol") + JsonString(_Symbol) + ",";
    json += JsonKey("magic") + StringFormat("%I64d", InpMagic) + ",";
+   json += JsonKey("account_login") + StringFormat("%I64d",AccountInfoInteger(ACCOUNT_LOGIN)) + ",";
+   json += JsonKey("account_server") + JsonString(AccountInfoString(ACCOUNT_SERVER)) + ",";
+   json += JsonKey("bridge_session_id") + JsonString(g_bridge_session_id) + ",";
+   json += JsonKey("demo_once_capable") + "true,";
+   json += JsonKey("demo_once_consumed") + JsonBool(OnceBudgetConsumed()) + ",";
    json += JsonKey("execution_locked") + "true";
    json += "}";
    return json;
@@ -614,12 +621,18 @@ string BuildSnapshotPayload(bool include_history=false)
    string history_json = "";
    string latest_bars = include_history ? JsonBarsWithHistory(history_json) : JsonBars();
    string json = "{";
-   json += JsonKey("bridge_version") + JsonString("0.3.0-task003") + ",";
+   json += JsonKey("bridge_version") + JsonString("1.017") + ",";
    json += JsonKey("symbol") + JsonString(_Symbol) + ",";
    json += JsonKey("magic") + StringFormat("%I64d", InpMagic) + ",";
    json += JsonKey("terminal_connected") + JsonBool((bool)TerminalInfoInteger(TERMINAL_CONNECTED)) + ",";
    json += JsonKey("account_trade_mode") + JsonString(AccountTradeModeText()) + ",";
    json += JsonKey("account_login") + StringFormat("%I64d", AccountInfoInteger(ACCOUNT_LOGIN)) + ",";
+   json += JsonKey("account_server") + JsonString(AccountInfoString(ACCOUNT_SERVER)) + ",";
+   json += JsonKey("bridge_session_id") + JsonString(g_bridge_session_id) + ",";
+   json += JsonKey("demo_once_capable") + "true,";
+   json += JsonKey("demo_once_consumed") + JsonBool(OnceBudgetConsumed()) + ",";
+   json += JsonKey("demo_once_status") + JsonString(g_once_has_result ? g_once_result.status : OnceBudgetConsumed() ? "CONSUMED" : "AVAILABLE") + ",";
+   json += JsonKey("demo_once_guard") + DemoOnceGuardJson() + ",";
    json += JsonKey("account_currency") + JsonString(AccountInfoString(ACCOUNT_CURRENCY)) + ",";
    json += JsonKey("leverage") + StringFormat("%I64d", AccountInfoInteger(ACCOUNT_LEVERAGE)) + ",";
    json += JsonKey("balance") + JsonNumber(AccountInfoDouble(ACCOUNT_BALANCE), 2) + ",";
@@ -891,21 +904,11 @@ bool SendRequest(string message_type,
       return false;
    }
 
-   string request_token = JsonKey("request_id") + JsonString(request_id);
-   string type_token = JsonKey("type") + JsonString(expected_type);
-
-   if(StringFind(response_text, request_token) < 0 ||
-      StringFind(response_text, type_token) < 0)
+   COnceJson reply;
+   int reply_payload=-1;
+   if(!OnceValidateEnvelope(response_text,request_id,expected_type,reply,reply_payload))
    {
       LogNetworkError("invalid response correlation/type", 5273);
-      CloseSocket();
-      return false;
-   }
-
-   if(StringFind(response_text, JsonKey("execution_enabled") + "true") >= 0 ||
-      StringFind(response_text, JsonKey("trading_enabled") + "true") >= 0)
-   {
-      Print("XAUPY_BRIDGE safety violation: Engine reported execution enabled.");
       CloseSocket();
       return false;
    }
@@ -923,6 +926,7 @@ bool EnsureHandshake()
       return false;
 
    g_handshake_ok = true;
+   DemoOnceReplayResult();
    ulong now_ms = GetTickCount64();
    if(g_last_handshake_log_ms == 0 || now_ms - g_last_handshake_log_ms >= 10000)
    {
@@ -935,6 +939,12 @@ bool EnsureHandshake()
 int OnInit()
 {
    MathSrand((int)(GetTickCount() ^ (uint)TimeLocal()));
+   if(!DemoOnceParserSelfTest())
+   {
+      Print("XAUPY_DEMO_ONCE pure JSON self-test FAILED; EA initialization refused.");
+      return INIT_FAILED;
+   }
+   DemoOnceInit();
 
    if(InpTimerMs < 250)
    {
@@ -971,6 +981,7 @@ void OnTimer()
       return;
 
    string response;
+   DemoOncePoll();
    bool include_history = g_last_history_ms == 0 || GetTickCount64() - g_last_history_ms >= 60000;
    if(!SendRequest("bridge_snapshot",
                    BuildSnapshotPayload(include_history),
@@ -981,8 +992,16 @@ void OnTimer()
    }
    if(include_history)
       g_last_history_ms = GetTickCount64();
+   DemoOnceHandleAck(response);
    // Closed bars precede ticks so Python can replay each event without looking ahead.
-   SendRequest("bridge_ticks", TickBatchPayload(), "bridge_ticks_ack", response);
+   if(!SendRequest("bridge_ticks", TickBatchPayload(), "bridge_ticks_ack", response)) return;
+   DemoOnceHandleAck(response);
+   // Reconnect/restart reconciliation needs this connection's fresh identity snapshot first.
+   // A rejected result stays pending and can never prevent the next snapshot/tick update.
+   if(g_once_report_pending && SendRequest("bridge_demo_once_result",g_once_report,"bridge_demo_once_result_ack",response))
+   {
+      if(DemoOnceResultAckAccepted(response)) g_once_report_pending=false;
+   }
 }
 
 void OnTick()

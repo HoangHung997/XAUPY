@@ -973,4 +973,103 @@ foreach (var foreign in new[] {
     Check(rejected, "IPC foreign or legacy process identity rejected");
 }
 
+DemoOnceSnapshot ReadDemoOnce(string json)
+{
+    using var document = JsonDocument.Parse(json);
+    return DemoOnceSnapshot.FromHeartbeatPayload(document.RootElement);
+}
+
+Check(ReadDemoOnce("{}") == DemoOnceSnapshot.Disabled &&
+      ReadDemoOnce("{\"demo_once\":null}") == DemoOnceSnapshot.Disabled,
+    "optional demo-once absent/null preserves disabled behavior");
+foreach (var demoState in new[] { "DISABLED", "ARMED", "DISPATCHED", "FILLED", "REJECTED", "UNKNOWN", "CANCELLED", "SUSPENDED", "EXPIRED" })
+{
+    var report = DemoOnceSnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new { demo_once = new
+    {
+        state = demoState, attempt_id = "6db89d49-7333-43b0-b656-9a5c04bc1c68", side = "BUY", volume = 0.01, deal_ticket = 123L
+    } }));
+    Check(report.HasReport && report.IsFresh && report.State == demoState,
+        $"demo-once state {demoState} parses without enabling general execution");
+}
+var filledDemoOnce = ReadDemoOnce("""
+    {"demo_once":{"state":"FILLED","reason":"DEAL_CONFIRMED","code":"DONE","attempt_id":"6db89d49-7333-43b0-b656-9a5c04bc1c68",
+     "volume":0.01,"side":"BUY","order_ticket":12345678901,"deal_ticket":12345678902}}
+    """);
+Check(filledDemoOnce is { State: "FILLED", Reason: "DEAL_CONFIRMED", Code: "DONE", AttemptId: "6db89d49-7333-43b0-b656-9a5c04bc1c68", Volume: 0.01, Side: "BUY", OrderTicket: 12345678901, DealTicket: 12345678902 },
+    "demo-once owns parsed values after JSON disposal and preserves 64-bit broker tickets");
+foreach (var incompleteField in new (string Key, object? Value)[] {
+    ("attempt_id", null), ("attempt_id", "not-a-uuid"), ("side", null), ("side", "LONG"), ("side", 1),
+    ("volume", null), ("volume", 0), ("volume", -0.01), ("volume", "0.01"),
+    ("deal_ticket", null), ("deal_ticket", 0), ("deal_ticket", -1), ("deal_ticket", "123"), ("deal_ticket", true) })
+{
+    var evidence = new Dictionary<string, object?>
+    {
+        ["state"] = "FILLED", ["attempt_id"] = "6db89d49-7333-43b0-b656-9a5c04bc1c68",
+        ["side"] = "BUY", ["volume"] = 0.01, ["deal_ticket"] = 123L
+    };
+    evidence[incompleteField.Key] = incompleteField.Value;
+    var report = DemoOnceSnapshot.FromHeartbeatPayload(JsonSerializer.SerializeToElement(new { demo_once = evidence }));
+    Check(report.State == "UNKNOWN" && report.Code == "INCOMPLETE_FILL_EVIDENCE",
+        $"incomplete or malformed fill evidence ({incompleteField.Key}) cannot claim a confirmed fill");
+}
+Check(ReadDemoOnce("""
+    {"demo_once":{"state":"FILLED","attempt_id":"6db89d49-7333-43b0-b656-9a5c04bc1c68",
+     "side":"SELL","volume":0.005,"deal_ticket":321}}
+    """) is { State: "FILLED", Volume: 0.005, Side: "SELL", OrderTicket: null, DealTicket: 321 },
+    "verified partial fill with valid deal evidence does not require an order ticket");
+foreach (var invalidDemoOnce in new[] {
+    "{\"demo_once\":false}", "{\"demo_once\":[]}", "{\"demo_once\":{}}",
+    "{\"demo_once\":{\"state\":123}}", "{\"demo_once\":{\"state\":true}}",
+    "{\"demo_once\":{\"state\":\"FUTURE_STATE\"}}" })
+{
+    var report = ReadDemoOnce(invalidDemoOnce);
+    Check(report.HasReport && report.State == "UNKNOWN" && report.Code!.StartsWith("INVALID_", StringComparison.Ordinal),
+        "malformed or unsupported demo-once reports remain uncertain, never filled");
+}
+var invalidDemoFields = ReadDemoOnce("""
+    {"demo_once":{"state":"ARMED","volume":-0.01,"side":true,"order_ticket":"123","deal_ticket":-1,"attempt_id":22}}
+    """);
+Check(invalidDemoFields is { State: "ARMED", Volume: null, Side: null, OrderTicket: null, DealTicket: null, AttemptId: null },
+    "demo-once malformed optional fields do not fabricate volume, identity or tickets");
+var staleDemoOnce = filledDemoOnce.AsStale();
+Check(!staleDemoOnce.IsFresh && staleDemoOnce.State == "FILLED" && staleDemoOnce.AttemptId == filledDemoOnce.AttemptId &&
+      staleDemoOnce.OrderTicket == filledDemoOnce.OrderTicket && staleDemoOnce.DealTicket == filledDemoOnce.DealTicket,
+    "stale demo-once retains last reported outcome and ticket evidence");
+
+bool ExecutionGuardRejects(string method, object value)
+{
+    var guard = typeof(EngineProcessSupervisor).GetMethod(method, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
+        ?? throw new InvalidOperationException($"Missing execution guard: {method}");
+    try { guard.Invoke(null, [value]); return false; }
+    catch (System.Reflection.TargetInvocationException error) when (error.InnerException is InvalidDataException) { return true; }
+}
+Check(!ExecutionGuardRejects("RejectUnexpectedExecutionEnable", ProtocolEnvelope.Create("heartbeat_ack", new
+    { trading_enabled = false, execution_enabled = false, demo_once = new { state = "ARMED", volume = 0.01 } })),
+    "armed single demo attempt coexists with locked general execution");
+Check(ExecutionGuardRejects("RejectUnexpectedExecutionEnable", ProtocolEnvelope.Create("heartbeat_ack", new
+    { trading_enabled = true, execution_enabled = false, demo_once = new { state = "ARMED" } })) &&
+      ExecutionGuardRejects("RejectUnexpectedExecutionEnable", ProtocolEnvelope.Create("heartbeat_ack", new
+    { trading_enabled = false, execution_enabled = true, demo_once = new { state = "FILLED" } })),
+    "demo-once report does not bypass either general execution flag guard");
+Check(ExecutionGuardRejects("RejectUnexpectedStrategyExecutionEnable", StrategySnapshot.Empty with { TradingEnabled = true }) &&
+      ExecutionGuardRejects("RejectUnexpectedStrategyExecutionEnable", StrategySnapshot.Empty with { ExecutionEnabled = true }),
+    "demo-once integration retains both strategy execution guards");
+Check(ExecutionGuardRejects("RejectUnexpectedOrdersExecutionEnable", OrdersPositionsSnapshot.Empty with { BrokerExecutionLocked = false }) &&
+      ExecutionGuardRejects("RejectUnexpectedOrdersExecutionEnable", OrdersPositionsSnapshot.Empty with { SimulationOnly = false }),
+    "demo-once integration retains broker lock and manual simulation guards");
+
+using (var demoSupervisor = new EngineProcessSupervisor())
+{
+    typeof(EngineProcessSupervisor).GetProperty(nameof(EngineProcessSupervisor.DemoOnce))!.SetValue(demoSupervisor, filledDemoOnce);
+    EngineStateChangedEventArgs? lastDemoEvent = null;
+    demoSupervisor.StateChanged += (_, state) => lastDemoEvent = state;
+    var setState = typeof(EngineProcessSupervisor).GetMethod("SetState", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+    setState.Invoke(demoSupervisor, [EngineConnectionState.Reconnecting, "contract test only", null]);
+    Check(lastDemoEvent is { DemoOnce.IsFresh: false, DemoOnce.State: "FILLED", DemoOnce.DealTicket: 12345678902 },
+        "supervisor disconnect publishes stale evidence without inventing cancellation or fill");
+    setState.Invoke(demoSupervisor, [EngineConnectionState.Ready, "handshake only", null]);
+    Check(lastDemoEvent is { DemoOnce.IsFresh: false },
+        "IPC handshake does not mark prior demo report fresh before a new heartbeat");
+}
+
 Console.WriteLine($"XAUPY IPC contract self-test complete: {passed} checks passed.");

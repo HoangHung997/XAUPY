@@ -1,5 +1,7 @@
 # XAUPY
 
+Đợt tiếp theo: **0.17.0-demo1** bổ sung một lần vào lệnh DEMO theo yêu cầu người dùng, tối đa 0,01 lot, có SL/TP và chỉ theo tín hiệu mới sau khi kích hoạt. Khóa giao dịch chung, tài khoản thật và nút lệnh mô phỏng vẫn giữ nguyên. Đây là ngoại lệ kiểm thử vào lệnh riêng, chưa phải bật hệ thống tự động giao dịch đầy đủ. Xem [phạm vi và nghiệm thu một lệnh DEMO](docs/DEMO_ONE_SHOT_ACCEPTANCE.md); bằng chứng RC2 dưới đây được giữ riêng.
+
 XAUPY là hệ thống giao dịch XAUUSD theo kiến trúc ba lớp:
 
 1. Avalonia / C# Desktop — Control Center.

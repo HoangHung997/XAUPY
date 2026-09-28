@@ -314,12 +314,14 @@ public partial class MainWindow : Window
         }
 
         ApplyBridgeStatus(e.Mt5Bridge);
+        ApplyDemoOnceStatus(e.DemoOnce);
         ApplyConfigurationSummary(e.Configuration);
         ApplyOverviewSnapshot(e.Overview);
         ApplyStrategySnapshot(e.Strategy);
         _strategyDashboard.Apply(e.Strategy, e.Configuration);
         _monitoringDashboard.Apply(e.Strategy, e.Overview, e.Mt5Bridge, e.Configuration);
         _ordersPositionsDashboard.Apply(e.OrdersPositions, e.Overview, e.Mt5Bridge, e.Configuration);
+        _ordersPositionsDashboard.ApplyDemoOnceStatus(e.DemoOnce);
         _journalDashboard.ApplySummary(e.JournalSummary);
         _backtestDashboard.ApplyConfiguration(e.Configuration);
         _optimizerDashboard.ApplyStatus(e.OptimizerStatus);
@@ -362,6 +364,17 @@ public partial class MainWindow : Window
             _lastBridgeConnected = bridge.Connected;
 
         }
+    }
+
+    private void ApplyDemoOnceStatus(DemoOnceSnapshot report)
+    {
+        var safety = FindText("GuardianReasonValue");
+        safety.Foreground = Brushes.Gold;
+        ToolTip.SetTip(safety, null);
+        if (!DemoOncePresentation.IsVisible(report)) return;
+
+        safety.Text = $"LOCKED · DEMO 1: {DemoOncePresentation.StateLabel(report)}";
+        ToolTip.SetTip(safety, DemoOncePresentation.Detail(report));
     }
 
     private void ApplyConfigurationSummary(ConfigurationSummary config)

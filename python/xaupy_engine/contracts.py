@@ -13,6 +13,15 @@ class ProtocolError(ValueError):
     """Raised when an IPC envelope violates protocol v1."""
 
 
+def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ProtocolError(f"duplicate JSON field: {key}")
+        result[key] = value
+    return result
+
+
 @dataclass(frozen=True)
 class Envelope:
     schema_version: int
@@ -54,7 +63,7 @@ class Envelope:
     @classmethod
     def from_json(cls, value: str) -> "Envelope":
         try:
-            raw = json.loads(value)
+            raw = json.loads(value, object_pairs_hook=_unique_object)
         except json.JSONDecodeError as exc:
             raise ProtocolError(f"invalid JSON: {exc.msg}") from exc
 

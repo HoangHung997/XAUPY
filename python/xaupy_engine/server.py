@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import time
 from typing import Any, Final
+from uuid import UUID
 
 from . import __version__
 from .backtest import (
@@ -36,6 +37,7 @@ from .settings import SettingsStore, default_settings
 from .diagnostics import collect_diagnostics
 from .history_jobs import HistoryJobs
 from .tick_protocol import TickTransport, validate_tick_payload
+from .demo_once import DemoOnceController, DemoOnceError, UnavailableDemoOnceController, profile_hash
 
 DEFAULT_HOST: Final = "127.0.0.1"
 DEFAULT_PORT: Final = 39421
@@ -84,6 +86,13 @@ class EngineServer:
         self.active_profile = deepcopy(self.settings_store.profile)
         self.history_jobs = HistoryJobs(self.settings_store.root_dir)
         self.strategy = StrategyEngine(self.active_profile)
+        try:
+            self.demo_once = DemoOnceController(self.settings_store.root_dir, self.bridge, self.strategy)
+        except (DemoOnceError, OSError) as exc:
+            # A damaged authorization ledger must disable execution without
+            # taking market monitoring and diagnostics offline.
+            self.demo_once = UnavailableDemoOnceController(str(exc))
+        self._demo_bridge_writer: asyncio.StreamWriter | None = None
         self.manual_actions = ManualActionSimulator(self.bridge)
         self.journal = StructuredJournal(journal_dir)
         self.backtests = BacktestRepository(backtest_dir)
@@ -214,6 +223,7 @@ class EngineServer:
         self._connections_total += 1
         self._client_writers.add(writer)
         peer = writer.get_extra_info("peername")
+        bridge_session_id: str | None = None
         self._log(
             "DEBUG",
             "Python Engine",
@@ -270,13 +280,45 @@ class EngineServer:
                     )
                     continue
 
-                response, should_shutdown = self._dispatch(request)
+                # The bounded demo command may only leave on the connection
+                # which established the current capable EA session. Desktop and
+                # diagnostic sockets cannot collect commands or report fills.
+                candidate_session = None
+                if (request.type == "bridge_hello" and self._demo_bridge_writer is not None
+                        and self._demo_bridge_writer is not writer):
+                    await self._write(writer, self._bridge_error(request, "A capable Bridge connection already owns the session"))
+                    continue
+                if request.type == "bridge_hello" and request.payload.get("demo_once_capable") is True:
+                    try:
+                        candidate_session = str(UUID(request.payload.get("bridge_session_id", "")))
+                    except (ValueError, TypeError, AttributeError):
+                        await self._write(writer, self._bridge_error(request, "Invalid demo Bridge session"))
+                        continue
+                    if (request.payload.get("component") != "mt5-bridge"
+                            or self._demo_bridge_writer not in (None, writer)):
+                        await self._write(writer, self._bridge_error(request, "A capable Bridge connection already owns the session"))
+                        continue
+                if (request.type.startswith("bridge_") and request.type != "bridge_hello"
+                        and self._demo_bridge_writer is not None
+                        and self._demo_bridge_writer is not writer):
+                    await self._write(writer, self._bridge_error(request, "Bridge messages require the owning connection"))
+                    continue
+                if (request.type == "bridge_snapshot" and bridge_session_id is not None
+                        and str(request.payload.get("bridge_session_id", "")).lower() != bridge_session_id):
+                    await self._write(writer, self._bridge_error(request, "Bridge snapshot session changed"))
+                    continue
+                response, should_shutdown = self._dispatch(request, bridge_session_id=bridge_session_id)
+                if candidate_session is not None and response.type == "bridge_hello_ack":
+                    bridge_session_id = candidate_session
+                    self._demo_bridge_writer = writer
                 await self._write(writer, response)
 
                 if should_shutdown:
                     self._shutdown_event.set()
                     break
         finally:
+            if self._demo_bridge_writer is writer:
+                self._demo_bridge_writer = None
             self._client_writers.discard(writer)
             self._log(
                 "DEBUG",
@@ -291,6 +333,38 @@ class EngineServer:
             except (ConnectionError, BrokenPipeError):
                 pass
 
+    def _demo_once_command(self, bridge_session_id: str | None) -> dict[str, Any] | None:
+        snapshot = self.bridge.latest_fresh_snapshot() or {}
+        if (bridge_session_id is None or snapshot.get("demo_once_capable") is not True
+                or str(snapshot.get("bridge_session_id", "")).lower() != bridge_session_id):
+            return None
+        command = self.demo_once.on_signal(self.active_profile)
+        if command is not None:
+            self._log("WARN", "Orders", "DEMO_ONCE",
+                      "One DEMO command durably dispatched; no automatic retry",
+                      details=command, correlation_id=command.get("attempt_id"), symbol=command.get("symbol"))
+        return command
+
+    def _demo_result_session_matches(self, payload: dict[str, Any], bridge_session_id: str | None) -> bool:
+        if bridge_session_id is None:
+            return False
+        original_session = str(payload.get("bridge_session_id", "")).lower()
+        if original_session == bridge_session_id:
+            return True
+        # A restarted EA can replay the *result* of its original command, never
+        # the command itself. Bind this read-only reconciliation to the stored
+        # authorization and a fresh snapshot from the current owning EA socket.
+        authorization = self.demo_once.status().get("authorization") or {}
+        snapshot = self.bridge.latest_fresh_snapshot() or {}
+        return (original_session == str(authorization.get("bridge_session_id", "")).lower()
+                and str(snapshot.get("bridge_session_id", "")).lower() == bridge_session_id
+                and snapshot.get("account_trade_mode") == "DEMO"
+                and snapshot.get("demo_once_capable") is True
+                and payload.get("attempt_id") == authorization.get("attempt_id")
+                and all(snapshot.get(key) == payload.get(key) == authorization.get(key)
+                        and snapshot.get(key) is not None
+                        for key in ("account_login", "account_server", "symbol", "magic")))
+
     def _common(self) -> dict[str, Any]:
         return {
             "component": "python-engine",
@@ -303,8 +377,36 @@ class EngineServer:
             "engine_instance_id": self.instance_id,
         }
 
-    def _dispatch(self, request: Envelope) -> tuple[Envelope, bool]:
+    def _dispatch(self, request: Envelope, *, bridge_session_id: str | None = None) -> tuple[Envelope, bool]:
         common = self._common()
+
+        if request.type in {"demo_once_arm", "demo_once_status", "demo_once_cancel", "bridge_demo_once_result"}:
+            if request.type == "demo_once_arm":
+                if self._demo_bridge_writer is None:
+                    result = {**self.demo_once.status(), "accepted": False, "code": "BRIDGE_SESSION_REQUIRED"}
+                else:
+                    result = self.demo_once.arm(request.payload, self.active_profile)
+            elif request.type == "demo_once_cancel":
+                result = self.demo_once.cancel(request.payload)
+            elif request.type == "bridge_demo_once_result":
+                if not self._demo_result_session_matches(request.payload, bridge_session_id):
+                    result = {**self.demo_once.status(), "accepted": False, "code": "BRIDGE_SESSION_REQUIRED"}
+                else:
+                    result = self.demo_once.record_result(request.payload)
+            else:
+                result = self.demo_once.status()
+            if request.type != "demo_once_status":
+                self._log("INFO" if result.get("accepted", False) else "WARN", "Orders", "DEMO_ONCE",
+                          f"Demo one-shot {request.type}: {result.get('state', '?')} / {result.get('code', '')}",
+                          details=result, correlation_id=request.request_id)
+            snapshot = self.bridge.latest_fresh_snapshot() or {}
+            context = {key: snapshot.get(key) for key in
+                       ("account_trade_mode", "account_login", "account_server", "symbol", "magic",
+                        "bridge_session_id", "demo_once_capable", "demo_once_guard")}
+            context["profile_hash"] = profile_hash(self.active_profile)
+            return Envelope.response(request.type + "_ack", request.request_id,
+                                     {**common, "accepted": result.get("accepted", False),
+                                      "demo_once": result, "demo_once_context": context}), False
 
         if request.type in {"diagnostics_get", "settings_get", "settings_defaults_get", "settings_set",
                             "backup_create", "backup_restore", "history_download_start", "history_download_status"}:
@@ -336,6 +438,7 @@ class EngineServer:
                 "connections_total": self._connections_total,
                 "bridge": bridge_status.to_payload(),
                 "tick_transport": self.tick_transport.payload(),
+                "demo_once": self.demo_once.status(),
                 "overview": self.bridge.overview_payload(),
                 "orders_positions": self.bridge.orders_positions_payload(),
                 "strategy": self.strategy.status_payload(
@@ -612,6 +715,7 @@ class EngineServer:
                         **common,
                         "accepted": True,
                         "command": None,
+                        "demo_once_command": self._demo_once_command(bridge_session_id),
                         "bridge": bridge_status.to_payload(),
                         "strategy": strategy_status,
                     },
@@ -639,6 +743,7 @@ class EngineServer:
                 self.tick_transport.record_accepted(request.payload)
             return Envelope.response("bridge_ticks_ack", request.request_id,
                                      {**common, "accepted": fresh and matching, "command": None,
+                                      "demo_once_command": self._demo_once_command(bridge_session_id) if fresh and matching else None,
                                       "tick_transport": self.tick_transport.payload(), "strategy": status}), False
 
         if request.type == "manual_action_simulate":

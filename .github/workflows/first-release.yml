@@ -1,0 +1,29 @@
+name: First release verification
+on:
+  push:
+    branches: ['release/1.0-completion-20260929']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: first-release-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive exact release source
+        shell: bash
+        run: |
+          git archive --format=zip --prefix=XAUPY/ HEAD -o XAUPY-source.zip
+          sha256sum XAUPY-source.zip > XAUPY-source.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: XAUPY-first-release-source
+          path: |
+            XAUPY-source.zip
+            XAUPY-source.sha256
+          retention-days: 14
+          if-no-files-found: error

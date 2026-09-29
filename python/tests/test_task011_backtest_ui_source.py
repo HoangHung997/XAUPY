@@ -138,7 +138,7 @@ class Task011BacktestUiSourceTests(unittest.TestCase):
         self.assertNotIn("Every tick (chính xác nhất)", self.xaml)
 
     def test_task011_version_and_safety_guards_remain(self):
-        self.assertIn('desktop_version = "1.0.0-dev"', self.supervisor)
+        self.assertIn('desktop_version = "1.0.0-rc1"', self.supervisor)
         self.assertIn("RejectUnexpectedExecutionEnable", self.supervisor)
         self.assertIn("RejectUnexpectedOrdersExecutionEnable", self.supervisor)
         self.assertIn("Task 012 manual action response violated simulation-only safety", self.supervisor)

@@ -4,9 +4,13 @@ namespace XAUPY.Ipc;
 
 public sealed partial class EngineProcessSupervisor
 {
-    public Task<JsonElement> SetExecutionModeAsync(string mode, bool confirmed, CancellationToken cancellationToken = default) =>
-        ExecutionRequestAsync("execution_mode_set", new { mode, confirmed, account_login = OrdersPositions.AccountLogin,
-            account_server = OrdersPositions.AccountServer, symbol = OrdersPositions.Symbol, magic = OrdersPositions.Magic }, cancellationToken);
+    public Task<JsonElement> SetExecutionModeAsync(string mode, bool confirmed, CancellationToken cancellationToken = default,
+        OrdersPositionsSnapshot? reviewedAccount = null)
+    {
+        var account = reviewedAccount ?? OrdersPositions;
+        return ExecutionRequestAsync("execution_mode_set", new { mode, confirmed, account_login = account.AccountLogin,
+            account_server = account.AccountServer, symbol = account.Symbol, magic = account.Magic }, cancellationToken);
+    }
 
     public async Task<JsonElement> ExecutionRequestAsync(string type, object payload, CancellationToken cancellationToken = default)
     {
@@ -19,11 +23,14 @@ public sealed partial class EngineProcessSupervisor
     public async Task<ManualActionResult> ExecuteManualActionAsync(string action, bool confirmed, long? ticket = null,
         double? volume = null, double? slPoints = null, double? tpPoints = null, double? percent = null,
         double? price = null, double? sl = null, double? tp = null, string? side = null, string? orderType = null,
-        string? intentId = null, CancellationToken cancellationToken = default)
+        string? intentId = null, CancellationToken cancellationToken = default, OrdersPositionsSnapshot? reviewedAccount = null, string? reviewedProfileHash = null)
     {
         string id = intentId ?? Guid.NewGuid().ToString();
+        var account = reviewedAccount ?? OrdersPositions;
         var payload = new { intent_id = id, action, confirmed, ticket, volume, sl_points = slPoints, tp_points = tpPoints,
-            percent, price, sl, tp, side, order_type = orderType };
+            percent, price, sl, tp, side, order_type = orderType,
+            confirmed_profile_hash = reviewedProfileHash, confirmed_identity = new { account_login = account.AccountLogin, account_server = account.AccountServer,
+                symbol = account.Symbol, magic = account.Magic } };
         var queued = await ExecutionRequestAsync("execution_action", payload, cancellationToken);
         var result = ManualActionResult.FromAck(queued);
         if (!result.Accepted) return result;
@@ -31,7 +38,7 @@ public sealed partial class EngineProcessSupervisor
         for (int i = 0; i < 20; i++)
         {
             await Task.Delay(350, cancellationToken);
-            var report = await ExecutionRequestAsync("execution_history", new { limit = 100 }, cancellationToken);
+            var report = await ExecutionRequestAsync("execution_history", new { limit = 100, intent_id = id }, cancellationToken);
             if (!report.TryGetProperty("items", out var items)) continue;
             foreach (var item in items.EnumerateArray())
             {

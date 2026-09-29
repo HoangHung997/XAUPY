@@ -321,8 +321,9 @@ public partial class MainWindow : Window
         }
 
         ApplyBridgeStatus(e.Mt5Bridge);
-        FindText("GuardianReasonValue").Text = e.Execution.Label;
-        ToolTip.SetTip(FindText("GuardianReasonValue"), e.Execution.Reason);
+        FindText("GuardianReasonValue").Text = ExecutionPresentation.Mode(e.Execution);
+        FindText("GuardianReasonValue").Foreground = e.Execution.EntryEnabled ? Brushes.SpringGreen : Brushes.Gold;
+        ToolTip.SetTip(FindText("GuardianReasonValue"), ExecutionPresentation.Summary(e.Execution) + "\n" + ExecutionPresentation.Permission(e.Execution));
         ApplyConfigurationSummary(e.Configuration);
         ApplyOverviewSnapshot(e.Overview);
         ApplyLiveSummary(e.Monitoring, e.OrdersPositions);

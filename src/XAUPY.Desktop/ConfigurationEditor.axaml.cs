@@ -694,15 +694,7 @@ public partial class ConfigurationEditor : UserControl
             if (file is null)
                 return;
 
-            await using var stream = await file.OpenWriteAsync();
-            if (stream.CanSeek)
-                stream.SetLength(0);
-
-            await JsonSerializer.SerializeAsync(
-                stream,
-                validation.Profile.Value,
-                new JsonSerializerOptions { WriteIndented = true });
-            await stream.FlushAsync();
+            await FileOutput.WriteTextAsync(file, JsonSerializer.Serialize(validation.Profile.Value, new JsonSerializerOptions { WriteIndented = true }));
             _currentJsonFile = file;
 
             SetStatus($"Đã lưu profile JSON: {file.Name}.", Brushes.LightGreen);
@@ -820,8 +812,9 @@ public partial class ConfigurationEditor : UserControl
             if (file is null)
                 return;
 
-            string outputPath = file.Path.LocalPath;
+            string? savedPath = file.TryGetLocalPath();
             string tempRoot = CreateTempDirectory();
+            string outputPath = Path.Combine(tempRoot,"exported.set");
 
             try
             {
@@ -853,7 +846,8 @@ public partial class ConfigurationEditor : UserControl
                 if (result.ExitCode != 0)
                     throw new InvalidOperationException($"xaupy-config export-set failed: {result.StandardError}");
 
-                _lastSetTemplatePath = outputPath;
+                await using (var exported = File.OpenRead(outputPath)) await FileOutput.CopyAsync(file,exported);
+                _lastSetTemplatePath = savedPath;
                 SetStatus(
                     $"Đã xuất {file.Name}" +
                     (arguments.Contains("--template") ? " theo template đã nhập." : " dạng canonical UTF-16LE."),

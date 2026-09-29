@@ -126,7 +126,7 @@ def closed_history(history: dict, timeframe: str, now: int, count: int) -> list:
     return bars
 
 
-def plan_entry(profile: dict, snapshot: dict, history: dict, side: str, overrides: dict | None = None) -> dict:
+def plan_entry(profile: dict, snapshot: dict, history: dict, side: str, overrides: dict | None = None, *, signal: dict | None = None) -> dict:
     overrides = overrides or {}
     if side not in {'BUY','SELL'} or not profile['strategy'][f'allow_{side.lower()}']:
         raise TradePlanError('SIDE_DISABLED')
@@ -143,8 +143,42 @@ def plan_entry(profile: dict, snapshot: dict, history: dict, side: str, override
     if order_type not in {side, side+'_STOP', side+'_LIMIT'}:
         raise TradePlanError('INVALID_ORDER_TYPE')
     entry = ask if buy else bid
+    expiration = 0
+    signal_bar_time = None
     if order_type != side:
-        entry = number(overrides.get('price', entry + (1 if buy else -1)*profile['entry']['pending_buffer_price_units']), 'pending_price', positive=True)
+        expiration = int(snapshot['server_time']) + profile['entry']['pending_expiration_minutes']*60
+        pending_price = overrides.get('price')
+        if pending_price is None:
+            if order_type not in {'BUY_STOP','SELL_STOP'}:
+                raise TradePlanError('PENDING_PRICE_REQUIRED')
+            tf = profile['timeframes']['trigger']
+            span = HISTORY_TIMEFRAME_SECONDS[tf]
+            signal_time = (signal or {}).get('bar_time')
+            signal_bar = (signal or {}).get('trigger_bar')
+            if signal_bar is not None:
+                from .strategy_engine import Bar, StrategyDataError
+                try:
+                    candle = Bar.from_payload(signal_bar)
+                except (ValueError, TypeError, StrategyDataError):
+                    raise TradePlanError('STOP_CONFIRM_SIGNAL_BAR_REQUIRED')
+                if candle.time != signal_time:
+                    raise TradePlanError('STOP_CONFIRM_SIGNAL_BAR_REQUIRED')
+            else:
+                candles = [b for b in history.get(tf, []) if b.time+span <= snapshot['server_time']
+                           and (signal_time is None or b.time == signal_time)]
+                if not candles:
+                    raise TradePlanError('STOP_CONFIRM_SIGNAL_BAR_REQUIRED')
+                candle = candles[-1]
+            signal_bar_time = candle.time
+            observed_at = (signal or {}).get('tick_time_msc')
+            created = observed_at//1000 if type(observed_at) is int and observed_at > 0 else candle.time+span
+            if created > snapshot['server_time']+1 or created+profile['entry']['max_signal_age_bars']*span <= snapshot['server_time']:
+                raise TradePlanError('SIGNAL_EXPIRED')
+            expiration = min(created+profile['entry']['pending_expiration_minutes']*60,
+                             created+profile['entry']['max_signal_age_bars']*span)
+            pending_price = (candle.high+spread+profile['entry']['pending_buffer_price_units'] if buy
+                             else candle.low-profile['entry']['pending_buffer_price_units'])
+        entry = number(pending_price, 'pending_price', positive=True)
         entry = grid(entry, tick, up=buy)
         gap = number(snapshot.get('stops_level'), 'stops_level') * point
         if ((order_type == 'BUY_STOP' and entry < ask+gap) or (order_type == 'SELL_STOP' and entry > bid-gap)
@@ -154,6 +188,8 @@ def plan_entry(profile: dict, snapshot: dict, history: dict, side: str, override
     cfg = profile['stop_loss']
     if overrides.get('sl_points') is not None:
         distance = number(overrides['sl_points'], 'sl_points', positive=True) * point
+        if distance < cfg['min_price_units']-1e-9 or distance > cfg['max_price_units']+1e-9:
+            raise TradePlanError('EXPLICIT_SL_OUTSIDE_LIMITS')
     elif cfg['mode'] == 'FIXED':
         distance = cfg['fixed_price_units']
     else:
@@ -198,10 +234,12 @@ def plan_entry(profile: dict, snapshot: dict, history: dict, side: str, override
         entry_price=number(item.get('price_open'),'open_position_price',positive=True)
         existing_buy=item.get('side',item.get('type','')).startswith('BUY')
         distance=max(0,(entry_price-existing_sl) if existing_buy else (existing_sl-entry_price))
-        day_budget-=distance/tick*value*number(item.get('volume',item.get('volume_current')),'open_volume',positive=True)
+        day_budget-=(distance/tick*value+profile['costs']['max_commission_per_lot'])*number(item.get('volume',item.get('volume_current')),'open_volume',positive=True)
     if day_budget <= 0:
         raise TradePlanError('DAILY_RISK_ALREADY_COMMITTED')
-    cash = min(balance*risk['risk_percent']/100, day_budget)
+    # Inactive percentage sizing must not secretly cap FIXED_LOT profiles.
+    # Both modes still respect the daily risk budget and broker/EA lot limits.
+    cash = min(balance*risk['risk_percent']/100, day_budget) if risk['sizing_mode']=='RISK_PERCENT' else day_budget
     cap = min(risk['max_lot'], number(snapshot.get('volume_max'), 'volume_max', positive=True))
     ea_cap = (snapshot.get('guardian') or {}).get('max_volume')
     if ea_cap is not None:
@@ -217,5 +255,23 @@ def plan_entry(profile: dict, snapshot: dict, history: dict, side: str, override
                 original_tp=original_tp, initial_risk=risk_distance, max_loss_money=cash,
                 max_deviation_points=profile['costs']['max_slippage_points'],
                 max_spread_price_units=profile['costs']['max_spread_price_units'],
-                expiration=int(snapshot['server_time'])+profile['entry']['pending_expiration_minutes']*60 if order_type!=side else 0,
+                max_commission_per_lot=profile['costs']['max_commission_per_lot'],
+                expiration=expiration, signal_bar_time=signal_bar_time,
                 comment=profile['execution']['order_comment'][:31])
+
+
+def pending_cancellation_reason(profile: dict, snapshot: dict, status: dict, side: str, expiration: int = 0) -> str | None:
+    """Shared live/replay policy; manual mode callers opt out before invoking it."""
+    if expiration > 0 and snapshot['server_time'] >= expiration:
+        return 'PENDING_EXPIRED'
+    if not session_allowed(snapshot, profile['sessions']):
+        return 'PENDING_SESSION_END'
+    if weekend_close_due(snapshot, profile['sessions']):
+        return 'WEEKEND_CLOSE'
+    armed = status.get('armed_side')
+    if profile['entry']['cancel_on_opposite_setup'] and armed in {'BUY','SELL'} and armed != side:
+        return 'PENDING_OPPOSITE_SETUP'
+    direction = status.get('direction')
+    if profile['entry']['cancel_on_direction_change'] and direction is not None and direction not in {side,'BOTH'}:
+        return 'PENDING_DIRECTION_CHANGED'
+    return None

@@ -26,21 +26,46 @@ public partial class OrdersPositionsDashboard
         demo_once = _demoOnceReport,
     };
 
+    internal static string BrokerHistoryCsv(IEnumerable<JsonElement> history)
+    {
+        string[] fields = ["ticket","order_ticket","position_id","magic","symbol","side","entry","volume",
+            "time","price_in","price_out","sl","tp","profit","entry_costs","exit_costs","commission","swap",
+            "realized_total","entry_complete","reason","comment"];
+        var text = new System.Text.StringBuilder();
+        text.AppendLine(string.Join(",",fields));
+        foreach (var row in history)
+            text.AppendLine(string.Join(",",fields.Select(field => row.TryGetProperty(field,out var value) ? Cell(value) : "")));
+        return text.ToString();
+        static string Cell(JsonElement value)
+        {
+            if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined) return "";
+            if (value.ValueKind != JsonValueKind.String) return value.GetRawText();
+            string text = value.GetString() ?? "";
+            // Spreadsheet tools must treat broker/user comments as data, not formulas.
+            if (text.Length > 0 && ("=+-@\t\r\n".Contains(text[0]) || text.TrimStart().StartsWith('='))) text = "'" + text;
+            return "\"" + text.Replace("\"","\"\"") + "\"";
+        }
+    }
+
     private async void ExportOrders_OnClick(object? sender, RoutedEventArgs e)
     {
         try
         {
             if (!_book.Available) throw new InvalidOperationException("Chưa có dữ liệu để xuất.");
-            var report = BuildOrdersReport(await AllBrokerHistoryAsync());
+            var history = await AllBrokerHistoryAsync();
+            var report = BuildOrdersReport(history);
             var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
             if (storage is null) return;
             var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions {
                 Title = "Xuất báo cáo Lệnh & Vị thế", SuggestedFileName = $"XAUPY-orders-{DateTime.Now:yyyyMMdd-HHmmss}.json",
-                DefaultExtension = "json", FileTypeChoices = new[] { new FilePickerFileType("Báo cáo JSON") { Patterns = new[] { "*.json" } } }
+                DefaultExtension = "json", FileTypeChoices = new[] {
+                    new FilePickerFileType("Báo cáo đầy đủ JSON") { Patterns = new[] { "*.json" } },
+                    new FilePickerFileType("Lịch sử broker CSV (UTF-8)") { Patterns = new[] { "*.csv" } } }
             });
             if (file is null) return;
-            await using var stream = await file.OpenWriteAsync(); stream.SetLength(0);
-            await JsonSerializer.SerializeAsync(stream, report, new JsonSerializerOptions { WriteIndented = true });
+            string content = file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                ? BrokerHistoryCsv(history) : JsonSerializer.Serialize(report,new JsonSerializerOptions { WriteIndented = true });
+            await FileOutput.WriteTextAsync(file,content);
             SetActionStatus($"Đã xuất {file.Name} • dữ liệu tại thời điểm mở hộp lưu.", Brushes.LightGreen);
         }
         catch (Exception error) { SetActionStatus(error.Message, Brushes.IndianRed); }

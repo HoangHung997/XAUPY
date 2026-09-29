@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 import time
+import math
 from datetime import datetime, timezone
 from typing import Any
 
@@ -52,6 +53,14 @@ class BridgeRegistry:
         self._latest_hello: dict[str, Any] | None = None
         self._snapshots_total = 0
         self._bar_history: dict[str, list[dict[str, Any]]] = {}
+        # Executable prices have their own clock. A tick must never be compared
+        # to an older account snapshot's server_time, or keep stale account data
+        # alive. All clock advancement is monotonic, not the PC's UTC timezone.
+        self._execution_tick: dict[str, Any] | None = None
+        self._execution_frame: tuple[int, float] | None = None
+        self._execution_stream: str | None = None
+        self._execution_sequence = 0
+        self._retired_execution_streams: list[str] = []
 
     def record_hello(self, payload: dict[str, Any]) -> None:
         if not isinstance(payload, dict):
@@ -177,6 +186,15 @@ class BridgeRegistry:
                 except StrategyDataError:
                     pass  # Legacy latest-bar errors remain visible to StrategyEngine.
             self._bar_history[timeframe] = [combined[t] for t in sorted(combined)[-HISTORY_LIMIT:]]
+        identity = ("bridge_session_id", "account_login", "account_server", "symbol", "magic")
+        if self._latest_snapshot is None or any(
+            self._latest_snapshot.get(k) != payload.get(k) for k in identity
+        ):
+            self._execution_tick = None
+            self._execution_frame = None
+            self._execution_stream = None
+            self._execution_sequence = 0
+            self._retired_execution_streams.clear()
         self._latest_snapshot = deepcopy(payload)
         self._latest_snapshot_received_utc = datetime.now(timezone.utc).isoformat()
         now = time.monotonic()
@@ -292,7 +310,7 @@ class BridgeRegistry:
         risk_complete = True
 
         tick_size = self._positive_number(snapshot.get("tick_size"))
-        tick_value = self._positive_number(snapshot.get("tick_value"))
+        tick_value = self._positive_number(snapshot.get("tick_value_loss", snapshot.get("tick_value")))
 
         for position in positions:
             open_pl += self._number(position.get("profit"))
@@ -312,7 +330,13 @@ class BridgeRegistry:
                 risk_complete = False
                 continue
 
-            risk_usd += abs(open_price - sl) / tick_size * tick_value * volume
+            side = position.get("side")
+            if side not in {"BUY", "SELL"}:
+                risk_complete = False
+                continue
+            # A stop protecting profit is not a potential loss from entry.
+            distance = max(0.0, open_price-sl if side == "BUY" else sl-open_price)
+            risk_usd += distance / tick_size * tick_value * volume
 
         realized_pl_value = snapshot.get("own_daily_realized")
         if not isinstance(realized_pl_value, (int, float)) or isinstance(realized_pl_value, bool):
@@ -375,6 +399,84 @@ class BridgeRegistry:
             return None
         return deepcopy(self._latest_snapshot)
 
+    def record_execution_ticks(self, payload: dict[str, Any], session_id: str | None) -> bool:
+        """Accept a quote/clock pair only from the connected owning EA session.
+
+        The transport is validated at the protocol boundary and again here so
+        direct callers cannot inject non-finite/future quotes. Duplicate frames
+        do not refresh the age. Missing ticks affect strategy continuity, but a
+        newest actual quoted tick is still valid for a manual market request.
+        """
+        from .tick_protocol import validate_tick_payload
+        validate_tick_payload(payload)
+        snapshot = self._latest_snapshot
+        if (not session_id or not snapshot or not self.market_data_connected()
+                or session_id != snapshot.get("bridge_session_id")
+                or payload["symbol"] != snapshot.get("symbol")):
+            return False
+        batch = payload["tick_batch"]
+        stream, sequence = batch["stream_id"], batch["sequence"]
+        if stream in self._retired_execution_streams:
+            return False
+        if stream == self._execution_stream and sequence <= self._execution_sequence:
+            return False
+        if stream != self._execution_stream:
+            if self._execution_stream is not None:
+                self._retired_execution_streams.append(self._execution_stream)
+                del self._retired_execution_streams[:-16]
+            self._execution_stream = stream
+            self._execution_tick = None
+        self._execution_sequence = sequence
+        now = time.monotonic()
+        # Do not move the reference clock backwards on a delayed frame.
+        server_ms = payload["server_time"] * 1000
+        if self._execution_frame:
+            prior_ms, received = self._execution_frame
+            server_ms = max(server_ms, prior_ms + int(max(0, now-received)*1000))
+        self._execution_frame = (server_ms, now)
+        for tick in reversed(batch["ticks"]):
+            if tick["bid"] > 0 and tick["ask"] >= tick["bid"]:
+                if not self._execution_tick or tick["time_msc"] >= self._execution_tick["time_msc"]:
+                    self._execution_tick = {k: tick[k] for k in ("bid", "ask", "time_msc")}
+                break
+        return True
+
+    def execution_snapshot(self) -> dict[str, Any] | None:
+        """Small fresh-account snapshot with coherent newest quote and age.
+
+        The server clock has one-second precision. quote_age_ms may therefore
+        be slightly negative within that precision; the caller enforces a
+        bounded future tolerance independently of its maximum quote age.
+        """
+        if not self.market_data_connected() or self._latest_snapshot is None:
+            return None
+        snapshot = deepcopy({k: v for k, v in self._latest_snapshot.items()
+                             if k not in {"bars", "bar_history", "all_positions", "all_deals"}})
+        now = time.monotonic()
+        age = max(0, now - self._last_snapshot_monotonic)
+        server_time = snapshot.get("server_time")
+        if type(server_time) is not int or server_time <= 0:
+            snapshot.update(quote_age_ms=None, snapshot_age_ms=int(age*1000), quote_source="INVALID_CLOCK")
+            return snapshot
+        server_ms = server_time * 1000 + int(age * 1000)
+        quote_source = "SNAPSHOT"
+        if self._execution_frame:
+            frame_ms, received = self._execution_frame
+            server_ms = max(server_ms, frame_ms + int(max(0, now-received)*1000))
+        quote = self._execution_tick
+        if quote and quote["time_msc"] >= snapshot.get("tick_time_msc", 0):
+            snapshot.update(bid=quote["bid"], ask=quote["ask"], tick_time_msc=quote["time_msc"])
+            quote_source = "TICK_BATCH"
+        snapshot["server_time"] = server_ms // 1000
+        snapshot["execution_clock_msc"] = server_ms
+        snapshot["quote_age_ms"] = server_ms - int(snapshot.get("tick_time_msc", 0))
+        snapshot["snapshot_age_ms"] = int(age * 1000)
+        snapshot["quote_source"] = quote_source
+        point = self._positive_number(snapshot.get("point"))
+        if point:
+            snapshot["spread_points"] = (snapshot["ask"]-snapshot["bid"])/point
+        return snapshot
+
     def snapshot_fresh(self) -> bool:
         if self._last_snapshot_monotonic is None:
             return False
@@ -423,11 +525,11 @@ class BridgeRegistry:
     def _number(value: Any) -> float:
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             return 0.0
-        return float(value)
+        return float(value) if math.isfinite(value) else 0.0
 
     @staticmethod
     def _positive_number(value: Any) -> float | None:
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             return None
         number = float(value)
-        return number if number > 0 else None
+        return number if math.isfinite(number) and number > 0 else None

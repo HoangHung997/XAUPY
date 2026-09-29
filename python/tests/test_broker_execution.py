@@ -175,7 +175,7 @@ class BrokerExecutionTests(unittest.TestCase):
         self.enable()
         self.snapshot['orders']=[dict(ticket=700,magic=991188,symbol='XAUUSD',type='BUY_STOP',volume_current=.01,
             price_open=4202.,sl=4199.,tp=4208.,expiration=NOW+600)]
-        result=self.service.submit(dict(intent_id=str(uuid4()),confirmed=True,action='MODIFY_PENDING',ticket=700,price=4203.),self.profile)
+        result=self.service.submit(dict(intent_id=str(uuid4()),confirmed=True,action='MODIFY_PENDING',ticket=700,price=4203.,sl=4200.),self.profile)
         self.assertEqual(NOW+600,result['preview']['expiration'])
         self.assertEqual(.01,result['preview']['volume'])
 

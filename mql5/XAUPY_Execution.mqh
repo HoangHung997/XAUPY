@@ -1,5 +1,6 @@
 #ifndef XAUPY_EXECUTION_MQH
 #define XAUPY_EXECUTION_MQH
+#include "XAUPY_ExecutionRules.mqh"
 
 // Versioned general execution. Each request is claimed on disk before OrderSend.
 // The consumed one-shot ledger is independent and is never reset by this code.
@@ -8,7 +9,7 @@ struct FullCommand
    string intent_id,bridge_session_id,account_server,symbol,account_trade_mode,profile_hash;
    string action,side,order_type,comment;
    long account_login,magic,ticket,position_identifier,issued_server_time,expires_server_time,expiration,max_deviation_points,max_positions;
-   double volume,price,sl,tp,original_tp,initial_risk,max_loss_money,max_spread_price_units,max_volume,max_daily_loss_pct;
+   double volume,price,sl,tp,original_tp,initial_risk,max_loss_money,max_spread_price_units,max_volume,max_daily_loss_pct,max_commission_per_lot;
    bool allow_real_account,never_widen_sl,require_server_sl;
 };
 struct FullResult
@@ -58,6 +59,8 @@ bool FullParse(COnceJson &json,int node,FullCommand &c)
          !json.Double(node,"max_loss_money",c.max_loss_money) || c.max_loss_money<=0 ||
          !json.Double(node,"max_spread_price_units",c.max_spread_price_units) || c.max_spread_price_units<0 ||
          !json.Long(node,"expiration",c.expiration)) return false;
+      int commission_node=json.Find(node,"max_commission_per_lot");
+      if(commission_node>=0 && (!json.Double(node,"max_commission_per_lot",c.max_commission_per_lot) || c.max_commission_per_lot<0)) return false;
       if(c.order_type!=c.side && c.order_type!=c.side+"_STOP" && c.order_type!=c.side+"_LIMIT") return false;
    }
    else
@@ -86,6 +89,7 @@ string FullCommandJson(FullCommand &c)
    s+=JsonKey("volume")+JsonNumber(c.volume)+","+JsonKey("price")+JsonNumber(c.price,10)+","+JsonKey("sl")+JsonNumber(c.sl,10)+","+JsonKey("tp")+JsonNumber(c.tp,10)+",";
    s+=JsonKey("original_tp")+JsonNumber(c.original_tp,10)+","+JsonKey("initial_risk")+JsonNumber(c.initial_risk,10)+",";
    s+=JsonKey("max_loss_money")+JsonNumber(c.max_loss_money)+","+JsonKey("max_spread_price_units")+JsonNumber(c.max_spread_price_units)+",";
+   s+=JsonKey("max_commission_per_lot")+JsonNumber(c.max_commission_per_lot)+",";
    s+=JsonKey("max_volume")+JsonNumber(c.max_volume)+","+JsonKey("max_daily_loss_pct")+JsonNumber(c.max_daily_loss_pct)+",";
    s+=JsonKey("issued_server_time")+StringFormat("%I64d",c.issued_server_time)+","+JsonKey("expires_server_time")+StringFormat("%I64d",c.expires_server_time)+",";
    s+=JsonKey("expiration")+StringFormat("%I64d",c.expiration)+","+JsonKey("max_positions")+StringFormat("%I64d",c.max_positions)+",";
@@ -100,6 +104,7 @@ bool FullParserFixture(string text)
 bool FullParserSelfTest()
 {
    // Pure local fixtures. No account, file, network or OrderSend calls.
+   if(!FullRulesSelfTest()) return false;
    FullCommand command; ZeroMemory(command);
    command.intent_id="12345678-1234-4234-8234-123456789012";
    command.bridge_session_id="12345678-1234-4234-8234-123456789013";
@@ -153,6 +158,32 @@ bool FullIdentity(FullCommand &c,bool require_session=true)
       c.symbol==_Symbol && c.magic==InpMagic && (!require_session || c.bridge_session_id==g_bridge_session_id);
 }
 bool FullGrid(double value,double step) { return step>0 && MathAbs(value/step-MathRound(value/step))<1e-6; }
+// Final broker-side budget check includes every existing owned position/order.
+// It is repeated immediately before sending; queued Python previews are not authority.
+bool FullCommittedRisk(FullCommand &c,double &risk)
+{
+   risk=0;
+   for(int i=0;i<PositionsTotal();i++)
+   {
+      ulong ticket=PositionGetTicket(i);
+      if(!ticket || PositionGetInteger(POSITION_MAGIC)!=c.magic || PositionGetString(POSITION_SYMBOL)!=c.symbol)continue;
+      double sl=PositionGetDouble(POSITION_SL),entry=PositionGetDouble(POSITION_PRICE_OPEN),volume=PositionGetDouble(POSITION_VOLUME),profit=0;
+      bool buy=PositionGetInteger(POSITION_TYPE)==POSITION_TYPE_BUY;
+      if(sl<=0 || !OrderCalcProfit(buy ? ORDER_TYPE_BUY : ORDER_TYPE_SELL,c.symbol,volume,entry,sl,profit))return false;
+      risk+=MathMax(0,-profit)+volume*c.max_commission_per_lot;
+   }
+   for(int i=0;i<OrdersTotal();i++)
+   {
+      ulong ticket=OrderGetTicket(i);
+      if(!ticket || OrderGetInteger(ORDER_MAGIC)!=c.magic || OrderGetString(ORDER_SYMBOL)!=c.symbol)continue;
+      double sl=OrderGetDouble(ORDER_SL),entry=OrderGetDouble(ORDER_PRICE_OPEN),volume=OrderGetDouble(ORDER_VOLUME_CURRENT),profit=0;
+      long type=OrderGetInteger(ORDER_TYPE);
+      bool buy=type==ORDER_TYPE_BUY_STOP || type==ORDER_TYPE_BUY_LIMIT || type==ORDER_TYPE_BUY_STOP_LIMIT;
+      if(sl<=0 || !OrderCalcProfit(buy ? ORDER_TYPE_BUY : ORDER_TYPE_SELL,c.symbol,volume,entry,sl,profit))return false;
+      risk+=MathMax(0,-profit)+volume*c.max_commission_per_lot;
+   }
+   return MathIsValidNumber(risk);
+}
 bool FullPrepare(FullCommand &c,MqlTradeRequest &request,string &reason)
 {
    ZeroMemory(request); reason="";
@@ -204,6 +235,7 @@ bool FullPrepare(FullCommand &c,MqlTradeRequest &request,string &reason)
       if(pending)
       {
          request.type_filling=ORDER_FILLING_RETURN;
+         if(!FullPendingDistanceRule((long)request.type,c.price,quote.bid,quote.ask,MathMax(gap,tick),reason))return false;
          if(c.expiration<=now || (SymbolInfoInteger(_Symbol,SYMBOL_EXPIRATION_MODE)&SYMBOL_EXPIRATION_SPECIFIED)==0)
             { reason="BROKER_EXPIRATION_NOT_SUPPORTED"; return false; }
          request.type_time=ORDER_TIME_SPECIFIED; request.expiration=(datetime)c.expiration;
@@ -214,8 +246,12 @@ bool FullPrepare(FullCommand &c,MqlTradeRequest &request,string &reason)
          (buy ? reference-c.sl : c.sl-reference)<MathMax(gap,tick)-1e-10 ||
          (c.tp && (buy ? c.tp-reference : reference-c.tp)<MathMax(gap,tick)-1e-10)) { reason="INVALID_PROTECTION"; return false; }
       double loss=0,worst=request.price+(buy ? 1 : -1)*c.max_deviation_points*point;
-      if(!OrderCalcProfit(buy ? ORDER_TYPE_BUY : ORDER_TYPE_SELL,_Symbol,c.volume,worst,c.sl,loss) || loss>=0 || -loss>c.max_loss_money+1e-8)
+      if(!OrderCalcProfit(buy ? ORDER_TYPE_BUY : ORDER_TYPE_SELL,_Symbol,c.volume,worst,c.sl,loss) || loss>=0)
          { reason="RISK_BUDGET_EXCEEDED"; return false; }
+      double committed=0;
+      if(!FullCommittedRisk(c,committed)) { reason="OPEN_RISK_UNKNOWN"; return false; }
+      double remaining=guard.day_start_balance*MathMin(InpMaxDailyLossPct,c.max_daily_loss_pct)/100+MathMin(0,guard.daily_realized)-committed;
+      if(!FullCashRiskRule(-loss,c.volume*c.max_commission_per_lot,MathMin(remaining,c.max_loss_money),reason))return false;
    }
    else if(c.action=="CANCEL_PENDING" || c.action=="MODIFY_PENDING")
    {
@@ -227,9 +263,13 @@ bool FullPrepare(FullCommand &c,MqlTradeRequest &request,string &reason)
       {
          request.price=c.price; request.sl=c.sl; request.tp=c.tp; request.stoplimit=OrderGetDouble(ORDER_PRICE_STOPLIMIT);
          request.type_time=(ENUM_ORDER_TYPE_TIME)OrderGetInteger(ORDER_TYPE_TIME); request.expiration=(datetime)c.expiration;
-         double old=OrderGetDouble(ORDER_SL); long type=OrderGetInteger(ORDER_TYPE);
+         double old=OrderGetDouble(ORDER_SL),old_price=OrderGetDouble(ORDER_PRICE_OPEN); long type=OrderGetInteger(ORDER_TYPE);
          bool buy=type==ORDER_TYPE_BUY_STOP || type==ORDER_TYPE_BUY_LIMIT || type==ORDER_TYPE_BUY_STOP_LIMIT;
-         if(old>0 && (buy ? c.sl<old-tick/2 : c.sl>old+tick/2)) { reason="NEVER_WIDEN_SL"; return false; }
+         if(!FullPendingRiskRule(buy,old_price,old,c.price,c.sl,reason) ||
+            !FullPendingDistanceRule(type,c.price,quote.bid,quote.ask,MathMax(MathMax(gap,freeze),tick),reason) ||
+            !FullProtectionRule(buy,c.price,c.sl,c.tp,MathMax(gap,tick),reason))return false;
+         if(freeze>0 && MathAbs(old_price-(buy ? quote.ask : quote.bid))<=freeze) { reason="STOP_OR_FREEZE_LEVEL"; return false; }
+         if(c.expiration>0 && c.expiration<=now) { reason="PENDING_EXPIRED"; return false; }
          if(!FullGrid(c.price,tick) || !FullGrid(c.sl,tick) || (c.tp && !FullGrid(c.tp,tick))) { reason="INVALID_PRICE_GRID"; return false; }
       }
    }
@@ -245,11 +285,13 @@ bool FullPrepare(FullCommand &c,MqlTradeRequest &request,string &reason)
          if((old>0 && (buy ? c.sl<old-tick/2 : c.sl>old+tick/2)) || !FullGrid(c.sl,tick) || (c.tp && !FullGrid(c.tp,tick)) ||
             (buy ? reference-c.sl : c.sl-reference)<MathMax(MathMax(gap,freeze),tick)-1e-10)
             { reason="STOP_WIDEN_OR_FREEZE"; return false; }
+         if(!FullProtectionRule(buy,reference,c.sl,c.tp,MathMax(MathMax(gap,freeze),tick),reason))return false;
          request.action=TRADE_ACTION_SLTP; request.sl=c.sl; request.tp=c.tp;
       }
       else
       {
          double current=PositionGetDouble(POSITION_VOLUME);
+         if(c.action=="CLOSE_POSITION" && current>c.volume+1e-9) { reason="POSITION_VOLUME_CHANGED"; return false; }
          request.volume=c.action=="CLOSE_POSITION" ? current : c.volume;
          if(request.volume<minimum || request.volume>current+1e-9 || !FullGrid(request.volume,step) ||
             (c.action=="PARTIAL_CLOSE" && current-request.volume<minimum-1e-9)) { reason="PARTIAL_VOLUME_OR_REMAINDER"; return false; }
@@ -313,18 +355,26 @@ bool FullVerify(FullResult &r)
       matched=PositionSelectByTicket((ulong)c.ticket) && PositionGetInteger(POSITION_MAGIC)==c.magic &&
          PositionGetString(POSITION_SYMBOL)==c.symbol && MathAbs(PositionGetDouble(POSITION_SL)-c.sl)<tick/2+1e-10 && MathAbs(PositionGetDouble(POSITION_TP)-c.tp)<tick/2+1e-10;
       r.position_ticket=(ulong)c.ticket;
+      if(matched) { r.sl=PositionGetDouble(POSITION_SL); r.tp=PositionGetDouble(POSITION_TP); }
    }
    else if(c.action=="CANCEL_PENDING")
-      matched=HistoryOrderSelect((ulong)c.ticket) && HistoryOrderGetInteger((ulong)c.ticket,ORDER_STATE)==ORDER_STATE_CANCELED && HistoryOrderGetInteger((ulong)c.ticket,ORDER_MAGIC)==c.magic;
+   {
+      matched=HistoryOrderSelect((ulong)c.ticket) && HistoryOrderGetInteger((ulong)c.ticket,ORDER_STATE)==ORDER_STATE_CANCELED &&
+         HistoryOrderGetInteger((ulong)c.ticket,ORDER_MAGIC)==c.magic && HistoryOrderGetString((ulong)c.ticket,ORDER_SYMBOL)==c.symbol;
+      if(matched)r.order_ticket=(ulong)c.ticket;
+   }
    else if(c.action=="MODIFY_PENDING" || (c.action=="ENTRY" && c.order_type!=c.side))
    {
       ulong order=c.action=="MODIFY_PENDING" ? (ulong)c.ticket : r.order_ticket;
       matched=order>0 && OrderSelect(order) && OrderGetInteger(ORDER_MAGIC)==c.magic && OrderGetString(ORDER_SYMBOL)==c.symbol &&
          MathAbs(OrderGetDouble(ORDER_SL)-c.sl)<tick/2+1e-10 && MathAbs(OrderGetDouble(ORDER_TP)-c.tp)<tick/2+1e-10 && MathAbs(OrderGetDouble(ORDER_PRICE_OPEN)-c.price)<tick/2+1e-10;
-      if(matched) r.order_ticket=order;
+      if(matched) { r.order_ticket=order; r.sl=OrderGetDouble(ORDER_SL); r.tp=OrderGetDouble(ORDER_TP); }
       if(!matched && c.action=="ENTRY" && order>0 && HistoryOrderSelect(order))
+      {
          matched=HistoryOrderGetInteger(order,ORDER_MAGIC)==c.magic && HistoryOrderGetString(order,ORDER_SYMBOL)==c.symbol &&
             HistoryOrderGetInteger(order,ORDER_STATE)==ORDER_STATE_FILLED && MathAbs(HistoryOrderGetDouble(order,ORDER_SL)-c.sl)<tick/2+1e-10 && MathAbs(HistoryOrderGetDouble(order,ORDER_TP)-c.tp)<tick/2+1e-10;
+         if(matched) { r.order_ticket=order; r.sl=HistoryOrderGetDouble(order,ORDER_SL); r.tp=HistoryOrderGetDouble(order,ORDER_TP); }
+      }
    }
    else matched=FullDealAggregate(r);
    if(matched) { r.state="CONFIRMED"; r.reason=(r.filled_volume>0 && c.volume>0 && r.filled_volume<c.volume-1e-9) ? "BROKER_PARTIAL_FILL_VERIFIED" : "BROKER_STATE_VERIFIED"; r.broker_verified=true; return true; }

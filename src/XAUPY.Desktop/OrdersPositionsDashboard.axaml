@@ -101,12 +101,15 @@
         <Border Classes="panel" Padding="10,6">
           <StackPanel Spacing="4">
             <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
-              <TextBlock x:Name="ExecutionStatusText" Text="{local:InitialText 3d0e1b06628814be}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+              <TextBlock x:Name="ExecutionStatusText" Text="{local:InitialText 3d0e1b06628814be}" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="{DynamicResource Font_13}"/>
               <Button Grid.Column="1" Classes="secondary" Content="{DynamicResource Text_8c544b74093bd5cc}" Tag="MANUAL" Click="ExecutionMode_OnClick"/>
               <Button Grid.Column="2" Classes="primary" Content="{DynamicResource Text_4cac9f7792beca47}" Tag="AUTO" Click="ExecutionMode_OnClick"/>
               <Button Grid.Column="3" Classes="secondary" Content="{DynamicResource Text_881cab5fd1353d7b}" Tag="OFF" Click="ExecutionMode_OnClick"/>
             </Grid>
-            <TextBlock x:Name="ExecutionRecentText" Text="{local:InitialText bfaa71a6aa22fdaf}" FontSize="{DynamicResource Font_12}" TextWrapping="Wrap" Foreground="{DynamicResource Brush_9CBAD4}"/>
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+              <TextBlock x:Name="ExecutionRecentText" Text="{local:InitialText bfaa71a6aa22fdaf}" FontSize="{DynamicResource Font_12}" TextWrapping="Wrap" Foreground="{DynamicResource Brush_9CBAD4}" VerticalAlignment="Center"/>
+              <Button Grid.Column="1" Classes="secondary" local:LocalizationService.Text="Tiến trình lệnh" Click="ExecutionHistory_OnClick" FontSize="{DynamicResource Font_12}" Padding="8,4"/>
+            </Grid>
           </StackPanel>
         </Border>
         <Border x:Name="DemoOnceStatusPanel" IsVisible="False" Classes="panel" Padding="10,6">
@@ -269,7 +272,7 @@
               <Border Classes="panelSoft" Padding="9,5"><TextBlock Text="H1"/></Border>
               <Border Classes="panelSoft" Padding="9,5"><TextBlock Text="H4"/></Border>
             </StackPanel>
-            <Grid Height="273">
+            <Grid Height="185">
               <local:MarketChartControl x:Name="OrdersMarketChart"/>
               <StackPanel IsVisible="False"><TextBlock x:Name="OrdersChartLastText"/><StackPanel x:Name="OrdersChartBars"/></StackPanel>
             </Grid>
@@ -293,7 +296,7 @@
                 <TextBlock Grid.Row="0" Text="Lot" Classes="label" VerticalAlignment="Center"/>
                 <TextBox x:Name="ManualLotBox" Grid.Row="0" Grid.Column="1" Classes="tradeInput" MinHeight="29" Text="0.01"/>
                 <TextBlock Grid.Row="1" Text="SL (points)" Classes="label" VerticalAlignment="Center"/>
-                <TextBox x:Name="ManualSlBox" Grid.Row="1" Grid.Column="1" Classes="tradeInput" MinHeight="29" PlaceholderText="{DynamicResource Text_6141e7f13f0ff975}"/>
+                <TextBox x:Name="ManualSlBox" Grid.Row="1" Grid.Column="1" Classes="tradeInput" MinHeight="29" PlaceholderText="Theo cấu hình" ToolTip.Tip="Để trống dùng SL của profile. Có nhập thì phải là số points dương; server SL vẫn bắt buộc."/>
                 <TextBlock Grid.Row="2" Text="TP (points)" Classes="label" VerticalAlignment="Center"/>
                 <TextBox x:Name="ManualTpBox" Grid.Row="2" Grid.Column="1" Classes="tradeInput" MinHeight="29" PlaceholderText="{DynamicResource Text_598c1b2664898a6f}"/>
               </Grid>
@@ -306,6 +309,12 @@
                 <Button Grid.Column="4" Classes="secondary quickLot" Content="1.00" Tag="1.00" Click="QuickLot_OnClick"/>
               </Grid>
 
+              <Border Classes="panelSoft" Padding="7,5">
+                <StackPanel Spacing="4">
+                  <CheckBox x:Name="ManualConfirmCheck" MinHeight="24" Padding="5,0" FontSize="{DynamicResource Font_13}" Content="{DynamicResource Text_62e0add88f465653}"/>
+                  <TextBlock x:Name="ManualEntryHint" FontSize="{DynamicResource Font_11}" Foreground="{DynamicResource Brush_FFD34D}" TextWrapping="Wrap"/>
+                </StackPanel>
+              </Border>
               <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                 <Button x:Name="MarketBuyButton" HorizontalAlignment="Stretch" Grid.Column="0" Background="{DynamicResource Brush_08B966}" BorderBrush="{DynamicResource Brush_16E18A}" BorderThickness="1" CornerRadius="5" Padding="12,6" Click="MarketBuy_OnClick">
                   <StackPanel><TextBlock Text="BUY" FontWeight="Bold" HorizontalAlignment="Center"/><TextBlock x:Name="BuyPriceText" Text="—" FontSize="{DynamicResource Font_20}" FontWeight="Bold" HorizontalAlignment="Center"/></StackPanel>
@@ -315,10 +324,7 @@
                 </Button>
               </Grid>
 
-              <Grid ColumnDefinitions="*,Auto">
-                <TextBlock x:Name="ManualSpreadText" Text="Spread: —" Classes="dim"/>
-                <CheckBox x:Name="ManualConfirmCheck" Grid.Column="1" MinHeight="23" Height="23" Padding="5,0" FontSize="{DynamicResource Font_13}" Content="{DynamicResource Text_62e0add88f465653}"/>
-              </Grid>
+              <TextBlock x:Name="ManualSpreadText" Text="Spread: —" Classes="dim"/>
             </StackPanel>
           </StackPanel>
         </Border>

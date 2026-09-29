@@ -49,10 +49,7 @@ public partial class StrategyDashboard : UserControl
                 FileTypeChoices = [StrategyJson]
             });
             if (file is null) return;
-            await using var stream = await file.OpenWriteAsync();
-            stream.SetLength(0);
-            await using var writer = new StreamWriter(stream, new UTF8Encoding(false));
-            await writer.WriteAsync(JsonSerializer.Serialize(profile, new JsonSerializerOptions { WriteIndented = true }));
+            await FileOutput.WriteTextAsync(file,JsonSerializer.Serialize(profile,new JsonSerializerOptions { WriteIndented = true }));
             ShowAction($"Đã lưu {file.Name}. Bản đang chạy chỉ đổi khi Áp dụng.", Brushes.LightGreen);
         });
     }

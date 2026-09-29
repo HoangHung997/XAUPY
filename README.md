@@ -1,3 +1,7 @@
+# XAUPY — 1.0.0 RC1
+
+Nhánh phát hành riêng: `release/1.0-completion-20260929`. Xem [thay đổi và phạm vi kiểm](docs/FIRST_RELEASE_20260929.md), [hướng dẫn tải/test](docs/FIRST_RELEASE_USER_GUIDE.md) và [ma trận 172 chức năng](docs/FIRST_RELEASE_FEATURE_MATRIX.csv). Bằng chứng các phiên bản dưới đây là lịch sử, không thay cho CI/artifact của nhánh RC1. Bản đầu tiên để người dùng nghiệm thu thực tế; không tự bật giao dịch hoặc gửi lệnh.
+
 # XAUPY
 
 Đợt tiếp theo: **0.17.0-demo1** bổ sung một lần vào lệnh DEMO theo yêu cầu người dùng, tối đa 0,01 lot, có SL/TP và chỉ theo tín hiệu mới sau khi kích hoạt. Khóa giao dịch chung, tài khoản thật và nút lệnh mô phỏng vẫn giữ nguyên. Đây là ngoại lệ kiểm thử vào lệnh riêng, chưa phải bật hệ thống tự động giao dịch đầy đủ. Xem [phạm vi và nghiệm thu một lệnh DEMO](docs/DEMO_ONE_SHOT_ACCEPTANCE.md); bằng chứng RC2 dưới đây được giữ riêng.

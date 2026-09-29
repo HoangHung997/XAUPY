@@ -10,7 +10,7 @@ import time
 from uuid import UUID, uuid4, uuid5
 
 from .demo_once import profile_hash
-from .trade_plan import TradePlanError, entry_guard, grid, number, plan_entry, volume_on_grid
+from .trade_plan import TradePlanError, entry_guard, grid, number, plan_entry, volume_on_grid, pending_cancellation_reason
 from .position_management import position_decision
 
 
@@ -25,6 +25,7 @@ def canonical(value):
 class BrokerExecution:
     def __init__(self, root: Path, bridge, strategy, settings):
         self.bridge, self.strategy, self.settings = bridge, strategy, settings
+        self._profile = getattr(strategy, 'profile', None)
         self.db = sqlite3.connect(Path(root)/'execution-v1.sqlite3', isolation_level=None)
         try:
             self.db.row_factory = sqlite3.Row
@@ -69,43 +70,106 @@ class BrokerExecution:
         # Lost replies must be reconciled even when the socket itself survives.
         self.db.execute("UPDATE intents SET state='UNKNOWN',updated=? WHERE state='DISPATCHED' AND updated<?", (time.time(),time.time()-15))
         counts = {r['state']:r['n'] for r in self.db.execute('SELECT state,COUNT(*) n FROM intents GROUP BY state')}
-        fresh = self.bridge.latest_fresh_snapshot()
+        fresh = (self.bridge.execution_snapshot() if hasattr(self.bridge, 'execution_snapshot')
+                 else self.bridge.latest_fresh_snapshot())
+        profile = getattr(self.strategy, 'profile', None) or self._profile
         reason = ''
-        if self.policy['mode']=='OFF':
+        entry_reason = ''
+        if self.policy['mode'] == 'OFF':
             reason = 'USER_STOPPED'
-        elif not fresh:
-            reason = 'MARKET_DATA_STALE'
-        elif any(fresh.get(k)!=self.policy.get(k) for k in IDENTITY):
-            reason = 'ACCOUNT_OR_SYMBOL_CHANGED'
-        elif counts.get('UNKNOWN',0):
-            reason = 'RECONCILIATION_REQUIRED'
-        elif self.startup_sync_pending:
-            reason = 'STARTUP_BRIDGE_SYNC_PENDING'
-        elif fresh.get('execution_capable') is not True:
-            reason = 'BRIDGE_UPGRADE_REQUIRED'
-        elif fresh.get('account_trade_mode')=='REAL':
-            cfg=getattr(self.strategy,'profile',{}).get('execution',{})
-            if not self.settings['safety']['allow_real_account'] or cfg.get('demo_only',False) or cfg.get('allow_real_account') is False:
-                reason='USER_REAL_PERMISSION_REQUIRED'
-        enabled=self.policy['mode']!='OFF' and not reason
+        else:
+            try:
+                self._snapshot()
+                if any((fresh or {}).get(k) != self.policy.get(k) for k in IDENTITY):
+                    raise TradePlanError('ACCOUNT_OR_SYMBOL_CHANGED')
+                if profile:
+                    self._account_permission(fresh, profile)
+                elif fresh.get('account_trade_mode') == 'REAL':
+                    raise TradePlanError('USER_REAL_PERMISSION_REQUIRED')
+                if self.startup_sync_pending:
+                    raise TradePlanError('STARTUP_BRIDGE_SYNC_PENDING')
+            except TradePlanError as exc:
+                reason = str(exc)
+        enabled = self.policy['mode'] != 'OFF' and not reason
+        if enabled:
+            if counts.get('UNKNOWN', 0) or counts.get('DISPATCHED', 0):
+                entry_reason = 'RECONCILIATION_REQUIRED'
+            elif self.awaiting_snapshot:
+                entry_reason = 'AWAITING_POST_TRADE_SNAPSHOT'
+            elif profile:
+                try:
+                    entry_guard(getattr(self, 'snapshot_transform', lambda v: v)(deepcopy(fresh)), profile,
+                                reserved_entries=sum(json.loads(r['command']).get('action') == 'ENTRY'
+                                    for r in self.db.execute("SELECT command FROM intents WHERE state='QUEUED'")))
+                    if fresh['ask']-fresh['bid'] > profile['costs']['max_spread_price_units']+1e-12:
+                        raise TradePlanError('SPREAD_LIMIT')
+                    if not profile['strategy']['allow_buy'] and not profile['strategy']['allow_sell']:
+                        raise TradePlanError('SIDE_DISABLED')
+                except TradePlanError as exc:
+                    entry_reason = str(exc)
+        entry_enabled = enabled and not entry_reason
+        cfg = (profile or {}).get('execution', {})
+        permission = bool(self.settings['safety']['allow_real_account'])
         today={}
         if fresh and fresh.get('server_utc_offset_seconds') is not None:
             start=fresh['server_time']//86400*86400-fresh['server_utc_offset_seconds']
             today={r['state']:r['n'] for r in self.db.execute("SELECT state,COUNT(*) n FROM intents WHERE created>=? AND json_extract(command,'$.account_login')=? AND json_extract(command,'$.account_server')=? GROUP BY state",
                    (start,fresh.get('account_login'),fresh.get('account_server')))}
         return {'mode':self.policy['mode'], 'identity':{k:self.policy.get(k) for k in IDENTITY},
-                'reason':reason or self.last_blocker, 'counts':counts, 'available':True,
+                'reason':reason or entry_reason, 'last_attempt_reason':self.last_blocker,
+                'entry_reason':reason or entry_reason, 'management_reason':reason,
+                'entry_enabled':entry_enabled, 'management_enabled':enabled,
+                'allow_buy':(profile or {}).get('strategy',{}).get('allow_buy',False),
+                'allow_sell':(profile or {}).get('strategy',{}).get('allow_sell',False),
+                'profile_hash':profile_hash(profile) if profile else None,
+                'quote_age_ms':(fresh or {}).get('quote_age_ms'),
+                'snapshot_age_ms':(fresh or {}).get('snapshot_age_ms'),
+                'quote_source':(fresh or {}).get('quote_source'),
+                'permissions':{'local_allow_real':permission,
+                    'profile_allow_real':cfg.get('allow_real_account') is True,
+                    'profile_demo_only':cfg.get('demo_only',True),
+                    'effective_allow_real':permission and cfg.get('allow_real_account') is True and cfg.get('demo_only') is False},
+                'counts':counts, 'available':True,
                 'counts_today':today,
                 'execution_enabled':enabled,
-                'trading_enabled':self.policy['mode']=='AUTO' and enabled,
+                'trading_enabled':self.policy['mode']=='AUTO' and entry_enabled,
                 'management_warnings':self.management_warnings,
                 'recent':self.history(limit=20)}
 
-    def history(self, limit=100, offset=0):
+    def history(self, limit=100, offset=0, intent_id=None):
         self._refresh_batches()
+        if intent_id is not None:
+            rows = self.db.execute('SELECT * FROM intents WHERE id=?', (str(intent_id),)).fetchall()
+            return [dict(id=r['id'], state=r['state'], command=json.loads(r['command']),
+                         result=json.loads(r['result']) if r['result'] else None,
+                         created=r['created'], updated=r['updated']) for r in rows]
         return [dict(id=r['id'], state=r['state'], command=json.loads(r['command']),
                      result=json.loads(r['result']) if r['result'] else None, created=r['created'], updated=r['updated'])
                 for r in self.db.execute('SELECT * FROM intents ORDER BY created DESC LIMIT ? OFFSET ?', (min(max(int(limit),1),500),max(int(offset),0)))]
+
+    def query_history(self, payload):
+        """Freeze membership while paging; results keep their own updated times."""
+        limit, offset = payload.get('limit', 100), payload.get('offset', 0)
+        if type(limit) is not int or not 1 <= limit <= 500 or type(offset) is not int or offset < 0:
+            raise TradePlanError('INVALID_HISTORY_PAGE')
+        cutoff = payload.get('snapshot_time')
+        cutoff = time.time() if cutoff is None else number(cutoff, 'snapshot_time', positive=True)
+        self._refresh_batches()
+        intent_id = payload.get('intent_id')
+        where, args = 'created<=?', [cutoff]
+        if intent_id is not None:
+            try:
+                intent_id = str(UUID(intent_id))
+            except (ValueError, TypeError, AttributeError):
+                raise TradePlanError('INVALID_INTENT_ID')
+            where += ' AND id=?'; args.append(intent_id)
+        total = self.db.execute('SELECT COUNT(*) FROM intents WHERE '+where, args).fetchone()[0]
+        rows = self.db.execute('SELECT * FROM intents WHERE '+where+' ORDER BY created DESC,id DESC LIMIT ? OFFSET ?',
+                               [*args, limit, offset]).fetchall()
+        items = [dict(id=r['id'],state=r['state'],command=json.loads(r['command']),
+                      result=json.loads(r['result']) if r['result'] else None,created=r['created'],updated=r['updated']) for r in rows]
+        return {'accepted':True, 'items':items, 'total':total, 'has_more':offset+len(items)<total,
+                'snapshot_time':cutoff, 'offset':offset}
 
     def _refresh_batches(self):
         for row in self.db.execute("SELECT * FROM intents WHERE state='BATCH_QUEUED'").fetchall():
@@ -119,11 +183,12 @@ class BrokerExecution:
             if any(s not in TERMINAL_STATES for s in states):
                 continue
             success=[s in {'CONFIRMED','APPLIED_LOCAL'} for s in states]
-            state='CONFIRMED' if all(success) else 'BATCH_PARTIAL' if any(success) else 'REJECTED'
+            state=('APPLIED_LOCAL' if all(s=='APPLIED_LOCAL' for s in states) else 'CONFIRMED') if all(success) else 'BATCH_PARTIAL' if any(success) else 'REJECTED'
             result.update(state=state,accepted=all(success),code=state)
             self.db.execute('UPDATE intents SET state=?,result=?,updated=? WHERE id=?',(state,canonical(result),time.time(),row['id']))
 
     def set_mode(self, payload, profile):
+        self._profile = profile
         mode = payload.get('mode')
         if mode not in {'OFF','MANUAL','AUTO'}:
             raise TradePlanError('INVALID_EXECUTION_MODE')
@@ -146,18 +211,29 @@ class BrokerExecution:
         return self.status()
 
     def _snapshot(self):
-        snapshot = self.bridge.latest_fresh_snapshot()
+        snapshot = (self.bridge.execution_snapshot() if hasattr(self.bridge, 'execution_snapshot')
+                    else self.bridge.latest_fresh_snapshot())
         if not snapshot or snapshot.get('terminal_connected') is not True:
             raise TradePlanError('MARKET_DATA_STALE')
         if snapshot.get('execution_capable') is not True:
             raise TradePlanError('BRIDGE_UPGRADE_REQUIRED')
         if type(snapshot.get('account_login')) is not int or snapshot['account_login']<=0:
             raise TradePlanError('ACCOUNT_IDENTITY_REQUIRED')
-        display=self.strategy.status_payload(market_connected=True).get('display') or {}
-        if display.get('available') and display.get('tick_time_msc',0)>=snapshot.get('tick_time_msc',0):
-            snapshot.update(bid=display['bid'],ask=display['ask'],tick_time_msc=display['tick_time_msc'])
-        if abs(snapshot['server_time']*1000-snapshot.get('tick_time_msc',0))>2000:
+        # The bridge owns the quote/clock pair. Strategy display values must
+        # never be spliced into an older account snapshot's clock.
+        server_time = snapshot.get('server_time')
+        if type(server_time) is not int or server_time <= 0:
+            raise TradePlanError('BROKER_CLOCK_REQUIRED')
+        clock = snapshot.get('execution_clock_msc', server_time * 1000)
+        stamp = snapshot.get('tick_time_msc', 0)
+        if type(stamp) is not int or stamp <= 0:
             raise TradePlanError('FRESH_QUOTE_REQUIRED')
+        snapshot['quote_age_ms'] = clock - stamp
+        if snapshot['quote_age_ms'] > 2000 or snapshot['quote_age_ms'] < -1000:
+            raise TradePlanError('FRESH_QUOTE_REQUIRED')
+        bid = number(snapshot.get('bid'), 'bid', positive=True)
+        if number(snapshot.get('ask'), 'ask', positive=True) < bid:
+            raise TradePlanError('INVALID_SPREAD')
         return getattr(self,'snapshot_transform',lambda value:value)(snapshot)
 
     def _account_permission(self, snapshot, profile):
@@ -205,6 +281,7 @@ class BrokerExecution:
         return result
 
     def submit(self, payload, profile, *, automatic=False):
+        self._profile = profile
         if not isinstance(payload,dict):
             raise TradePlanError('INVALID_PAYLOAD')
         try:
@@ -223,6 +300,12 @@ class BrokerExecution:
         action=payload.get('action','')
         entry=action in {'MARKET_BUY','MARKET_SELL','PLACE_PENDING'}
         snapshot=self._permission(profile,entry=entry)
+        expected_hash = payload.get('confirmed_profile_hash')
+        if expected_hash is not None and expected_hash != profile_hash(profile):
+            raise TradePlanError('CONFIRMED_PROFILE_CHANGED')
+        reviewed = payload.get('confirmed_identity')
+        if reviewed is not None and (not isinstance(reviewed, dict) or any(reviewed.get(k) != snapshot.get(k) for k in IDENTITY)):
+            raise TradePlanError('CONFIRMED_ACCOUNT_MISMATCH')
         if automatic and self.policy['mode']!='AUTO':
             raise TradePlanError('AUTOMATIC_TRADING_NOT_SELECTED')
         if action in {'CLOSE_ALL','CLOSE_PROFIT','CLOSE_LOSS','CANCEL_ALL_PENDING','PARTIAL_ALL','BE_ALL','TRAIL_ALL'}:
@@ -241,8 +324,10 @@ class BrokerExecution:
             # Parent intent is persisted too: duplicate batch cannot act on tickets
             # that arrived after the first click.
             now=time.time()
-            result={'accepted':all(r['accepted'] for r in results),'intent_id':intent_id,'state':'BATCH_QUEUED','code':'BATCH_QUEUED','items':results}
-            self.db.execute('INSERT INTO intents VALUES (?,?,?,?,?,?,?)',(intent_id,fingerprint,'BATCH_QUEUED',canonical({'action':'BATCH'}),canonical(result),now,now))
+            batch_state = 'BATCH_QUEUED' if results else 'REJECTED'
+            result={'accepted':bool(results) and any(r['accepted'] for r in results),'all_accepted':bool(results) and all(r['accepted'] for r in results),'intent_id':intent_id,
+                    'state':batch_state,'code':'BATCH_QUEUED' if results else 'NO_TARGETS','items':results}
+            self.db.execute('INSERT INTO intents VALUES (?,?,?,?,?,?,?)',(intent_id,fingerprint,batch_state,canonical({'action':'BATCH'}),canonical(result),now,now))
             return result
         if entry:
             reserved=self.db.execute("SELECT command FROM intents WHERE state='QUEUED'").fetchall()
@@ -253,7 +338,15 @@ class BrokerExecution:
                 overrides['order_type']=side
             if action=='PLACE_PENDING' and payload.get('order_type') not in {'BUY_STOP','SELL_STOP','BUY_LIMIT','SELL_LIMIT'}:
                 raise TradePlanError('INVALID_PENDING_TYPE')
-            plan=plan_entry(profile,snapshot,self.strategy.history,side,overrides)
+            signal = self.strategy.status_payload(market_connected=True).get('last_signal') if automatic else None
+            planning_snapshot=deepcopy(snapshot)
+            planning_snapshot['orders']=list(planning_snapshot.get('orders',[]))
+            for reserved_row in reserved:
+                reserved_plan=json.loads(reserved_row['command'])
+                if reserved_plan.get('action')=='ENTRY' and all(reserved_plan.get(k)==snapshot.get(k) for k in IDENTITY):
+                    planning_snapshot['orders'].append({'side':reserved_plan['side'],'price_open':reserved_plan['price'],
+                        'sl':reserved_plan['sl'],'volume_current':reserved_plan['volume']})
+            plan=plan_entry(profile,planning_snapshot,self.strategy.history,side,overrides,signal=signal)
             metrics=self.strategy.status_payload(market_connected=True).get('display',{}).get('indicators',{}).get('trigger',{})
             plan.update(entry_rsi=metrics.get('rsi'),entry_z=metrics.get('z'))
         else:
@@ -293,6 +386,27 @@ class BrokerExecution:
                 raw=number(value(key,item.get('price_open' if key=='price' else key,0)),key,positive=key!='tp')
                 plan[key]=grid(raw,snapshot['tick_size']) if raw else 0
             plan['expiration']=int(value('expiration',item.get('expiration',0)))
+            kind = str(item.get('order_type', item.get('type', ''))).replace(' ', '_')
+            buy = kind.startswith('BUY')
+            if kind not in {'BUY_STOP','SELL_STOP','BUY_LIMIT','SELL_LIMIT'}:
+                raise TradePlanError('INVALID_PENDING_TYPE')
+            old_price = number(item.get('price_open'), 'old_pending_price', positive=True)
+            old_sl = number(item.get('sl'), 'old_pending_sl', positive=True)
+            sign = 1 if buy else -1
+            if sign*(plan['sl']-old_sl)<-1e-9:
+                raise TradePlanError('NEVER_WIDEN_SL')
+            if sign*(plan['price']-plan['sl'])>sign*(old_price-old_sl)+1e-9:
+                raise TradePlanError('PENDING_RISK_INCREASE')
+            reference = snapshot['ask' if buy else 'bid']
+            gap = max(snapshot.get('stops_level',0),snapshot.get('freeze_level',0))*snapshot['point']
+            gap = max(gap, snapshot['tick_size'])
+            separation = (plan['price']-reference) if kind.endswith('STOP') else (reference-plan['price'])
+            if sign*separation < gap-1e-9 or sign*(plan['price']-plan['sl']) < gap-1e-9:
+                raise TradePlanError('STOP_OR_FREEZE_LEVEL')
+            if plan['tp'] and sign*(plan['tp']-plan['price']) < gap-1e-9:
+                raise TradePlanError('INVALID_SERVER_TP')
+            if plan['expiration'] and plan['expiration'] <= snapshot['server_time']:
+                raise TradePlanError('PENDING_EXPIRED')
         elif action=='START_TRAILING':
             key=self.position_key(snapshot,ticket)
             state=self.position_state(key) or {}
@@ -313,6 +427,8 @@ class BrokerExecution:
         gap=max(snapshot.get('stops_level',0),snapshot.get('freeze_level',0))*snapshot['point']
         if (close-plan['sl'] if buy else plan['sl']-close) < max(gap, snapshot['tick_size'])-1e-10:
             raise TradePlanError('STOP_OR_FREEZE_LEVEL')
+        if plan.get('tp') and (plan['tp']-close if buy else close-plan['tp']) < max(gap, snapshot['tick_size'])-1e-10:
+            raise TradePlanError('INVALID_SERVER_TP')
 
     @staticmethod
     def position_key(snapshot,ticket):
@@ -408,13 +524,12 @@ class BrokerExecution:
         if automatic:
             from .trade_plan import session_allowed, weekend_close_due
             from uuid import NAMESPACE_URL
-            signal=projection.get('last_signal') or {}
             for pending in snapshot.get('orders',[]):
                 if any(c.get('ticket')==pending['ticket'] for c in outstanding): continue
-                side=pending.get('order_type',pending.get('type',''))
-                opposite=profile['entry']['cancel_on_opposite_setup'] and projection.get('armed_side') and not side.startswith(projection['armed_side'])
+                kind = pending.get('order_type',pending.get('type',''))
+                side = 'BUY' if kind.startswith('BUY') else 'SELL' if kind.startswith('SELL') else ''
                 try:
-                    cancel=not session_allowed(snapshot,profile['sessions']) or weekend_close_due(snapshot,profile['sessions']) or opposite
+                    cancel = pending_cancellation_reason(profile,snapshot,projection,side,int(pending.get('expiration',0)))
                     if cancel:
                         key=self.position_key(snapshot,pending['ticket'])+':CANCEL_PENDING'
                         self.submit({'intent_id':str(uuid5(NAMESPACE_URL,key)),'confirmed':True,'ticket':pending['ticket'],'action':'CANCEL_PENDING'},profile)
@@ -493,17 +608,27 @@ class BrokerExecution:
         if payload['state']=='CONFIRMED':
             if not payload['order_send_called'] or payload.get('broker_verified') is not True or payload['retcode'] not in {10008,10009,10010,10025}:
                 raise TradePlanError('BROKER_EVIDENCE_REQUIRED')
-            if command['action']=='ENTRY' and command['order_type'] in {'BUY','SELL'}:
-                if payload['deal_ticket']<=0 or number(payload.get('filled_volume'),'filled_volume',positive=True)>command['volume']+1e-9:
+            action=command['action']
+            if action in {'ENTRY','CLOSE_POSITION','PARTIAL_CLOSE'} and (action!='ENTRY' or command['order_type'] in {'BUY','SELL'}):
+                if payload['order_ticket']<=0 or payload['deal_ticket']<=0 or number(payload.get('filled_volume'),'filled_volume',positive=True)>command['volume']+1e-9:
                     raise TradePlanError('FILL_EVIDENCE_REQUIRED')
-                price=number(payload.get('fill_price'),'fill_price',positive=True)
+                number(payload.get('fill_price'),'fill_price',positive=True)
+            if action in {'CLOSE_POSITION','PARTIAL_CLOSE','MODIFY_POSITION'} and payload['position_ticket']!=command['ticket']:
+                raise TradePlanError('POSITION_EVIDENCE_MISMATCH')
+            if action in {'CANCEL_PENDING','MODIFY_PENDING'} and payload['order_ticket']!=command['ticket']:
+                raise TradePlanError('ORDER_EVIDENCE_MISMATCH')
+            if action=='ENTRY' and payload['order_ticket']<=0:
+                raise TradePlanError('ORDER_EVIDENCE_REQUIRED')
+            if action in {'ENTRY','MODIFY_POSITION','MODIFY_PENDING'}:
                 sl=number(payload.get('sl'),'sl',positive=True)
                 tp=number(payload.get('tp'),'tp')
                 tolerance=number(snapshot.get('tick_size'),'tick_size',positive=True)/2+1e-10
-                if abs(sl-command['sl'])>tolerance or abs(tp-command['tp'])>tolerance or (sl>=price if command['side']=='BUY' else sl<=price):
+                if abs(sl-command['sl'])>tolerance or abs(tp-command['tp'])>tolerance:
+                    raise TradePlanError('PROTECTION_EVIDENCE_MISMATCH')
+                if action=='ENTRY' and command['order_type'] in {'BUY','SELL'} and (sl>=payload['fill_price'] if command['side']=='BUY' else sl<=payload['fill_price']):
                     raise TradePlanError('PROTECTION_EVIDENCE_MISMATCH')
         self.db.execute('UPDATE intents SET state=?,result=?,updated=? WHERE id=?',(payload['state'],canonical(payload),time.time(),row['id']))
-        if payload['state']=='CONFIRMED' and command['action']=='ENTRY' and payload.get('position_ticket',0)>0:
+        if payload['state']=='CONFIRMED' and command['action']=='ENTRY' and payload.get('position_ticket',0)>0 and payload.get('fill_price',0)>0:
             key=self.position_key(command,payload['position_ticket'])
             initial=abs(payload.get('fill_price',command['price'])-command['sl'])
             self.save_position_state(key,{'initial_risk':initial,'original_tp':command['original_tp'],
@@ -530,6 +655,7 @@ class UnavailableBrokerExecution:
     def submit(self,*args,**kwargs): raise TradePlanError('EXECUTION_STORAGE_UNAVAILABLE')
     def record_result(self,*args,**kwargs): raise TradePlanError('EXECUTION_STORAGE_UNAVAILABLE')
     def history(self,*args,**kwargs): return []
+    def query_history(self,payload): raise TradePlanError('EXECUTION_STORAGE_UNAVAILABLE')
     def close(self): pass
     def disconnected(self): pass
     def on_snapshot(self): pass

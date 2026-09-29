@@ -135,6 +135,8 @@ public sealed partial class EngineProcessSupervisor : IDisposable
             OptimizerStatus = OptimizerStatusSnapshot.Idle;
             Configuration = ConfigurationSummary.Default;
             Strategy = StrategySnapshot.Empty;
+        Execution = ExecutionSnapshot.Offline;
+        DemoOnce = DemoOnceSnapshot.Disabled;
 
             if (!File.Exists(EnginePath))
             {
@@ -200,6 +202,8 @@ public sealed partial class EngineProcessSupervisor : IDisposable
         JournalSummary = JournalSummarySnapshot.Empty;
         OptimizerStatus = OptimizerStatusSnapshot.Idle;
         Strategy = StrategySnapshot.Empty;
+        Execution = ExecutionSnapshot.Offline;
+        DemoOnce = DemoOnceSnapshot.Disabled;
         SetState(EngineConnectionState.Stopped, "Python Engine đã dừng.");
     }
 
@@ -234,6 +238,8 @@ public sealed partial class EngineProcessSupervisor : IDisposable
                     JournalSummary = JournalSummarySnapshot.Empty;
                     OptimizerStatus = OptimizerStatusSnapshot.Idle;
                     Strategy = StrategySnapshot.Empty;
+        Execution = ExecutionSnapshot.Offline;
+        DemoOnce = DemoOnceSnapshot.Disabled;
                     SetState(
                         EngineConnectionState.Starting,
                         $"Engine đã tự khởi động lại ({_restartAttempts}/{MaxRestartAttempts}), PID {_process.Id}.");
@@ -271,7 +277,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
                     var heartbeat = ProtocolEnvelope.Create(
                         updateKind,
-                        new { component = "desktop", desktop_version = "1.0.0-dev" });
+                        new { component = "desktop", desktop_version = "1.0.0-rc1" });
 
                     var response = await SendReceiveAsync(
                         heartbeat,
@@ -322,6 +328,8 @@ public sealed partial class EngineProcessSupervisor : IDisposable
                 JournalSummary = JournalSummarySnapshot.Empty;
                 OptimizerStatus = OptimizerStatusSnapshot.Idle;
                 Strategy = StrategySnapshot.Empty;
+        Execution = ExecutionSnapshot.Offline;
+        DemoOnce = DemoOnceSnapshot.Disabled;
 
                 if (_stopRequested || cancellationToken.IsCancellationRequested)
                     break;
@@ -355,7 +363,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
         var hello = ProtocolEnvelope.Create(
             "hello",
-            new { component = "desktop", desktop_version = "1.0.0-dev" });
+            new { component = "desktop", desktop_version = "1.0.0-rc1" });
 
         var response = await SendReceiveAsync(hello, TimeSpan.FromSeconds(3), cancellationToken);
 
@@ -373,7 +381,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
 
         var configRequest = ProtocolEnvelope.Create(
             "config_active_get",
-            new { component = "desktop", desktop_version = "1.0.0-dev" });
+            new { component = "desktop", desktop_version = "1.0.0-rc1" });
 
         var configResponse = await SendReceiveAsync(
             configRequest,
@@ -1205,7 +1213,7 @@ public sealed partial class EngineProcessSupervisor : IDisposable
         if (state != EngineConnectionState.Ready)
         {
             DemoOnce = DemoOnce.AsStale();
-            Execution = Execution with { Fresh = false, Enabled = false };
+            Execution = Execution with { Fresh = false, Enabled = false, EntryEnabled = false, ManagementEnabled = false };
             Monitoring = null;
         }
         if (lastHeartbeatUtc.HasValue)

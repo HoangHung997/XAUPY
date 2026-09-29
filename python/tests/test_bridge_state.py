@@ -37,7 +37,7 @@ def snapshot():
 class BridgeRegistryTests(unittest.TestCase):
     def test_all_symbol_views_do_not_change_execution_scope_or_risk(self):
         payload = snapshot()
-        own = dict(ticket=1, magic=991188, symbol="XAUUSD", profit=1, swap=0, volume=.01, price_open=4200, sl=4190)
+        own = dict(ticket=1, side="BUY", magic=991188, symbol="XAUUSD", profit=1, swap=0, volume=.01, price_open=4200, sl=4190)
         foreign = dict(ticket=2, magic=991188, symbol="EURUSD", profit=100, swap=0, volume=1, price_open=1.1, sl=1)
         payload.update(magic=991188, positions=[own], positions_count=1, all_positions=[own, foreign], all_deals=[dict(magic=991188, symbol="EURUSD", ticket=3)], tick_size=.01, tick_value=1, equity=1000)
         registry = BridgeRegistry(); registry.record_snapshot(payload)

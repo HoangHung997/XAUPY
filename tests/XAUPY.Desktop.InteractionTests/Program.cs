@@ -14,7 +14,7 @@ using System.Text.Json.Nodes;
 using XAUPY.Desktop;
 using XAUPY.Ipc;
 
-if (args.Length != 2 || args[0] != "--engine" || !File.Exists(args[1]))
+if ((args.Length != 2 && (args.Length != 4 || args[2] != "--render-audit")) || args[0] != "--engine" || !File.Exists(args[1]))
 {
     Console.Error.WriteLine("Usage: XAUPY.Desktop.InteractionTests --engine <packaged-engine-executable>");
     return 2;
@@ -26,6 +26,7 @@ int port = ((IPEndPoint)reservation.LocalEndpoint).Port; reservation.Stop();
 runtime.SetEnvironment("XAUPY_ENGINE_PORT", port.ToString());
 runtime.SetEnvironment("XAUPY_ENGINE_PATH", enginePath);
 AppBuilder.Configure<App>().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false }).UseSkia().SetupWithoutStarting();
+if (args.Length == 4) return CaptureAudit.Run(Path.GetFullPath(args[3]),port);
 int assertions = 0, failures = 0;
 void Assert(bool valid, string message) { assertions++; if (!valid) failures++; Console.WriteLine((valid ? "PASS " : "FAIL ") + message); }
 Assert((string?)typeof(OrdersPositionsDashboard).GetMethod("Epoch",BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,[1790574477L])=="2026.09.28 05:47",
@@ -121,8 +122,23 @@ try {
     orderStatus.Apply(OrdersPositionsSnapshot.Empty with { Available=true,TerminalConnected=true,AccountTradeMode="DEMO" },
         OverviewSnapshot.Empty,Mt5BridgeStatus.Offline,ConfigurationSummary.Default);
     orderStatus.ApplyExecutionStatus(new ExecutionSnapshot("MANUAL","",true,true,null));
+    Assert(!orderStatus.FindControl<Button>("MarketBuyButton")!.IsEnabled,
+        "manual mode does not silently confirm a financial operation");
+    orderStatus.FindControl<CheckBox>("ManualConfirmCheck")!.IsChecked = true;
     Assert(orderStatus.FindControl<Button>("MarketBuyButton")!.IsEnabled && orderStatus.FindControl<Button>("MarketSellButton")!.IsEnabled,
-        "explicit connected manual mode enables broker controls");
+        "fresh connected manual mode and visible confirmation enable broker controls");
+    orderStatus.FindControl<TextBox>("ManualLotBox")!.Text = "0.02"; Dispatcher.UIThread.RunJobs();
+    Assert(orderStatus.FindControl<CheckBox>("ManualConfirmCheck")!.IsChecked != true && !orderStatus.FindControl<Button>("MarketBuyButton")!.IsEnabled,
+        "changing trade parameters revokes prior checkbox confirmation");
+    orderStatus.FindControl<TextBox>("ManualSlBox")!.Text = "not-a-stop"; Dispatcher.UIThread.RunJobs();
+    orderStatus.FindControl<CheckBox>("ManualConfirmCheck")!.IsChecked = true;
+    Assert(!orderStatus.FindControl<Button>("MarketSellButton")!.IsEnabled,
+        "invalid nonempty SL is not silently converted into profile-default protection");
+    orderStatus.FindControl<TextBox>("ManualSlBox")!.Text = ""; Dispatcher.UIThread.RunJobs();
+    orderStatus.FindControl<CheckBox>("ManualConfirmCheck")!.IsChecked = true;
+    orderStatus.ApplyExecutionStatus(new ExecutionSnapshot("AUTO","FRESH_QUOTE_REQUIRED",false,true,null));
+    Assert(!orderStatus.FindControl<Button>("MarketSellButton")!.IsEnabled && orderStatus.FindControl<TextBlock>("ExecutionStatusText")!.Text!.Contains("Giá chưa đủ mới"),
+        "quote freshness gate disables entry and explains why without raw-code-only message");
     orderStatus.ApplyExecutionStatus(new ExecutionSnapshot("OFF","USER_STOPPED",false,true,null));
     Assert(!orderStatus.FindControl<Button>("MarketBuyButton")!.IsEnabled,
         "user stop immediately disables new manual entry");
@@ -135,6 +151,35 @@ try {
     var rising=Enumerable.Range(0,30).Select(i=>new MarketBar(1800000000+i*60,100+i,101+i,99+i,100+i,1)).ToArray();
     var values=((double? Rsi,double? Z))metrics.Invoke(null,new object[]{rising,14,20})!;
     Assert(values.Rsi==100 && values.Z>1.6 && values.Z<1.7,"chart RSI/Z calculated from actual bars");
+    var consentGate = new ExecutionSnapshot("MANUAL","",true,true,null) { ProfileHash="A", BuyAllowed=true, SellAllowed=false };
+    orderStatus.ApplyExecutionStatus(consentGate);
+    orderStatus.FindControl<TextBox>("ManualSlBox")!.Text="";
+    orderStatus.FindControl<CheckBox>("ManualConfirmCheck")!.IsChecked=true;
+    Assert(orderStatus.FindControl<Button>("MarketBuyButton")!.IsEnabled && !orderStatus.FindControl<Button>("MarketSellButton")!.IsEnabled,
+        "BUY-only profile disables SELL independently of current execution mode");
+    orderStatus.ApplyExecutionStatus(consentGate with { ProfileHash="B" });
+    Assert(orderStatus.FindControl<CheckBox>("ManualConfirmCheck")!.IsChecked!=true && !orderStatus.FindControl<Button>("MarketBuyButton")!.IsEnabled,
+        "profile change revokes a previously reviewed order confirmation");
+    var permissionView=new SettingsDashboard();
+    permissionView.ApplyExecutionStatus(consentGate with { Mode="OFF",Enabled=false,EntryEnabled=false,PermissionsKnown=true,LocalAllowReal=true,EffectiveAllowReal=true });
+    Assert(permissionView.FindControl<TextBlock>("ExecutionModeSummary")!.Text!.Contains("Đã dừng"),
+        "saved REAL permission is presented separately from a stopped execution mode");
+    string atomicPath=Path.Combine(runtime.Root,"kiểm tra-atomic.json");
+    File.WriteAllText(atomicPath,"old evidence");
+    Complete(FileOutput.WriteLocalAsync(atomicPath,System.Text.Encoding.UTF8.GetBytes("{\"tiếng Việt\":true}")));
+    Assert(File.ReadAllText(atomicPath)=="{\"tiếng Việt\":true}","atomic export writes full UTF-8 evidence without truncation");
+    using(var cancellation=new CancellationTokenSource())
+    {
+        cancellation.Cancel();
+        try { Complete(FileOutput.WriteLocalAsync(atomicPath,new byte[400],cancellation.Token)); }
+        catch(OperationCanceledException) { }
+    }
+    Assert(File.ReadAllText(atomicPath)=="{\"tiếng Việt\":true}" && !Directory.EnumerateFiles(runtime.Root,".*.tmp").Any(),
+        "cancelled export keeps old evidence and removes only its temporary file");
+    var csvRow=JsonSerializer.SerializeToElement(new { ticket=42,comment="=1+2",symbol="XAUUSD",profit=-1.5 });
+    var csv=(string)typeof(OrdersPositionsDashboard).GetMethod("BrokerHistoryCsv",BindingFlags.Static|BindingFlags.NonPublic)!.Invoke(null,[new[]{csvRow}])!;
+    Assert(csv.Contains("\"'=1+2\"") && csv.Contains("-1.5") && csv.Contains("entry_costs"),
+        "broker CSV escapes formula-like comments and preserves numeric cost evidence");
     var statusStrategy = new StrategyDashboard();
     statusStrategy.ApplyExecution(new ExecutionSnapshot("AUTO", "", true, true, null));
     Assert(statusStrategy.FindControl<TextBlock>("StopsExecutionText")!.Text == "Tự động" &&

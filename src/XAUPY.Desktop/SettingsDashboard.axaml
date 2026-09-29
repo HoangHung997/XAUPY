@@ -72,7 +72,7 @@
           <TextBlock Text="{DynamicResource Text_7be69a9f6ad0c183}" TextWrapping="Wrap" FontSize="{DynamicResource Font_13}"/>
           <CheckBox x:Name="AllowRealAccount" Content="{DynamicResource Text_f44f66c9ea854308}" FontSize="{DynamicResource Font_13}"/>
           <TextBlock Text="{DynamicResource Text_0cb1c4d77a5a0196}" TextWrapping="Wrap" FontSize="{DynamicResource Font_12}" Foreground="{DynamicResource Brush_8DB0CC}"/>
-          <TextBlock x:Name="ExecutionModeSummary" Text="{local:InitialText 0e560af63841c6a1}" Foreground="{DynamicResource Brush_FFD34D}" FontSize="{DynamicResource Font_12}" TextTrimming="CharacterEllipsis"/>
+          <TextBlock x:Name="ExecutionModeSummary" Text="{local:InitialText 0e560af63841c6a1}" Foreground="{DynamicResource Brush_FFD34D}" FontSize="{DynamicResource Font_11}" TextWrapping="Wrap"/>
         </StackPanel></Border>
         <Border Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="2" Classes="panel" Padding="10">
           <Grid ColumnDefinitions="*,135" RowDefinitions="Auto,*" ColumnSpacing="10"><StackPanel Orientation="Horizontal" Spacing="9"><local:ReferenceIcon Kind="cloud" Width="27" Height="27" Tint="{DynamicResource Brush_69BCFF}"/><TextBlock Text="{DynamicResource Text_fec135458dc1a88d}" Classes="panelTitle" Foreground="{DynamicResource Brush_8FCCFF}" VerticalAlignment="Center"/></StackPanel>

@@ -46,20 +46,19 @@ public partial class ToolsDashboard
     private async void CompareFiles_OnClick(object? sender,RoutedEventArgs e) => await RunAsync(async ()=>
     {
         var storage=TopLevel.GetTopLevel(this)?.StorageProvider;
-        if(storage is null) return;
+        if(storage is null || !await ConfirmDiscardDraftAsync()) return;
         var files=await storage.OpenFilePickerAsync(new FilePickerOpenOptions { Title="Chọn đúng hai preset JSON",AllowMultiple=true,FileTypeFilter=new[]{JsonType} });
         if(files.Count==0) return;
         if(files.Count!=2) throw new InvalidDataException("Chọn đúng hai file để so sánh.");
         async Task<JsonElement> Read(IStorageFile file)
         {
             await using var stream=await file.OpenReadAsync();
-            if(stream.Length>2*1024*1024) throw new InvalidDataException("Preset vượt quá 2 MiB.");
+            if(stream.CanSeek && stream.Length>2*1024*1024) throw new InvalidDataException("Preset vượt quá 2 MiB.");
             using var doc=await JsonDocument.ParseAsync(stream); return doc.RootElement.Clone();
         }
         var left=await Read(files[0]); var right=await Read(files[1]);
         var differences=new List<object>(); CompareAll("",left,right,differences);
-        ToolEditor.Text=JsonSerializer.Serialize(new { baseline=files[0].Name,candidate=files[1].Name,differences },Pretty);
-        _loadedText=ToolEditor.Text;
+        PresentReadOnlyReport("compare", JsonSerializer.Serialize(new { baseline=files[0].Name,candidate=files[1].Name,differences },Pretty));
         Result($"{differences.Count} khác biệt giữa hai preset.",true);
     });
     private static void CompareAll(string path,JsonElement left,JsonElement right,List<object> rows)

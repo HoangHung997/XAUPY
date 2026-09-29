@@ -14,6 +14,8 @@ public static class LocalizationService
     private static bool _updating;
     public static readonly AttachedProperty<string?> TextProperty =
         AvaloniaProperty.RegisterAttached<Control, string?>("Text", typeof(LocalizationService));
+    public static string? GetText(Control control) => control.GetValue(TextProperty);
+    public static void SetText(Control control, string? value) => control.SetValue(TextProperty, value);
     static LocalizationService()
     {
         TextBlock.TextProperty.Changed.AddClassHandler<TextBlock>((control, _) => ForgetOverriddenLabel(control));

@@ -24,6 +24,7 @@ public partial class OrdersPositionsDashboard : UserControl
     {
         InitializeComponent();
         StyleTableHeaders();
+        InitializeManualConfirmation();
         RenderAll();
         RenderQuoteChart();
     }
@@ -57,6 +58,11 @@ public partial class OrdersPositionsDashboard : UserControl
         Text("OrdersConnectionDot").Foreground = book.Available && book.TerminalConnected ? Brushes.MediumSpringGreen : Brushes.Gold;
         if (_book.AccountLogin != book.AccountLogin || _book.AccountServer != book.AccountServer || _book.Magic != book.Magic)
             ClearBrokerHistory();
+        if (Identity(_book) != Identity(book) || !book.Available || !book.TerminalConnected)
+        {
+            Check("ManualConfirmCheck").IsChecked = false;
+            Check("ConfirmCloseCheck").IsChecked = false;
+        }
         _book = book;
         _config = config;
 
@@ -302,55 +308,9 @@ public partial class OrdersPositionsDashboard : UserControl
 
         bool confirmed = Check("ConfirmCloseCheck").IsChecked == true;
 
-        switch (action)
-        {
-            case "PARTIAL_ALL":
-                await ExecuteAcrossPositionsAsync("PARTIAL_CLOSE", confirmed, percent: 50);
-                break;
-            case "BE_ALL":
-                await ExecuteAcrossPositionsAsync("MOVE_SL_BE", confirmed);
-                break;
-            case "TRAIL_ALL":
-                await ExecuteAcrossPositionsAsync("START_TRAILING", confirmed);
-                break;
-            default:
-                await SendActionAsync(action, confirmed);
-                break;
-        }
-    }
-
-    private async Task ExecuteAcrossPositionsAsync(
-        string action,
-        bool confirmed,
-        double? percent = null)
-    {
-        var positions = _book.Positions.Where(p => IsCurrentSymbol(p.Symbol)).ToArray();
-        if (positions.Length == 0)
-        {
-            SetActionStatus("Không có vị thế của chiến lược để xử lý.", Brushes.IndianRed);
-            return;
-        }
-
-        int accepted = 0;
-        string lastCode = string.Empty;
-
-        foreach (var position in positions)
-        {
-            var result = await SendActionAsync(
-                action,
-                confirmed,
-                ticket: position.Ticket,
-                percent: percent,
-                updateStatus: false);
-            if (result?.Accepted == true)
-                accepted++;
-            if (result is not null)
-                lastCode = result.Code;
-        }
-
-        SetActionStatus(
-            $"{action}: {accepted}/{positions.Length} thao tác được tiếp nhận • {lastCode}",
-            accepted == positions.Length ? Brushes.LightGreen : Brushes.Gold);
+        // One durable parent intent freezes the target set. Repeated heartbeat
+        // changes cannot expand a batch while the first click is still running.
+        await SendActionAsync(action, confirmed, percent: action == "PARTIAL_ALL" ? 50 : null);
     }
 
     private async void MarketBuy_OnClick(object? sender, RoutedEventArgs e) =>
@@ -361,21 +321,17 @@ public partial class OrdersPositionsDashboard : UserControl
 
     private async Task SendMarketAsync(string action)
     {
-        if (!TryNumber(Box("ManualLotBox").Text, out var volume))
+        if (!ValidateManualInputs(out var volume, out var slPoints, out var tpPoints, out var error))
         {
-            SetActionStatus("REJECTED • Lot không hợp lệ.", Brushes.IndianRed);
+            SetActionStatus(error, Brushes.IndianRed);
             return;
         }
-
-        double? slPoints = NullableNumber(Box("ManualSlBox").Text);
-        double? tpPoints = NullableNumber(Box("ManualTpBox").Text);
-
-        await SendActionAsync(
-            action,
-            confirmed: Check("ManualConfirmCheck").IsChecked == true,
-            volume: volume,
-            slPoints: slPoints,
-            tpPoints: tpPoints);
+        if (Check("ManualConfirmCheck").IsChecked != true || _confirmedIdentity != Identity(_book))
+        {
+            SetActionStatus(ExecutionPresentation.Reason("USER_CONFIRMATION_REQUIRED"), Brushes.Gold);
+            return;
+        }
+        await SendActionAsync(action, true, volume: volume, slPoints: slPoints, tpPoints: tpPoints);
     }
 
     private void QuickLot_OnClick(object? sender, RoutedEventArgs e)
@@ -400,6 +356,8 @@ public partial class OrdersPositionsDashboard : UserControl
             return;
         }
 
+        var reviewed = _book;
+        string? reviewedProfile = _executionState.ProfileHash;
         var priceBox = new TextBox { Text = Price(order.PriceOpen), PlaceholderText = "Giá đặt" };
         var slBox = new TextBox { Text = PriceOrDash(order.Sl).Replace("—", ""), PlaceholderText = "SL" };
         var tpBox = new TextBox { Text = PriceOrDash(order.Tp).Replace("—", ""), PlaceholderText = "TP" };
@@ -446,9 +404,11 @@ public partial class OrdersPositionsDashboard : UserControl
         cancel.Click += (_, _) => dialog.Close();
         ok.Click += (_, _) =>
         {
-            if (!TryNumber(priceBox.Text, out var price))
+            if (!TryNumber(priceBox.Text, out var price) || price <= 0 ||
+                (!string.IsNullOrWhiteSpace(slBox.Text) && (!TryNumber(slBox.Text,out var stop) || stop <= 0)) ||
+                (!string.IsNullOrWhiteSpace(tpBox.Text) && (!TryNumber(tpBox.Text,out var target) || target < 0)) || confirm.IsChecked != true)
             {
-                status.Text = "Giá đặt không hợp lệ.";
+                status.Text = "Nhập giá/SL/TP hợp lệ và xác nhận tài khoản trước khi gửi.";
                 return;
             }
 
@@ -465,6 +425,11 @@ public partial class OrdersPositionsDashboard : UserControl
         if (result is not { } change)
             return;
 
+        if (Identity(reviewed) != Identity(_book) || reviewedProfile != _executionState.ProfileHash)
+        {
+            SetActionStatus(ExecutionPresentation.Reason("CONFIRMED_ACCOUNT_MISMATCH"), Brushes.IndianRed);
+            return;
+        }
         await SendActionAsync(
             "MODIFY_PENDING",
             change.Confirmed,
@@ -495,6 +460,17 @@ public partial class OrdersPositionsDashboard : UserControl
             return null;
         }
 
+        // Snapshot the reviewed context before refreshing UI state. A heartbeat
+        // may have changed supervisor.Execution before its UI event is delivered.
+        var reviewed = _book;
+        string? reviewedHash = action is "MARKET_BUY" or "MARKET_SELL" ? _confirmedProfileHash : _executionState.ProfileHash;
+        if (confirmed && reviewedHash != _supervisor.Execution.ProfileHash)
+        {
+            SetActionStatus(ExecutionPresentation.Reason("CONFIRMED_PROFILE_CHANGED"), Brushes.IndianRed);
+            Check("ManualConfirmCheck").IsChecked = false;
+            Check("ConfirmCloseCheck").IsChecked = false;
+            return null;
+        }
         try
         {
             _executionBusy = true;
@@ -509,13 +485,16 @@ public partial class OrdersPositionsDashboard : UserControl
                 percent,
                 price,
                 sl,
-                tp);
+                tp,
+                reviewedAccount: reviewed,
+                reviewedProfileHash: reviewedHash);
 
             if (updateStatus)
             {
-                string prefix = result.Code == "CONFIRMED" ? "BROKER ĐÃ XÁC NHẬN" : result.Code == "APPLIED_LOCAL" ? "ĐÃ BẬT QUẢN LÝ" : result.Accepted ? "ĐANG XỬ LÝ" : "CHƯA THỰC HIỆN";
+                string prefix = result.Code == "BATCH_PARTIAL" ? "ĐÃ THỰC HIỆN MỘT PHẦN" : result.Code == "CONFIRMED" ? "BROKER ĐÃ XÁC NHẬN" : result.Code == "APPLIED_LOCAL" ? "ĐÃ BẬT QUẢN LÝ" : result.Accepted ? "ĐANG XỬ LÝ" : "CHƯA THỰC HIỆN";
                 SetActionStatus(
-                    $"{prefix} • {result.Code} • {result.Message}",
+                    $"{prefix} • {ExecutionPresentation.Reason(result.Code)}" +
+                    (string.IsNullOrWhiteSpace(result.Message) || result.Message == result.Code ? "" : $" • {ExecutionPresentation.Reason(result.Message)}"),
                     result.Accepted ? Brushes.LightGreen : Brushes.IndianRed);
             }
 
@@ -527,7 +506,13 @@ public partial class OrdersPositionsDashboard : UserControl
                 SetActionStatus($"ERROR • {ex.Message}", Brushes.IndianRed);
             return null;
         }
-        finally { _executionBusy = false; ApplyExecutionStatus(_supervisor.Execution); }
+        finally
+        {
+            _executionBusy = false;
+            Check("ManualConfirmCheck").IsChecked = false;
+            Check("ConfirmCloseCheck").IsChecked = false;
+            ApplyExecutionStatus(_supervisor.Execution);
+        }
     }
 
     private void RenderQuoteChart()

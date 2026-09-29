@@ -96,8 +96,8 @@
     "en": "Alert: waiting for Bridge."
   },
   "22474724a7626156": {
-    "vi": "An toàn",
-    "en": "Safety"
+    "vi": "Giao dịch",
+    "en": "Trading"
   },
   "fe8562f967d79e77": {
     "vi": "Báo cáo nghiên cứu",
@@ -2810,5 +2810,29 @@
   "9ad4a5ce02bca72c": {
     "vi": "Giá trị tick / lot (tiền TK)",
     "en": "Tick value / lot (account currency)"
+  },
+  "1cbe9374391d6be9": {
+    "vi": "Tiến trình lệnh",
+    "en": "Order lifecycle"
+  },
+  "d654065d13f45eea": {
+    "vi": "Sẵn sàng",
+    "en": "Ready"
+  },
+  "0455de4981f6d2da": {
+    "vi": "Đã dừng giao dịch; chọn Thủ công hoặc Tự động để bắt đầu.",
+    "en": "Trading stopped; choose Manual or Automatic to start."
+  },
+  "ba9383f37ca9a390": {
+    "vi": "Tích Xác nhận đặt lệnh ở ngay trên nút BUY/SELL.",
+    "en": "Check Confirm order directly above BUY/SELL."
+  },
+  "c350ac6f81e9bfef": {
+    "vi": "Giá chưa đủ mới hoặc đồng hồ giá không khớp. Chờ tick mới; không gửi lại liên tục.",
+    "en": "Quote is not fresh or clocks disagree. Wait for a new tick; do not repeatedly submit."
+  },
+  "40b5ccca299e06b6": {
+    "vi": "Mất kết nối Python Engine.",
+    "en": "Python Engine is disconnected."
   }
 }

@@ -977,14 +977,7 @@ public partial class OptimizerDashboard : UserControl
                 rolling = CurrentRolling()
             };
 
-            await using var stream = await file.OpenWriteAsync();
-            if (stream.CanSeek)
-                stream.SetLength(0);
-            await JsonSerializer.SerializeAsync(
-                stream,
-                payload,
-                new JsonSerializerOptions { WriteIndented = true });
-            await stream.FlushAsync();
+            await FileOutput.WriteTextAsync(file, JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
             SetStateMessage($"Đã lưu preset: {file.Name}", Brushes.LightGreen);
         }
         catch (Exception ex)

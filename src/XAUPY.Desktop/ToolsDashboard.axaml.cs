@@ -384,6 +384,17 @@ public partial class ToolsDashboard : UserControl
         if (_mode != "news") { _mode = "profile"; ToolEditor.IsReadOnly = false; ApplyToolButton.IsEnabled = SaveProfileButton.IsEnabled = DefaultProfileButton.IsEnabled = true; }
         Result("Đã mở file. Nhấn Kiểm tra cú pháp trước khi áp dụng.", true);
     });
+    private void PresentReadOnlyReport(string mode, string json)
+    {
+        _mode=mode;
+        _currentFile=null; // A report can never overwrite the previously opened profile.
+        ToolFileName.Text=$"{mode}-report.json";
+        ToolEditor.IsReadOnly=true;
+        ApplyToolButton.IsEnabled=SaveProfileButton.IsEnabled=DefaultProfileButton.IsEnabled=false;
+        ToolEditor.Text=_loadedText=json;
+        _loaded=true;
+        RefreshEditorInfo();
+    }
     private async void Save_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
     {
         var top = TopLevel.GetTopLevel(this);
@@ -392,10 +403,10 @@ public partial class ToolsDashboard : UserControl
         target ??= await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions { Title = "Lưu JSON", SuggestedFileName = $"xaupy-{_mode}.json", DefaultExtension = "json", FileTypeChoices = new[] { JsonType } });
         if (target is null) return;
         using var json = JsonDocument.Parse(ToolEditor.Text ?? "");
-        await using var stream = await target.OpenWriteAsync();
-        stream.SetLength(0);
-        await JsonSerializer.SerializeAsync(stream, json.RootElement, Pretty);
+        await FileOutput.WriteTextAsync(target,JsonSerializer.Serialize(json.RootElement,Pretty));
         _currentFile=target;
+        ToolFileName.Text=target.Name;
+        // Saving a draft does not apply it to the running strategy.
         Result($"Đã lưu {target.Name}.", true);
     });
     private async void CalculateRisk_OnClick(object? sender, RoutedEventArgs e)

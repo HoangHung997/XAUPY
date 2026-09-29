@@ -74,8 +74,8 @@ class OverviewUiSourceTests(unittest.TestCase):
         # The shell must display the actual execution state selected by the user.
         self.assertIn('x:Name="GuardianReasonValue"', self.xaml)
         self.assertNotIn('Text="LOCKED"', self.xaml)
-        self.assertIn('e.Execution.Label', self.code)
-        self.assertIn('e.Execution.Reason', self.code)
+        self.assertIn('ExecutionPresentation.Mode(e.Execution)', self.code)
+        self.assertIn('ExecutionPresentation.Summary(e.Execution)', self.code)
         self.assertNotIn("broker execution hiện đang khóa", self.code)
 
 

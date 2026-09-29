@@ -42,7 +42,7 @@ def position_decision(profile, snapshot, history, position, state, metrics, *, a
         if management['partial_close_enabled'] and not state.get('partial_intent') and gain >= risk*management['partial_close_at_rr']:
             return state, {'action':'PARTIAL_CLOSE','percent':management['partial_close_percent'],'reason':'PARTIAL_RR'}
         if management['breakeven_enabled'] and gain >= risk*management['breakeven_trigger_rr']:
-            candidates.append(position['price_open']+sign*management['breakeven_offset_price_units'])
+            candidates.append((position['price_open']+sign*management['breakeven_offset_price_units'],snapshot['tick_size']))
         if profile['take_profit']['mode']=='ZRSI_DYNAMIC' and state.get('original_tp'):
             target=state['original_tp']
             remaining=sign*(target-close)
@@ -76,27 +76,26 @@ def position_decision(profile, snapshot, history, position, state, metrics, *, a
                 if -remaining>=dynamic['max_extension_price_units']:
                     return state, {'action':'CLOSE_POSITION','reason':'MAX_EXTENSION'}
                 if dynamic['lock_sl_at_original_tp']:
-                    candidates.append(target+sign*dynamic['lock_profit_buffer'])
+                    candidates.append((target+sign*dynamic['lock_profit_buffer'],snapshot['tick_size']))
         mode=management['sl_tighten_mode']
         if mode=='ZRSI_ASSIST' and state.get('extended'):
-            candidates.append(state['original_tp']+sign*dynamic['lock_profit_buffer'])
+            candidates.append((state['original_tp']+sign*dynamic['lock_profit_buffer'],snapshot['tick_size']))
         elif mode in {'STRUCTURE','ATR'}:
             try:
                 candidate=stop_candidate(mode,profile,snapshot,history,position)
-                if candidate is not None: candidates.append(candidate)
+                if candidate is not None: candidates.append((candidate,snapshot['tick_size']))
             except TradePlanError:
                 pass  # Incomplete bar history cannot create a new stop.
     if (automatic and management['trailing_enabled']) or state.get('manual_trailing'):
         try:
             candidate=stop_candidate(management['trailing_mode'],profile,snapshot,history,position,trailing=True)
-            if candidate is not None: candidates.append(candidate)
+            if candidate is not None: candidates.append((candidate,max(snapshot['tick_size'],management['trailing_step_price_units'])))
         except TradePlanError:
             pass
     old=position.get('sl',0)
     gap=max(snapshot.get('stops_level',0),snapshot.get('freeze_level',0))*snapshot['point']
-    step=max(snapshot['tick_size'],management['trailing_step_price_units'])
     valid=[]
-    for candidate in candidates:
+    for candidate, step in candidates:
         if candidate<=0: continue
         candidate=grid(candidate,snapshot['tick_size'],up=not buy)
         if sign*(close-candidate)<max(gap,snapshot['tick_size'])-1e-9: continue

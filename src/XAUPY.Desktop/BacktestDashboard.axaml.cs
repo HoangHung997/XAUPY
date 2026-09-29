@@ -380,6 +380,7 @@ public partial class BacktestDashboard : UserControl
             return;
         }
 
+        var report = _current;
         var file = await storage.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
@@ -394,16 +395,9 @@ public partial class BacktestDashboard : UserControl
 
         try
         {
-            var export = await FetchFullResultAsync(_current);
+            var export = await FetchFullResultAsync(report);
 
-            await using var stream = await file.OpenWriteAsync();
-            if (stream.CanSeek)
-                stream.SetLength(0);
-            await JsonSerializer.SerializeAsync(
-                stream,
-                export,
-                new JsonSerializerOptions { WriteIndented = true });
-            await stream.FlushAsync();
+            await FileOutput.WriteTextAsync(file, JsonSerializer.Serialize(export, new JsonSerializerOptions { WriteIndented = true }));
 
             SetStatus($"Đã lưu kết quả: {file.Name}", Brushes.LightGreen);
         }
@@ -428,6 +422,7 @@ public partial class BacktestDashboard : UserControl
             return;
         }
 
+        var report = _current;
         var file = await storage.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
@@ -442,18 +437,13 @@ public partial class BacktestDashboard : UserControl
 
         try
         {
-            var report=_current;
             var trades = await FetchAllTradesAsync(report.RunId, report.TradeTotal);
             if(file.Name.EndsWith(".html",StringComparison.OrdinalIgnoreCase))
             {
-                await using var htmlStream=await file.OpenWriteAsync();if(htmlStream.CanSeek)htmlStream.SetLength(0);
-                await using var htmlWriter=new StreamWriter(htmlStream,new UTF8Encoding(false));
-                await htmlWriter.WriteAsync(BuildHtmlReport(report,trades));
+                await FileOutput.WriteTextAsync(file,BuildHtmlReport(report,trades));
                 SetStatus($"Đã xuất báo cáo và {trades.Count} giao dịch: {file.Name}",Brushes.LightGreen);return;
             }
-            await using var stream = await file.OpenWriteAsync();
-            if (stream.CanSeek)
-                stream.SetLength(0);
+            await using var stream = new MemoryStream();
             await using var writer = new StreamWriter(
                 stream,
                 new UTF8Encoding(false),
@@ -486,6 +476,8 @@ public partial class BacktestDashboard : UserControl
 
             await writer.FlushAsync();
             await stream.FlushAsync();
+            stream.Position=0;
+            await FileOutput.CopyAsync(file,stream);
             SetStatus($"Đã xuất {trades.Count} giao dịch: {file.Name}", Brushes.LightGreen);
         }
         catch (Exception ex)

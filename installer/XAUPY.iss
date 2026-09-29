@@ -1,16 +1,16 @@
 [Setup]
-AppId={{07BF11D7-1E2A-478F-A51F-428439D1CF3A}
+AppId={{4AD63852-EC87-48C2-A549-C84E06AEB8A5}
 AppName=XAUPY Control Center
 AppVersion=1.0.0
 VersionInfoVersion=1.0.0.0
-AppVerName=XAUPY Control Center 1.0.0 Development
-DefaultDirName={localappdata}\Programs\XAUPY
+AppVerName=XAUPY Control Center 1.0.0 RC1
+DefaultDirName={localappdata}\Programs\XAUPY-1.0-RC1
 DefaultGroupName=XAUPY
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\dist
-OutputBaseFilename=XAUPY-1.0.0-dev-Setup
+OutputBaseFilename=XAUPY-1.0.0-rc1-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern

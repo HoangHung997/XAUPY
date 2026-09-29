@@ -255,16 +255,17 @@ class TickBacktestEngine(BacktestEngine):
                 position.dynamic_extended=bool(updated.get('extended'))
                 position.dynamic_extension_time=updated.get('extension_time')
                 if decision:queued.append({**decision,'ticket':position.trade_id,'time_msc':tick['time_msc']})
-            if self.profile['entry']['cancel_on_opposite_setup'] and status.get('armed_side'):
-                for intent in list(pending):
-                    if intent['plan']['side']!=status['armed_side']:
-                        pending.remove(intent);self._skip(state,'PENDING_OPPOSITE_SETUP')
+            from .trade_plan import pending_cancellation_reason
+            for intent in list(pending):
+                reason = pending_cancellation_reason(self.profile,snapshot,status,intent['plan']['side'],intent['plan']['expiration'])
+                if reason:
+                    pending.remove(intent);self._skip(state,reason)
             sequence=status['signal_sequence']
             if sequence>last_signal:
                 last_signal=sequence;signal=deepcopy(status['last_signal'])
                 try:
                     entry_guard(snapshot,self.profile)
-                    plan=plan_entry(self.profile,snapshot,strategy.history,signal['side'])
+                    plan=plan_entry(self.profile,snapshot,strategy.history,signal['side'],signal=signal)
                     queued.append(dict(action='ENTRY',plan=plan,signal=signal,time_msc=tick['time_msc']))
                 except TradePlanError as exc:self._skip(state,str(exc))
             # Sample every quote; one row per second retains its worst drawdown.
@@ -279,7 +280,7 @@ class TickBacktestEngine(BacktestEngine):
         if queued:self._skip(state,'UNEXECUTED_INTENT_AT_END')
         if pending:self._skip(state,'PENDING_END_OF_DATA')
         result=self._result_payload(state,strategy,dataset,start_date=start,end_date=end)
-        result.update(model=TICK_BACKTEST_MODEL,execution_revision='SHARED_LIVE_ENTRY_AND_POSITION_POLICY_V1',
+        result.update(model=TICK_BACKTEST_MODEL,execution_revision='SHARED_LIVE_ENTRY_AND_POSITION_POLICY_V2',
             tick_count=len(ticks),discontinuous_ticks=gaps,spread_model='OBSERVED_BID_ASK',
             fill_model='Next observed quote; configured adverse slippage; TP at limit, SL at observed quote plus adverse slippage; no liquidity/latency guarantee',
             swap_model='Not included; review overnight exposure',broker_execution_requested=False)

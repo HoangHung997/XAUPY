@@ -49,8 +49,7 @@ public partial class OptimizerDashboard
             try
             {
                 var file=await dialog.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {Title="Xuất cấu hình ứng viên",SuggestedFileName=$"XAUPY-candidate-{selected.Index}.json",DefaultExtension="json"});
-                if(file is null)return;await using var stream=await file.OpenWriteAsync();if(stream.CanSeek)stream.SetLength(0);
-                await using var writer=new StreamWriter(stream);await writer.WriteAsync(json);status.Text="Đã xuất cấu hình; bản đang chạy chưa đổi.";
+                if(file is null)return;await FileOutput.WriteTextAsync(file,json);status.Text="Đã xuất cấu hình; bản đang chạy chưa đổi.";
             }catch(Exception ex){status.Text=ex.Message;}
         };
         dialog.Content=new Grid {RowDefinitions=new RowDefinitions("Auto,Auto,*,Auto,Auto"),Margin=new Thickness(18),RowSpacing=12};
@@ -88,8 +87,7 @@ public partial class OptimizerDashboard
             var status=new TextBlock {TextWrapping=TextWrapping.Wrap};
             save.Click+=async (_,_)=> {try {
                 var file=await dialog.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {SuggestedFileName="XAUPY-research.json",DefaultExtension="json"});
-                if(file is null)return;await using var stream=await file.OpenWriteAsync();if(stream.CanSeek)stream.SetLength(0);
-                await using var writer=new StreamWriter(stream);await writer.WriteAsync(JsonSerializer.Serialize(result,new JsonSerializerOptions {WriteIndented=true}));status.Text="Đã xuất báo cáo.";
+                if(file is null)return;await FileOutput.WriteTextAsync(file,JsonSerializer.Serialize(result,new JsonSerializerOptions {WriteIndented=true}));status.Text="Đã xuất báo cáo.";
             }catch(Exception ex){status.Text=ex.Message;}};
             var panel=new DockPanel {Margin=new Thickness(16)};DockPanel.SetDock(save,Dock.Bottom);panel.Children.Add(save);DockPanel.SetDock(status,Dock.Bottom);panel.Children.Add(status);
             panel.Children.Add(new TextBox {Text=string.Join("\n",lines),IsReadOnly=true,AcceptsReturn=true,TextWrapping=TextWrapping.Wrap});dialog.Content=panel;await dialog.ShowDialog(owner);

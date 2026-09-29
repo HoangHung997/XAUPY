@@ -474,7 +474,7 @@ class EngineServer:
                         raise TradePlanError('BRIDGE_SESSION_REQUIRED')
                     result = self.execution.record_result(request.payload, bridge_session_id)
                 elif request.type == 'execution_history':
-                    result = {'accepted':True, 'items':self.execution.history(request.payload.get('limit',100), request.payload.get('offset',0))}
+                    result = self.execution.query_history(request.payload)
                 else:
                     result = {'accepted':True, **self.execution.status()}
             except (TradePlanError, ValueError, TypeError) as exc:
@@ -887,6 +887,9 @@ class EngineServer:
                 status = self.strategy.status_payload(market_connected=fresh)
             else:
                 try:
+                    # Publish a coherent current quote/clock before callbacks
+                    # can plan an order. Account freshness remains mandatory.
+                    self.bridge.record_execution_ticks(request.payload, bridge_session_id)
                     status = self.strategy.ingest_tick_batch(request.payload)
                 except StrategyDataError as exc:
                     self.strategy.reset_setup("INVALID_TICK_BATCH")

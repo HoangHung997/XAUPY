@@ -63,8 +63,7 @@ public partial class BacktestDashboard
                 try
                 {
                     var file=await dialog.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {Title="Lưu so sánh",SuggestedFileName="XAUPY-backtest-comparison.html",DefaultExtension="html"});
-                    if(file is null)return;await using var stream=await file.OpenWriteAsync();if(stream.CanSeek)stream.SetLength(0);
-                    await using var writer=new StreamWriter(stream,new UTF8Encoding(false));await writer.WriteAsync(html);
+                    if(file is null)return;await FileOutput.WriteTextAsync(file,html);
                 }catch(Exception ex){body.Text=ex.Message;}
             };
             dialog.Content=new StackPanel {Margin=new Thickness(18),Spacing=12,Children={new TextBlock {Text="A"},left,new TextBlock {Text="B"},right,new StackPanel {Orientation=Orientation.Horizontal,Spacing=10,Children={compare,export}},new ScrollViewer {Content=body,MaxHeight=370}}};

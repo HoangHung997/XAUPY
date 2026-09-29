@@ -150,13 +150,13 @@ class StrategyMonitoringUiSourceTests(unittest.TestCase):
         self.assertIn("RejectUnexpectedStrategyExecutionEnable", self.supervisor)
         self.assertIn("TradingEnabled", self.model)
         self.assertIn("ExecutionEnabled", self.model)
-        self.assertIn('desktop_version = "1.0.0-dev"', self.supervisor)
+        self.assertIn('desktop_version = "1.0.0-rc1"', self.supervisor)
 
     def test_main_overview_now_uses_real_strategy_state(self):
         self.assertIn('x:Name="StrategyStateValue"', self.main_xaml)
         self.assertIn("ApplyStrategySnapshot", self.main_code)
         self.assertIn("strategy.State", self.main_code)
-        self.assertIn('e.Execution.Label', self.main_code)
+        self.assertIn('ExecutionPresentation.Mode(e.Execution)', self.main_code)
 
     def test_tools_and_settings_are_hosted_and_load_real_data(self):
         self.assertIn('x:Name="ToolsView"', self.main_xaml)

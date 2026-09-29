@@ -1109,4 +1109,38 @@ var historicalStops = JsonSerializer.SerializeToElement(new { ticket=1678504331L
     volume=.01, price_in=4205.97, price_out=4204.90, time=1790574477L, sl=4204.90, tp=4212.69 });
 Check(OrdersPositionsSnapshot.TryReadDeal(historicalStops,out var closedTrade) && closedTrade.Sl==4204.90 && closedTrade.Tp==4212.69,
     "MT5 closing-deal protective levels survive the Desktop projection");
+// First release: current gate, prior attempt and REAL permission are independent.
+var executionGate = ExecutionSnapshot.Parse(JsonSerializer.SerializeToElement(new { execution = new {
+    available=true,mode="AUTO",execution_enabled=true,entry_enabled=false,management_enabled=true,
+    reason="DAILY_LOSS_LIMIT",entry_reason="DAILY_LOSS_LIMIT",management_reason="",
+    last_attempt_reason="FRESH_QUOTE_REQUIRED",quote_age_ms=125.5,snapshot_age_ms=350,
+    quote_source="TICK_BATCH",allow_buy=true,allow_sell=false,profile_hash="profile-A",
+    permissions=new { local_allow_real=true,profile_allow_real=false,profile_demo_only=true,effective_allow_real=false }
+} }));
+Check(executionGate.Fresh && executionGate.Enabled && !executionGate.EntryEnabled && executionGate.ManagementEnabled,
+    "daily entry guard leaves risk-reducing management independently available");
+Check(executionGate.Reason=="DAILY_LOSS_LIMIT" && executionGate.LastAttemptReason=="FRESH_QUOTE_REQUIRED",
+    "old attempt failure cannot overwrite the current execution gate");
+Check(executionGate.QuoteSource=="TICK_BATCH" && executionGate.QuoteAgeMs==125.5 && executionGate.SnapshotAgeMs==350,
+    "quote and account ages retain their distinct clock evidence");
+Check(executionGate.PermissionsKnown && executionGate.LocalAllowReal && !executionGate.EffectiveAllowReal && executionGate.ProfileDemoOnly,
+    "saved REAL preference does not imply effective profile permission or start trading");
+Check(executionGate.BuyAllowed && !executionGate.SellAllowed && executionGate.ProfileHash=="profile-A",
+    "side availability and confirmation profile identity survive projection");
+foreach (var malformed in new object?[] { null, "bad", 42, new { execution="invalid" } })
+    Check(!ExecutionSnapshot.Parse(JsonSerializer.SerializeToElement(malformed)).Enabled,
+        "malformed execution payload fails closed");
+var invalidMode=ExecutionSnapshot.Parse(JsonSerializer.SerializeToElement(new { execution=new {mode="INVALID",execution_enabled=true} }));
+Check(invalidMode.Mode=="OFF" && !invalidMode.EntryEnabled && invalidMode.Reason=="INVALID_EXECUTION_MODE",
+    "unknown execution modes cannot enable broker controls");
+var offGate=ExecutionSnapshot.Parse(JsonSerializer.SerializeToElement(new { execution=new {mode="OFF",execution_enabled=true,entry_enabled=true} }));
+Check(!offGate.Enabled && !offGate.EntryEnabled,"OFF cannot be bypassed by contradictory boolean flags");
+using(var gateSupervisor=new EngineProcessSupervisor())
+{
+    typeof(EngineProcessSupervisor).GetProperty(nameof(EngineProcessSupervisor.Execution))!.SetValue(gateSupervisor,executionGate with { EntryEnabled=true });
+    var setter=typeof(EngineProcessSupervisor).GetMethod("SetState",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)!;
+    setter.Invoke(gateSupervisor,[EngineConnectionState.Reconnecting,"isolated projection test",null]);
+    Check(!gateSupervisor.Execution.Fresh && !gateSupervisor.Execution.Enabled && !gateSupervisor.Execution.EntryEnabled && !gateSupervisor.Execution.ManagementEnabled,
+        "disconnect clears all executable readiness flags before another heartbeat");
+}
 Console.WriteLine($"XAUPY IPC contract self-test complete: {passed} checks passed.");

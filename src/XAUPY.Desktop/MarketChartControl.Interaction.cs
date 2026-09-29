@@ -175,7 +175,7 @@ public sealed partial class MarketChartControl
         var file=await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {Title="Lưu biểu đồ PNG",SuggestedFileName=$"{_symbol}-{_timeframe}-{DateTime.Now:yyyyMMdd-HHmmss}.png",DefaultExtension="png"});
         if(file is null)return;
         using var bitmap=new RenderTargetBitmap(new PixelSize((int)Math.Ceiling(Bounds.Width),(int)Math.Ceiling(Bounds.Height)),new Vector(96,96));
-        bitmap.Render(this);await using var stream=await file.OpenWriteAsync();if(stream.CanSeek)stream.SetLength(0);bitmap.Save(stream,PngBitmapEncoderOptions.Default);
+        bitmap.Render(this);await using var stream=new MemoryStream();bitmap.Save(stream,PngBitmapEncoderOptions.Default);stream.Position=0;await FileOutput.CopyAsync(file,stream);
     }
     private async Task ShowFullScreenAsync()
     {

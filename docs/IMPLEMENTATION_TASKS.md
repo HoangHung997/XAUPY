@@ -1043,3 +1043,7 @@ General/REAL execution, broker position management and the other absent or
 partial capabilities remain open. [Parameter research](PARAMETER_RESEARCH_20260928.md)
 used all 100,062 archived M1 bars; none of the 16 candidates passed the
 profitability screens. The active trading configuration was not replaced.
+
+## Nhánh hoàn thiện riêng — 29/09/2026
+
+Theo yêu cầu người dùng, tiếp tục Task016 trên `release/1.0-completion-20260929` từ `335fcd3c`. Xem `FIRST_RELEASE_20260929.md`, `FIRST_RELEASE_FEATURE_MATRIX.csv` và `FIRST_RELEASE_USER_GUIDE.md`. Phần giao dịch/Windows thực nghiệm thu sau khi tải. Task016 giữ ACTIVE trong lúc chờ CI/bản tải mới; không nhận bằng chứng old RC làm bằng chứng mới.

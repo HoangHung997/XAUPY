@@ -17,7 +17,13 @@ public partial class SettingsDashboard : UserControl
     private bool _loaded;
     public SettingsDashboard() => InitializeComponent();
     public void AttachSupervisor(EngineProcessSupervisor supervisor) => _supervisor = supervisor;
-    public void ApplyExecutionStatus(ExecutionSnapshot status) => ExecutionModeSummary.Text = status.Label;
+    public void ApplyExecutionStatus(ExecutionSnapshot status)
+    {
+        string saved = ExecutionPresentation.Permission(status);
+        bool dirtyPermission = status.PermissionsKnown && (AllowRealAccount.IsChecked == true) != status.LocalAllowReal;
+        ExecutionModeSummary.Text = (dirtyPermission ? "Quyền REAL: bản nháp chưa lưu" : saved) + "\nGiao dịch: " + ExecutionPresentation.Mode(status);
+        ToolTip.SetTip(ExecutionModeSummary, ExecutionPresentation.Summary(status));
+    }
     public async Task EnsureLoadedAsync(bool force = false)
     {
         if (_busy || (_loaded && !force) || _supervisor?.State != EngineConnectionState.Ready) return;

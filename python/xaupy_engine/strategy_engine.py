@@ -801,6 +801,8 @@ class StrategyEngine:
             "profile_hash": self.profile_hash, "direction": self.direction,
             "timeframes": deepcopy(self.profile["timeframes"]), "indicators": deepcopy(metrics),
             "threshold_latches": deepcopy(self._tick_setup_latches), "trigger": deepcopy(details),
+            # Freeze only the candle extrema observed up to this signal.
+            "trigger_bar": deepcopy(self._display_bars.get(self.profile["timeframes"]["trigger"])),
         }
 
     def _evaluate(self, new_timeframes: set[str]) -> None:
@@ -907,6 +909,7 @@ class StrategyEngine:
             "sequence": self.signal_sequence,
             "side": self.armed_side,
             "bar_time": trigger_bar.time,
+            "trigger_bar": vars(trigger_bar).copy(),
             "profile_hash": self.profile_hash,
             "direction": self.direction,
             "timeframes": deepcopy(self.profile["timeframes"]),

@@ -1,5 +1,5 @@
 #property strict
-#property version   "1.020"
+#property version   "1.021"
 #property description "XAUPY data and execution bridge. Account-bound user control with broker confirmation."
 
 input string InpHost               = "127.0.0.1";
@@ -663,7 +663,7 @@ string JsonBarsWithHistory(string &history_json)
 string BuildHelloPayload()
 {
    string json = "{";
-   json += JsonKey("bridge_version") + JsonString("1.020") + ",";
+   json += JsonKey("bridge_version") + JsonString("1.021") + ",";
    json += JsonKey("execution_capable") + "true,";
    json += JsonKey("component") + JsonString("mt5-bridge") + ",";
    json += JsonKey("symbol") + JsonString(_Symbol) + ",";
@@ -692,7 +692,7 @@ string BuildSnapshotPayload(bool include_history=false)
    string history_json = "";
    string latest_bars = include_history ? JsonBarsWithHistory(history_json) : JsonBars();
    string json = "{";
-   json += JsonKey("bridge_version") + JsonString("1.020") + ",";
+   json += JsonKey("bridge_version") + JsonString("1.021") + ",";
    json += JsonKey("execution_capable") + "true,";
    json += JsonKey("symbol") + JsonString(_Symbol) + ",";
    json += JsonKey("magic") + StringFormat("%I64d", InpMagic) + ",";

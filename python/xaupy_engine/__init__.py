@@ -1,7 +1,3 @@
-"""XAUPY Python Engine.
+"""XAUPY first complete release candidate. User-controlled execution; no profitability guarantee."""
 
-Development toward first complete release: user-controlled broker execution,
-observed-tick research, persisted settings and recovery.
-"""
-
-__version__ = "1.0.0-dev"
+__version__ = "1.0.0-rc1"

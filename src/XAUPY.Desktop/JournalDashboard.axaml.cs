@@ -385,10 +385,7 @@ public partial class JournalDashboard : UserControl
             await writer.FlushAsync();
             await stream.FlushAsync();
             stream.Position=0;
-            await using var destination = await file.OpenWriteAsync();
-            if(destination.CanSeek) destination.SetLength(0);
-            await stream.CopyToAsync(destination);
-            await destination.FlushAsync();
+            await FileOutput.CopyAsync(file,stream);
             SetStatus(
                 $"Đã xuất {exported} dòng phù hợp bộ lọc: {file.Name}",
                 Brushes.LightGreen);

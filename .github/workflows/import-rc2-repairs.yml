@@ -18,11 +18,11 @@ jobs:
         with:
           ref: ${{ github.sha }}
           fetch-depth: 2
-      - name: Verify immutable baseline and transfer, apply exact tested source
+      - name: Verify exact tested tree and import non-workflow application changes
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = 29ea5d968379271c8f05a84c551bdc50475ee13f
+          test "$(git rev-parse HEAD^)" = 796ee5ca8919bdeefcf85caf79f23f3ac28f60b1
           python - <<'PY'
           import base64,hashlib,lzma,os
           from pathlib import Path
@@ -40,12 +40,15 @@ jobs:
           git apply --index "$RUNNER_TEMP/rc2.patch"
           git diff --cached --check
           test "$(git write-tree)" = 117e3388e2f1d32a24b0f34a4f46c6f32f6abf8e
-          git diff --cached --stat
+          # The runner has contents write but no workflow-write permission.
+          # Leave workflow updates for the authorized connector; do not request
+          # additional credentials or weaken repository permissions.
+          git restore --source="$GITHUB_SHA" --staged --worktree .github/workflows
+          test -z "$(git diff --cached --name-only -- .github/workflows)"
           current="$(git ls-remote origin refs/heads/release/1.0-completion-20260929 | cut -f1)"
           test "$current" = "$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'fix: RC2 partial protection, reviewed fail-safe restore, broker capabilities and complete UI workflows'
-          test "$(git rev-parse HEAD^{tree})" = 117e3388e2f1d32a24b0f34a4f46c6f32f6abf8e
+          git commit -m 'fix: RC2 partial protection, reviewed fail-safe restore, broker capabilities and UI workflows'
           git push origin HEAD:refs/heads/release/1.0-completion-20260929
-          printf 'IMPORTED_COMMIT=%s\nTESTED_TREE=117e3388e2f1d32a24b0f34a4f46c6f32f6abf8e\n' "$(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          printf 'IMPORTED_COMMIT=%s\nIMPORTED_TREE=%s\nFINAL_TESTED_TREE=117e3388e2f1d32a24b0f34a4f46c6f32f6abf8e\n' "$(git rev-parse HEAD)" "$(git rev-parse HEAD^{tree})" >> "$GITHUB_STEP_SUMMARY"

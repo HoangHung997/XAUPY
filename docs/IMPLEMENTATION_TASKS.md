@@ -36,7 +36,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-013 | DONE | Dynamic TP/SL + stop-confirm entry | 003,007,011 | Simulation and packaged smoke passed; CI 36340716356 + verified release artifact |
 | XAUPY-014 | DONE | Tools tab + diagnostics | 003,004,010 | Diagnostics/contracts/packaged smoke passed; CI 36340716356 + verified release artifact |
 | XAUPY-015 | DONE | Settings, backup, startup, fail-safe UX | 002,003,004 | Persistence/recovery + 20 UI checks passed; CI 36340716356 + verified release artifact |
-| XAUPY-016 | ACTIVE | Installer, release workflow, demo acceptance | all prior | RC2 CI/installer, independent artifact verification, native local-build restart and exact downloaded-CI MT5 acceptance passed; strict 100% UI parity remains unfulfilled |
+| XAUPY-016 | READY_FOR_USER_TEST | Installer, release workflow, demo acceptance | all prior | RC2 CI/installer, independent artifact verification, native local-build restart and exact downloaded-CI MT5 acceptance passed; strict 100% UI parity remains unfulfilled |
 
 # XAUPY-001
 
@@ -1047,3 +1047,8 @@ profitability screens. The active trading configuration was not replaced.
 ## Nhánh hoàn thiện riêng — 29/09/2026
 
 Theo yêu cầu người dùng, tiếp tục Task016 trên `release/1.0-completion-20260929` từ `335fcd3c`. Xem `FIRST_RELEASE_20260929.md`, `FIRST_RELEASE_FEATURE_MATRIX.csv` và `FIRST_RELEASE_USER_GUIDE.md`. Phần giao dịch/Windows thực nghiệm thu sau khi tải. Task016 giữ ACTIVE trong lúc chờ CI/bản tải mới; không nhận bằng chứng old RC làm bằng chứng mới.
+
+
+## RC1 delivery verified — 2026-09-29
+
+Task016 is READY_FOR_USER_TEST on the isolated release branch. Application source a1abc91d9b2d43888a4471bd28c6b6f2e8af0e0f passed CI 36507058142. Portable/installer were independently downloaded and all 304 manifest hashes verified. See FIRST_RELEASE_DELIVERY_20260929.md for exact scope, hashes and remaining user broker/native-Windows acceptance. Historical ACTIVE/RC2 records above retain their original evidence scope. No broker or user-runtime mutation was performed.

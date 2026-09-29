@@ -1,3 +1,5 @@
+> **1.0.0-rc1 READY_FOR_USER_TEST** — [Verified delivery](docs/FIRST_RELEASE_DELIVERY_20260929.md) · [Download release](https://github.com/HoangHung997/XAUPY/releases/tag/v1.0.0-rc1). Exact application source: `a1abc91d9b2d43888a4471bd28c6b6f2e8af0e0f`.
+
 # XAUPY — 1.0.0 RC1
 
 Nhánh phát hành riêng: `release/1.0-completion-20260929`. Xem [thay đổi và phạm vi kiểm](docs/FIRST_RELEASE_20260929.md), [hướng dẫn tải/test](docs/FIRST_RELEASE_USER_GUIDE.md) và [ma trận 172 chức năng](docs/FIRST_RELEASE_FEATURE_MATRIX.csv). Bằng chứng các phiên bản dưới đây là lịch sử, không thay cho CI/artifact của nhánh RC1. Bản đầu tiên để người dùng nghiệm thu thực tế; không tự bật giao dịch hoặc gửi lệnh.

@@ -18,40 +18,16 @@ jobs:
       - name: Restore isolated audit dependencies
         shell: bash
         run: |
-          export NUGET_PACKAGES="$RUNNER_TEMP/xaupy-audit-nuget"
+          export NUGET_PACKAGES="$GITHUB_WORKSPACE/audit-tools/nuget"
           dotnet restore tests/XAUPY.Desktop.InteractionTests/XAUPY.Desktop.InteractionTests.csproj
           dotnet restore tests/XAUPY.Ipc.ContractTests/XAUPY.Ipc.ContractTests.csproj
-      - name: Archive compiler and restored dependencies for offline audit
-        shell: bash
-        run: |
-          set -euo pipefail
-          root="$(dirname "$(readlink -f "$(command -v dotnet)")")"
-          sdk="$(dotnet --version)"
-          mkdir -p audit-tools/dotnet audit-tools/nuget
-          cd "$root"
-          runtime="$(ls shared/Microsoft.NETCore.App | grep '^10\.' | sort -V | tail -1)"
-          ref="$(ls packs/Microsoft.NETCore.App.Ref | grep '^10\.' | sort -V | tail -1)"
-          apphost="$(ls packs/Microsoft.NETCore.App.Host.linux-x64 | grep '^10\.' | sort -V | tail -1)"
-          fxr="$(ls host/fxr | grep '^10\.' | sort -V | tail -1)"
-          tar cf - dotnet "host/fxr/$fxr" "sdk/$sdk" "shared/Microsoft.NETCore.App/$runtime" "packs/Microsoft.NETCore.App.Ref/$ref" "packs/Microsoft.NETCore.App.Host.linux-x64/$apphost" | tar xf - -C "$GITHUB_WORKSPACE/audit-tools/dotnet"
-          cp -a "$RUNNER_TEMP/xaupy-audit-nuget/." "$GITHUB_WORKSPACE/audit-tools/nuget/"
-          cd "$GITHUB_WORKSPACE"
-          du -sh audit-tools/*
-          tar czf desktop-audit-dotnet.tgz -C audit-tools dotnet
+          find audit-tools/nuget -type f -name '*.nupkg' -delete
           tar czf desktop-audit-nuget.tgz -C audit-tools nuget
-          sha256sum desktop-audit-*.tgz > desktop-audit.sha256
-          ls -lh desktop-audit-*.tgz
+          sha256sum desktop-audit-nuget.tgz > desktop-audit.sha256
+          ls -lh desktop-audit-nuget.tgz
       - uses: actions/upload-artifact@v4
         with:
-          name: desktop-audit-dotnet
-          path: |
-            desktop-audit-dotnet.tgz
-            desktop-audit.sha256
-          retention-days: 1
-          if-no-files-found: error
-      - uses: actions/upload-artifact@v4
-        with:
-          name: desktop-audit-nuget
+          name: desktop-audit-nuget-expanded
           path: |
             desktop-audit-nuget.tgz
             desktop-audit.sha256

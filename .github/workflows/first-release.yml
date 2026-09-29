@@ -9,13 +9,28 @@ concurrency:
   group: first-release-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  source:
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Archive exact release source
-        shell: bash
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install runtime dependencies
+        run: python -m pip install -r python/requirements-runtime.txt
+      - name: Verify Python and compiled broker-rule regressions
+        run: |
+          g++ --version
+          python -m unittest discover -s python/tests -v
+      - name: Build Desktop Release
+        run: dotnet build src/XAUPY.Desktop/XAUPY.Desktop.csproj -c Release
+      - name: Verify IPC contracts
+        run: dotnet run --project tests/XAUPY.Ipc.ContractTests/XAUPY.Ipc.ContractTests.csproj -c Release
+      - name: Archive exact source
         run: |
           git archive --format=zip --prefix=XAUPY/ HEAD -o XAUPY-source.zip
           sha256sum XAUPY-source.zip > XAUPY-source.sha256
@@ -25,5 +40,77 @@ jobs:
           path: |
             XAUPY-source.zip
             XAUPY-source.sha256
-          retention-days: 14
           if-no-files-found: error
+          retention-days: 14
+  windows:
+    needs: validate
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install packaging dependencies
+        run: python -m pip install 'pyinstaller>=6.14,<7' 'MetaTrader5==5.0.6231'
+      - name: Prepare MetaEditor
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Invoke-WebRequest 'https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe' -OutFile "$env:RUNNER_TEMP/mt5setup.exe"
+          Start-Process "$env:RUNNER_TEMP/mt5setup.exe" -ArgumentList '/auto' -WindowStyle Hidden
+          $deadline = (Get-Date).AddMinutes(7)
+          while (-not (Test-Path 'C:/Program Files/MetaTrader 5/MetaEditor64.exe')) {
+            if ((Get-Date) -gt $deadline) { throw 'MetaEditor installation timed out' }
+            Start-Sleep -Seconds 5
+          }
+          Get-Process terminal64 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+      - name: Build and test full Windows portable and installer
+        shell: pwsh
+        run: |
+          $compiler = 'C:/Program Files (x86)/Inno Setup 6/ISCC.exe'
+          if (-not (Test-Path $compiler)) { throw 'Inno Setup compiler missing' }
+          ./scripts/build_windows.ps1 -Iscc $compiler
+      - name: Verify installer install hashes and uninstall
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $setup = (Resolve-Path 'dist/XAUPY-1.0.0-rc1-Setup.exe').Path
+          $installRoot = Join-Path $env:RUNNER_TEMP 'XAUPY-RC1-installer-acceptance'
+          $process = Start-Process $setup -WindowStyle Hidden -Wait -PassThru -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', ('/DIR="' + $installRoot + '"'))
+          if ($process.ExitCode -ne 0) { throw "Installer exited $($process.ExitCode)" }
+          $manifest = Get-Content -LiteralPath (Join-Path $installRoot 'build-manifest.json') -Raw | ConvertFrom-Json
+          if ($manifest.commit -ne $env:GITHUB_SHA -or $manifest.version -ne '1.0.0-rc1' -or $manifest.working_tree_modified -or -not $manifest.tests_executed) { throw 'Invalid installed source or test identity' }
+          foreach ($file in $manifest.files) {
+            $installed = Join-Path $installRoot $file.path
+            if (-not (Test-Path -LiteralPath $installed -PathType Leaf)) { throw "Missing installed file $($file.path)" }
+            if ((Get-FileHash -LiteralPath $installed -Algorithm SHA256).Hash.ToLowerInvariant() -ne $file.sha256) { throw "Installed hash mismatch $($file.path)" }
+          }
+          Write-Host "PASS: installer $($manifest.files.Count) manifest files verified"
+          $process = Start-Process (Join-Path $installRoot 'unins000.exe') -WindowStyle Hidden -Wait -PassThru -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
+          if ($process.ExitCode -ne 0 -or (Test-Path -LiteralPath (Join-Path $installRoot 'XAUPY.Desktop.exe'))) { throw 'Uninstall failed' }
+      - name: Capture ten actual controls with isolated fixture data
+        shell: pwsh
+        run: |
+          dotnet run --project tests/XAUPY.Desktop.InteractionTests/XAUPY.Desktop.InteractionTests.csproj -c Release -- --engine "$env:GITHUB_WORKSPACE/dist/XAUPY-win-x64/engine/xaupy-engine.exe" --render-audit "$env:GITHUB_WORKSPACE/artifacts/rc1-ui-audit"
+          if ($LASTEXITCODE -ne 0) { throw 'Ten-tab capture/control audit failed' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: XAUPY-1.0.0-rc1-win-x64
+          path: |
+            dist/XAUPY-1.0.0-rc1-win-x64.zip
+            dist/XAUPY-1.0.0-rc1-Setup.exe
+            dist/SHA256SUMS.txt
+            dist/XAUPY-win-x64/build-manifest.json
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: XAUPY-RC1-isolated-UI-evidence
+          path: artifacts/rc1-ui-audit
+          if-no-files-found: warn
+          retention-days: 30

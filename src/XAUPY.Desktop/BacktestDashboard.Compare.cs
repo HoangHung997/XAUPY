@@ -57,12 +57,12 @@ public partial class BacktestDashboard
             }
             compare.Click+=async (_,_)=>{try{compare.IsEnabled=false;await RenderComparison();}catch(Exception ex){body.Text=ex.Message;export.IsEnabled=false;}finally{compare.IsEnabled=true;}};
             left.SelectionChanged+=(_,_)=>{export.IsEnabled=false;}; right.SelectionChanged+=(_,_)=>{export.IsEnabled=false;};
-            var dialog=new Window {Title="So sánh kết quả Backtest",Width=1060,Height=630,WindowStartupLocation=WindowStartupLocation.CenterOwner};
+            var dialog=new Window {[LocalizationService.TitleProperty] = "So sánh kết quả Backtest",Width=1060,Height=630,WindowStartupLocation=WindowStartupLocation.CenterOwner};
             export.Click+=async (_,_)=>
             {
                 try
                 {
-                    var file=await dialog.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {Title="Lưu so sánh",SuggestedFileName="XAUPY-backtest-comparison.html",DefaultExtension="html"});
+                    var file=await dialog.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {Title = LocalizationService.T("Lưu so sánh"),SuggestedFileName="XAUPY-backtest-comparison.html",DefaultExtension="html"});
                     if(file is null)return;await FileOutput.WriteTextAsync(file,html);
                 }catch(Exception ex){body.Text=ex.Message;}
             };

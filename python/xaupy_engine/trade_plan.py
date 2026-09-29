@@ -34,6 +34,23 @@ def volume_on_grid(volume: float, snapshot: dict) -> float:
     return result
 
 
+def partial_close_volume(volume: float, percent: float, snapshot: dict) -> float:
+    """Broker-feasible partial amount, shared by planning and manual execution.
+
+    An impossible partial is a skipped optional management step, not permission
+    to round up, close the entire position, or block independent protection.
+    """
+    volume = number(volume, 'position_volume', positive=True)
+    percent = number(percent, 'percent', positive=True)
+    if percent >= 100:
+        raise TradePlanError('PARTIAL_PERCENT_MUST_BE_BELOW_100')
+    amount = volume_on_grid(volume * percent / 100, snapshot)
+    minimum = number(snapshot.get('volume_min'), 'volume_min', positive=True)
+    if round(volume - amount, 10) < minimum - 1e-9:
+        raise TradePlanError('PARTIAL_REMAINDER_BELOW_MINIMUM')
+    return amount
+
+
 def calendar_time(snapshot: dict, sessions: dict) -> datetime:
     stamp = number(snapshot.get('server_time'), 'server_time', positive=True)
     if sessions['timezone'].upper() == 'UTC':
@@ -70,7 +87,50 @@ def weekend_close_due(snapshot: dict, sessions: dict) -> bool:
     return end - sessions['weekend_close_minutes_before'] * 60 <= now <= end
 
 
+CAPABILITY_FLAGS = ('trade_allowed', 'allow_buy', 'allow_sell', 'market_orders',
+                    'stop_orders', 'limit_orders', 'server_sl', 'server_tp',
+                    'specified_expiration', 'netting_symbol_exposed')
+
+
+def broker_capabilities(snapshot: dict, *, required: bool = True) -> dict | None:
+    """Snapshot evidence, not an authorization grant; EA repeats every check."""
+    value = snapshot.get('execution_capabilities')
+    if value is None:
+        if required:
+            raise TradePlanError('BRIDGE_UPGRADE_REQUIRED')
+        return None
+    if (not isinstance(value, dict) or type(value.get('schema_version')) is not int
+            or value['schema_version'] != 1 or any(type(value.get(k)) is not bool for k in CAPABILITY_FLAGS)):
+        raise TradePlanError('BROKER_CAPABILITIES_INVALID')
+    return value
+
+
+def entry_capability_guard(snapshot: dict, *, side: str | None = None, order_type: str | None = None) -> None:
+    caps = broker_capabilities(snapshot, required=False)
+    if caps is None:
+        return  # Research/legacy data has no terminal capabilities; broker service requires them.
+    if not caps['trade_allowed']:
+        raise TradePlanError('TRADE_PERMISSION_DISABLED')
+    if caps['netting_symbol_exposed']:
+        raise TradePlanError('NETTING_SYMBOL_ALREADY_EXPOSED')
+    if not caps['server_sl']:
+        raise TradePlanError('BROKER_SERVER_SL_UNSUPPORTED')
+    if (side in ('BUY', 'SELL') and not caps['allow_'+side.lower()]
+            or not caps['allow_buy'] and not caps['allow_sell']):
+        raise TradePlanError('SYMBOL_ENTRY_DISABLED')
+    if order_type:
+        if order_type in ('BUY', 'SELL') and not caps['market_orders']:
+            raise TradePlanError('BROKER_MARKET_ORDERS_UNSUPPORTED')
+        if order_type.endswith('_STOP') and not caps['stop_orders']:
+            raise TradePlanError('BROKER_STOP_ORDERS_UNSUPPORTED')
+        if order_type.endswith('_LIMIT') and not caps['limit_orders']:
+            raise TradePlanError('BROKER_LIMIT_ORDERS_UNSUPPORTED')
+        if order_type not in ('BUY', 'SELL') and not caps['specified_expiration']:
+            raise TradePlanError('BROKER_EXPIRATION_NOT_SUPPORTED')
+
+
 def entry_guard(snapshot: dict, profile: dict, *, reserved_entries: int = 0) -> None:
+    entry_capability_guard(snapshot)
     if snapshot.get('terminal_connected') is not True:
         raise TradePlanError('TERMINAL_DISCONNECTED')
     if snapshot.get('symbol') != profile['strategy']['symbol'] or snapshot.get('magic') != profile['execution']['magic']:
@@ -142,6 +202,7 @@ def plan_entry(profile: dict, snapshot: dict, history: dict, side: str, override
     order_type = overrides.get('order_type', side + '_STOP' if profile['entry']['mode'] == 'STOP_CONFIRM' else side)
     if order_type not in {side, side+'_STOP', side+'_LIMIT'}:
         raise TradePlanError('INVALID_ORDER_TYPE')
+    entry_capability_guard(snapshot, side=side, order_type=order_type)
     entry = ask if buy else bid
     expiration = 0
     signal_bar_time = None
@@ -217,6 +278,9 @@ def plan_entry(profile: dict, snapshot: dict, history: dict, side: str, override
         emergency = tp_cfg['dynamic']
         tp = (grid(entry+(1 if buy else -1)*max(reward, emergency['emergency_server_tp_price_units']), tick, up=not buy)
               if emergency['emergency_server_tp_enabled'] else 0.0)
+    caps = broker_capabilities(snapshot, required=False)
+    if tp and caps is not None and not caps['server_tp']:
+        raise TradePlanError('BROKER_SERVER_TP_UNSUPPORTED')
     stop_gap = close_side-sl if buy else sl-close_side
     if stop_gap <= 0 or stop_gap+1e-10 < number(snapshot.get('stops_level'), 'stops_level')*point or risk_distance > cfg['max_price_units']+1e-9:
         raise TradePlanError('INVALID_SERVER_STOPS')

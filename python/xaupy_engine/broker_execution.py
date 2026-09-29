@@ -10,8 +10,9 @@ import time
 from uuid import UUID, uuid4, uuid5
 
 from .demo_once import profile_hash
-from .trade_plan import TradePlanError, entry_guard, grid, number, plan_entry, volume_on_grid, pending_cancellation_reason
+from .trade_plan import TradePlanError, entry_guard, grid, number, plan_entry, volume_on_grid, pending_cancellation_reason, partial_close_volume
 from .position_management import position_decision
+from .trade_plan import broker_capabilities
 
 
 IDENTITY = ('account_login','account_server','symbol','magic')
@@ -108,6 +109,8 @@ class BrokerExecution:
                 except TradePlanError as exc:
                     entry_reason = str(exc)
         entry_enabled = enabled and not entry_reason
+        caps = (fresh or {}).get('execution_capabilities')
+        caps = caps if isinstance(caps, dict) else {}
         cfg = (profile or {}).get('execution', {})
         permission = bool(self.settings['safety']['allow_real_account'])
         today={}
@@ -119,8 +122,9 @@ class BrokerExecution:
                 'reason':reason or entry_reason, 'last_attempt_reason':self.last_blocker,
                 'entry_reason':reason or entry_reason, 'management_reason':reason,
                 'entry_enabled':entry_enabled, 'management_enabled':enabled,
-                'allow_buy':(profile or {}).get('strategy',{}).get('allow_buy',False),
-                'allow_sell':(profile or {}).get('strategy',{}).get('allow_sell',False),
+                'allow_buy':(profile or {}).get('strategy',{}).get('allow_buy',False) and caps.get('allow_buy') is True,
+                'allow_sell':(profile or {}).get('strategy',{}).get('allow_sell',False) and caps.get('allow_sell') is True,
+                'broker_capabilities':deepcopy(caps),
                 'profile_hash':profile_hash(profile) if profile else None,
                 'quote_age_ms':(fresh or {}).get('quote_age_ms'),
                 'snapshot_age_ms':(fresh or {}).get('snapshot_age_ms'),
@@ -217,6 +221,8 @@ class BrokerExecution:
             raise TradePlanError('MARKET_DATA_STALE')
         if snapshot.get('execution_capable') is not True:
             raise TradePlanError('BRIDGE_UPGRADE_REQUIRED')
+        if not broker_capabilities(snapshot)['trade_allowed']:
+            raise TradePlanError('TRADE_PERMISSION_DISABLED')
         if type(snapshot.get('account_login')) is not int or snapshot['account_login']<=0:
             raise TradePlanError('ACCOUNT_IDENTITY_REQUIRED')
         # The bridge owns the quote/clock pair. Strategy display values must
@@ -370,12 +376,7 @@ class BrokerExecution:
               'position_identifier':item.get('position_identifier',ticket),'side':item.get('side',''), 'sl':item.get('sl',0),'tp':item.get('tp',0),
               'max_deviation_points':profile['costs']['max_slippage_points'],'comment':profile['execution']['order_comment'][:31]}
         if action=='PARTIAL_CLOSE':
-            percent=number(value('percent',50),'percent',positive=True)
-            if percent>=100:
-                raise TradePlanError('PARTIAL_PERCENT_MUST_BE_BELOW_100')
-            plan['volume']=volume_on_grid(item['volume']*percent/100,snapshot)
-            if item['volume']-plan['volume'] < snapshot['volume_min']-1e-9:
-                raise TradePlanError('PARTIAL_REMAINDER_BELOW_MINIMUM')
+            plan['volume'] = partial_close_volume(item['volume'], value('percent', 50), snapshot)
         elif action in {'MOVE_SL_BE','MODIFY_POSITION'}:
             buy=item['side']=='BUY'
             raw=(item['price_open']+(1 if buy else -1)*profile['management']['breakeven_offset_price_units'] if action=='MOVE_SL_BE' else value('sl',item.get('sl',0)))
@@ -468,6 +469,18 @@ class BrokerExecution:
         except TradePlanError as exc:
             self.last_blocker=str(exc)
 
+    def _management_warning(self, ticket, reason):
+        key = str(ticket)
+        previous = self.management_warnings.get(key)
+        if reason is None:
+            self.management_warnings.pop(key, None)
+        else:
+            self.management_warnings[key] = reason
+            if previous != reason:
+                callback = getattr(self, 'warning_callback', None)
+                if callback is not None:
+                    callback(key, reason)
+
     def manage_positions(self,profile):
         if self.policy['mode']=='OFF':
             return
@@ -478,6 +491,9 @@ class BrokerExecution:
         if self.awaiting_snapshot:
             return
         automatic=self.policy['mode']=='AUTO'
+        live_tickets = {str(item['ticket']) for collection in ('positions', 'orders')
+                        for item in snapshot.get(collection, [])}
+        self.management_warnings = {key:value for key,value in self.management_warnings.items() if key in live_tickets}
         projection=self.strategy.status_payload(market_connected=True)
         display=projection.get('display') or {}
         metrics=display.get('indicators',{}).get('trigger',{}) if display.get('continuous') else {}
@@ -507,6 +523,10 @@ class BrokerExecution:
                     state.update(initial_risk=initial,original_tp=position.get('initial_tp'))
             try:
                 state,action=position_decision(profile,snapshot,self.strategy.history,position,state,metrics,automatic=automatic)
+                if state.get('partial_skip_reason'):
+                    self._management_warning(ticket, state['partial_skip_reason'])
+                else:
+                    self._management_warning(ticket, None)
                 if state!=previous:
                     self.save_position_state(key,state)
                 if action:
@@ -518,7 +538,7 @@ class BrokerExecution:
                         state['partial_intent']=intent_id
                         self.save_position_state(key,state)
             except TradePlanError as exc:
-                self.management_warnings[str(ticket)]=str(exc)
+                self._management_warning(ticket, str(exc))
 
         # Strategy-owned pending orders are cancelled when their entry window ends.
         if automatic:
@@ -534,7 +554,7 @@ class BrokerExecution:
                         key=self.position_key(snapshot,pending['ticket'])+':CANCEL_PENDING'
                         self.submit({'intent_id':str(uuid5(NAMESPACE_URL,key)),'confirmed':True,'ticket':pending['ticket'],'action':'CANCEL_PENDING'},profile)
                 except TradePlanError as exc:
-                    self.management_warnings[str(pending['ticket'])]=str(exc)
+                    self._management_warning(pending['ticket'], str(exc))
 
     def next_command(self,profile,session):
         try:

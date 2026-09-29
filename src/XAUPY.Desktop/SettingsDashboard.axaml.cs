@@ -104,22 +104,10 @@ public partial class SettingsDashboard : UserControl
     private async void Save_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
     {
         if (_settings is null || _supervisor is null) return;
-        var next = _settings.DeepClone().AsObject();
-        next["startup"]!["auto_start_engine"] = AutoEngine.IsChecked == true;
-        next["startup"]!["auto_restart_engine"] = AutoRestart.IsChecked == true;
-        next["startup"]!["start_with_windows"] = WindowsStartup.IsChecked == true;
-        next["notifications"]!["system_errors"] = ErrorNotifications.IsChecked == true;
-        next["notifications"]!["connection_changes"] = ConnectionNotifications.IsChecked == true;
-        next["backup"]!["auto_backup"] = AutoBackup.IsChecked == true;
-        next["backup"]!["keep_count"] = (int)(BackupCount.Value ?? 30);
-        next["connection"]!["mt5_path"] = Mt5Path.Text ?? "";
-        next["connection"]!["port"] = (int)(BridgePort.Value ?? 39421);
-        next["appearance"]!["theme"] = ThemeChoice.SelectedIndex==1?"N30 Contrast":"N30 Dark";
-        next["appearance"]!["font_scale"] = (int)(FontScaleChoice.Value ?? 100);
-        next["appearance"]!["language"] = LanguageChoice.SelectedIndex==1?"English":"Tiếng Việt";
-        next["safety"]!["auto_start_trading"] = AutoTrading.IsChecked == true;
-        next["safety"]!["require_reconciliation"] = RequireStartupSync.IsChecked == true;
-        next["safety"]!["allow_real_account"] = AllowRealAccount.IsChecked == true;
+        var next = ReadDraft();
+        if (next["safety"]!["allow_real_account"]!.GetValue<bool>() != _settings["safety"]!["allow_real_account"]!.GetValue<bool>()
+            && HasConflictingDraft?.Invoke() == true)
+            throw new InvalidOperationException(LocalizationService.T("Lưu hoặc hủy bản nháp cấu hình trước khi đổi quyền REAL."));
         var wasStartup = _settings["startup"]!["start_with_windows"]!.GetValue<bool>();
         var newStartup = WindowsStartup.IsChecked == true;
         if (newStartup != wasStartup) ApplyWindowsStartup(newStartup);
@@ -135,21 +123,15 @@ public partial class SettingsDashboard : UserControl
     private async void Backup_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
     {
         if (_supervisor is null) return;
+        if (HasUnsavedChanges) throw new InvalidOperationException(LocalizationService.T("Lưu hoặc Hủy cài đặt đang sửa trước khi tạo bản sao lưu."));
         var result = await _supervisor.CreateBackupAsync(); EnsureOk(result); Apply(result);
         Status($"Đã sao lưu: {result.GetProperty("backup").GetProperty("id").GetString()}", true);
     });
-    private async void Restore_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
-    {
-        if (_supervisor is null || BackupList.SelectedItem is not string id) throw new InvalidOperationException("Chọn một bản sao lưu để khôi phục.");
-        var result = await _supervisor.RestoreBackupAsync(id); EnsureOk(result); Apply(result);
-        ApplyWindowsStartup(WindowsStartup.IsChecked == true);
-        await ProbeAsync();
-        Status("Đã khôi phục, sao lưu trạng thái trước đó và đặt lại chiến lược. Quyền tài khoản được kiểm tra theo cài đặt vừa khôi phục.", true);
-    });
+    private async void Restore_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(RestoreReviewedAsync);
     private async void BrowseMt5_OnClick(object? sender, RoutedEventArgs e) => await RunAsync(async () =>
     {
         var top = TopLevel.GetTopLevel(this); if (top is null) return;
-        var chosen = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Chọn terminal64.exe", AllowMultiple = false, FileTypeFilter = new[] { new FilePickerFileType("MT5 Terminal") { Patterns = new[] { "terminal64.exe" } } } });
+        var chosen = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = LocalizationService.T("Chọn terminal64.exe"), AllowMultiple = false, FileTypeFilter = new[] { new FilePickerFileType("MT5 Terminal") { Patterns = new[] { "terminal64.exe" } } } });
         if (chosen.Count > 0) Mt5Path.Text = chosen[0].TryGetLocalPath();
     });
     private void LaunchMt5_OnClick(object? sender,RoutedEventArgs e)

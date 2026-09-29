@@ -64,6 +64,11 @@ public partial class OptimizerDashboard : UserControl
             Combo(name).ItemsSource = Timeframes;
         }
 
+        foreach(string field in new[]{"OptimizeFromDateBox","OptimizeToDateBox","OptimizeBalanceBox","OptimizeSpreadBox","OptimizeCommissionBox","MinTradesBox","WorkersBox","WalkForwardFoldsBox"})
+            Box(field).TextChanged += ParameterText_OnChanged;
+        Combo("WalkForwardRatioCombo").SelectionChanged += ParameterSelection_OnChanged;
+        Combo("WalkForwardRollingCombo").SelectionChanged += ParameterSelection_OnChanged;
+
         _pollTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromSeconds(1)
@@ -953,7 +958,7 @@ public partial class OptimizerDashboard : UserControl
             var file = await storage.SaveFilePickerAsync(
                 new FilePickerSaveOptions
                 {
-                    Title = "Lưu Optimizer preset",
+                    Title = LocalizationService.T("Lưu Optimizer preset"),
                     SuggestedFileName = "XAUPY-Optimizer-Custom.json",
                     DefaultExtension = "json",
                     FileTypeChoices = new[] { OptimizerPresetType }
@@ -978,6 +983,7 @@ public partial class OptimizerDashboard : UserControl
             };
 
             await FileOutput.WriteTextAsync(file, JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
+            MarkPresetSaved(file.Name);
             SetStateMessage($"Đã lưu preset: {file.Name}", Brushes.LightGreen);
         }
         catch (Exception ex)
@@ -988,6 +994,8 @@ public partial class OptimizerDashboard : UserControl
 
     private async void LoadPreset_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (_loading || _status.IsActive) { SetStateMessage(LocalizationService.T("Chờ tác vụ tối ưu kết thúc trước khi tải preset."), Brushes.Gold); return; }
+        await EnsureLoadedAsync();
         var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
         if (storage is null || !storage.CanOpen)
             return;
@@ -995,7 +1003,7 @@ public partial class OptimizerDashboard : UserControl
         var files = await storage.OpenFilePickerAsync(
             new FilePickerOpenOptions
             {
-                Title = "Tải Optimizer preset",
+                Title = LocalizationService.T("Tải Optimizer preset"),
                 AllowMultiple = false,
                 FileTypeFilter = new[] { OptimizerPresetType }
             });
@@ -1008,6 +1016,7 @@ public partial class OptimizerDashboard : UserControl
             await using var stream = await file.OpenReadAsync();
             using var doc = await JsonDocument.ParseAsync(stream);
             ApplyPreset(doc.RootElement);
+            MarkPresetSaved(file.Name);
             SetStateMessage($"Đã tải preset: {file.Name}", Brushes.LightGreen);
         }
         catch (Exception ex)
@@ -1018,6 +1027,7 @@ public partial class OptimizerDashboard : UserControl
 
     private void ApplyPreset(JsonElement root)
     {
+        ValidatePresetBeforeMutation(root);
         if (!root.TryGetProperty("parameter_ranges", out var ranges) ||
             ranges.ValueKind != JsonValueKind.Array)
         {
@@ -1122,7 +1132,10 @@ public partial class OptimizerDashboard : UserControl
         SelectionChangedEventArgs e)
     {
         if (_initialized && !_suppressInputEvents)
+        {
+            MarkPresetEdited();
             UpdateCombinationPreview();
+        }
     }
 
     private void ParameterText_OnChanged(
@@ -1130,7 +1143,10 @@ public partial class OptimizerDashboard : UserControl
         TextChangedEventArgs e)
     {
         if (_initialized && !_suppressInputEvents)
+        {
+            MarkPresetEdited();
             UpdateCombinationPreview();
+        }
     }
 
     private List<Dictionary<string, object>> BuildParameterRanges()
@@ -1405,9 +1421,9 @@ public partial class OptimizerDashboard : UserControl
         out double step)
     {
         min = max = step = 0;
-        return item.TryGetProperty("min", out var a) && a.TryGetDouble(out min) &&
-               item.TryGetProperty("max", out var b) && b.TryGetDouble(out max) &&
-               item.TryGetProperty("step", out var c) && c.TryGetDouble(out step);
+        return item.TryGetProperty("min", out var a) && a.ValueKind == JsonValueKind.Number && a.TryGetDouble(out min) &&
+               item.TryGetProperty("max", out var b) && b.ValueKind == JsonValueKind.Number && b.TryGetDouble(out max) &&
+               item.TryGetProperty("step", out var c) && c.ValueKind == JsonValueKind.Number && c.TryGetDouble(out step);
     }
 
     private void SetTextIfPresent(JsonElement root, string property, string boxName)

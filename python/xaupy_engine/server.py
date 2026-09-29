@@ -120,6 +120,9 @@ class EngineServer:
         self._demo_bridge_writer: asyncio.StreamWriter | None = None
         self.manual_actions = ManualActionSimulator(self.bridge)
         self.journal = StructuredJournal(journal_dir)
+        self.execution.warning_callback = lambda ticket, reason: self._log(
+            'WARN', 'Orders', 'MANAGEMENT', 'Position management: '+reason,
+            details={'ticket':ticket, 'reason':reason, 'scope':'current symbol and strategy magic'})
         from .mt5_logs import Mt5LogReader
         self.mt5_logs = Mt5LogReader(self.settings_store.root_dir,self.journal)
         self.monitoring = MonitoringService(self.settings_store.root_dir)
@@ -327,11 +330,11 @@ class EngineServer:
                         and self._demo_bridge_writer is not writer):
                     await self._write(writer, self._bridge_error(request, "A capable Bridge connection already owns the session"))
                     continue
-                if request.type == "bridge_hello" and request.payload.get("demo_once_capable") is True:
+                if request.type == "bridge_hello" and (request.payload.get("demo_once_capable") is True or request.payload.get("execution_capable") is True):
                     try:
                         candidate_session = str(UUID(request.payload.get("bridge_session_id", "")))
                     except (ValueError, TypeError, AttributeError):
-                        await self._write(writer, self._bridge_error(request, "Invalid demo Bridge session"))
+                        await self._write(writer, self._bridge_error(request, "Invalid execution Bridge session"))
                         continue
                     if (request.payload.get("component") != "mt5-bridge"
                             or self._demo_bridge_writer not in (None, writer)):
@@ -527,7 +530,7 @@ class EngineServer:
                                       "demo_once": result, "demo_once_context": context}), False
 
         if request.type in {"diagnostics_get", "settings_get", "settings_defaults_get", "settings_set",
-                            "backup_create", "backup_restore", "history_download_start", "history_download_status",
+                            "backup_create", "backup_restore_preview", "backup_restore", "history_download_start", "history_download_status",
                             "broker_history_start", "broker_history_status", "broker_history_query",
                             "history_catalog", "library_profile_list", "library_profile_save", "library_profile_get",
                             "calendar_import", "calendar_validate", "calendar_get", "startup_profile_set", "startup_profile_clear", "optimizer_candidate_prepare",
@@ -1903,6 +1906,18 @@ class EngineServer:
             },
         )
 
+    def _backup_restore_preview(self, backup_id: object) -> dict[str, Any]:
+        preview = self.settings_store.preview_backup(backup_id)
+        preview['state_preview_hash'] = preview['preview_hash']
+        bridge = getattr(self.execution, 'bridge', self.bridge)
+        snapshot = bridge.latest_fresh_snapshot() or {}
+        identity = {key:snapshot.get(key) for key in ('account_login','account_server','account_trade_mode','symbol','magic')}
+        preview['execution_before'] = self.execution.policy.get('mode', 'OFF')
+        preview['identity'] = identity
+        preview['preview_hash'] = self.settings_store._digest({
+            'state':preview['state_preview_hash'], 'mode':preview['execution_before'], 'identity':identity})
+        return preview
+
     def _maintenance_response(self, request: Envelope, common: dict[str, Any]) -> Envelope:
         try:
             extra: dict[str, Any] = {}
@@ -1964,6 +1979,8 @@ class EngineServer:
                 extra["history_download"] = self.history_jobs.status()
             elif request.type == "settings_defaults_get":
                 extra["settings"] = default_settings()
+            elif request.type == "backup_restore_preview":
+                extra['preview'] = self._backup_restore_preview(request.payload.get('backup_id'))
             else:
                 if request.type == "settings_set":
                     settings = request.payload.get("settings")
@@ -1973,6 +1990,11 @@ class EngineServer:
                     if settings.get('safety',{}).get('allow_real_account') != self.settings_store.settings['safety']['allow_real_account']:
                         allow_real = settings['safety']['allow_real_account']
                         profile['execution'].update(allow_real_account=allow_real, demo_only=not allow_real)
+                    # Validate first; invalid settings cannot stop or alter the
+                    # current system. Permission changes require a new mode review.
+                    self.settings_store._validate_document({'schema_version':1, 'settings':settings, 'profile':profile})
+                    if settings['safety']['allow_real_account'] != self.settings_store.settings['safety']['allow_real_account']:
+                        self.execution.set_mode({'mode':'OFF'}, self.active_profile)
                     self.settings_store.save(settings=settings, profile=profile)
                     if profile != self.active_profile:
                         self.active_profile = profile
@@ -1983,17 +2005,31 @@ class EngineServer:
                     extra["backup"] = self.settings_store.create_backup()
                     self._log("INFO", "Python Engine", "BACKUP", "Local settings/profile backup created", details=extra["backup"])
                 elif request.type == "backup_restore":
-                    self.settings_store.restore_backup(request.payload.get("backup_id"))
+                    if request.payload.get('confirmed') is not True:
+                        raise ValueError('RESTORE_CONFIRMATION_REQUIRED')
+                    preview = self._backup_restore_preview(request.payload.get('backup_id'))
+                    if request.payload.get('preview_hash') != preview['preview_hash']:
+                        raise ValueError('RESTORE_PREVIEW_CHANGED')
+                    # Persist OFF and cancel only unsent intents before changing
+                    # profile/risk. DISPATCHED/UNKNOWN evidence is never erased.
+                    self.execution.set_mode({'mode':'OFF'}, self.active_profile)
+                    self.settings_store.restore_backup(request.payload.get("backup_id"),
+                        expected_preview_hash=preview['state_preview_hash'])
                     self.active_profile = deepcopy(self.settings_store.profile)
                     self.strategy.set_profile(self.active_profile)
                     self.strategy.reset_setup("BACKUP_RESTORED")
                     self.execution.settings = self.settings_store.settings
-                    self._log("WARN", "Python Engine", "RECOVERY", "Backup restored; strategy reset; execution permissions rechecked against restored settings")
+                    self._log("WARN", "Python Engine", "RECOVERY", "Backup restored after review; execution OFF; existing REAL grants cannot increase")
                 extra.update(self.settings_store.payload())
-            return Envelope.response(request.type + "_ack", request.request_id, {**common, "ok": True, **extra})
+                if request.type in {'settings_set', 'backup_restore'}:
+                    extra['execution'] = self.execution.status()
+            return Envelope.response(request.type + "_ack", request.request_id, {**self._common(), "ok": True, **extra})
         except (OSError, ValueError, TypeError, KeyError, sqlite3.Error) as exc:
+            current = self._common()
+            if request.type in {'settings_set', 'backup_restore'}:
+                current['execution'] = self.execution.status()
             return Envelope.response(request.type + "_ack", request.request_id,
-                                     {**common, "ok": False, "errors": [str(exc)]})
+                                     {**current, "ok": False, "errors": [str(exc)]})
 
     @staticmethod
     async def _write(

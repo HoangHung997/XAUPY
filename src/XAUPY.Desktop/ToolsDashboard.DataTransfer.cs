@@ -15,12 +15,12 @@ public partial class ToolsDashboard
         string? path;
         if(mode=="EXPORT")
         {
-            var file=await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {Title="Xuất dữ liệu phân tích và nhật ký",SuggestedFileName=$"XAUPY-data-{DateTime.Now:yyyyMMdd-HHmmss}.zip",DefaultExtension="zip",FileTypeChoices=[type]});
+            var file=await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {Title = LocalizationService.T("Xuất dữ liệu phân tích và nhật ký"),SuggestedFileName=$"XAUPY-data-{DateTime.Now:yyyyMMdd-HHmmss}.zip",DefaultExtension="zip",FileTypeChoices=[type]});
             path=file?.TryGetLocalPath();
         }
         else
         {
-            var files=await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {Title="Nhập gói XAUPY đã xuất",AllowMultiple=false,FileTypeFilter=[type]});
+            var files=await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {Title = LocalizationService.T("Nhập gói XAUPY đã xuất"),AllowMultiple=false,FileTypeFilter=[type]});
             path=files.FirstOrDefault()?.TryGetLocalPath();
         }
         if(path is null)return;

@@ -36,7 +36,7 @@ DONE — implementation, automated evidence and required deliverable complete.
 | XAUPY-013 | DONE | Dynamic TP/SL + stop-confirm entry | 003,007,011 | Simulation and packaged smoke passed; CI 36340716356 + verified release artifact |
 | XAUPY-014 | DONE | Tools tab + diagnostics | 003,004,010 | Diagnostics/contracts/packaged smoke passed; CI 36340716356 + verified release artifact |
 | XAUPY-015 | DONE | Settings, backup, startup, fail-safe UX | 002,003,004 | Persistence/recovery + 20 UI checks passed; CI 36340716356 + verified release artifact |
-| XAUPY-016 | READY_FOR_USER_TEST | Installer, release workflow, demo acceptance | all prior | RC2 CI/installer, independent artifact verification, native local-build restart and exact downloaded-CI MT5 acceptance passed; strict 100% UI parity remains unfulfilled |
+| XAUPY-016 | IMPLEMENTED_CI_PENDING | RC2 repairs, installer, reference review and broker acceptance | all prior | Two RC1 P1 defects repaired in RC2; local regressions passed; exact Windows CI/artifact, strict reference parity and broker UAT tracked separately |
 
 # XAUPY-001
 
@@ -1052,3 +1052,13 @@ Theo yêu cầu người dùng, tiếp tục Task016 trên `release/1.0-completi
 ## RC1 delivery verified — 2026-09-29
 
 Task016 is READY_FOR_USER_TEST on the isolated release branch. Application source a1abc91d9b2d43888a4471bd28c6b6f2e8af0e0f passed CI 36507058142. Portable/installer were independently downloaded and all 304 manifest hashes verified. See FIRST_RELEASE_DELIVERY_20260929.md for exact scope, hashes and remaining user broker/native-Windows acceptance. Historical ACTIVE/RC2 records above retain their original evidence scope. No broker or user-runtime mutation was performed.
+
+## RC2 repair handoff — 2026-09-29
+
+Current work remains XAUPY-016 on the separate release branch. RC1 source/tag and
+its failed independent readiness audit remain unchanged. See RC2_REPAIRS_20260929.md
+and RC2_FEATURE_MATRIX.csv. 526 Python / 165 IPC / 161 Linux-headless Desktop /
+161 general protocol / 62 RC2 protocol checks passed locally. Windows/package
+numbers must be recorded from the new run, not copied from RC1. No actual broker
+operation or user-state mutation was performed. Strict 100% image acceptance and
+native broker/Windows acceptance are not closed by handler or headless tests.

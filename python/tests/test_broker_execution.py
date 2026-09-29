@@ -23,7 +23,7 @@ class BrokerExecutionTests(unittest.TestCase):
         self.profile['take_profit'].update(mode='FIXED',fixed_price_units=6)
         self.profile['risk'].update(fixed_lot=.01,sizing_mode='FIXED_LOT')
         self.settings=default_settings()
-        self.snapshot=dict(execution_capable=True,terminal_connected=True,account_trade_mode='DEMO',
+        self.snapshot=dict(execution_capable=True,execution_capabilities=dict(schema_version=1,trade_allowed=True,allow_buy=True,allow_sell=True,market_orders=True,stop_orders=True,limit_orders=True,server_sl=True,server_tp=True,specified_expiration=True,netting_symbol_exposed=False,margin_mode='HEDGING'),terminal_connected=True,account_trade_mode='DEMO',
             account_login=123456,account_server='Test-Demo',symbol='XAUUSD',magic=991188,
             bridge_session_id=str(uuid4()),server_time=NOW,tick_time_msc=NOW*1000,
             bid=4200.,ask=4200.2,balance=10000.,point=.01,tick_size=.01,tick_value=1.,

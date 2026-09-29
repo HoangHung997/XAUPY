@@ -60,10 +60,17 @@ public partial class OrdersPositionsDashboard
         bool valid = ValidateManualInputs(out _, out _, out _, out string error);
         bool confirmed = Check("ManualConfirmCheck").IsChecked == true && _confirmedIdentity == Identity(_book);
         bool ready = _executionState.Fresh && _executionState.EntryEnabled && _book.Available && _book.TerminalConnected && !_executionBusy;
-        Button("MarketBuyButton").IsEnabled = ready && valid && confirmed && _executionState.BuyAllowed;
-        Button("MarketSellButton").IsEnabled = ready && valid && confirmed && _executionState.SellAllowed;
+        Button("MarketBuyButton").IsEnabled = ready && valid && confirmed && _executionState.MarketOrdersAllowed && _executionState.BuyAllowed;
+        Button("MarketSellButton").IsEnabled = ready && valid && confirmed && _executionState.MarketOrdersAllowed && _executionState.SellAllowed;
+        bool pendingAllowed = _executionState.BrokerCapabilitiesKnown && _executionState.SpecifiedExpirationAllowed &&
+            (_executionState.StopOrdersAllowed || _executionState.LimitOrdersAllowed);
+        Button("PendingEntryButton").IsEnabled = ready && valid && pendingAllowed;
+        ToolTip.SetTip(Button("PendingEntryButton"), !ready ? ExecutionPresentation.Reason(_executionState.EntryReason)
+            : !pendingAllowed ? ExecutionPresentation.Reason("BROKER_EXPIRATION_NOT_SUPPORTED")
+            : LocalizationService.T("Đặt lệnh chờ trên symbol hiện tại; xác nhận riêng trong hộp thoại."));
         Text("ManualEntryHint").Text = !ready ? ExecutionPresentation.Reason(_executionState.EntryReason)
-            : !valid ? error : !confirmed ? "Tích xác nhận trước khi bấm BUY/SELL. Bỏ trống SL/TP sẽ dùng profile."
+            : !_executionState.MarketOrdersAllowed ? ExecutionPresentation.Reason("BROKER_MARKET_ORDERS_UNSUPPORTED")
+            : !valid ? error : !confirmed ? LocalizationService.T("Tích xác nhận trước khi bấm BUY/SELL. Bỏ trống SL/TP sẽ dùng profile.")
             : $"Sẽ gửi broker · {_book.AccountTradeMode} {_book.AccountLogin} · SL/TP theo biểu mẫu hoặc profile.";
         ToolTip.SetTip(Button("MarketBuyButton"), _executionState.BuyAllowed ? Text("ManualEntryHint").Text : ExecutionPresentation.Reason("SIDE_DISABLED"));
         ToolTip.SetTip(Button("MarketSellButton"), _executionState.SellAllowed ? Text("ManualEntryHint").Text : ExecutionPresentation.Reason("SIDE_DISABLED"));
@@ -79,7 +86,7 @@ public partial class OrdersPositionsDashboard
         var confirm=new CheckBox {Content=$"Xác nhận sửa #{ticket} · {_book.AccountTradeMode} {_book.AccountLogin}"};
         var status=new TextBlock {Foreground=Brushes.OrangeRed};
         var send=new Button {[LocalizationService.TextProperty] = "Gửi thay đổi"};
-        var dialog=new Window {Title="Sửa SL / TP",Width=500,Height=310,WindowStartupLocation=WindowStartupLocation.CenterOwner};
+        var dialog=new Window {[LocalizationService.TitleProperty] = "Sửa SL / TP",Width=500,Height=310,WindowStartupLocation=WindowStartupLocation.CenterOwner};
         (double Sl,double Tp)? values=null;
         send.Click+=(_,_)=>
         {
@@ -123,6 +130,16 @@ public partial class OrdersPositionsDashboard
             }
             Text("ExecutionRecentText").Text = $"{action} · {outcome} · {id[..Math.Min(8,id.Length)]} · {evidence}";
         }
+        else Text("ExecutionRecentText").Text = LocalizationService.T("Lệnh được đối chiếu trực tiếp với broker.");
+        if (state.ManagementWarnings.Count > 0)
+        {
+            string detail = string.Join("\n",state.ManagementWarnings.Select(item => "#"+item.Key+": "+ExecutionPresentation.Reason(item.Value)));
+            var first=state.ManagementWarnings.First();
+            Text("ExecutionRecentText").Text = $"#{first.Key}: {ExecutionPresentation.Reason(first.Value)}";
+            ToolTip.SetTip(Text("ExecutionRecentText"), detail+"\n"+LocalizationService.T("Thao tác không khả thi được bỏ qua; bảo vệ độc lập vẫn được đánh giá."));
+            Text("ExecutionRecentText").Foreground=Brushes.Gold;
+        }
+        else { ToolTip.SetTip(Text("ExecutionRecentText"),null); Text("ExecutionRecentText").Foreground=Brushes.LightSteelBlue; }
     }
 
     private async void ExecutionMode_OnClick(object? sender, RoutedEventArgs e)
@@ -159,7 +176,7 @@ public partial class OrdersPositionsDashboard
         var apply = new Button { [LocalizationService.TextProperty] = "Áp dụng", IsEnabled = false, Classes = { "primary" } };
         var cancel = new Button { [LocalizationService.TextProperty] = "Hủy", Classes = { "secondary" } };
         buttons.Children.Add(apply); buttons.Children.Add(cancel); body.Children.Add(buttons);
-        var dialog = new Window { Title = "Chế độ giao dịch", Width = 500, SizeToContent = SizeToContent.Height,
+        var dialog = new Window { [LocalizationService.TitleProperty] = "Chế độ giao dịch", Width = 500, SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, Content = body, Background = new SolidColorBrush(Color.Parse("#031426")) };
         check.IsCheckedChanged += (_, _) => apply.IsEnabled = check.IsChecked == true;
         apply.Click += (_, _) => { accepted = true; dialog.Close(); }; cancel.Click += (_, _) => dialog.Close();
@@ -173,13 +190,18 @@ public partial class OrdersPositionsDashboard
         var reviewed = _book;
         var reviewedProfile = _executionState.ProfileHash;
         string lotText=Box("ManualLotBox").Text ?? "", slText=Box("ManualSlBox").Text ?? "", tpText=Box("ManualTpBox").Text ?? "";
-        var types = new ComboBox { ItemsSource = new[] { "BUY_STOP", "SELL_STOP", "BUY_LIMIT", "SELL_LIMIT" }, SelectedIndex = 0 };
+        var allowedTypes = new[] { "BUY_STOP", "SELL_STOP", "BUY_LIMIT", "SELL_LIMIT" }
+            .Where(kind => (kind.StartsWith("BUY") ? _executionState.BuyAllowed : _executionState.SellAllowed) &&
+                (kind.EndsWith("STOP") ? _executionState.StopOrdersAllowed : _executionState.LimitOrdersAllowed)).ToArray();
+        if (!_executionState.EntryEnabled || !_executionState.SpecifiedExpirationAllowed || allowedTypes.Length == 0)
+        { SetActionStatus(ExecutionPresentation.Reason("BROKER_EXPIRATION_NOT_SUPPORTED"), Brushes.OrangeRed); return; }
+        var types = new ComboBox { ItemsSource = allowedTypes, SelectedIndex = 0 };
         var price = new TextBox { PlaceholderText = "Giá đặt lệnh" };
         var confirm = new CheckBox { Content = $"Xác nhận đặt lệnh trên {_book.AccountTradeMode} {_book.AccountLogin}" };
         var note = new TextBlock { Text = $"{reviewed.AccountTradeMode} {reviewed.AccountLogin} · {reviewed.Symbol}\nLot: {lotText} · SL points: {(slText.Length==0 ? "Theo cấu hình" : slText)} · TP points: {(tpText.Length==0 ? "Theo cấu hình" : tpText)}", TextWrapping = TextWrapping.Wrap };
         var submit = new Button { [LocalizationService.TextProperty] = "Gửi lệnh chờ", Classes = { "primary" } };
         var body = new StackPanel { Margin = new Thickness(18), Spacing = 10, Children = { note, types, price, confirm, submit } };
-        var dialog = new Window { Title = "Đặt lệnh chờ", Width = 460, SizeToContent = SizeToContent.Height,
+        var dialog = new Window { [LocalizationService.TitleProperty] = "Đặt lệnh chờ", Width = 460, SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, Content = body, Background = new SolidColorBrush(Color.Parse("#031426")) };
         submit.Click += async (_, _) =>
         {
@@ -207,8 +229,8 @@ public partial class OrdersPositionsDashboard
     {
         if (TopLevel.GetTopLevel(this) is not Window owner) return;
         var info = new TextBlock { Margin = new Thickness(20), TextWrapping = TextWrapping.Wrap,
-            Text = $"{_book.Symbol} · {_book.AccountServer}\nLot: {_book.VolumeMin} – {_book.VolumeMax}; bước {_book.VolumeStep}\nPoint: {_book.Point}; bước giá: {_book.TickSize}\nGiá trị tick/lot: {_book.TickValue} {_book.AccountCurrency}\nStops: {_book.StopsLevel} points; Freeze: {_book.FreezeLevel} points\nSpread hiện tại: {_book.SpreadPoints:0.##} points\nĐơn vị SL/TP trong biểu mẫu: số points × {_book.Point}." };
-        await new Window { Title = "Thông số symbol từ MT5", Width = 480, SizeToContent = SizeToContent.Height,
+            Text = $"{_book.Symbol} · {_book.AccountServer}\nLot: {_book.VolumeMin} – {_book.VolumeMax}; bước {_book.VolumeStep}\nPoint: {_book.Point}; bước giá: {_book.TickSize}\nGiá trị tick/lot: {_book.TickValue} {_book.AccountCurrency}\nStops: {_book.StopsLevel} points; Freeze: {_book.FreezeLevel} points\nSpread hiện tại: {_book.SpreadPoints:0.##} points\nĐơn vị SL/TP trong biểu mẫu: số points × {_book.Point}.\nBroker: {_executionState.MarginMode} · Expiry: {_executionState.SpecifiedExpirationAllowed}\nMarket: {_executionState.MarketOrdersAllowed} · Stop: {_executionState.StopOrdersAllowed} · Limit: {_executionState.LimitOrdersAllowed}" };
+        await new Window { [LocalizationService.TitleProperty] = "Thông số symbol từ MT5", Width = 480, SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, Content = info, Background = new SolidColorBrush(Color.Parse("#031426")) }.ShowDialog(owner);
     }
 }

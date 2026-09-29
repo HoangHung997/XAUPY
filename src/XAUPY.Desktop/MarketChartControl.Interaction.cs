@@ -28,13 +28,13 @@ public sealed partial class MarketChartControl
     {
         Focusable=true;
         var menu=new ContextMenu();
-        void Item(string label,Func<Task> action) { var item=new MenuItem {Header=label}; item.Click+=async (_,_)=>{try{await action();}catch(Exception ex){await ShowChartErrorAsync(ex.Message);}};menu.Items.Add(item); }
+        void Item(string label,Func<Task> action) { var item=new MenuItem {[LocalizationService.HeaderProperty]=label}; item.Click+=async (_,_)=>{try{await action();}catch(Exception ex){await ShowChartErrorAsync(ex.Message);}};menu.Items.Add(item); }
         Item("Tải toàn bộ lịch sử CSV/JSON…",()=>LoadHistoryFileAsync(false));
-        Item("So sánh với tài sản khác…",()=>LoadHistoryFileAsync(true));
+        Item("So sánh tài sản từ file CSV/JSON…",()=>LoadHistoryFileAsync(true));
         Item("Cài đặt EMA / RSI / Z…",ConfigureIndicatorsAsync);
         Item("Lưu biểu đồ PNG…",SaveChartAsync);
         Item("Toàn màn hình (Esc để thoát)",ShowFullScreenAsync);
-        var frames=new MenuItem {Header="Khung thời gian"};
+        var frames=new MenuItem {[LocalizationService.HeaderProperty] = "Khung thời gian"};
         foreach(string frame in Timeframes){var item=new MenuItem {Header=frame};item.Click+=(_,_)=>SelectTimeframe(frame);frames.Items.Add(item);}menu.Items.Add(frames);
         Item("Về giá hiện tại",()=>{_panBars=0;if(_archiveMode)_history.Clear();_archiveMode=false;if(_latestSnapshot is not null)SetSnapshot(_latestSnapshot);InvalidateVisual();return Task.CompletedTask;});
         ContextMenu=menu;
@@ -76,7 +76,7 @@ public sealed partial class MarketChartControl
     private async Task LoadHistoryFileAsync(bool comparison)
     {
         var top=TopLevel.GetTopLevel(this); if(top is null) return;
-        var files=await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {Title=comparison?"Chọn lịch sử tài sản so sánh":"Mở toàn bộ lịch sử",FileTypeFilter=new[]{new FilePickerFileType("Nến CSV/JSON"){Patterns=new[]{"*.csv","*.json"}}} });
+        var files=await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {Title=LocalizationService.T(comparison?"Chọn lịch sử tài sản so sánh":"Mở toàn bộ lịch sử"),FileTypeFilter=new[]{new FilePickerFileType("Nến CSV/JSON"){Patterns=new[]{"*.csv","*.json"}}} });
         if(files.Count==0) return;
         var parsed=await Task.Run(()=>ReadChartData(files[0].Path.LocalPath));
         if(comparison) { _comparisonBars=parsed.Bars;_comparisonSymbol=parsed.Symbol+" "+parsed.Timeframe;_comparisonTimeframe=null; }
@@ -90,46 +90,7 @@ public sealed partial class MarketChartControl
         ToolTip.SetTip(this,$"{parsed.Symbol} {parsed.Timeframe} • {parsed.Bars.Length:N0} nến • cuộn để zoom, kéo để xem lịch sử, Home/End, chuột phải để mở công cụ.");
     }
     internal static (string Symbol,string Timeframe,MarketBar[] Bars) ReadChartData(string path)
-    {
-        string symbol=Path.GetFileNameWithoutExtension(path),tf="M1";
-        var bars=new List<MarketBar>();
-        if(Path.GetExtension(path).Equals(".json",StringComparison.OrdinalIgnoreCase))
-        {
-            using var doc=JsonDocument.Parse(File.ReadAllText(path));
-            var root=doc.RootElement;
-            symbol=root.GetProperty("symbol").GetString()!;
-            if(root.TryGetProperty("timeframe",out var timeframe))tf=timeframe.GetString()!;
-            foreach(var b in root.GetProperty("bars").EnumerateArray())
-                bars.Add(new MarketBar(b.GetProperty("time").GetInt64(),b.GetProperty("open").GetDouble(),b.GetProperty("high").GetDouble(),b.GetProperty("low").GetDouble(),b.GetProperty("close").GetDouble(),b.TryGetProperty("tick_volume",out var volume)?volume.GetInt64():0));
-        }
-        else
-        {
-            using var reader=new StreamReader(path);
-            var header=(reader.ReadLine() ?? "").TrimStart('\uFEFF').Split(',');
-            int Index(string name)=>Array.IndexOf(header,name);
-            foreach(var name in new[]{"time","open","high","low","close"}) if(Index(name)<0)throw new InvalidDataException("Thiếu cột "+name);
-            string? line;
-            while((line=reader.ReadLine()) is not null)
-            {
-                if(string.IsNullOrWhiteSpace(line))continue;
-                var row=line.Split(',');
-                double Number(string name)=>double.Parse(row[Index(name)],CultureInfo.InvariantCulture);
-                if(Index("symbol")>=0)symbol=row[Index("symbol")];
-                if(Index("timeframe")>=0)tf=row[Index("timeframe")];
-                bars.Add(new MarketBar(long.Parse(row[Index("time")],CultureInfo.InvariantCulture),Number("open"),Number("high"),Number("low"),Number("close"),Index("tick_volume")>=0?(long)Number("tick_volume"):0));
-            }
-            var manifest=Path.Combine(Path.GetDirectoryName(path)!,"manifest.json");
-            if(File.Exists(manifest))
-            {
-                using var doc=JsonDocument.Parse(File.ReadAllText(manifest));
-                foreach(var entry in doc.RootElement.GetProperty("timeframes").EnumerateObject())
-                    if(entry.Value.TryGetProperty("path",out var file) && Path.GetFullPath(file.GetString()!)==Path.GetFullPath(path)) {tf=entry.Name;symbol=doc.RootElement.GetProperty("symbol").GetString()!;break;}
-            }
-        }
-        if(bars.Count==0 || !Timeframes.Contains(tf) || bars.Any(b=>!Valid(b) || b.TickVolume<0) || bars.Zip(bars.Skip(1)).Any(p=>p.First.Time>=p.Second.Time))
-            throw new InvalidDataException("Nến phải hợp lệ, tăng dần, không trùng thời gian và thuộc khung được hỗ trợ.");
-        return(symbol,tf,bars.ToArray());
-    }
+        => ChartHistoryReader.Read(path);
 
     private async Task ConfigureIndicatorsAsync()
     {
@@ -138,7 +99,7 @@ public sealed partial class MarketChartControl
         var rsi=new TextBox {Text=_rsiPeriod.ToString()}; var z=new TextBox {Text=_zPeriod.ToString()};
         var show=new CheckBox {[LocalizationService.TextProperty] = "Hiển thị chỉ báo",IsChecked=_showIndicators};
         var status=new TextBlock {Foreground=Brushes.OrangeRed,TextWrapping=TextWrapping.Wrap};var save=new Button {[LocalizationService.TextProperty] = "Áp dụng trên biểu đồ"};
-        var dialog=new Window {Title="Chỉ báo biểu đồ",Width=430,Height=370,WindowStartupLocation=WindowStartupLocation.CenterOwner};
+        var dialog=new Window {[LocalizationService.TitleProperty] = "Chỉ báo biểu đồ",Width=430,Height=370,WindowStartupLocation=WindowStartupLocation.CenterOwner};
         save.Click+=(_,_)=>
         {
             try
@@ -172,7 +133,7 @@ public sealed partial class MarketChartControl
     private async Task SaveChartAsync()
     {
         var top=TopLevel.GetTopLevel(this);if(top is null || Bounds.Width<1 || Bounds.Height<1)return;
-        var file=await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {Title="Lưu biểu đồ PNG",SuggestedFileName=$"{_symbol}-{_timeframe}-{DateTime.Now:yyyyMMdd-HHmmss}.png",DefaultExtension="png"});
+        var file=await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {Title = LocalizationService.T("Lưu biểu đồ PNG"),SuggestedFileName=$"{_symbol}-{_timeframe}-{DateTime.Now:yyyyMMdd-HHmmss}.png",DefaultExtension="png"});
         if(file is null)return;
         using var bitmap=new RenderTargetBitmap(new PixelSize((int)Math.Ceiling(Bounds.Width),(int)Math.Ceiling(Bounds.Height)),new Vector(96,96));
         bitmap.Render(this);await using var stream=new MemoryStream();bitmap.Save(stream,PngBitmapEncoderOptions.Default);stream.Position=0;await FileOutput.CopyAsync(file,stream);
@@ -185,14 +146,14 @@ public sealed partial class MarketChartControl
             _showIndicators=_showIndicators,_formingBars=_formingBars,_comparisonBars=_comparisonBars,_comparisonSymbol=_comparisonSymbol,
             _comparisonTimeframe=_comparisonTimeframe,_lineMode=_lineMode,_userSelectedTimeframe=_userSelectedTimeframe,_latestSnapshot=_latestSnapshot};
         foreach(var (tf,bars) in _history)chart._history[tf]=new SortedDictionary<long,MarketBar>(bars);
-        var window=new Window {Title=$"{_symbol} {_timeframe} • Esc để thoát",WindowState=WindowState.FullScreen,Content=chart};
+        var window=new Window {Title=$"{_symbol} {_timeframe} • {LocalizationService.T("Esc để thoát")}",WindowState=WindowState.FullScreen,Content=chart};
         window.KeyDown+=(_,e)=>{if(e.Key==Key.Escape)window.Close();};_fullScreenChart=chart;
         try{await window.ShowDialog(owner);}finally{_fullScreenChart=null;}
     }
     private async Task ShowChartErrorAsync(string message)
     {
         if(TopLevel.GetTopLevel(this) is not Window owner)return;
-        var close=new Button {[LocalizationService.TextProperty] = "Đóng"};var window=new Window {Title="Biểu đồ",Width=520,Height=200,WindowStartupLocation=WindowStartupLocation.CenterOwner};
+        var close=new Button {[LocalizationService.TextProperty] = "Đóng"};var window=new Window {[LocalizationService.TitleProperty] = "Biểu đồ",Width=520,Height=200,WindowStartupLocation=WindowStartupLocation.CenterOwner};
         close.Click+=(_,_)=>window.Close();window.Content=new StackPanel {Margin=new Thickness(20),Spacing=15,Children={new TextBlock {Text=message,TextWrapping=TextWrapping.Wrap},close}};await window.ShowDialog(owner);
     }
     private async Task RunChartActionAsync(Func<Task> action)

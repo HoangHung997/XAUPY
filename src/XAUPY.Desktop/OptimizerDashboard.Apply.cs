@@ -48,7 +48,7 @@ public partial class OptimizerDashboard
         {
             try
             {
-                var file=await dialog.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {Title="Xuất cấu hình ứng viên",SuggestedFileName=$"XAUPY-candidate-{selected.Index}.json",DefaultExtension="json"});
+                var file=await dialog.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {Title = LocalizationService.T("Xuất cấu hình ứng viên"),SuggestedFileName=$"XAUPY-candidate-{selected.Index}.json",DefaultExtension="json"});
                 if(file is null)return;await FileOutput.WriteTextAsync(file,json);status.Text="Đã xuất cấu hình; bản đang chạy chưa đổi.";
             }catch(Exception ex){status.Text=ex.Message;}
         };
@@ -82,7 +82,7 @@ public partial class OptimizerDashboard
             }
             lines.Add("\nChi phí thử: phí ×1,5, trượt giá ×2. Spread tick giữ quan sát thực; OHLC ×1,5.");
             lines.Add("Chưa mô hình hóa swap, thanh khoản và độ trễ broker. Chỉ áp dụng qua nút Xem của ứng viên.");
-            var dialog=new Window {Title="Báo cáo nghiên cứu RSI / Z",Width=850,Height=580,WindowStartupLocation=WindowStartupLocation.CenterOwner};
+            var dialog=new Window {[LocalizationService.TitleProperty] = "Báo cáo nghiên cứu RSI / Z",Width=850,Height=580,WindowStartupLocation=WindowStartupLocation.CenterOwner};
             var save=new Button {[LocalizationService.TextProperty] = "Xuất toàn bộ bằng chứng JSON"};
             var status=new TextBlock {TextWrapping=TextWrapping.Wrap};
             save.Click+=async (_,_)=> {try {

@@ -53,6 +53,18 @@ public static class ExecutionPresentation
             "CONFIRMED_PROFILE_CHANGED" => "Cấu hình đã đổi sau khi xác nhận; kiểm lại lot/SL/TP rồi xác nhận lại.",
             "PENDING_RISK_INCREASE" => "Đổi giá lệnh chờ làm tăng khoảng rủi ro; cần thu hẹp SL tương ứng.",
             "POSITION_VOLUME_CHANGED" => "Khối lượng vị thế đã tăng sau khi xác nhận; kiểm tra rồi xác nhận lại.",
+            "RESTORE_CONFIRMATION_REQUIRED" => "Khôi phục cần xem trước và xác nhận thay đổi; không tự bật giao dịch.",
+            "RESTORE_PREVIEW_CHANGED" => "Cấu hình, tài khoản hoặc bản sao lưu đã đổi. Xem trước và xác nhận lại.",
+            "BROKER_CAPABILITIES_INVALID" => "EA chưa cung cấp đủ thông số quyền và chế độ broker. Cập nhật EA đi kèm app.",
+            "BROKER_SERVER_SL_UNSUPPORTED" => "Symbol không hỗ trợ SL trên server; không được mở lệnh thiếu bảo vệ.",
+            "BROKER_SERVER_TP_UNSUPPORTED" => "Symbol không hỗ trợ TP trên server theo cấu hình đã chọn.",
+            "BROKER_MARKET_ORDERS_UNSUPPORTED" => "Symbol không hỗ trợ lệnh thị trường.",
+            "BROKER_STOP_ORDERS_UNSUPPORTED" => "Symbol không hỗ trợ lệnh Stop.",
+            "BROKER_LIMIT_ORDERS_UNSUPPORTED" => "Symbol không hỗ trợ lệnh Limit.",
+            "BROKER_EXPIRATION_NOT_SUPPORTED" => "Broker không hỗ trợ thời hạn lệnh chờ đã chọn; không tự đổi thành lệnh vô thời hạn.",
+            "NETTING_SYMBOL_ALREADY_EXPOSED" => "Tài khoản netting đã có vị thế trên symbol này; không gộp thêm vị thế của chiến lược.",
+            "TRADE_PERMISSION_DISABLED" => "MT5, EA hoặc tài khoản chưa cho phép giao dịch thuật toán. Kiểm tra quyền Algo Trading.",
+            "SYMBOL_ENTRY_DISABLED" => "Broker không cho phép mở chiều giao dịch này trên symbol hiện tại.",
             "SIDE_DISABLED" => "Chiều BUY/SELL này đang tắt trong Cấu hình.",
             "CONFIRMED" or "BROKER_STATE_VERIFIED" => "Broker đã xác nhận kết quả.",
             "BROKER_PARTIAL_FILL_VERIFIED" => "Broker đã xác nhận khớp một phần khối lượng.",
@@ -74,8 +86,8 @@ public static class ExecutionPresentation
         !state.Fresh ? Reason("ENGINE_OFFLINE") : state.Mode == "OFF" ? Reason("USER_STOPPED") :
         $"{Mode(state)} · {Reason(state.EntryReason)}";
 
-    public static string Permission(ExecutionSnapshot state) => !state.PermissionsKnown ? "Quyền REAL: chưa có dữ liệu"
+    public static string Permission(ExecutionSnapshot state) => LocalizationService.T(!state.PermissionsKnown ? "Quyền REAL: chưa có dữ liệu"
         : !state.LocalAllowReal ? "Quyền REAL: chưa cho phép"
         : !state.EffectiveAllowReal ? "Quyền REAL: đã lưu; profile vẫn giới hạn DEMO"
-        : "Quyền REAL: đã cho phép • không tự bật giao dịch";
+        : "Quyền REAL: đã cho phép • không tự bật giao dịch");
 }

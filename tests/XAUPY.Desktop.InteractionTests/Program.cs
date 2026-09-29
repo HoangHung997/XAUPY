@@ -488,6 +488,8 @@ try {
 
     var settingsView = new SettingsDashboard(); settingsView.AttachSupervisor(supervisor);
     Complete(settingsView.EnsureLoadedAsync());
+    ReadinessRepairChecks.Run(Assert, supervisor, settingsView, Complete);
+    ReadinessRepairChecks.CheckMetadataTranslation(Assert);
     var settingsWindow = new Window { Content = settingsView, Width = 1342, Height = 794 };
     settingsWindow.Show(); Dispatcher.UIThread.RunJobs();
     try {

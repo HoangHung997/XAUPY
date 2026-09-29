@@ -1,8 +1,18 @@
-> **1.0.0-rc1 READY_FOR_USER_TEST** — [Verified delivery](docs/FIRST_RELEASE_DELIVERY_20260929.md) · [Download release](https://github.com/HoangHung997/XAUPY/releases/tag/v1.0.0-rc1). Exact application source: `a1abc91d9b2d43888a4471bd28c6b6f2e8af0e0f`.
+# XAUPY — 1.0.0 RC2 repair candidate
 
-# XAUPY — 1.0.0 RC1
+Nhánh riêng: `release/1.0-completion-20260929`. **RC1 có hai lỗi P1 đã tái hiện;
+không dùng nhãn READY_FOR_USER_TEST cũ làm chứng nhận giao dịch hoàn thiện.**
+Nguồn RC2 sửa partial cản BE, khôi phục tăng quyền REAL và các lỗi UI/tích hợp
+được ghi trong [báo cáo sửa RC2](docs/RC2_REPAIRS_20260929.md).
+Xem [hướng dẫn RC2](docs/RC2_USER_GUIDE.md),
+[ma trận 172 mục với phạm vi riêng](docs/RC2_FEATURE_MATRIX.csv) và
+[tái kiểm RC1](docs/RC1_REAUDIT_20260929.md).
 
-Nhánh phát hành riêng: `release/1.0-completion-20260929`. Xem [thay đổi và phạm vi kiểm](docs/FIRST_RELEASE_20260929.md), [hướng dẫn tải/test](docs/FIRST_RELEASE_USER_GUIDE.md) và [ma trận 172 chức năng](docs/FIRST_RELEASE_FEATURE_MATRIX.csv). Bằng chứng các phiên bản dưới đây là lịch sử, không thay cho CI/artifact của nhánh RC1. Bản đầu tiên để người dùng nghiệm thu thực tế; không tự bật giao dịch hoặc gửi lệnh.
+Trạng thái hiện tại: **IMPLEMENTED_CI_PENDING**. Chỉ binary gắn đúng SHA/CI và
+manifest trong báo cáo giao hàng mới được dùng để tải test. Không tuyên bố UI
+khớp 100% hoặc broker UAT hoàn tất. Không tự bật REAL/AUTO trên máy người dùng.
+
+## Lịch sử các bản trước — không phải trạng thái RC2 hiện tại
 
 # XAUPY
 

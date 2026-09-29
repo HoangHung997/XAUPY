@@ -28,7 +28,7 @@ class GeneralExecutionProtocolTests(unittest.IsolatedAsyncioTestCase):
         self.ea=await self.connect()
         self.desktop=await self.connect()
         self.session=str(uuid4())
-        self.snapshot=dict(bridge_version='1.020',execution_capable=True,demo_once_capable=True,bridge_session_id=self.session,
+        self.snapshot=dict(execution_capabilities=dict(schema_version=1,trade_allowed=True,allow_buy=True,allow_sell=True,market_orders=True,stop_orders=True,limit_orders=True,server_sl=True,server_tp=True,specified_expiration=True,netting_symbol_exposed=False,margin_mode='HEDGING'),bridge_version='1.022',execution_capable=True,demo_once_capable=True,bridge_session_id=self.session,
             account_login=100,account_server='Test-Demo',symbol='XAUUSD',magic=991188,account_trade_mode='DEMO',terminal_connected=True,
             server_time=NOW,tick_time_msc=NOW*1000,bid=4200.,ask=4200.2,balance=10000.,point=.01,tick_size=.01,tick_value=1.,
             volume_min=.01,volume_max=100.,volume_step=.01,stops_level=10,freeze_level=0,positions=[],orders=[],deals=[],
@@ -39,7 +39,7 @@ class GeneralExecutionProtocolTests(unittest.IsolatedAsyncioTestCase):
         await exchange(*self.ea,'bridge_snapshot',self.snapshot)
 
     def hello(self):
-        return dict(component='mt5-bridge',bridge_version='1.020',symbol='XAUUSD',execution_capable=True,demo_once_capable=True,bridge_session_id=self.session)
+        return dict(component='mt5-bridge',bridge_version='1.022',symbol='XAUUSD',execution_capable=True,demo_once_capable=True,bridge_session_id=self.session)
 
     async def connect(self):
         connection=await asyncio.open_connection('127.0.0.1',self.server.bound_port)
@@ -81,6 +81,27 @@ class GeneralExecutionProtocolTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(accepted.payload['accepted'],accepted.payload)
         heartbeat=await exchange(*self.desktop,'heartbeat')
         self.assertEqual('CONFIRMED',heartbeat.payload['execution']['recent'][0]['state'])
+
+    async def test_general_execution_session_does_not_require_legacy_one_shot_capability(self):
+        # Establish a wholly new owning session without the unrelated legacy flag.
+        self.ea[1].close(); await self.ea[1].wait_closed()
+        for _ in range(100):
+            if self.server._demo_bridge_writer is None: break
+            await asyncio.sleep(.01)
+        self.assertIsNone(self.server._demo_bridge_writer)
+        self.session=str(uuid4()); self.snapshot['bridge_session_id']=self.session
+        self.ea=await self.connect()
+        hello=self.hello();hello.pop('demo_once_capable')
+        reply=await exchange(*self.ea,'bridge_hello',hello)
+        self.assertEqual('bridge_hello_ack',reply.type)
+        await exchange(*self.ea,'bridge_snapshot',self.snapshot)
+        await self.activate()
+        action=dict(intent_id=str(uuid4()),confirmed=True,action='MARKET_BUY')
+        self.assertTrue((await exchange(*self.desktop,'execution_action',action)).payload['accepted'])
+        reply=await exchange(*self.ea,'bridge_snapshot',self.snapshot)
+        self.assertEqual(action['intent_id'],reply.payload['execution_command']['intent_id'])
+        forged=await exchange(*self.desktop,'bridge_snapshot',self.snapshot)
+        self.assertEqual('error',forged.type)
 
     async def test_old_one_shot_and_continuous_modes_cannot_dispatch_concurrently(self):
         await self.activate()

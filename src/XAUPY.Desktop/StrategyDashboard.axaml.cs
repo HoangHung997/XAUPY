@@ -43,7 +43,7 @@ public partial class StrategyDashboard : UserControl
                 ?? throw new InvalidOperationException("Không mở được hộp thoại lưu file.");
             var file = await provider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = "Lưu chiến lược XAUPY",
+                Title = LocalizationService.T("Lưu chiến lược XAUPY"),
                 SuggestedFileName = "XAUPY_Strategy.json",
                 DefaultExtension = "json",
                 FileTypeChoices = [StrategyJson]
@@ -64,7 +64,7 @@ public partial class StrategyDashboard : UserControl
                 ?? throw new InvalidOperationException("Không mở được hộp thoại chọn file.");
             var files = await provider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Tải chiến lược XAUPY", AllowMultiple = false, FileTypeFilter = [StrategyJson]
+                Title = LocalizationService.T("Tải chiến lược XAUPY"), AllowMultiple = false, FileTypeFilter = [StrategyJson]
             });
             if (files.Count == 0) return;
             await using var stream = await files[0].OpenReadAsync();
@@ -127,7 +127,7 @@ public partial class StrategyDashboard : UserControl
         bool accepted = false;
         var dialog = new Window
         {
-            Title = "Áp dụng chiến lược", Width = 530, Height = 285, CanResize = false,
+            [LocalizationService.TitleProperty] = "Áp dụng chiến lược", Width = 530, Height = 285, CanResize = false,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, Background = new SolidColorBrush(Color.Parse("#031426"))
         };
         var cancel = new Button { [LocalizationService.TextProperty] = "Hủy", Classes = { "secondary" } };

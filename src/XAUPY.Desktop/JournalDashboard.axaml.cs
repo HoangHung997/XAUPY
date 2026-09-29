@@ -323,7 +323,7 @@ public partial class JournalDashboard : UserControl
         var file = await top.StorageProvider.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
-                Title = "Xuất XAUPY Journal",
+                Title = LocalizationService.T("Xuất XAUPY Journal"),
                 SuggestedFileName = $"XAUPY-Journal-{DateTime.Now:yyyyMMdd-HHmmss}.jsonl",
                 DefaultExtension = "jsonl",
                 FileTypeChoices = new[] { JsonLinesFileType }

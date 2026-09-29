@@ -40,7 +40,7 @@
   </UserControl.Styles>
 
   <Grid ColumnDefinitions="4*,1*" ColumnSpacing="8">
-    <ScrollViewer Grid.Column="0"
+    <ScrollViewer x:Name="OrdersTableScroll" Grid.Column="0"
                   VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
       <StackPanel Spacing="8">
@@ -283,7 +283,7 @@
           <StackPanel>
             <Grid ColumnDefinitions="*,*,*" Background="{DynamicResource Brush_082038}">
               <Border Grid.Column="0" Background="{DynamicResource Brush_0866F4}" CornerRadius="4,4,0,0" Margin="4,4,2,0" Padding="9,6"><TextBlock Text="{DynamicResource Text_77dd21dd80b5070b}" HorizontalAlignment="Center"/></Border>
-              <Button Grid.Column="1" Classes="navTab" Content="{DynamicResource Text_cbc8601b47b64389}" Click="PendingEntry_OnClick"/>
+              <Button x:Name="PendingEntryButton" Grid.Column="1" Classes="navTab" Content="{DynamicResource Text_cbc8601b47b64389}" Click="PendingEntry_OnClick"/>
               <Button Grid.Column="2" Classes="navTab" Content="{DynamicResource Text_4aa16c9282a68669}" Click="SymbolInfo_OnClick"/>
             </Grid>
 

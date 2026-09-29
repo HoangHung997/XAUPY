@@ -242,8 +242,9 @@
           <Grid RowDefinitions="36,*,24">
             <Grid Grid.Row="0" Background="{DynamicResource Brush_082038}" ColumnDefinitions="*,Auto">
               <TextBlock Text="{DynamicResource Text_96e541405d30d5af}" Classes="panelTitle" Margin="12,8"/>
-              <ComboBox Grid.Column="1" Width="150" SelectedIndex="0" IsEnabled="False" Margin="0,4,8,4">
-                <ComboBoxItem Content="{DynamicResource Text_02fde5e3de280156}"/>
+              <ComboBox x:Name="DrawdownUnitCombo" Grid.Column="1" Width="150" SelectedIndex="0" Margin="0,4,8,4" SelectionChanged="DrawdownUnit_OnChanged">
+                <ComboBoxItem Content="{DynamicResource Text_02fde5e3de280156}" Tag="PERCENT"/>
+                <ComboBoxItem Content="{DynamicResource Text_bd6a1b0867dde3c6}" Tag="MONEY"/>
               </ComboBox>
             </Grid>
 

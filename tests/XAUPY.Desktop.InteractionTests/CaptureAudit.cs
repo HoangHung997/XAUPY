@@ -40,7 +40,7 @@ internal static class CaptureAudit
             while(Environment.TickCount64<until){Dispatcher.UIThread.RunJobs();Thread.Sleep(10);}
             Dispatcher.UIThread.RunJobs();
         }
-        void Snapshot()
+        void Snapshot(bool populated=false)
         {
             long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var spans=new Dictionary<string,long> { ["M1"]=60,["M3"]=180,["M5"]=300,["M15"]=900,["M30"]=1800,["H1"]=3600,["H2"]=7200,["H4"]=14400,["D1"]=86400 };
@@ -48,16 +48,37 @@ internal static class CaptureAudit
                 double value=4200+Math.Sin(i/8.0)*3+i*.025;
                 return new { time=(now/kv.Value-120+i)*kv.Value,open=value-.15,high=value+.45,low=value-.5,close=value,tick_volume=100+i };
             }).ToArray());
-            Exchange("bridge_snapshot",new { bridge_version="1.021",execution_capable=true,demo_once_capable=true,
+            object[] positions=populated ? Enumerable.Range(0,4).Select(i=>(object)new {
+                ticket=100001L+i,position_identifier=110001L+i,magic=991188,symbol="XAUUSD",side=i%2==0?"BUY":"SELL",
+                volume=.01,price_open=4200.0+i,price_current=4202.25,sl=i%2==0?4197.0:4207.0,tp=i%2==0?4210.0:4192.0,
+                profit=i%2==0?2.25:-1.25,swap=0.0,time=now-300+i*60,comment="ISOLATED FIXTURE — long receipt / no actual broker" }).ToArray() : Array.Empty<object>();
+            object[] pending=populated ? Enumerable.Range(0,2).Select(i=>(object)new {
+                ticket=200001L+i,magic=991188,symbol="XAUUSD",type=i==0?"BUY_STOP":"SELL_LIMIT",volume_initial=.02,
+                volume_current=.02,price_open=4205.0+i,price_current=4202.25,sl=i==0?4200.0:4211.0,tp=i==0?4212.0:4198.0,
+                state="PLACED",time_setup=now-60,expiration=now+300,comment="ISOLATED FIXTURE" }).ToArray() : Array.Empty<object>();
+            object[] deals=populated ? Enumerable.Range(0,4).Select(i=>(object)new {
+                ticket=300001L+i,order_ticket=310001L+i,magic=991188,symbol="XAUUSD",side=i%2==0?"BUY":"SELL",
+                volume=.01,price_in=4201.0,price_out=4202.0,profit=i%2==0?1.0:-1.0,commission=-.07,swap=0.0,
+                time=now-600+i*60,comment="Dữ liệu thử; mã và comment dài không được che nút thao tác" }).ToArray() : Array.Empty<object>();
+            Exchange("bridge_snapshot",new { bridge_version="1.022",execution_capable=true,demo_once_capable=true,
+                execution_capabilities=new {schema_version=1,trade_allowed=true,allow_buy=true,allow_sell=true,
+                    market_orders=true,stop_orders=true,limit_orders=true,server_sl=true,server_tp=true,
+                    specified_expiration=true,netting_symbol_exposed=false,margin_mode="HEDGING"},
                 bridge_session_id=session,account_login=700001,account_server="ISOLATED-UI-FIXTURE",symbol="XAUUSD",magic=991188,
                 account_trade_mode="DEMO",terminal_connected=true,server_time=now,tick_time_msc=now*1000,
                 server_utc_offset_seconds=0,bid=4202.25,ask=4202.45,point=.01,tick_size=.01,tick_value=1.0,tick_value_loss=1.0,
                 volume_min=.01,volume_max=100.0,volume_step=.01,stops_level=10,freeze_level=0,
-                balance=10000.0,equity=10000.0,margin_free=10000.0,account_currency="USD",account_leverage=100,
-                positions=Array.Empty<object>(),orders=Array.Empty<object>(),deals=Array.Empty<object>(),
+                balance=10000.0,equity=10000.0,margin_free=10000.0,account_currency="USD",leverage=100,spread_points=20.0,
+                positions=positions,orders=pending,deals=deals,positions_count=positions.Length,orders_count=pending.Length,
                 guardian=new { execution_locked=true,execution_ready=false,reason="USER_STOPPED",max_volume=.1 },
                 demo_once_guard=new {history_complete=true,broker_day_start=now/86400*86400,trades_today=0,consecutive_losses=0,last_exit_time=0,day_start_balance=10000.0,daily_realized=0.0},
                 bars=history.ToDictionary(kv=>kv.Key,kv=>kv.Value[^1]),bar_history=history });
+        }
+        void SaveWindow(Window target,string name)
+        {
+            Dispatcher.UIThread.RunJobs();
+            using var bitmap=new RenderTargetBitmap(new PixelSize((int)target.Bounds.Width,(int)target.Bounds.Height),new Vector(96,96));
+            bitmap.Render(target);bitmap.Save(Path.Combine(directory,name+".png"),PngBitmapEncoderOptions.Default);
         }
         try
         {
@@ -68,8 +89,9 @@ internal static class CaptureAudit
             client=new TcpClient();client.Connect("127.0.0.1",port);client.ReceiveTimeout=15000;
             reader=new StreamReader(client.GetStream(),Encoding.UTF8,leaveOpen:true);
             writer=new StreamWriter(client.GetStream(),new UTF8Encoding(false),leaveOpen:true){AutoFlush=true,NewLine="\n"};
-            Exchange("bridge_hello",new {component="mt5-bridge",bridge_version="1.021",symbol="XAUUSD",execution_capable=true,demo_once_capable=true,bridge_session_id=session});
+            Exchange("bridge_hello",new {component="mt5-bridge",bridge_version="1.022",symbol="XAUUSD",execution_capable=true,demo_once_capable=true,bridge_session_id=session});
             Snapshot();Pump(2200);
+            for(int wait=0;wait<12;wait++){Snapshot();Pump(500);} // let transient startup notifications expire
             foreach(var page in pages)
             {
                 var button=window.FindControl<Button>(page.Value) ?? throw new InvalidOperationException(page.Value);
@@ -93,9 +115,51 @@ internal static class CaptureAudit
                 if(supervisor.Execution.Enabled)throw new InvalidOperationException("Capture must never enable execution");
                 Console.WriteLine("PASS isolated headless render "+page.Key);
             }
+            // Extra states absent from the RC1 capture: populated tables, long
+            // comments, stale execution message, scope and restore review dialog.
+            window.FindControl<Button>("NavOrders")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            for(int i=0;i<5;i++){Snapshot(true);Pump(300);}
+            SaveWindow(window,"orders-populated");
+            var ordersView=window.FindControl<OrdersPositionsDashboard>("OrdersPositionsDashboard")!;
+            void VerifyActions()
+            {
+                var buttons=ordersView.GetVisualDescendants().OfType<Button>().Where(b=>b.Name?.StartsWith("PositionAction")==true).ToArray();
+                if(buttons.Length!=20)throw new InvalidOperationException("Missing populated position actions");
+                foreach(var button in buttons)
+                {
+                    var parent=button.GetVisualParent() as Control ?? throw new InvalidOperationException("Unattached action");
+                    if(button.Bounds.Width<18 || button.Bounds.Right>parent.Bounds.Width+.75 || button.Bounds.Left<-.75)
+                        throw new InvalidOperationException("Clipped position action: "+button.Name);
+                }
+                if(supervisor.OrdersPositions.Point!=.01)throw new InvalidOperationException("Broker point missing in actual Desktop projection");
+            }
+            VerifyActions();
+            var scroll=ordersView.FindControl<ScrollViewer>("OrdersTableScroll")!;
+            scroll.Offset=new Vector(0,Math.Max(0,scroll.Extent.Height-scroll.Viewport.Height));Pump(150);SaveWindow(window,"orders-history-scrolled");
+            scroll.Offset=default;
+            window.Width=1360;window.Height=780;
+            for(int i=0;i<4;i++){Snapshot(true);Pump(200);}
+            VerifyActions();SaveWindow(window,"orders-small-window");
+            window.Width=1672;window.Height=941;
+            for(int i=0;i<4;i++){Snapshot(true);Pump(200);}
+            VerifyActions();
+            if(ordersView.FindControl<StackPanel>("PositionsRowsHost")!.Children.Count<4 ||
+                ordersView.FindControl<StackPanel>("PendingRowsHost")!.Children.Count<2)
+                throw new InvalidOperationException("Populated capture failed to project real test rows");
+            ordersView.ApplyExecutionStatus(new ExecutionSnapshot("MANUAL","FRESH_QUOTE_REQUIRED",false,true,null){EntryEnabled=false,EntryReason="FRESH_QUOTE_REQUIRED"});
+            SaveWindow(window,"orders-blocked");
+            if(ordersView.FindControl<Button>("MarketBuyButton")!.IsEnabled)throw new InvalidOperationException("Blocked capture enabled entry");
+            window.FindControl<Button>("NavSettings")!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Snapshot();Pump(1000);
+            var backup=Exchange("backup_create",new {});
+            var preview=Exchange("backup_restore_preview",new {backup_id=backup.GetProperty("backup").GetProperty("id").GetString()}).GetProperty("preview");
+            var builder=typeof(SettingsDashboard).GetMethod("BuildRestoreReview",BindingFlags.Static|BindingFlags.NonPublic)!;
+            var restore=(Window)builder.Invoke(null,new object[]{preview,(Action<bool>)(_=>{})})!;
+            restore.Show(window);Pump(200);SaveWindow(restore,"restore-review");restore.Close();
+            ReferenceImageAudit.Build(directory,Path.GetFullPath("docs/ui-reference"));
             File.WriteAllText(Path.Combine(directory,"capture-manifest.json"),JsonSerializer.Serialize(new {
                 scope="HEADLESS ISOLATED FIXTURE; NOT NATIVE MT5 OR PIXEL-PARITY ACCEPTANCE",timestamp=DateTimeOffset.UtcNow,
-                width=window.Bounds.Width,height=window.Bounds.Height,pages=report,broker_connected=false,execution_enabled=false
+                width=window.Bounds.Width,height=window.Bounds.Height,pages=report,extra_states=new[]{"orders-populated","orders-history-scrolled","orders-small-window","orders-blocked","restore-review"},broker_connected=false,execution_enabled=false
             },new JsonSerializerOptions{WriteIndented=true}));
             return 0;
         }

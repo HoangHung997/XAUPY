@@ -155,6 +155,19 @@ class OrdersProjectionTests(unittest.TestCase):
         self.assertTrue(book["broker_execution_locked"])
         self.assertTrue(book["simulation_only"])
 
+    def test_point_metadata_reaches_positions_distance_and_symbol_information(self):
+        registry = BridgeRegistry()
+        sample = bridge_snapshot()
+        registry.record_snapshot(sample)
+        book = registry.orders_positions_payload()
+        self.assertEqual(.01, book['point'])
+        position = book['positions'][0]
+        self.assertAlmostEqual(200., (position['price_current']-position['price_open'])/book['point'])
+        self.assertAlmostEqual(270., (book['orders'][0]['price_open']-book['ask'])/book['point'])
+        sample.pop('point')
+        registry.record_snapshot(sample)
+        self.assertIsNone(registry.orders_positions_payload()['point'])
+
     def test_stale_book_clears_ticket_rows(self):
         registry = BridgeRegistry(stale_seconds=0.01)
         registry.record_snapshot(bridge_snapshot())

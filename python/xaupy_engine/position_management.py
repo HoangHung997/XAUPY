@@ -1,7 +1,7 @@
 """Tick-observed position policy. Returns intentions; never talks to a broker."""
 from copy import deepcopy
 from .strategy_engine import _atr
-from .trade_plan import TradePlanError, closed_history, grid, weekend_close_due
+from .trade_plan import TradePlanError, closed_history, grid, weekend_close_due, partial_close_volume
 
 
 def _combine(values, mode):
@@ -38,9 +38,17 @@ def position_decision(profile, snapshot, history, position, state, metrics, *, a
         return state, {'action':'CLOSE_POSITION','reason':'WEEKEND_CLOSE'}
     risk = state.get('initial_risk',0)
     candidates = []
+    partial_action = None
+    state.pop('partial_skip_reason', None)
     if automatic and risk > 0:
         if management['partial_close_enabled'] and not state.get('partial_intent') and gain >= risk*management['partial_close_at_rr']:
-            return state, {'action':'PARTIAL_CLOSE','percent':management['partial_close_percent'],'reason':'PARTIAL_RR'}
+            try:
+                partial_close_volume(position.get('volume'), management['partial_close_percent'], snapshot)
+                partial_action = {'action':'PARTIAL_CLOSE', 'percent':management['partial_close_percent'], 'reason':'PARTIAL_RR'}
+            except TradePlanError as exc:
+                # Bounded per-position evidence; retry feasibility only, not a
+                # financial request. Continue BE/trailing/dynamic exit evaluation.
+                state['partial_skip_reason'] = str(exc)
         if management['breakeven_enabled'] and gain >= risk*management['breakeven_trigger_rr']:
             candidates.append((position['price_open']+sign*management['breakeven_offset_price_units'],snapshot['tick_size']))
         if profile['take_profit']['mode']=='ZRSI_DYNAMIC' and state.get('original_tp'):
@@ -92,6 +100,10 @@ def position_decision(profile, snapshot, history, position, state, metrics, *, a
             if candidate is not None: candidates.append((candidate,max(snapshot['tick_size'],management['trailing_step_price_units'])))
         except TradePlanError:
             pass
+    # A full protective/dynamic exit above takes precedence. A feasible partial
+    # keeps its one-intent policy; a skipped partial never starves stop tightening.
+    if partial_action is not None:
+        return state, partial_action
     old=position.get('sl',0)
     gap=max(snapshot.get('stops_level',0),snapshot.get('freeze_level',0))*snapshot['point']
     valid=[]

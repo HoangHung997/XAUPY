@@ -75,6 +75,7 @@ if (-not $SkipTests) {
     Invoke-Checked $Python @('scripts/smoke_intrabar_engine.py',"$releaseRoot/engine/xaupy-engine.exe")
     Invoke-Checked $Python @('scripts/smoke_demo_once_engine.py',"$releaseRoot/engine/xaupy-engine.exe")
     Invoke-Checked $Python @('scripts/smoke_first_release_execution.py',"$releaseRoot/engine/xaupy-engine.exe")
+    Invoke-Checked $Python @('scripts/smoke_rc2_repairs.py',"$releaseRoot/engine/xaupy-engine.exe")
     Invoke-Checked $Python @('scripts/smoke_release_v1.py',"$releaseRoot/engine/xaupy-engine.exe")
     Invoke-Checked $Dotnet @('run','--project',"$projectRoot/tests/XAUPY.Desktop.InteractionTests/XAUPY.Desktop.InteractionTests.csproj",'-c','Release',
         '--','--engine',"$releaseRoot/engine/xaupy-engine.exe")
@@ -93,17 +94,17 @@ $requiredFiles = @('XAUPY.Desktop.exe', 'XAUPY.Desktop.dll', 'XAUPY.Ipc.dll',
     'mt5/XAUPY_Bridge_EA.mq5', 'mt5/XAUPY_Bridge_EA.ex5', 'mt5/compile.log',
     'mt5/XAUPY_DemoOnce.mqh', 'mt5/XAUPY_ExecutionRules.mqh', 'mt5/XAUPY_Execution.mqh', 'mt5/XAUPY_MarketServices.mqh', 'mt5/XAUPY_StrictJson.mqh',
     'docs/TASK014_TOOLS_DIAGNOSTICS_SPEC.md', 'docs/TASK015_SETTINGS_RECOVERY_SPEC.md',
-    'docs/TASK016_RELEASE_ACCEPTANCE.md', 'docs/FIRST_RELEASE_USER_GUIDE.md', 'docs/FIRST_RELEASE_20260929.md', 'README.md')
+    'docs/TASK016_RELEASE_ACCEPTANCE.md', 'docs/RC2_REPAIRS_20260929.md', 'docs/RC2_USER_GUIDE.md', 'docs/FIRST_RELEASE_USER_GUIDE.md', 'docs/FIRST_RELEASE_20260929.md', 'README.md')
 foreach ($required in $requiredFiles) {
     if (-not (Test-Path -LiteralPath (Join-Path $releaseRoot $required) -PathType Leaf)) { throw "Release file missing: $required" }
 }
 if (@(Get-ChildItem -LiteralPath "$releaseRoot/docs/ui-reference" -Filter '*.png' -File).Count -ne 10) { throw 'Release requires all ten approved UI reference images.' }
-$manifest = [ordered]@{version='1.0.0-rc1'; release_channel='release-candidate'; commit=$revision; working_tree_modified=$isDirty; built_at_utc=[DateTime]::UtcNow.ToString('o'); general_execution_capable=$true; execution_default_mode='OFF'; execution_requires_user_account_selection=$true; real_requires_explicit_local_permission=$true; demo_one_shot_capable=$true; demo_one_shot_requires_explicit_arm=$true; tests_executed=(-not [bool]$SkipTests); files=@()}
+$manifest = [ordered]@{version='1.0.0-rc2'; release_channel='release-candidate'; ea_version='1.022'; execution_capabilities_schema=1; restore_requires_review=$true; restore_may_increase_real_permission=$false; commit=$revision; working_tree_modified=$isDirty; built_at_utc=[DateTime]::UtcNow.ToString('o'); general_execution_capable=$true; execution_default_mode='OFF'; execution_requires_user_account_selection=$true; real_requires_explicit_local_permission=$true; demo_one_shot_capable=$true; demo_one_shot_requires_explicit_arm=$true; tests_executed=(-not [bool]$SkipTests); files=@()}
 $manifest.files = @(Get-ChildItem -LiteralPath $releaseRoot -Recurse -File | Where-Object Name -ne 'build-manifest.json' | ForEach-Object {
     @{path=[IO.Path]::GetRelativePath($releaseRoot,$_.FullName).Replace('\','/');bytes=$_.Length;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()}
 })
 $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath "$releaseRoot/build-manifest.json" -Encoding utf8
-$zipPath = Join-Path $distRoot 'XAUPY-1.0.0-rc1-win-x64.zip'
+$zipPath = Join-Path $distRoot 'XAUPY-1.0.0-rc2-win-x64.zip'
 Compress-Archive -Path "$releaseRoot/*" -DestinationPath $zipPath -Force
 $archive = [IO.Compression.ZipFile]::OpenRead($zipPath)
 try {
@@ -120,7 +121,7 @@ try {
 } finally { $archive.Dispose() }
 $artifactPaths = @($zipPath)
 if ($Iscc) {
-    $installerPath = Join-Path $distRoot 'XAUPY-1.0.0-rc1-Setup.exe'
+    $installerPath = Join-Path $distRoot 'XAUPY-1.0.0-rc2-Setup.exe'
     if (Test-Path -LiteralPath $installerPath) { Remove-Item -LiteralPath $installerPath -Force }
     Invoke-Checked $Iscc @('installer/XAUPY.iss')
     if (-not (Test-Path -LiteralPath $installerPath -PathType Leaf)) { throw 'Inno Setup returned without the required installer.' }

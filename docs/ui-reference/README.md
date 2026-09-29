@@ -28,7 +28,7 @@ Thư mục này lưu các ảnh mockup giao diện đã duyệt và được dù
 ## Quy tắc sử dụng khi triển khai
 
 1. **Ưu tiên bố cục và luồng thao tác trong ảnh** khi xây UI thật.
-2. Không cần sao chép từng pixel; có thể điều chỉnh spacing, font, kích thước control và responsive layout để phù hợp màn hình thật.
+2. **Yêu cầu mới nhất của người dùng (29/09/2026) là khớp 100% với bộ demo.** Câu cũ cho phép tự điều chỉnh pixel/spacing không còn là căn cứ tự nghiệm thu. Mọi sai khác cần được ghi nhận và chưa được coi là đã duyệt. Dữ liệu động phải là dữ liệu thực, không sao chép số minh họa để tạo kết quả giống ảnh.
 3. Các tab, nhóm chức năng, thứ tự thông tin và trạng thái chính nên giữ nhất quán với mockup nếu không có quyết định thiết kế mới.
 4. Mọi số liệu trong ảnh chỉ là **dữ liệu minh hoạ**. Code phải lấy dữ liệu thật từ MT5 / EA Bridge / Python Engine.
 5. Tên tham số, giá trị mặc định và logic chiến lược phải lấy từ spec/code/config hiện hành, không suy ngược từ con số minh hoạ trên ảnh.
@@ -56,3 +56,11 @@ Bộ ảnh này là chuẩn tham chiếu cho **desktop Python Control Center**. 
 - Thư mục này chỉ chứa tài liệu tham chiếu UI/UX.
 - Không dùng ảnh làm bằng chứng hiệu suất chiến lược.
 - Khi có mockup mới được duyệt, cập nhật ảnh và README này để giữ một nguồn tham chiếu duy nhất.
+
+## RC2 reference evidence — trạng thái chưa đóng 100%
+
+Bộ kiểm RC2 đọc mười PNG ở trên, tạo cặp demo/control cùng kích thước, hash và
+báo cáo HTML. Capture có thêm bảng có dữ liệu, cửa sổ nhỏ, cảnh báo và restore.
+Các control/safety additions cần thiết không được ngụy trang bằng ảnh nền hoặc
+số liệu mẫu. Báo cáo hiện ghi strict parity còn mở; CI render PASS chỉ xác minh
+ảnh/control được tạo, không tự chấp nhận mọi sai khác.

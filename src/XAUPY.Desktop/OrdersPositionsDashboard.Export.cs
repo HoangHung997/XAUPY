@@ -57,7 +57,7 @@ public partial class OrdersPositionsDashboard
             var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
             if (storage is null) return;
             var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions {
-                Title = "Xuất báo cáo Lệnh & Vị thế", SuggestedFileName = $"XAUPY-orders-{DateTime.Now:yyyyMMdd-HHmmss}.json",
+                Title = LocalizationService.T("Xuất báo cáo Lệnh & Vị thế"), SuggestedFileName = $"XAUPY-orders-{DateTime.Now:yyyyMMdd-HHmmss}.json",
                 DefaultExtension = "json", FileTypeChoices = new[] {
                     new FilePickerFileType("Báo cáo đầy đủ JSON") { Patterns = new[] { "*.json" } },
                     new FilePickerFileType("Lịch sử broker CSV (UTF-8)") { Patterns = new[] { "*.csv" } } }

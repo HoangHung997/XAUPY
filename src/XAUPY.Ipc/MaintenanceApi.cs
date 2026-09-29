@@ -135,9 +135,14 @@ public sealed partial class EngineProcessSupervisor
     public Task<JsonElement> CreateBackupAsync(CancellationToken cancellationToken = default) =>
         MaintenanceRequestAsync("backup_create", new { }, cancellationToken);
 
-    public async Task<JsonElement> RestoreBackupAsync(string backupId, CancellationToken cancellationToken = default)
+    public Task<JsonElement> PreviewBackupRestoreAsync(string backupId, CancellationToken cancellationToken = default) =>
+        MaintenanceRequestAsync("backup_restore_preview", new { backup_id = backupId }, cancellationToken);
+
+    public async Task<JsonElement> RestoreBackupAsync(string backupId, string previewHash, bool confirmed,
+        CancellationToken cancellationToken = default)
     {
-        var result = await MaintenanceRequestAsync("backup_restore", new { backup_id = backupId }, cancellationToken);
+        var result = await MaintenanceRequestAsync("backup_restore", new { backup_id = backupId,
+            confirmed, preview_hash = previewHash }, cancellationToken);
         if (result.GetProperty("ok").GetBoolean())
         {
             AutoRestartEngine = result.GetProperty("settings").GetProperty("startup").GetProperty("auto_restart_engine").GetBoolean();
@@ -154,6 +159,11 @@ public sealed partial class EngineProcessSupervisor
         if (response.Type != type + "_ack")
             throw new InvalidDataException($"Unexpected maintenance response: {response.Type}");
         RejectUnexpectedExecutionEnable(response);
+        if (response.Payload.TryGetProperty("execution", out _))
+        {
+            Execution = ExecutionSnapshot.Parse(response.Payload);
+            SetState(State, "Settings/recovery execution state refreshed", LastHeartbeatUtc);
+        }
         return response.Payload.Clone();
     }
 }

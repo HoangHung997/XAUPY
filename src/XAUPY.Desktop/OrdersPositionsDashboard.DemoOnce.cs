@@ -81,7 +81,7 @@ public partial class OrdersPositionsDashboard
     {
         if (TopLevel.GetTopLevel(this) is not Window owner) return false;
         bool confirmed = false;
-        var dialog = new Window { Title = "Bắt đầu DEMO một lệnh", Width = 540, Height = 275, CanResize = false,
+        var dialog = new Window { [LocalizationService.TitleProperty] = "Bắt đầu DEMO một lệnh", Width = 540, Height = 275, CanResize = false,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, Background = new SolidColorBrush(Color.Parse("#031426")) };
         var cancel = new Button { [LocalizationService.TextProperty] = "Quay lại", Classes = { "secondary" } };
         var start = new Button { [LocalizationService.TextProperty] = "Bắt đầu chờ tín hiệu DEMO", Classes = { "primary" } };

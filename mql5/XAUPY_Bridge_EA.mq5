@@ -1,5 +1,5 @@
 #property strict
-#property version   "1.021"
+#property version   "1.022"
 #property description "XAUPY data and execution bridge. Account-bound user control with broker confirmation."
 
 input string InpHost               = "127.0.0.1";
@@ -663,7 +663,7 @@ string JsonBarsWithHistory(string &history_json)
 string BuildHelloPayload()
 {
    string json = "{";
-   json += JsonKey("bridge_version") + JsonString("1.021") + ",";
+   json += JsonKey("bridge_version") + JsonString("1.022") + ",";
    json += JsonKey("execution_capable") + "true,";
    json += JsonKey("component") + JsonString("mt5-bridge") + ",";
    json += JsonKey("symbol") + JsonString(_Symbol) + ",";
@@ -676,6 +676,28 @@ string BuildHelloPayload()
    json += JsonKey("execution_locked") + "true";
    json += "}";
    return json;
+}
+
+string JsonExecutionCapabilities()
+{
+   long mode=SymbolInfoInteger(_Symbol,SYMBOL_TRADE_MODE);
+   long orders=SymbolInfoInteger(_Symbol,SYMBOL_ORDER_MODE);
+   bool hedging=AccountInfoInteger(ACCOUNT_MARGIN_MODE)==ACCOUNT_MARGIN_MODE_RETAIL_HEDGING;
+   bool allowed=TerminalInfoInteger(TERMINAL_TRADE_ALLOWED) && MQLInfoInteger(MQL_TRADE_ALLOWED) &&
+                AccountInfoInteger(ACCOUNT_TRADE_ALLOWED) && AccountInfoInteger(ACCOUNT_TRADE_EXPERT);
+   string json="{"+JsonKey("schema_version")+"1,";
+   json+=JsonKey("trade_allowed")+JsonBool(allowed)+",";
+   json+=JsonKey("allow_buy")+JsonBool(mode==SYMBOL_TRADE_MODE_FULL || mode==SYMBOL_TRADE_MODE_LONGONLY)+",";
+   json+=JsonKey("allow_sell")+JsonBool(mode==SYMBOL_TRADE_MODE_FULL || mode==SYMBOL_TRADE_MODE_SHORTONLY)+",";
+   json+=JsonKey("market_orders")+JsonBool((orders&SYMBOL_ORDER_MARKET)!=0)+",";
+   json+=JsonKey("stop_orders")+JsonBool((orders&SYMBOL_ORDER_STOP)!=0)+",";
+   json+=JsonKey("limit_orders")+JsonBool((orders&SYMBOL_ORDER_LIMIT)!=0)+",";
+   json+=JsonKey("server_sl")+JsonBool((orders&SYMBOL_ORDER_SL)!=0)+",";
+   json+=JsonKey("server_tp")+JsonBool((orders&SYMBOL_ORDER_TP)!=0)+",";
+   json+=JsonKey("specified_expiration")+JsonBool((SymbolInfoInteger(_Symbol,SYMBOL_EXPIRATION_MODE)&SYMBOL_EXPIRATION_SPECIFIED)!=0)+",";
+   json+=JsonKey("netting_symbol_exposed")+JsonBool(!hedging && PositionSelect(_Symbol))+",";
+   json+=JsonKey("margin_mode")+JsonString(hedging ? "HEDGING" : "NETTING");
+   return json+"}";
 }
 
 string BuildSnapshotPayload(bool include_history=false)
@@ -692,7 +714,7 @@ string BuildSnapshotPayload(bool include_history=false)
    string history_json = "";
    string latest_bars = include_history ? JsonBarsWithHistory(history_json) : JsonBars();
    string json = "{";
-   json += JsonKey("bridge_version") + JsonString("1.021") + ",";
+   json += JsonKey("bridge_version") + JsonString("1.022") + ",";
    json += JsonKey("execution_capable") + "true,";
    json += JsonKey("symbol") + JsonString(_Symbol) + ",";
    json += JsonKey("magic") + StringFormat("%I64d", InpMagic) + ",";
@@ -733,6 +755,7 @@ string BuildSnapshotPayload(bool include_history=false)
    json += JsonKey("deals") + JsonDeals() + ",";
    json += JsonKey("all_deals") + JsonDeals(true) + ",";
    json += JsonKey("guardian") + JsonGuardian() + ",";
+   json += JsonKey("execution_capabilities") + JsonExecutionCapabilities() + ",";
    json += JsonKey("server_time") + StringFormat("%I64d", (long)TimeTradeServer()) + ",";
    json += JsonKey("server_utc_offset_seconds") + StringFormat("%I64d", (long)MathRound((double)(TimeTradeServer()-TimeGMT())/60)*60) + ",";
    json += JsonKey("weekend_session_end") + StringFormat("%I64d",WeekendSessionEnd()) + ",";

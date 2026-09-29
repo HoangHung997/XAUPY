@@ -60,7 +60,7 @@ def engine_session(executable: str, runtime: Path):
         stream = sock.makefile("rwb")
         hello = exchange(stream, "hello", {"component": "maintenance-smoke"})
         assert hello["engine_instance_id"] == instance, "launched process identity missing"
-        assert hello["engine_version"] == "1.0.0-rc1"
+        assert hello["engine_version"] == "1.0.0-rc2"
         yield stream
     finally:
         if stream is not None and process.poll() is None:
@@ -109,7 +109,11 @@ def main() -> None:
             backup = exchange(stream, "backup_create")["backup"]["id"]
             profile["profile"]["name"] = "Temporary changed profile"
             assert exchange(stream, "config_active_set", {"profile": profile})["applied"]
-            restored = exchange(stream, "backup_restore", {"backup_id": backup})
+            preview = exchange(stream, "backup_restore_preview", {"backup_id": backup})
+            assert preview["ok"]
+            assert not exchange(stream, "backup_restore", {"backup_id": backup})["ok"]
+            restored = exchange(stream, "backup_restore", {"backup_id": backup, "confirmed": True,
+                "preview_hash": preview["preview"]["preview_hash"]})
             assert restored["ok"]
             assert len(restored["backups"]) <= 2
             assert exchange(stream, "config_active_get")["profile"]["profile"]["name"] == "Maintenance recovery acceptance"

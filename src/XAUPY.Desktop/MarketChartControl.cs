@@ -115,10 +115,10 @@ public sealed partial class MarketChartControl : Control
     private void OpenComparisonMenu(Control owner)
     {
         var menu = new ContextMenu();
-        var clear = new MenuItem { Header = "Tắt so sánh" };
+        var clear = new MenuItem { [LocalizationService.HeaderProperty] = "Tắt so sánh" };
         clear.Click += (_, _) => { _comparisonBars=null; SetComparisonTimeframe(null); };
         menu.Items.Add(clear);
-        var file=new MenuItem { Header="Tải lịch sử tài sản khác…" };
+        var file=new MenuItem { [LocalizationService.HeaderProperty] = "So sánh tài sản từ file CSV/JSON…" };
         file.Click+=async (_,_)=>await RunChartActionAsync(()=>LoadHistoryFileAsync(comparison:true)); menu.Items.Add(file);
         foreach (var tf in Timeframes.Where(tf => tf != _timeframe))
         {

@@ -43,9 +43,8 @@
 
           <StackPanel Grid.Column="1" Spacing="3">
             <TextBlock Text="{DynamicResource Text_6083e2fbbd7dd613}" Classes="label"/>
-            <ComboBox x:Name="OptimizerPresetCombo" SelectedIndex="0">
-              <ComboBoxItem Content="Custom"/>
-            </ComboBox>
+            <TextBox x:Name="OptimizerPresetName" Text="Custom" IsReadOnly="True"
+                     ToolTip.Tip="{DynamicResource Text_60d9b242b2d94e94}"/>
           </StackPanel>
 
           <Button Grid.Column="2"

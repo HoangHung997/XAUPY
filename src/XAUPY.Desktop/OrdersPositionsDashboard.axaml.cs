@@ -133,6 +133,8 @@ public partial class OrdersPositionsDashboard : UserControl
             ? $"Spread: {_book.SpreadPoints.Value:0.##}"
             : "Spread: —";
 
+        Check("ConfirmCloseCheck").Content = $"{LocalizationService.T("Xác nhận thao tác:")} {_book.Symbol ?? _config.Symbol} · Magic {_book.Magic} {LocalizationService.T("(không gồm symbol khác)")}";
+        ToolTip.SetTip(Check("ConfirmCloseCheck"), LocalizationService.T("Các nút hàng loạt chỉ tác động vị thế/lệnh chờ thuộc symbol đang kết nối và Magic này, bất kể bộ lọc hiển thị."));
         RenderPositions();
         RenderPendingOrders();
         RenderDeals();
@@ -175,17 +177,32 @@ public partial class OrdersPositionsDashboard : UserControl
         AddCell(grid, 11, "Đang mở", Brushes.LightGreen);
         AddCell(grid, 12, Epoch(position.Time));
 
-        var actions = new StackPanel
+        // A horizontal StackPanel measured all five buttons at their desired
+        // width and pushed SL/TP outside the clipped table. Equal native grid
+        // cells keep every action reachable at the reference and smaller widths.
+        var actions = new Grid
         {
-            Orientation = Orientation.Horizontal,
-            Spacing = 4,
-            HorizontalAlignment = HorizontalAlignment.Center
+            ColumnDefinitions = new ColumnDefinitions("1.4*,*,*,*,*"),
+            ColumnSpacing = 3,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Margin = new Thickness(2,0)
         };
-        actions.Children.Add(ActionButton("Đóng", position.Ticket, "CLOSE_POSITION"));
-        actions.Children.Add(ActionButton("1/2", position.Ticket, "PARTIAL_CLOSE"));
-        actions.Children.Add(ActionButton("BE", position.Ticket, "MOVE_SL_BE"));
-        actions.Children.Add(ActionButton("TS", position.Ticket, "START_TRAILING"));
-        actions.Children.Add(ActionButton("SL/TP", position.Ticket, "MODIFY_POSITION"));
+        var definitions = new[] {
+            ("Đóng", "CLOSE_POSITION", "Đóng vị thế"),
+            ("1/2", "PARTIAL_CLOSE", "Đóng 50% nếu lot và phần còn lại hợp lệ"),
+            ("BE", "MOVE_SL_BE", "Chuyển SL về hòa vốn"),
+            ("TS", "START_TRAILING", "Bật theo dõi Trailing Stop"),
+            ("…", "MODIFY_POSITION", "Sửa SL / TP") };
+        for (int column=0; column<definitions.Length; column++)
+        {
+            var definition = definitions[column];
+            var button = ActionButton(definition.Item1, position.Ticket, definition.Item2);
+            button.Name = $"PositionAction{position.Ticket}_{definition.Item2}";
+            button.MinWidth=0; button.Padding=new Thickness(3,4);
+            button.HorizontalAlignment=HorizontalAlignment.Stretch;
+            ToolTip.SetTip(button,LocalizationService.T(definition.Item3));
+            Grid.SetColumn(button,column); actions.Children.Add(button);
+        }
         actions.IsEnabled = IsCurrentSymbol(position.Symbol);
         if (!actions.IsEnabled) ToolTip.SetTip(actions, "Chỉ quan sát symbol khác; thao tác dùng thông số của symbol đang kết nối.");
         Grid.SetColumn(actions, 13);
@@ -393,7 +410,7 @@ public partial class OrdersPositionsDashboard : UserControl
             Height = 390,
             MinWidth = 430,
             MinHeight = 390,
-            Title = "XAUPY • Sửa lệnh chờ",
+            [LocalizationService.TitleProperty] = "XAUPY • Sửa lệnh chờ",
             Background = new SolidColorBrush(Color.Parse("#031426")),
             Content = content,
             CanResize = false

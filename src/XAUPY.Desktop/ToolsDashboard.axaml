@@ -29,7 +29,7 @@
       <Grid Grid.Row="1" ColumnDefinitions="1.4*,40,1.1*,1*,1.3*" ColumnSpacing="12" Margin="12,1">
         <StackPanel Spacing="5"><TextBlock Text="{DynamicResource Text_5c60626b450b20fd}"/><TextBox Classes="toolField" x:Name="ToolFileName" Text="active-profile.json" IsReadOnly="True"/></StackPanel>
         <Button Grid.Column="1" Classes="secondary" Height="36" VerticalAlignment="Bottom" Margin="0,0,0,6" Click="Reload_OnClick" ToolTip.Tip="{DynamicResource Text_248874316eab5b03}" Padding="7"><local:ReferenceIcon Kind="refresh" Width="23" Height="23"/></Button>
-        <StackPanel Grid.Column="2" Spacing="5"><TextBlock Text="{DynamicResource Text_523f8059a0ae022a}"/><ComboBox SelectedIndex="0" Height="36"><ComboBoxItem Content="EA / Trading"/></ComboBox></StackPanel>
+        <StackPanel Grid.Column="2" Spacing="5"><TextBlock Text="{DynamicResource Text_523f8059a0ae022a}"/><TextBox x:Name="ConfigScopeReadOnly" Text="EA / Trading" IsReadOnly="True" Height="36" ToolTip.Tip="Hồ sơ cấu hình chiến lược EA/Python đang hỗ trợ; không phải bộ chọn chế độ giao dịch."/></StackPanel>
         <StackPanel Grid.Column="3" Spacing="5"><TextBlock Text="Symbol"/><TextBox Classes="toolField" x:Name="ToolSymbol" Text="—" IsReadOnly="True"/></StackPanel>
         <StackPanel Grid.Column="4" Spacing="5"><TextBlock Text="{DynamicResource Text_f5e71f4689fbaa1f}"/><TextBox Classes="toolField" x:Name="ToolProfileName" Text="—" IsReadOnly="True"/></StackPanel>
       </Grid>

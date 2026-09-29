@@ -18,6 +18,13 @@ public sealed class BacktestChartControl : Control
     private string _seriesMode = "Equity";
     private readonly List<(Border Chip, string Mode)> _chips = new();
     public string SeriesMode => _seriesMode;
+    public string DrawdownUnit { get; private set; } = "PERCENT";
+    public void SelectDrawdownUnit(string unit)
+    {
+        if(unit is not ("PERCENT" or "MONEY"))return;
+        DrawdownUnit=unit;InvalidateVisual();
+    }
+    private double DrawdownValue(BacktestDrawdownPoint point) => DrawdownUnit=="MONEY" ? point.DrawdownUsd : point.DrawdownPct;
     public int TimezoneOffsetMinutes { get; set; }
     private static readonly IBrush EquityBrush = Brush("#1B8FFF");
     private static readonly IBrush BalanceBrush = Brush("#30D08A");
@@ -87,7 +94,7 @@ public sealed class BacktestChartControl : Control
         if (hasData && _drawdownMode)
         {
             max = 0;
-            min = -Math.Max(0.01, _drawdown.Max(x => x.DrawdownPct) * 1.15);
+            min = -Math.Max(0.01, _drawdown.Max(DrawdownValue) * 1.15);
             firstTime = _drawdown[0].Time;
             lastTime = _drawdown[^1].Time;
         }
@@ -108,7 +115,7 @@ public sealed class BacktestChartControl : Control
             if (hasData)
             {
                 var value = max - (max - min) * i / 5;
-                var label = _drawdownMode ? value.ToString(Math.Abs(min) < 1 ? "0.000" : "0.0", CultureInfo.InvariantCulture) + "%" : value.ToString("N0", CultureInfo.InvariantCulture);
+                var label = _drawdownMode ? value.ToString(Math.Abs(min) < 1 ? "0.000" : "0.0", CultureInfo.InvariantCulture) + (DrawdownUnit=="PERCENT" ? "%" : "") : value.ToString("N0", CultureInfo.InvariantCulture);
                 var text = Text(label, LabelBrush, 11);
                 context.DrawText(text, new Point(plot.Left - text.Width - 8, y - text.Height / 2));
             }
@@ -135,7 +142,7 @@ public sealed class BacktestChartControl : Control
         {
             if (_drawdownMode)
             {
-                var points = _drawdown.Select(p => new Point(X(p.Time), Y(-p.DrawdownPct))).ToArray();
+                var points = _drawdown.Select(p => new Point(X(p.Time), Y(-DrawdownValue(p)))).ToArray();
                 DrawSeries(context, points, DrawdownBrush, plot.Top, "#50FF3658");
             }
             else
@@ -148,11 +155,11 @@ public sealed class BacktestChartControl : Control
         }
         double highlight;
         double px;
-        if (_drawdownMode) { var point = _drawdown.MaxBy(p => p.DrawdownPct)!; highlight = -point.DrawdownPct; px = X(point.Time); }
+        if (_drawdownMode) { var point = _drawdown.MaxBy(DrawdownValue)!; highlight = -DrawdownValue(point); px = X(point.Time); }
         else { var point = _equity[^1]; highlight = _seriesMode == "Balance" ? point.Balance : point.Equity; px = X(point.Time); }
         var py = Y(highlight);
         var color = _drawdownMode ? DrawdownBrush : _seriesMode == "Balance" ? BalanceBrush : EquityBrush;
-        var valueText = Text(highlight.ToString(_drawdownMode ? "0.00'%'" : "N2", CultureInfo.InvariantCulture), Brushes.White, 11);
+        var valueText = Text(highlight.ToString(_drawdownMode && DrawdownUnit=="PERCENT" ? "0.00'%'" : "N2", CultureInfo.InvariantCulture), Brushes.White, 11);
         double pillWidth = valueText.Width + 12;
         double left = Math.Clamp(px-pillWidth/2, plot.Left, plot.Right-pillWidth);
         double top = Math.Clamp(py-27, plot.Top, plot.Bottom-23);

@@ -641,7 +641,7 @@ public partial class ConfigurationEditor : UserControl
             var storage = RequireStorageProvider();
             var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Mở XAUPY profile JSON",
+                Title = LocalizationService.T("Mở XAUPY profile JSON"),
                 AllowMultiple = false,
                 FileTypeFilter = new[] { JsonFileType }
             });
@@ -685,7 +685,7 @@ public partial class ConfigurationEditor : UserControl
             var file = (sender as Button)?.Tag as string != "save-as" ? _currentJsonFile : null;
             file ??= await storage.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = "Lưu XAUPY profile JSON",
+                Title = LocalizationService.T("Lưu XAUPY profile JSON"),
                 SuggestedFileName = SuggestedProfileFileName(),
                 DefaultExtension = "json",
                 FileTypeChoices = new[] { JsonFileType }
@@ -710,7 +710,7 @@ public partial class ConfigurationEditor : UserControl
             var storage = RequireStorageProvider();
             var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Nhập preset MT5 .set",
+                Title = LocalizationService.T("Nhập preset MT5 .set"),
                 AllowMultiple = false,
                 FileTypeFilter = new[] { SetFileType }
             });
@@ -803,7 +803,7 @@ public partial class ConfigurationEditor : UserControl
             var storage = RequireStorageProvider();
             var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = "Xuất MT5 .set",
+                Title = LocalizationService.T("Xuất MT5 .set"),
                 SuggestedFileName = Path.ChangeExtension(SuggestedProfileFileName(), ".set"),
                 DefaultExtension = "set",
                 FileTypeChoices = new[] { SetFileType }

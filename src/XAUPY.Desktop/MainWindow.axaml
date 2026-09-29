@@ -24,7 +24,7 @@
             <TextBlock Text="N30" FontSize="{DynamicResource Font_11}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
           </Border>
           <TextBlock Text="N30 Control Center" FontSize="{DynamicResource Font_20}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-          <TextBlock Text="v1.0 RC1 (Python)  -  XAUUSD" FontSize="{DynamicResource Font_18}" FontWeight="SemiBold" Foreground="{DynamicResource Brush_D8E6F7}" VerticalAlignment="Center"/>
+          <TextBlock Text="v1.0 RC2 (Python)  -  XAUUSD" FontSize="{DynamicResource Font_18}" FontWeight="SemiBold" Foreground="{DynamicResource Brush_D8E6F7}" VerticalAlignment="Center"/>
         </StackPanel>
 
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,18,0">

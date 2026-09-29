@@ -111,6 +111,8 @@ public partial class MainWindow : Window
         _toolsDashboard.HasConflictingDraft = () => _configurationEditor.HasUnsavedChanges || _strategyDashboard.HasUnsavedChanges || _quickConfigurationDirty;
         _settingsDashboard = this.FindControl<SettingsDashboard>("SettingsView")!;
         _settingsDashboard.AttachSupervisor(_engineSupervisor);
+        _settingsDashboard.HasConflictingDraft = () => _configurationEditor.HasUnsavedChanges || _strategyDashboard.HasUnsavedChanges
+            || _quickConfigurationDirty || _toolsDashboard.HasUnsavedChanges;
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clockTimer.Tick += (_, _) => UpdateClock();

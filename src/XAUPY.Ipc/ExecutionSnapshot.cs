@@ -21,6 +21,14 @@ public sealed record ExecutionSnapshot(string Mode, string Reason, bool Enabled,
     public bool EffectiveAllowReal { get; init; }
     public bool ProfileAllowReal { get; init; }
     public bool ProfileDemoOnly { get; init; } = true;
+    public bool BrokerCapabilitiesKnown { get; init; }
+    public bool MarketOrdersAllowed { get; init; } = true;
+    public bool StopOrdersAllowed { get; init; }
+    public bool LimitOrdersAllowed { get; init; }
+    public bool SpecifiedExpirationAllowed { get; init; }
+    public string MarginMode { get; init; } = "UNKNOWN";
+    public IReadOnlyDictionary<string,string> ManagementWarnings { get; init; } = new Dictionary<string,string>();
+
 
     public static ExecutionSnapshot Offline { get; } = new("OFF", "ENGINE_OFFLINE", false, false, null);
     public static ExecutionSnapshot Parse(JsonElement payload)
@@ -57,6 +65,19 @@ public sealed record ExecutionSnapshot(string Mode, string Reason, bool Enabled,
                 ProfileAllowReal = OverviewSnapshot.ReadBool(permission, "profile_allow_real"),
                 ProfileDemoOnly = Flag(permission, "profile_demo_only", true)
             };
+        if (value.TryGetProperty("broker_capabilities", out var caps) && caps.ValueKind == JsonValueKind.Object)
+            result = result with {
+                BrokerCapabilitiesKnown = caps.TryGetProperty("schema_version", out var version) && version.ValueKind == JsonValueKind.Number && version.TryGetInt32(out int schema) && schema == 1,
+                MarketOrdersAllowed = Flag(caps,"market_orders",false),
+                StopOrdersAllowed = Flag(caps,"stop_orders",false),
+                LimitOrdersAllowed = Flag(caps,"limit_orders",false),
+                SpecifiedExpirationAllowed = Flag(caps,"specified_expiration",false),
+                MarginMode = OverviewSnapshot.ReadString(caps,"margin_mode") ?? "UNKNOWN"
+            };
+        if (value.TryGetProperty("management_warnings", out var warnings) && warnings.ValueKind == JsonValueKind.Object)
+            result = result with { ManagementWarnings = warnings.EnumerateObject()
+                .Where(item => item.Value.ValueKind == JsonValueKind.String)
+                .ToDictionary(item => item.Name, item => item.Value.GetString() ?? "") };
         return result;
     }
     private static bool Flag(JsonElement value, string key, bool fallback) =>

@@ -122,7 +122,7 @@ def run(executable):
             session=str(uuid4())
             start=int(time.time())
             clock=time.monotonic()
-            snapshot=dict(bridge_version='1.021',execution_capable=True,demo_once_capable=True,
+            snapshot=dict(execution_capabilities=dict(schema_version=1,trade_allowed=True,allow_buy=True,allow_sell=True,market_orders=True,stop_orders=True,limit_orders=True,server_sl=True,server_tp=True,specified_expiration=True,netting_symbol_exposed=False,margin_mode='HEDGING'),bridge_version='1.022',execution_capable=True,demo_once_capable=True,
                 bridge_session_id=session,account_login=700001,account_server='ISOLATED-NO-BROKER',
                 symbol='XAUUSD',magic=991188,account_trade_mode='DEMO',terminal_connected=True,
                 server_time=start,tick_time_msc=start*1000,bid=4200.,ask=4200.2,balance=10000.,
@@ -138,7 +138,7 @@ def run(executable):
             ea=Peer(port)
 
             def hello():
-                return dict(component='mt5-bridge',bridge_version='1.021',symbol='XAUUSD',
+                return dict(component='mt5-bridge',bridge_version='1.022',symbol='XAUUSD',
                     execution_capable=True,demo_once_capable=True,bridge_session_id=session)
 
             def refresh():

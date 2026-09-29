@@ -187,7 +187,7 @@ public partial class ToolsDashboard : UserControl
         if (!HasUnsavedChanges) return true;
         if (TopLevel.GetTopLevel(this) is not Window owner) return false;
         bool discard = false;
-        var dialog = new Window { Title = "Bản nháp chưa áp dụng", Width = 510, Height = 195,
+        var dialog = new Window { [LocalizationService.TitleProperty] = "Bản nháp chưa áp dụng", Width = 510, Height = 195,
             CanResize = false, WindowStartupLocation = WindowStartupLocation.CenterOwner };
         var keep = new Button { [LocalizationService.TextProperty] = "Giữ bản nháp" };
         var replace = new Button { [LocalizationService.TextProperty] = "Bỏ thay đổi" };
@@ -371,7 +371,7 @@ public partial class ToolsDashboard : UserControl
         var top = TopLevel.GetTopLevel(this);
         if (top is null) return;
         if (!await ConfirmDiscardDraftAsync()) return;
-        var paths = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Mở JSON", AllowMultiple = false, FileTypeFilter = new[] { JsonType } });
+        var paths = await top.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { Title = LocalizationService.T("Mở JSON"), AllowMultiple = false, FileTypeFilter = new[] { JsonType } });
         if (paths.Count == 0) return;
         await using var stream = await paths[0].OpenReadAsync();
         if (stream.CanSeek && stream.Length > 2 * 1024 * 1024) throw new InvalidDataException("File vượt quá 2 MiB.");
@@ -400,7 +400,7 @@ public partial class ToolsDashboard : UserControl
         var top = TopLevel.GetTopLevel(this);
         if (top is null) return;
         var target=(sender as Button)?.Tag as string != "save-as" ? _currentFile : null;
-        target ??= await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions { Title = "Lưu JSON", SuggestedFileName = $"xaupy-{_mode}.json", DefaultExtension = "json", FileTypeChoices = new[] { JsonType } });
+        target ??= await top.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions { Title = LocalizationService.T("Lưu JSON"), SuggestedFileName = $"xaupy-{_mode}.json", DefaultExtension = "json", FileTypeChoices = new[] { JsonType } });
         if (target is null) return;
         using var json = JsonDocument.Parse(ToolEditor.Text ?? "");
         await FileOutput.WriteTextAsync(target,JsonSerializer.Serialize(json.RootElement,Pretty));

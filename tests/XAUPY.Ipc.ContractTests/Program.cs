@@ -1143,4 +1143,13 @@ using(var gateSupervisor=new EngineProcessSupervisor())
     Check(!gateSupervisor.Execution.Fresh && !gateSupervisor.Execution.Enabled && !gateSupervisor.Execution.EntryEnabled && !gateSupervisor.Execution.ManagementEnabled,
         "disconnect clears all executable readiness flags before another heartbeat");
 }
+var brokerCaps = ExecutionSnapshot.Parse(JsonSerializer.SerializeToElement(new {execution=new {
+    mode="MANUAL",execution_enabled=true,broker_capabilities=new {schema_version=1,market_orders=true,
+        stop_orders=true,limit_orders=false,specified_expiration=false,margin_mode="NETTING"}
+}}));
+Check(brokerCaps.BrokerCapabilitiesKnown && brokerCaps.MarketOrdersAllowed && brokerCaps.StopOrdersAllowed &&
+    !brokerCaps.LimitOrdersAllowed && !brokerCaps.SpecifiedExpirationAllowed && brokerCaps.MarginMode=="NETTING",
+    "RC2 broker-side capability limits survive IPC independently of execution mode");
+Check(!ExecutionSnapshot.Offline.StopOrdersAllowed && !ExecutionSnapshot.Offline.SpecifiedExpirationAllowed,
+    "RC2 unknown broker capabilities cannot enable pending controls");
 Console.WriteLine($"XAUPY IPC contract self-test complete: {passed} checks passed.");

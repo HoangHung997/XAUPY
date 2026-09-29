@@ -14,7 +14,7 @@ class PositionManagementTests(unittest.TestCase):
     def setUp(self):
         self.profile=default_profile()
         self.profile['management'].update(breakeven_enabled=False,trailing_enabled=False,sl_tighten_mode='OFF')
-        self.snapshot=dict(bid=4203.,ask=4203.2,server_time=NOW,point=.01,tick_size=.01,stops_level=10,freeze_level=10)
+        self.snapshot=dict(bid=4203.,ask=4203.2,server_time=NOW,point=.01,tick_size=.01,stops_level=10,freeze_level=10,volume_min=.01,volume_max=100.,volume_step=.01)
         self.position=dict(side='BUY',price_open=4200.,sl=4197.,tp=4220.,volume=.04)
         self.state=dict(initial_risk=3.,original_tp=4206.,entry_z=-2.,entry_rsi=30.)
 

@@ -165,7 +165,10 @@ class MaintenanceProtocolTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(backup["ok"])
         settings["startup"]["auto_restart_engine"] = True
         await self.exchange("settings_set", {"settings": settings})
-        restored = await self.exchange("backup_restore", {"backup_id": backup["backup"]["id"]})
+        preview = await self.exchange("backup_restore_preview", {"backup_id": backup["backup"]["id"]})
+        self.assertTrue(preview["ok"])
+        restored = await self.exchange("backup_restore", {"backup_id": backup["backup"]["id"],
+            "confirmed": True, "preview_hash": preview["preview"]["preview_hash"]})
         self.assertTrue(restored["ok"])
         self.assertFalse(restored["settings"]["startup"]["auto_restart_engine"])
         self.assertEqual("BACKUP_RESTORED", self.server.strategy.status_payload(market_connected=False)["last_reset_reason"])

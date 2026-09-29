@@ -157,7 +157,7 @@ public partial class MainWindow
                    "4. Backtest và Tối ưu sử dụng dữ liệu lịch sử đã chọn. Quyền giao dịch được chọn tại tab Lệnh & Vị thế.",
             TextWrapping = TextWrapping.Wrap
         });
-        var dialog = new Window { Title = "Hướng dẫn", Width = 600, Height = 470, CanResize = false, Content = content, WindowStartupLocation = WindowStartupLocation.CenterOwner };
+        var dialog = new Window { [LocalizationService.TitleProperty] = "Hướng dẫn", Width = 600, Height = 470, CanResize = false, Content = content, WindowStartupLocation = WindowStartupLocation.CenterOwner };
         var close = new Button { [LocalizationService.TextProperty] = "Đóng", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
         close.Click += (_, _) => dialog.Close();
         content.Children.Add(close);

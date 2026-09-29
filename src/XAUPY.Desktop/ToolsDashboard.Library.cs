@@ -30,7 +30,7 @@ public partial class ToolsDashboard
         var entries=response.GetProperty("profiles").EnumerateArray().Select(v=>v.Clone()).ToArray();
         var list=new ListBox { ItemsSource=entries.Select(v=>$"{v.GetProperty("id")} • {v.GetProperty("name")} • {v.GetProperty("saved_utc")} • {v.GetProperty("revision").GetString()![..12]}").ToArray(),MinHeight=240 };
         var open=new Button { [LocalizationService.TextProperty] = "Nạp vào bản nháp" };
-        var dialog=new Window { Title="Thư viện hồ sơ và phiên bản",Width=820,Height=420,WindowStartupLocation=WindowStartupLocation.CenterOwner };
+        var dialog=new Window { [LocalizationService.TitleProperty] = "Thư viện hồ sơ và phiên bản",Width=820,Height=420,WindowStartupLocation=WindowStartupLocation.CenterOwner };
         int selected=-1;
         open.Click+=(_,_)=>{ if(list.SelectedIndex>=0){selected=list.SelectedIndex;dialog.Close();} };
         dialog.Content=new StackPanel { Margin=new Thickness(16),Spacing=10,Children={new TextBlock { [LocalizationService.TextProperty] = "Mỗi lần lưu giữ một phiên bản. Nạp bản nháp để kiểm tra trước khi áp dụng." },new ScrollViewer { Content=list,MaxHeight=280 },open} };
@@ -47,7 +47,7 @@ public partial class ToolsDashboard
     {
         var storage=TopLevel.GetTopLevel(this)?.StorageProvider;
         if(storage is null || !await ConfirmDiscardDraftAsync()) return;
-        var files=await storage.OpenFilePickerAsync(new FilePickerOpenOptions { Title="Chọn đúng hai preset JSON",AllowMultiple=true,FileTypeFilter=new[]{JsonType} });
+        var files=await storage.OpenFilePickerAsync(new FilePickerOpenOptions { Title = LocalizationService.T("Chọn đúng hai preset JSON"),AllowMultiple=true,FileTypeFilter=new[]{JsonType} });
         if(files.Count==0) return;
         if(files.Count!=2) throw new InvalidDataException("Chọn đúng hai file để so sánh.");
         async Task<JsonElement> Read(IStorageFile file)

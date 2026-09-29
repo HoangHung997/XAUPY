@@ -1,16 +1,16 @@
 [Setup]
-AppId={{4AD63852-EC87-48C2-A549-C84E06AEB8A5}
+AppId={{E69B1F13-5605-52C9-B865-1B0393953701}
 AppName=XAUPY Control Center
 AppVersion=1.0.0
-VersionInfoVersion=1.0.0.0
-AppVerName=XAUPY Control Center 1.0.0 RC1
-DefaultDirName={localappdata}\Programs\XAUPY-1.0-RC1
-DefaultGroupName=XAUPY
+VersionInfoVersion=1.0.0.2
+AppVerName=XAUPY Control Center 1.0.0 RC2
+DefaultDirName={localappdata}\Programs\XAUPY-1.0-RC2
+DefaultGroupName=XAUPY 1.0 RC2
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\dist
-OutputBaseFilename=XAUPY-1.0.0-rc1-Setup
+OutputBaseFilename=XAUPY-1.0.0-rc2-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -28,7 +28,7 @@ Name: desktopicon; Description: "Create a desktop shortcut"; Flags: unchecked
 
 [Icons]
 Name: "{group}\XAUPY Control Center"; Filename: "{app}\XAUPY.Desktop.exe"
-Name: "{autodesktop}\XAUPY Control Center"; Filename: "{app}\XAUPY.Desktop.exe"; Tasks: desktopicon
+Name: "{autodesktop}\XAUPY Control Center RC2"; Filename: "{app}\XAUPY.Desktop.exe"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\XAUPY.Desktop.exe"; Description: "Open XAUPY Control Center"; Flags: nowait postinstall skipifsilent unchecked

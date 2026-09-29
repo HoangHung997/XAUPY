@@ -4,6 +4,7 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import datetime, timezone
 import json
+import hashlib
 import os
 from pathlib import Path
 import tempfile
@@ -171,18 +172,64 @@ class SettingsStore:
                 for p in sorted(self.backup_dir.glob("xaupy-*.json"), key=lambda p: p.name, reverse=True)
                 if p.is_file() and not p.is_symlink()]
 
-    def restore_backup(self, backup_id: object) -> None:
+    def _read_backup(self, backup_id: object) -> dict[str, Any]:
         if not isinstance(backup_id, str) or Path(backup_id).name != backup_id or not backup_id.startswith("xaupy-"):
             raise ValueError("Invalid backup id")
         path = self.backup_dir / backup_id
         if path.is_symlink() or path.resolve().parent != self.backup_dir.resolve():
             raise ValueError("Backup must belong to XAUPY backup directory")
-        settings, profile = self._validate_document(self._read(path))
+        document = self._read(path)
+        self._validate_document(document)
+        return document
+
+    @staticmethod
+    def _digest(value: object) -> str:
+        encoded = json.dumps(value, ensure_ascii=False, sort_keys=True,
+                             separators=(',', ':'), allow_nan=False).encode('utf-8')
+        return hashlib.sha256(encoded).hexdigest()
+
+    def preview_backup(self, backup_id: object) -> dict[str, Any]:
+        """Read-only effective restore plan, bound to current state and backup.
+
+        A backup is data, not a financial authorization. It cannot resurrect a
+        revoked local or profile REAL grant or enable automatic restart trading.
+        """
+        document = self._read_backup(backup_id)
+        settings, profile = self._validate_document(document)
+        current = self.document()
+        local_grant = self.settings['safety']['allow_real_account']
+        settings['safety'].update(allow_real_account=local_grant,
+                                 auto_start_trading=False, require_reconciliation=True)
+        profile['execution']['allow_real_account'] = bool(local_grant
+            and self.profile['execution']['allow_real_account'] and profile['execution']['allow_real_account'])
+        profile['execution']['demo_only'] = bool(not local_grant
+            or self.profile['execution']['demo_only'] or profile['execution']['demo_only'])
+        after = {'schema_version':1, 'settings':settings, 'profile':profile}
+        changes: list[dict[str, Any]] = []
+        def compare(path: str, before: Any, next_value: Any) -> None:
+            if isinstance(before, dict) and isinstance(next_value, dict):
+                for key in sorted(before.keys() | next_value.keys()):
+                    compare((path+'.' if path else '')+key, before.get(key), next_value.get(key))
+            elif before != next_value or type(before) is not type(next_value):
+                changes.append({'path':path, 'before':before, 'after':next_value})
+        compare('', current, after)
+        return {'backup_id':backup_id,
+                'preview_hash':self._digest({'backup_id':backup_id, 'backup':document, 'current':current, 'after':after}),
+                'before':current, 'after':after, 'changes':changes,
+                'execution_after':'OFF', 'permission_escalation_allowed':False}
+
+    def restore_backup(self, backup_id: object, *, expected_preview_hash: str | None = None) -> None:
+        # Re-read once at commit time: a changed backup/current profile invalidates
+        # the UI review. The Engine independently requires explicit confirmation.
+        preview = self.preview_backup(backup_id)
+        if expected_preview_hash is not None and expected_preview_hash != preview['preview_hash']:
+            raise ValueError('RESTORE_PREVIEW_CHANGED')
+        effective = preview['after']
         self.create_backup()
-        _atomic_json(self.path, {"schema_version": 1, "settings": settings, "profile": profile})
-        self.settings, self.profile = settings, profile
+        _atomic_json(self.path, effective)
+        self.settings, self.profile = deepcopy(effective['settings']), deepcopy(effective['profile'])
         self._prune()
-        self.recovery_message = "Đã khôi phục và đặt lại chiến lược; quyền giao dịch theo cài đặt đã lưu"
+        self.recovery_message = "Đã khôi phục; giao dịch dừng, quyền REAL không tăng. Kiểm tra cấu hình và xác nhận lại chế độ."
 
     def payload(self) -> dict[str, Any]:
         return {"settings": deepcopy(self.settings), "state_path": str(self.path),

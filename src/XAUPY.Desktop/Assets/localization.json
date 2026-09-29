@@ -2834,5 +2834,377 @@
   "40b5ccca299e06b6": {
     "vi": "Mất kết nối Python Engine.",
     "en": "Python Engine is disconnected."
+  },
+  "8f42439c2da1fb36": {
+    "vi": "Tải toàn bộ lịch sử CSV/JSON…",
+    "en": "Load complete CSV/JSON history…"
+  },
+  "7b2e300faba2d96d": {
+    "vi": "So sánh tài sản từ file CSV/JSON…",
+    "en": "Compare an asset from a CSV/JSON file…"
+  },
+  "8fbd035e83f1df24": {
+    "vi": "Cài đặt EMA / RSI / Z…",
+    "en": "EMA / RSI / Z settings…"
+  },
+  "50d0e9e7cf6834aa": {
+    "vi": "Lưu biểu đồ PNG…",
+    "en": "Save chart as PNG…"
+  },
+  "b061bbb5cfa91e61": {
+    "vi": "Toàn màn hình (Esc để thoát)",
+    "en": "Full screen (Esc to exit)"
+  },
+  "34e35cef2b2afd15": {
+    "vi": "Về giá hiện tại",
+    "en": "Return to current price"
+  },
+  "048951e1a4c8492c": {
+    "vi": "Tắt so sánh",
+    "en": "Clear comparison"
+  },
+  "195fda9ff3eeb1df": {
+    "vi": "Chỉ báo biểu đồ",
+    "en": "Chart indicators"
+  },
+  "4ae6b98f98839fd5": {
+    "vi": "Lưu biểu đồ PNG",
+    "en": "Save chart as PNG"
+  },
+  "e4ff84f00ae88b68": {
+    "vi": "Biểu đồ",
+    "en": "Chart"
+  },
+  "1c91ba19c67d68f8": {
+    "vi": "Esc để thoát",
+    "en": "Esc to exit"
+  },
+  "d5c07f6ed1cd34fa": {
+    "vi": "Chọn lịch sử tài sản so sánh",
+    "en": "Choose comparison asset history"
+  },
+  "23e7dffe325e1ff4": {
+    "vi": "Mở toàn bộ lịch sử",
+    "en": "Open complete history"
+  },
+  "53b985dbcc1098cd": {
+    "vi": "Mở XAUPY profile JSON",
+    "en": "Open XAUPY profile JSON"
+  },
+  "2e8e61aad7a1107f": {
+    "vi": "Lưu XAUPY profile JSON",
+    "en": "Save XAUPY profile JSON"
+  },
+  "b779b4efae8a6984": {
+    "vi": "Nhập preset MT5 .set",
+    "en": "Import MT5 .set preset"
+  },
+  "0412adcc2f66dd14": {
+    "vi": "Xuất MT5 .set",
+    "en": "Export MT5 .set"
+  },
+  "5fc68d3b13cd7866": {
+    "vi": "Xuất dữ liệu phân tích và nhật ký",
+    "en": "Export research data and journal"
+  },
+  "b72ff81c36c11fab": {
+    "vi": "Nhập gói XAUPY đã xuất",
+    "en": "Import an exported XAUPY bundle"
+  },
+  "c7135d2690d94f25": {
+    "vi": "Xuất báo cáo Lệnh & Vị thế",
+    "en": "Export Orders and Positions report"
+  },
+  "c5128ed8a443014d": {
+    "vi": "Xuất cấu hình ứng viên",
+    "en": "Export candidate configuration"
+  },
+  "4fd9d0b0f235758d": {
+    "vi": "Báo cáo nghiên cứu RSI / Z",
+    "en": "RSI / Z research report"
+  },
+  "da36545d6f0de4c6": {
+    "vi": "Tiến trình lệnh — chỉ đọc, không gửi lại",
+    "en": "Order progress — read only, no resubmission"
+  },
+  "895a8cf1bc8010da": {
+    "vi": "Xuất bằng chứng thực thi",
+    "en": "Export execution evidence"
+  },
+  "c135f041a510e71b": {
+    "vi": "Lưu kết quả Backtest XAUPY",
+    "en": "Save XAUPY Backtest results"
+  },
+  "f78d981076eecf1f": {
+    "vi": "Xuất báo cáo Backtest",
+    "en": "Export Backtest report"
+  },
+  "9c93acc22a1c9b4c": {
+    "vi": "XAUPY • Xóa kết quả Backtest",
+    "en": "XAUPY • Delete Backtest results"
+  },
+  "2e0aaff2e5893372": {
+    "vi": "XAUPY • Sửa lệnh chờ",
+    "en": "XAUPY • Modify pending order"
+  },
+  "93b4074e3df9e83d": {
+    "vi": "Lưu Optimizer preset",
+    "en": "Save Optimizer preset"
+  },
+  "71e4487e36002492": {
+    "vi": "Tải Optimizer preset",
+    "en": "Load Optimizer preset"
+  },
+  "68bbfe686978b970": {
+    "vi": "Sửa SL / TP",
+    "en": "Modify SL / TP"
+  },
+  "9a83fe60943d6596": {
+    "vi": "Chế độ giao dịch",
+    "en": "Trading mode"
+  },
+  "a60ab3b44eec0ad6": {
+    "vi": "Đặt lệnh chờ",
+    "en": "Place pending order"
+  },
+  "39160438cfc302c7": {
+    "vi": "Thông số symbol từ MT5",
+    "en": "Symbol specifications from MT5"
+  },
+  "7aa1823ba08cdff6": {
+    "vi": "Xuất XAUPY Journal",
+    "en": "Export XAUPY Journal"
+  },
+  "93573b041c96eeb2": {
+    "vi": "Lưu chiến lược XAUPY",
+    "en": "Save XAUPY strategy"
+  },
+  "728cd607090b8f9a": {
+    "vi": "Tải chiến lược XAUPY",
+    "en": "Load XAUPY strategy"
+  },
+  "7cbe8a6a6981aca2": {
+    "vi": "Áp dụng chiến lược",
+    "en": "Apply strategy"
+  },
+  "7293322fe9c44cc3": {
+    "vi": "Chọn dữ liệu lịch sử",
+    "en": "Select historical data"
+  },
+  "6551b678eccdf1b5": {
+    "vi": "Chọn dữ liệu lịch sử M1",
+    "en": "Select M1 historical data"
+  },
+  "b2eafbaa420b1c55": {
+    "vi": "So sánh kết quả Backtest",
+    "en": "Compare Backtest results"
+  },
+  "a86a3606e28f2a6a": {
+    "vi": "Lưu so sánh",
+    "en": "Save comparison"
+  },
+  "6719dbb10bbbead6": {
+    "vi": "Bản nháp chưa áp dụng",
+    "en": "Unapplied draft"
+  },
+  "c2d4765fa81c3004": {
+    "vi": "Mở JSON",
+    "en": "Open JSON"
+  },
+  "f114199c8c60d888": {
+    "vi": "Lưu JSON",
+    "en": "Save JSON"
+  },
+  "8bdf79abb7b46c0c": {
+    "vi": "Thư viện hồ sơ và phiên bản",
+    "en": "Profile and version library"
+  },
+  "71fb0438b8fdd15f": {
+    "vi": "Chọn đúng hai preset JSON",
+    "en": "Select exactly two JSON presets"
+  },
+  "87865bb89b0b58cf": {
+    "vi": "Bắt đầu DEMO một lệnh",
+    "en": "Start one DEMO order"
+  },
+  "9e943b28db240088": {
+    "vi": "Xác nhận khôi phục an toàn",
+    "en": "Review safe backup restoration"
+  },
+  "db3fa51a17472280": {
+    "vi": "Cài đặt có bản nháp chưa lưu. Lưu hoặc Hủy thay đổi trước khi khôi phục.",
+    "en": "Settings have unsaved changes. Save or discard them before restoring."
+  },
+  "5e985835abb3e59e": {
+    "vi": "Có bản nháp chưa lưu ở Cấu hình, Chiến lược, Công cụ hoặc Tổng quan. Giữ/lưu bản nháp trước khi khôi phục.",
+    "en": "Configuration, Strategy, Tools or Overview has an unsaved draft. Preserve or save it before restoring."
+  },
+  "c5b5dc5ea3c0e025": {
+    "vi": "Chọn một bản sao lưu để khôi phục.",
+    "en": "Select a backup to restore."
+  },
+  "5cbe4012eb67414e": {
+    "vi": "Không mở được cửa sổ xác nhận khôi phục.",
+    "en": "The restore confirmation window is unavailable."
+  },
+  "5a9a104e9ed8de00": {
+    "vi": "Đã hủy khôi phục. Không thay đổi cấu hình hoặc quyền giao dịch.",
+    "en": "Restoration cancelled. Configuration and trading permission are unchanged."
+  },
+  "c03b721eb9cc22ee": {
+    "vi": "Bản sao lưu đã đổi. Xem trước và xác nhận lại.",
+    "en": "The backup selection changed. Review and confirm again."
+  },
+  "7035bbd2d0b7be49": {
+    "vi": "Đã khôi phục. Giao dịch đã DỪNG; quyền REAL không tăng. Kiểm tra cấu hình rồi xác nhận lại chế độ.",
+    "en": "Restored. Trading is STOPPED; REAL permission has not increased. Review the configuration and confirm the mode again."
+  },
+  "97abbd2217ca6c93": {
+    "vi": "Không cập nhật được khởi động Windows: ",
+    "en": "Could not update Windows startup: "
+  },
+  "b621a2c45411a2ba": {
+    "vi": "Bản sao lưu: ",
+    "en": "Backup: "
+  },
+  "3486aee5518a1570": {
+    "vi": "Chế độ hiện tại: ",
+    "en": "Current mode: "
+  },
+  "0df332ecd07af427": {
+    "vi": "Sau khôi phục: DỪNG. Hủy yêu cầu chưa gửi; giữ nguyên bằng chứng lệnh đã gửi/chưa rõ kết quả.",
+    "en": "After restoration: STOPPED. Unsent requests are cancelled; sent or uncertain execution evidence is preserved."
+  },
+  "1274d2c3f4469742": {
+    "vi": "Quyền REAL không được tăng từ backup; không tự chạy giao dịch khi mở lại.",
+    "en": "A backup cannot increase REAL permission; trading will not start automatically on restart."
+  },
+  "9320db3f2cd70755": {
+    "vi": "Rủi ro: trước → sau",
+    "en": "Risk: before → after"
+  },
+  "f3f959086ce5dd88": {
+    "vi": "Các giá trị thay đổi:",
+    "en": "Changed values:"
+  },
+  "a8b206f76464269a": {
+    "vi": "Tôi đã xem thay đổi và xác nhận khôi phục, dừng giao dịch.",
+    "en": "I reviewed the changes and confirm restoration with trading stopped."
+  },
+  "08d32cccafd8e03a": {
+    "vi": "Khôi phục đã xem",
+    "en": "Restore reviewed backup"
+  },
+  "2faf41a5937e9b71": {
+    "vi": "Xác nhận thao tác:",
+    "en": "Confirm operations:"
+  },
+  "bd41ace87e02fe2e": {
+    "vi": "(không gồm symbol khác)",
+    "en": "(other symbols excluded)"
+  },
+  "53183a08e084e3e7": {
+    "vi": "Quyền REAL: chưa có dữ liệu",
+    "en": "REAL permission: unavailable"
+  },
+  "3896ba48474a4992": {
+    "vi": "Quyền REAL: chưa cho phép",
+    "en": "REAL permission: not allowed"
+  },
+  "1d8274aeff237b8c": {
+    "vi": "Quyền REAL: đã lưu; profile vẫn giới hạn DEMO",
+    "en": "REAL permission: saved; profile still restricts to DEMO"
+  },
+  "123bc1ede1fec673": {
+    "vi": "Quyền REAL: đã cho phép • không tự bật giao dịch",
+    "en": "REAL permission: allowed • does not start trading"
+  },
+  "b142a74d2814fcf2": {
+    "vi": "Khôi phục cần xem trước và xác nhận thay đổi; không tự bật giao dịch.",
+    "en": "Restoration requires reviewing and confirming the changes; trading is not started automatically."
+  },
+  "395c280759a0cb05": {
+    "vi": "Cấu hình, tài khoản hoặc bản sao lưu đã đổi. Xem trước và xác nhận lại.",
+    "en": "The configuration, account or backup changed. Review and confirm again."
+  },
+  "5af3a00e680af9e9": {
+    "vi": "Broker không hỗ trợ thời hạn lệnh chờ đã chọn; không tự đổi thành lệnh vô thời hạn.",
+    "en": "The broker does not support the selected pending-order expiry; no automatic change to GTC."
+  },
+  "b430caacb06e48a5": {
+    "vi": "Tài khoản netting đã có vị thế trên symbol này; không gộp thêm vị thế của chiến lược.",
+    "en": "This netting account already has a position on the symbol; the strategy will not merge into it."
+  },
+  "aa00c5916b9f2ce8": {
+    "vi": "MT5, EA hoặc tài khoản chưa cho phép giao dịch thuật toán. Kiểm tra quyền Algo Trading.",
+    "en": "MT5, the EA or the account does not allow algorithmic trading. Check Algo Trading permissions."
+  },
+  "5a521dc9a6085b16": {
+    "vi": "Broker không cho phép mở chiều giao dịch này trên symbol hiện tại.",
+    "en": "The broker does not allow this entry direction on the current symbol."
+  },
+  "5ce9cd14e2530122": {
+    "vi": "EA chưa cung cấp đủ thông số quyền và chế độ broker. Cập nhật EA đi kèm app.",
+    "en": "The EA has not provided complete broker capabilities. Install the EA included with this app."
+  },
+  "fe4146f8d0fb10b0": {
+    "vi": "Symbol không hỗ trợ SL trên server; không được mở lệnh thiếu bảo vệ.",
+    "en": "This symbol does not support server SL. Unprotected entries are not permitted."
+  },
+  "7bdd33506bed6259": {
+    "vi": "Symbol không hỗ trợ TP trên server theo cấu hình đã chọn.",
+    "en": "This symbol does not support the configured server TP."
+  },
+  "82c43e7684154003": {
+    "vi": "Symbol không hỗ trợ lệnh thị trường.",
+    "en": "This symbol does not support market orders."
+  },
+  "f03db035a25d0a66": {
+    "vi": "Symbol không hỗ trợ lệnh Stop.",
+    "en": "This symbol does not support stop orders."
+  },
+  "7dfd08ce5d825283": {
+    "vi": "Symbol không hỗ trợ lệnh Limit.",
+    "en": "This symbol does not support limit orders."
+  },
+  "cf7e54431d6cdac4": {
+    "vi": "Đóng vị thế",
+    "en": "Close position"
+  },
+  "41d5a963be32e513": {
+    "vi": "Đóng 50% nếu lot và phần còn lại hợp lệ",
+    "en": "Close 50% only when the volume and remainder are valid"
+  },
+  "8be052c65c5f2b66": {
+    "vi": "Chuyển SL về hòa vốn",
+    "en": "Move SL to break-even"
+  },
+  "a54dddb115857b68": {
+    "vi": "Bật theo dõi Trailing Stop",
+    "en": "Enable trailing-stop monitoring"
+  },
+  "db4f7431f0117bdb": {
+    "vi": "(chuẩn hóa)",
+    "en": "(normalized)"
+  },
+  "3fc1e592e6c98149": {
+    "vi": "Khối lượng sau chuẩn hóa nhỏ hơn lot tối thiểu của broker.",
+    "en": "Normalized volume is below the broker minimum."
+  },
+  "d2939c292ae0880a": {
+    "vi": "Đóng một phần sẽ để lại khối lượng nhỏ hơn lot tối thiểu.",
+    "en": "Partial close would leave a volume below the broker minimum."
+  },
+  "bd6a1b0867dde3c6": {
+    "vi": "Giá trị tiền",
+    "en": "Account amount"
+  },
+  "88259185d1ffce75": {
+    "vi": "Chờ tác vụ tối ưu kết thúc trước khi tải preset.",
+    "en": "Wait for the optimization job to finish before loading a preset."
+  },
+  "60d9b242b2d94e94": {
+    "vi": "Tên preset đã tải/lưu. Dùng Tải preset để chọn file; sửa phạm vi sẽ trở về Custom.",
+    "en": "Loaded/saved preset name. Use Load preset to select a file; editing ranges returns to Custom."
   }
 }

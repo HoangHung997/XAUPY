@@ -13,6 +13,14 @@ namespace XAUPY.Desktop;
 
 public partial class BacktestDashboard : UserControl
 {
+    private bool _controlsReady;
+    private void DrawdownUnit_OnChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (!_controlsReady) return; // XAML may raise SelectionChanged before its name scope is attached.
+        if(sender is ComboBox {SelectedItem:ComboBoxItem {Tag:string unit}} && this.FindControl<BacktestChartControl>("DrawdownChart") is { } chart)
+            chart.SelectDrawdownUnit(unit);
+    }
+
     private const int TradePageSize = 8;
 
     private static readonly FilePickerFileType BacktestDataFileType = new("XAUPY Historical Data")
@@ -42,6 +50,7 @@ public partial class BacktestDashboard : UserControl
     public BacktestDashboard()
     {
         InitializeComponent();
+        _controlsReady = true;
         ClearResult();
         RenderHistory();
         RenderTrades();
@@ -384,7 +393,7 @@ public partial class BacktestDashboard : UserControl
         var file = await storage.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
-                Title = "Lưu kết quả Backtest XAUPY",
+                Title = LocalizationService.T("Lưu kết quả Backtest XAUPY"),
                 SuggestedFileName = $"XAUPY-Backtest-{_current.FromDate}-{_current.ToDate}.json",
                 DefaultExtension = "json",
                 FileTypeChoices = new[] { JsonFileType }
@@ -426,7 +435,7 @@ public partial class BacktestDashboard : UserControl
         var file = await storage.SaveFilePickerAsync(
             new FilePickerSaveOptions
             {
-                Title = "Xuất báo cáo Backtest",
+                Title = LocalizationService.T("Xuất báo cáo Backtest"),
                 SuggestedFileName = $"XAUPY-Backtest-{_current.FromDate}-{_current.ToDate}.html",
                 DefaultExtension = "html",
                 FileTypeChoices = new[] { new FilePickerFileType("Báo cáo tổng hợp HTML") {Patterns=["*.html"]}, CsvFileType }
@@ -708,7 +717,7 @@ public partial class BacktestDashboard : UserControl
             MinWidth = 430,
             MinHeight = 220,
             CanResize = false,
-            Title = "XAUPY • Xóa kết quả Backtest",
+            [LocalizationService.TitleProperty] = "XAUPY • Xóa kết quả Backtest",
             Background = new SolidColorBrush(Color.Parse("#031426"))
         };
 

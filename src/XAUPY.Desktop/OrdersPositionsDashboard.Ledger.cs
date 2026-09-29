@@ -32,7 +32,7 @@ public partial class OrdersPositionsDashboard
         Grid.SetRow(list, 2); grid.Children.Add(list);
         Grid.SetRow(detail, 3); grid.Children.Add(detail);
         Grid.SetRow(buttons, 4); grid.Children.Add(buttons);
-        var window = new Window { Title = "Tiến trình lệnh — chỉ đọc, không gửi lại", Width = 950, Height = 700,
+        var window = new Window { [LocalizationService.TitleProperty] = "Tiến trình lệnh — chỉ đọc, không gửi lại", Width = 950, Height = 700,
             MinWidth = 600, MinHeight = 420, WindowStartupLocation = WindowStartupLocation.CenterOwner,
             Content = grid, Background = new SolidColorBrush(Color.Parse("#031426")) };
         JsonElement[] rows = Array.Empty<JsonElement>();
@@ -80,7 +80,7 @@ public partial class OrdersPositionsDashboard
             try
             {
                 var file = await window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {
-                    Title = "Xuất bằng chứng thực thi", SuggestedFileName = $"XAUPY-execution-page-{page+1}.json", DefaultExtension = "json",
+                    Title = LocalizationService.T("Xuất bằng chứng thực thi"), SuggestedFileName = $"XAUPY-execution-page-{page+1}.json", DefaultExtension = "json",
                     FileTypeChoices = new[] { new FilePickerFileType("JSON") { Patterns = new[] { "*.json" } } }
                 });
                 if (file is not null)

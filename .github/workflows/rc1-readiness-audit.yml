@@ -1,0 +1,176 @@
+name: RC1 independent readiness audit
+on:
+  push:
+    branches: ['release/1.0-completion-20260929']
+    paths: ['.github/workflows/rc1-readiness-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AUDITED_SHA: a1abc91d9b2d43888a4471bd28c6b6f2e8af0e0f
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: a1abc91d9b2d43888a4471bd28c6b6f2e8af0e0f
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install isolated runtime dependencies
+        run: python -m pip install -r python/requirements-runtime.txt
+      - name: Reproduce release blockers without MT5 or a network listener
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-evidence
+          python - <<'PY'
+          import asyncio, csv, json, os, subprocess, sys, tempfile
+          from collections import Counter
+          from copy import deepcopy
+          from pathlib import Path
+          from types import SimpleNamespace
+          import xml.etree.ElementTree as ET
+          sys.path[:0] = [str(Path('python').resolve()), str(Path('python/tests').resolve())]
+          from test_broker_execution import BrokerExecutionTests
+          from xaupy_engine.server import EngineServer
+          from xaupy_engine.contracts import Envelope
+          from xaupy_engine.broker_execution import IDENTITY
+
+          source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert source == os.environ['AUDITED_SHA']
+          report = {'source': source,
+                    'scope': 'ISOLATED PYTHON REGRESSION: synthetic account, no terminal, no broker, no socket listener',
+                    'broker_connected': False, 'broker_requests_sent': 0, 'findings': []}
+
+          case = BrokerExecutionTests(methodName='runTest')
+          case.setUp()
+          try:
+              case.profile['management'].update(partial_close_enabled=True, partial_close_percent=50,
+                  partial_close_at_rr=1.0, breakeven_enabled=True, breakeven_trigger_rr=1.0,
+                  breakeven_offset_price_units=0.1, trailing_enabled=False, sl_tighten_mode='OFF')
+              case.enable('AUTO')
+              case.snapshot['positions'] = [dict(ticket=700, position_identifier=701, magic=991188,
+                  symbol='XAUUSD', side='BUY', volume=0.01, price_open=4197.0, sl=4194.0, tp=4210.0)]
+              key = case.service.position_key(case.snapshot, 700)
+              case.service.save_position_state(key, {'initial_risk': 3.0, 'original_tp': 4210.0})
+              attempts = []
+              for _ in range(2):
+                  case.service.manage_positions(case.profile)
+                  attempts.append({'queued_count': len(case.service.history()),
+                      'warning': case.service.management_warnings.get('700'),
+                      'partial_intent': case.service.position_state(key).get('partial_intent')})
+              # Control: same quote and same original risk, disable only impossible partial close.
+              case.profile['management']['partial_close_enabled'] = False
+              case.service.manage_positions(case.profile)
+              control = [dict(action=r['command']['action'], sl=r['command'].get('sl'), state=r['state'])
+                         for r in case.service.history()]
+              reproduced = all(a['queued_count'] == 0 and a['warning'] == 'VOLUME_BELOW_BROKER_MINIMUM'
+                  and a['partial_intent'] is None for a in attempts) and any(
+                  c['action'] == 'MODIFY_POSITION' and abs(c['sl'] - 4197.1) < 1e-8 for c in control)
+              report['findings'].append({'id': 'RC1-AUDIT-001', 'severity': 'P1',
+                  'title': 'Impossible partial close prevents eligible break-even from being evaluated',
+                  'reproduced': reproduced, 'volume': 0.01, 'broker_volume_min': 0.01,
+                  'broker_volume_step': 0.01, 'partial_percent': 50,
+                  'observations_with_partial_enabled': attempts, 'control_with_partial_disabled': control})
+              assert reproduced, 'The suspected partial/BE failure was not reproduced; reassess before reporting.'
+          finally:
+              case.doCleanups()
+
+          # Exercise the actual EngineServer dispatcher and real SettingsStore, but with a fake price source.
+          case = BrokerExecutionTests(methodName='runTest')
+          case.setUp()
+          try:
+              snapshot = deepcopy(case.snapshot)
+              snapshot['account_trade_mode'] = 'REAL'  # A dictionary fixture, NOT a real terminal/account.
+              profile = deepcopy(case.profile)
+              profile['execution'].update(demo_only=False, allow_real_account=True)
+              settings = deepcopy(case.settings)
+              settings['safety']['allow_real_account'] = True
+              with tempfile.TemporaryDirectory(prefix='xaupy-rc1-restore-audit-') as root:
+                  engine = EngineServer(port=0, state_dir=root)
+                  try:
+                      engine.settings_store.save(settings=settings, profile=profile)
+                      engine.active_profile = deepcopy(engine.settings_store.profile)
+                      engine.strategy.set_profile(engine.active_profile)
+                      engine.execution.bridge = SimpleNamespace(latest_fresh_snapshot=lambda: deepcopy(snapshot))
+                      engine.execution.settings = engine.settings_store.settings
+                      def request(kind, payload=None):
+                          reply, _ = engine._dispatch(Envelope.create(kind, payload))
+                          assert reply.type == kind + '_ack', reply.to_json()
+                          return reply.payload
+                      activated = request('execution_mode_set', dict(mode='AUTO', confirmed=True,
+                          **{k: snapshot[k] for k in IDENTITY}))
+                      assert activated['accepted'], activated
+                      backup = request('backup_create')
+                      assert backup['ok'], backup
+                      backup_id = backup['backup']['id']
+                      revoked = deepcopy(engine.settings_store.settings)
+                      revoked['safety']['allow_real_account'] = False
+                      result = request('settings_set', {'settings': revoked})
+                      assert result['ok'], result
+                      before = engine.execution.status()
+                      assert before['mode'] == 'AUTO' and not before['trading_enabled'], before
+                      restored = request('backup_restore', {'backup_id': backup_id})
+                      assert restored['ok'], restored
+                      after = engine.execution.status()
+                      reproduced = (not before['permissions']['effective_allow_real']
+                          and after['permissions']['effective_allow_real'] and after['mode'] == 'AUTO'
+                          and after['trading_enabled'])
+                      report['findings'].append({'id': 'RC1-AUDIT-002', 'severity': 'P1',
+                          'title': 'Backup restore revives revoked REAL preference while retaining AUTO',
+                          'reproduced': reproduced,
+                          'before_restore': {k: before[k] for k in ('mode','reason','trading_enabled','permissions')},
+                          'after_restore': {k: after[k] for k in ('mode','reason','trading_enabled','permissions')},
+                          'confirmation_in_restore_request': False,
+                          'orders_created': len(engine.execution.history())})
+                      assert len(engine.execution.history()) == 0
+                      assert engine._server is None
+                      assert reproduced, 'The suspected restore permission failure was not reproduced; reassess.'
+                  finally:
+                      asyncio.run(engine.close())
+          finally:
+              case.doCleanups()
+
+          with Path('docs/FIRST_RELEASE_FEATURE_MATRIX.csv').open(encoding='utf-8-sig', newline='') as stream:
+              rows = list(csv.DictReader(stream))
+          report['feature_matrix'] = {'rows': len(rows),
+              'readiness_counts': dict(Counter(r['release_readiness'] for r in rows)),
+              'scope_counts': dict(Counter(r['release_check_scope'] for r in rows)),
+              'distinct_release_evidence_strings': len({r['release_evidence'] for r in rows}),
+              'note': 'Readiness labels and shared evidence strings are NOT individual end-to-end acceptance.'}
+          settings_tree = ET.parse('src/XAUPY.Desktop/SettingsDashboard.axaml')
+          ns = '{https://github.com/avaloniaui}'
+          report['one_option_settings_selectors'] = [node.attrib for node in settings_tree.iter(ns+'ComboBox')
+              if len(node.findall(ns+'ComboBoxItem')) == 1]
+          report['visual_review'] = {'new_pixel_comparison_performed': False,
+              'existing_capture_scope': 'Headless fixture; no approved-image comparator; empty positions/orders/deals and OFF mode',
+              'source': 'tests/XAUPY.Desktop.InteractionTests/CaptureAudit.cs'}
+          report['blocking_findings'] = sum(f['severity'] == 'P1' and f['reproduced'] for f in report['findings'])
+          report['readiness_verdict'] = 'BLOCKED' if report['blocking_findings'] else 'REVIEW_REQUIRED'
+          text = json.dumps(report, ensure_ascii=False, indent=2)
+          Path('audit-evidence/rc1-independent-audit.json').write_text(text+'\n', encoding='utf-8')
+          print(text)
+          PY
+      - name: Preserve exact audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: XAUPY-RC1-independent-readiness-audit
+          path: audit-evidence
+          if-no-files-found: error
+          retention-days: 30
+      - name: Enforce readiness verdict, not merely successful reproduction
+        run: |
+          python - <<'PY'
+          import json
+          r=json.load(open('audit-evidence/rc1-independent-audit.json',encoding='utf-8'))
+          print('AUDITED_SOURCE:',r['source'])
+          print('READINESS_VERDICT:',r['readiness_verdict'])
+          for finding in r['findings']:
+              print(finding['id'],finding['severity'],'REPRODUCED' if finding['reproduced'] else 'NOT_REPRODUCED',finding['title'])
+          raise SystemExit(1 if r['blocking_findings'] else 0)
+          PY

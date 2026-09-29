@@ -1,0 +1,104 @@
+name: Publish verified first release
+on:
+  push:
+    branches: ['release/1.0-completion-20260929']
+    paths: ['.github/workflows/publish-first-release.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-xaupy-1.0.0-rc1
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/release/1.0-completion-20260929'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: HoangHung997/XAUPY
+      RELEASE_SHA: a1abc91d9b2d43888a4471bd28c6b6f2e8af0e0f
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/1.0-completion-20260929
+      - name: Verify successful source and download exact artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/HoangHung997/XAUPY/actions/runs/36507058142 > run.json
+          python - <<'PY'
+          import json,os
+          r=json.load(open('run.json'))
+          assert r['head_sha']==os.environ['RELEASE_SHA'] and r['conclusion']=='success' and r['status']=='completed'
+          assert r['run_attempt']==1
+          PY
+          gh run download 36507058142 --name XAUPY-1.0.0-rc1-win-x64 --dir release-assets
+      - name: Independently verify files before publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os,zipfile
+          root=Path('release-assets')
+          expected={'XAUPY-1.0.0-rc1-win-x64.zip':'0d77dc48610b1d9af826614ce19c326791235b97933202653dc0a84d1d10674e','XAUPY-1.0.0-rc1-Setup.exe':'d64e0b5de41761b582628a639b43592f09b90a471efb9df8f09106005dba3523'}
+          for name,digest in expected.items():
+              p=next(root.rglob(name))
+              assert hashlib.sha256(p.read_bytes()).hexdigest()==digest, name
+              if p.parent!=root:(root/name).write_bytes(p.read_bytes())
+          with zipfile.ZipFile(root/'XAUPY-1.0.0-rc1-win-x64.zip') as z:
+              m=json.loads(z.read('build-manifest.json'))
+              assert m['commit']==os.environ['RELEASE_SHA'] and m['version']=='1.0.0-rc1'
+              assert not m['working_tree_modified'] and m['tests_executed'] and len(m['files'])==330
+              for f in m['files']:assert hashlib.sha256(z.read(f['path'])).hexdigest()==f['sha256'],f['path']
+              (root/'FIRST_RELEASE_USER_GUIDE.md').write_bytes(z.read('docs/FIRST_RELEASE_USER_GUIDE.md'))
+              (root/'build-manifest.json').write_bytes(z.read('build-manifest.json'))
+          (root/'SHA256SUMS.txt').write_text(''.join(f'{v}  {k}\n' for k,v in expected.items()),encoding='utf-8')
+          (root/'FIRST_RELEASE_DELIVERY_20260929.md').write_bytes(Path('docs/FIRST_RELEASE_DELIVERY_20260929.md').read_bytes())
+          print('PASS: exact successful source, 330 manifest hashes, portable and installer SHA-256')
+          PY
+      - name: Publish immutable source identity as release candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag=v1.0.0-rc1
+          if gh release view "$tag" --json tagName >/dev/null 2>&1; then
+            resolved="$(gh api "repos/HoangHung997/XAUPY/commits/$tag" --jq .sha)"
+            [ "$resolved" = "$RELEASE_SHA" ] || { echo 'Existing release points to different source'; exit 1; }
+            draft="$(gh release view "$tag" --json isDraft --jq .isDraft)"
+            [ "$draft" = true ] || { echo 'Release already published; refusing to replace assets'; exit 1; }
+          else
+            gh release create "$tag" --target "$RELEASE_SHA" --draft --prerelease --title 'XAUPY 1.0 RC1 - First complete Windows build for user acceptance' --notes-file docs/FIRST_RELEASE_DELIVERY_20260929.md
+          fi
+          gh release upload "$tag" release-assets/XAUPY-1.0.0-rc1-win-x64.zip release-assets/XAUPY-1.0.0-rc1-Setup.exe release-assets/SHA256SUMS.txt release-assets/build-manifest.json release-assets/FIRST_RELEASE_USER_GUIDE.md release-assets/FIRST_RELEASE_DELIVERY_20260929.md --clobber
+          gh release edit "$tag" --draft=false --prerelease --latest=false
+          gh release view "$tag" --json url,tagName,isDraft,isPrerelease,assets
+      - name: Record delivery state without changing verified application source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('docs/IMPLEMENTATION_TASKS.md')
+          text=p.read_text(encoding='utf-8')
+          old='| XAUPY-016 | ACTIVE |'
+          new='| XAUPY-016 | READY_FOR_USER_TEST |'
+          if old in text:text=text.replace(old,new,1)
+          elif new not in text:raise SystemExit('Task 016 state changed; refuse to overwrite')
+          heading='## RC1 delivery verified — 2026-09-29'
+          if heading not in text:
+              text+='\n\n'+heading+'\n\nTask016 is READY_FOR_USER_TEST on the isolated release branch. Application source a1abc91d9b2d43888a4471bd28c6b6f2e8af0e0f passed CI 36507058142. Portable/installer were independently downloaded and all 330 manifest hashes verified. See FIRST_RELEASE_DELIVERY_20260929.md for exact scope, hashes and remaining user broker/native-Windows acceptance. Historical ACTIVE/RC2 records above retain their original evidence scope. No broker or user-runtime mutation was performed.\n'
+          p.write_text(text,encoding='utf-8')
+          p=Path('README.md');text=p.read_text(encoding='utf-8')
+          note='> **1.0.0-rc1 READY_FOR_USER_TEST** — [Verified delivery](docs/FIRST_RELEASE_DELIVERY_20260929.md) · [Download release](https://github.com/HoangHung997/XAUPY/releases/tag/v1.0.0-rc1). Exact application source: `a1abc91d9b2d43888a4471bd28c6b6f2e8af0e0f`.\n\n'
+          if note not in text:p.write_text(note+text,encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add README.md docs/IMPLEMENTATION_TASKS.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'docs: record verified RC1 delivery and user acceptance handoff'
+            git push origin HEAD:refs/heads/release/1.0-completion-20260929
+          fi
